@@ -255,6 +255,110 @@ function stats(d) {
 `;
 }
 
+// ------------------------------------------------------------------ terminal
+
+// Komut satirlari harf harf yazilir, ciktilar beliriverir; tum dizi
+// bitince bastan baslar. Satirlar birikimli: yazilan ekranda kalir.
+function terminal(satirlar) {
+  const W = 760;
+  const satirH = 26;
+  const ustBosluk = 62;
+  const H = ustBosluk + satirlar.length * satirH + 22;
+  const size = 15;
+  const charW = size * 0.6;
+  const bekle = 4.5; // dizi bitince ekranda kalma suresi
+
+  // Her satirin baslangic ani: komutlar yazilma suresince, ciktilar kisa.
+  let t = 0.5;
+  const zaman = satirlar.map((s) => {
+    const sure = s.tip === "komut" ? [...s.metin].length * 0.055 : 0.25;
+    const bas = t;
+    t += sure + (s.tip === "komut" ? 0.45 : 0.2);
+    return { bas, sure };
+  });
+  const dongu = t + bekle;
+  const at = (s) => Math.max(0, Math.min(1, s / dongu));
+
+  const govde = satirlar
+    .map((s, i) => {
+      const { bas, sure } = zaman[i];
+      const y = ustBosluk + i * satirH;
+      const onek = s.tip === "komut" ? "$ " : "  ";
+      const metin = onek + s.metin;
+      // Metin x=24'ten basliyor, kirpma dikdortgeni x=0'dan: hedef genislige
+      // o kaymayi da eklemezsek satirin sonu kesiliyor.
+      const w = (24 + [...metin].length * charW + 6).toFixed(1);
+      const renk = s.tip === "komut" ? T.text : s.renk || T.muted;
+
+      if (s.tip === "komut") {
+        return `
+    <clipPath id="k${i}"><rect x="0" y="${y - 16}" width="0" height="22">
+      <animate attributeName="width" values="24;24;${w};${w};24"
+               keyTimes="0;${at(bas)};${at(bas + sure)};${at(dongu - 0.05)};1"
+               dur="${dongu.toFixed(2)}s" repeatCount="indefinite" />
+    </rect></clipPath>
+    <g clip-path="url(#k${i})">
+      <text class="tr" x="24" y="${y}" fill="${renk}">${esc(metin)}</text>
+    </g>`;
+      }
+      return `
+    <g opacity="0">
+      <animate attributeName="opacity" values="0;0;1;1;0"
+               keyTimes="0;${at(bas)};${at(bas + sure)};${at(dongu - 0.05)};1"
+               dur="${dongu.toFixed(2)}s" repeatCount="indefinite" calcMode="linear" />
+      <text class="tr" x="24" y="${y}" fill="${renk}">${esc(metin)}</text>
+    </g>`;
+    })
+    .join("");
+
+  // Imlec, tamamlanan son satirin sonuna zipliyor.
+  const durak = satirlar.map((s, i) => {
+    const metin = (s.tip === "komut" ? "$ " : "  ") + s.metin;
+    return {
+      bitis: at(zaman[i].bas + zaman[i].sure),
+      x: 24 + [...metin].length * charW,
+      y: ustBosluk + i * satirH,
+    };
+  });
+  const imlecKey = ["0", ...durak.map((d) => d.bitis.toFixed(4)), "1"].join(";");
+  const imlecX = [24, ...durak.map((d) => d.x.toFixed(1)), durak.at(-1).x.toFixed(1)].join(";");
+  const imlecY = [
+    durak[0].y,
+    ...durak.map((d) => d.y),
+    durak.at(-1).y,
+  ].map((y) => y + 10).join(";");
+  const dots = ["#ff5f57", "#febc2e", "#28c840"]
+    .map((c, i) => `<circle cx="${26 + i * 18}" cy="26" r="5.5" fill="${c}" />`)
+    .join("");
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(satirlar.map((s) => s.metin).join(" · "))}">
+  <defs>
+    ${defsBg()}
+    <style>${baseStyle()}
+      .tr { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: ${size}px; }
+      .baslik { font-size: 12px; fill: ${T.muted}; font-family: 'SFMono-Regular', Consolas, monospace; }
+      .imlec { animation: blink 1.05s steps(1) infinite; }
+      @keyframes blink { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
+    </style>
+  </defs>
+  <rect class="card-bg" width="${W}" height="${H}" rx="14" />
+  ${dots}
+  <text class="baslik" x="${W / 2}" y="30" text-anchor="middle">ferhat@github · ~</text>
+  <line x1="0" y1="48" x2="${W}" y2="48" stroke="${T.line}" stroke-width="1" />
+  ${govde}
+  <g class="imlec">
+    <rect x="24" y="${durak[0].y + 10}" width="9" height="2.5" fill="${T.green}">
+      <animate attributeName="x" values="${imlecX}" keyTimes="${imlecKey}"
+               dur="${dongu.toFixed(2)}s" repeatCount="indefinite" calcMode="discrete" />
+      <animate attributeName="y" values="${imlecY}" keyTimes="${imlecKey}"
+               dur="${dongu.toFixed(2)}s" repeatCount="indefinite" calcMode="discrete" />
+    </rect>
+  </g>
+</svg>
+`;
+}
+
 // ------------------------------------------------------------------ araclar
 
 // Marka renkleri zemine gore okunmayabiliyor (GitHub siyah, JavaScript sari).
@@ -277,6 +381,22 @@ function fitColor(hex) {
   return hex;
 }
 
+// Her logoya kendi hareketi: hepsi ayni ritimde sallanirsa cansiz duruyor.
+const KARAKTER = {
+  JavaScript: "nabiz",
+  HTML5: "sallan",
+  CSS: "nabiz",
+  Firebase: "alev",
+  PWA: "nabiz",
+  "Node.js": "sallan",
+  Git: "don",
+  GitHub: "nabiz",
+  Linux: "sallan",
+  Figma: "sallan",
+  Markdown: "nabiz",
+  JSON: "don",
+};
+
 function tools(icons) {
   const cols = 4;
   const rows = Math.ceil(icons.length / cols);
@@ -296,11 +416,17 @@ function tools(icons) {
       const scale = 42 / 24;
       // Kosegen boyunca ilerleyen dalga: her karo bir oncekinden biraz gecikmeli.
       const gecikme = ((col + row) * 0.16).toFixed(2);
+      const kar = KARAKTER[ic.ad] || "nabiz";
+      const renk = fitColor(ic.hex);
       return `
     <g transform="translate(${cx} ${y + 30})">
+      <circle class="isik" r="26" fill="${renk}" filter="url(#hale)"
+              style="animation-delay:${gecikme}s" />
       <g class="bob" style="animation-delay:${gecikme}s">
-        <g transform="translate(-21 -21) scale(${scale.toFixed(4)})">
-          <path d="${ic.path}" fill="${fitColor(ic.hex)}" />
+        <g class="${kar}" style="animation-delay:${gecikme}s">
+          <g transform="translate(-21 -21) scale(${scale.toFixed(4)})">
+            <path d="${ic.path}" fill="${renk}" />
+          </g>
         </g>
       </g>
     </g>
@@ -312,10 +438,29 @@ function tools(icons) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(icons.map((i) => i.ad).join(", "))}">
   <defs>
     ${defsBg()}
+    <filter id="hale" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="10" />
+    </filter>
     <style>${baseStyle()}
       .tl { font-size: 12.5px; fill: ${T.muted}; animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
+      /* Tasiyici sallanma: hepsinde ayni, gecikmeyle kosegen dalga olusturur. */
       .bob { animation: bob 3.2s ease-in-out infinite alternate; }
       @keyframes bob { from { transform: translateY(-3px); } to { transform: translateY(3px); } }
+      /* Ustune her logonun kendi karakteri biniyor. */
+      .nabiz { animation: nabiz 2.6s ease-in-out infinite; }
+      @keyframes nabiz { 0%,100% { transform: scale(1); } 50% { transform: scale(1.14); } }
+      .sallan { animation: sallan 3s ease-in-out infinite; }
+      @keyframes sallan { 0%,100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
+      .don { animation: don 9s linear infinite; }
+      @keyframes don { to { transform: rotate(360deg); } }
+      .alev { animation: alev 1.8s ease-in-out infinite; }
+      @keyframes alev {
+        0%,100% { transform: scale(1) rotate(-3deg); }
+        35% { transform: scale(1.1) rotate(2deg); }
+        70% { transform: scale(.96) rotate(-1deg); }
+      }
+      .isik { opacity: 0; animation: isik 2.6s ease-in-out infinite; }
+      @keyframes isik { 0%,100% { opacity: .07; } 50% { opacity: .26; } }
     </style>
   </defs>
   <rect class="card-bg" width="${W}" height="${H}" rx="14" />
@@ -589,6 +734,20 @@ for (const [ek, palet] of [["", KOYU], ["-light", ACIK]]) {
     [`header${ek}.svg`]: header({ name: DISPLAY_NAME, tagline: TAGLINE }),
     [`typing${ek}.svg`]: typing(LINES),
     [`tools${ek}.svg`]: tools(ICONS),
+    [`terminal${ek}.svg`]: terminal([
+      { tip: "komut", metin: "whoami" },
+      { tip: "cikti", metin: "Ferhat — web geliştirici", renk: T.blue },
+      { tip: "komut", metin: "cat yigin.txt" },
+      { tip: "cikti", metin: "HTML · CSS · JavaScript · Firebase · PWA", renk: T.green },
+      { tip: "komut", metin: "ls projeler/" },
+      { tip: "cikti", metin: "acik-defter/   netstore/", renk: T.purple },
+      { tip: "komut", metin: "cat ogrendiklerim.md" },
+      { tip: "cikti", metin: "Firestore guvenlik kurallari · App Check · Service Worker", renk: T.cyan },
+      { tip: "komut", metin: "locale -a" },
+      { tip: "cikti", metin: "tr_TR   en_US   fa_AF", renk: T.pink },
+      { tip: "komut", metin: "echo $FELSEFE" },
+      { tip: "cikti", metin: "Bir şeyi anlamanın en hızlı yolu, onu sıfırdan yazmak", renk: T.yellow },
+    ]),
     [`stats${ek}.svg`]: stats(data),
     [`languages${ek}.svg`]: languages(data.langs),
     [`activity${ek}.svg`]: activity(data.days, stamp),

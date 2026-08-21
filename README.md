@@ -21,12 +21,18 @@
 
 # 🧑‍💻 Hakkımda
 
-- 🔭 Şu an **[açık-defter](https://github.com/Ferhat-Yasinoglu/acik-defter)** üzerinde çalışıyorum — Firebase destekli, iki kişinin ortak kullandığı bir defter uygulaması
-- 🌱 Öğrendiklerim: **Firestore güvenlik kuralları**, **App Check**, **Service Worker / PWA**
-- 🛠️ Sade araçları seviyorum — framework yerine düz **HTML + CSS + JavaScript**
-- 🌍 Çok dilli arayüzler kuruyorum: 🇹🇷 TR · 🇬🇧 EN · 🇦🇫 FA
-- ⚡ Bir şeyi anlamanın en hızlı yolu, onu sıfırdan yazmak
-- 📫 Bana ulaş: **farhadyaqoobi.kunduz@gmail.com**
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal-light.svg" />
+    <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" alt="whoami: Ferhat — web geliştirici. Yığın: HTML, CSS, JavaScript, Firebase, PWA. Projeler: açık-defter, netstore." />
+  </picture>
+</div>
+
+<p align="center">
+  <a href="https://github.com/Ferhat-Yasinoglu/acik-defter">📓 açık-defter</a> &nbsp;·&nbsp;
+  <a href="https://github.com/Ferhat-Yasinoglu/acik-defter/tree/main/netstore">🛒 netstore</a> &nbsp;·&nbsp;
+  <a href="mailto:farhadyaqoobi.kunduz@gmail.com">✉️ farhadyaqoobi.kunduz@gmail.com</a>
+</p>
 
 ---
 
