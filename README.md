@@ -1,15 +1,15 @@
-<img src="https://capsule-render.vercel.app/api?type=waving&height=200&color=0:4F9DFF,100:BF91F3&text=Ferhat%20Yasinoglu&fontColor=ffffff&fontSize=42&fontAlignY=32&desc=Web%20geli%C5%9Ftirici%20%C2%B7%20Firebase%20%C2%B7%20PWA&descAlignY=52&animation=fadeIn" width="100%" alt="başlık" />
+<div align="center">
 
-<p align="center">
-  <a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=24&pause=900&center=true&vCenter=true&width=560&height=50&color=4F9DFF&lines=Merhaba+%F0%9F%91%8B+Ben+Ferhat;Web+geli%C5%9Ftirici+%F0%9F%92%BB;Firebase+%26+PWA+merakl%C4%B1s%C4%B1+%F0%9F%94%A5;Framework+yok%2C+sade+JavaScript+%E2%9A%A1;Her+g%C3%BCn+yeni+bir+%C5%9Fey+%C3%B6%C4%9Freniyorum+%F0%9F%8C%B1" alt="Ferhat" /></a>
-</p>
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/header.svg" alt="Ferhat Yasinoglu" width="100%" />
 
-<p align="center">
-  <a href="https://github.com/Ferhat-Yasinoglu?tab=followers"><img src="https://img.shields.io/github/followers/Ferhat-Yasinoglu?label=Takip%C3%A7i&style=for-the-badge&logo=github&color=4F9DFF&labelColor=1a1b27" alt="takipçi" /></a>
-  <a href="https://github.com/Ferhat-Yasinoglu?tab=repositories"><img src="https://img.shields.io/badge/Repolar-Bak-4F9DFF?style=for-the-badge&logo=github&labelColor=1a1b27" alt="repolar" /></a>
-  <a href="mailto:farhadyaqoobi.kunduz@gmail.com"><img src="https://img.shields.io/badge/E--posta-Yaz-EA4335?style=for-the-badge&logo=gmail&logoColor=white&labelColor=1a1b27" alt="e-posta" /></a>
-  <img src="https://komarev.com/ghpvc/?username=Ferhat-Yasinoglu&label=Profil%20G%C3%B6r%C3%BCnt%C3%BClenme&color=4F9DFF&style=for-the-badge" alt="görüntülenme" />
-</p>
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/typing.svg" alt="Web geliştirici · Firebase · PWA" width="100%" />
+
+<a href="https://github.com/Ferhat-Yasinoglu?tab=followers"><img src="https://img.shields.io/github/followers/Ferhat-Yasinoglu?label=Takip%C3%A7i&style=for-the-badge&logo=github&color=70a5fd&labelColor=1a1b27" alt="takipçi" /></a>
+<a href="https://github.com/Ferhat-Yasinoglu?tab=repositories"><img src="https://img.shields.io/badge/Repolar-Bak-70a5fd?style=for-the-badge&logo=github&labelColor=1a1b27" alt="repolar" /></a>
+<a href="mailto:farhadyaqoobi.kunduz@gmail.com"><img src="https://img.shields.io/badge/E--posta-Yaz-f7768e?style=for-the-badge&logo=gmail&logoColor=white&labelColor=1a1b27" alt="e-posta" /></a>
+<img src="https://komarev.com/ghpvc/?username=Ferhat-Yasinoglu&label=Profil%20G%C3%B6r%C3%BCnt%C3%BClenme&color=bf91f3&style=for-the-badge" alt="görüntülenme" />
+
+</div>
 
 ---
 
@@ -89,17 +89,13 @@
 
 # 📊 GitHub İstatistikleri
 
-<p align="center">
-    <a href="https://github.com/Ferhat-Yasinoglu?tab=repositories"><img height="165" src="https://github-profile-summary-cards.vercel.app/api/cards/stats?username=Ferhat-Yasinoglu&theme=tokyonight" alt="istatistik" /></a>
-    <a href="https://github.com/Ferhat-Yasinoglu?tab=repositories"><img height="165" src="https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=Ferhat-Yasinoglu&theme=tokyonight" alt="diller" /></a>
-</p>
-
-<p align="center">
-    <img src="https://streak-stats.demolab.com?user=Ferhat-Yasinoglu&theme=tokyonight&hide_border=true&locale=tr&date_format=j%20M%5B%20Y%5D" alt="seri" />
-</p>
-
 <div align="center">
-    <a href="https://github.com/ashutosh00710/github-readme-activity-graph"><img alt="Katkı grafiği" src="https://github-readme-activity-graph.vercel.app/graph?username=Ferhat-Yasinoglu&bg_color=1a1b27&color=70a5fd&line=bf91f3&point=ffffff&area=true&hide_border=true" /></a>
+
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/stats.svg" alt="GitHub istatistikleri" />
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/languages.svg" alt="En çok kullandığım diller" />
+
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/activity.svg" alt="Son 90 günün katkı grafiği" width="100%" />
+
 </div>
 
 ---
@@ -125,13 +121,13 @@
                 <b>📓 açık-defter</b>
                 <br><sub>Firebase/Firestore ile ortak kullanılan defter + kişisel site</sub>
                 <br><br>
-                <a href="https://github.com/Ferhat-Yasinoglu/acik-defter"><img src="https://img.shields.io/badge/Repoya%20git-4F9DFF?style=flat-square&logo=github&logoColor=white" alt="repo" /></a>
+                <a href="https://github.com/Ferhat-Yasinoglu/acik-defter"><img src="https://img.shields.io/badge/Repoya%20git-70a5fd?style=flat-square&logo=github&logoColor=white" alt="repo" /></a>
             </td>
             <td align="center" width="300">
                 <b>🛒 netstore</b>
                 <br><sub>Çevrimdışı çalışan, kurulabilir PWA mağaza arayüzü</sub>
                 <br><br>
-                <a href="https://github.com/Ferhat-Yasinoglu/acik-defter/tree/main/netstore"><img src="https://img.shields.io/badge/Repoya%20git-4F9DFF?style=flat-square&logo=github&logoColor=white" alt="repo" /></a>
+                <a href="https://github.com/Ferhat-Yasinoglu/acik-defter/tree/main/netstore"><img src="https://img.shields.io/badge/Repoya%20git-70a5fd?style=flat-square&logo=github&logoColor=white" alt="repo" /></a>
             </td>
         </tr>
     </table>
@@ -139,4 +135,4 @@
 
 <p align="center"><i>⭐ Beğendiğin bir repoya yıldız bırakmayı unutma!</i></p>
 
-<img src="https://capsule-render.vercel.app/api?type=waving&section=footer&height=120&color=0:BF91F3,100:4F9DFF" width="100%" alt="alt" />
+<img src="https://capsule-render.vercel.app/api?type=waving&section=footer&height=120&color=0:bf91f3,100:70a5fd" width="100%" alt="alt" />

@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="190" viewBox="0 0 480 190" role="img" aria-label="GitHub istatistikleri">
+  <defs>
+    
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1b27" />
+      <stop offset="100%" stop-color="#24283b" />
+    </linearGradient>
+    <style>
+    text { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; }
+    .card-bg { fill: url(#bg); stroke: #2f334d; stroke-width: 1; }
+    .rise { opacity: 0; animation: rise .7s cubic-bezier(.2,.7,.3,1) forwards; }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) {
+      .rise { animation-duration: .01ms; opacity: 1; }
+    }
+      .title { font-size: 16px; font-weight: 700; fill: #c0caf5; }
+      .num { font-size: 25px; font-weight: 800; }
+      .lbl { font-size: 12px; fill: #7982a9; }
+      .pulse { animation: pulse 2.4s ease-in-out infinite; }
+      @keyframes pulse { 0%,100% { opacity: .45; r: 4; } 50% { opacity: 1; r: 5.5; } }
+    </style>
+  </defs>
+  <rect class="card-bg" width="480" height="190" rx="14" />
+  <circle class="pulse" cx="30" cy="34" r="4" fill="#9ece6a" />
+  <text class="title" x="46" y="39">📊 GitHub İstatistikleri</text>
+  
+    <g class="rise" style="animation-delay:0.12s">
+      <rect x="28" y="52" width="3" height="40" rx="1.5" fill="#70a5fd" />
+      <text class="num" x="42" y="78" fill="#70a5fd">21</text>
+      <text class="lbl" x="42" y="96">Toplam katkı</text>
+    </g>
+    <g class="rise" style="animation-delay:0.21s">
+      <rect x="176" y="52" width="3" height="40" rx="1.5" fill="#9ece6a" />
+      <text class="num" x="190" y="78" fill="#9ece6a">18</text>
+      <text class="lbl" x="190" y="96">Commit</text>
+    </g>
+    <g class="rise" style="animation-delay:0.30s">
+      <rect x="324" y="52" width="3" height="40" rx="1.5" fill="#bf91f3" />
+      <text class="num" x="338" y="78" fill="#bf91f3">3</text>
+      <text class="lbl" x="338" y="96">Depo</text>
+    </g>
+    <g class="rise" style="animation-delay:0.39s">
+      <rect x="28" y="120" width="3" height="40" rx="1.5" fill="#e0af68" />
+      <text class="num" x="42" y="146" fill="#e0af68">4</text>
+      <text class="lbl" x="42" y="164">Yıldız</text>
+    </g>
+    <g class="rise" style="animation-delay:0.48s">
+      <rect x="176" y="120" width="3" height="40" rx="1.5" fill="#2ac3de" />
+      <text class="num" x="190" y="146" fill="#2ac3de">2</text>
+      <text class="lbl" x="190" y="164">Takipçi</text>
+    </g>
+    <g class="rise" style="animation-delay:0.57s">
+      <rect x="324" y="120" width="3" height="40" rx="1.5" fill="#f7768e" />
+      <text class="num" x="338" y="146" fill="#f7768e">2</text>
+      <text class="lbl" x="338" y="164">Pull request</text>
+    </g>
+</svg>
