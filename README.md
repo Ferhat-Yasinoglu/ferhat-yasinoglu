@@ -15,16 +15,12 @@
 
 # 🧑‍💻 Hakkımda
 
-<img align="right" width="180" src="https://media.giphy.com/media/M9gbBd9nbDrOTu1Mqx/giphy.gif" alt="kod" />
-
 - 🔭 Şu an **[açık-defter](https://github.com/Ferhat-Yasinoglu/acik-defter)** üzerinde çalışıyorum — Firebase destekli, iki kişinin ortak kullandığı bir defter uygulaması
 - 🌱 Öğrendiklerim: **Firestore güvenlik kuralları**, **App Check**, **Service Worker / PWA**
 - 🛠️ Sade araçları seviyorum — framework yerine düz **HTML + CSS + JavaScript**
 - 🌍 Çok dilli arayüzler kuruyorum: 🇹🇷 TR · 🇬🇧 EN · 🇦🇫 FA
 - ⚡ Bir şeyi anlamanın en hızlı yolu, onu sıfırdan yazmak
 - 📫 Bana ulaş: **farhadyaqoobi.kunduz@gmail.com**
-
-<br clear="right" />
 
 ---
 
