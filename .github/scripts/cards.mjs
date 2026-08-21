@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = join(ROOT, "assets");
 
-const T = {
+const KOYU = {
   bg: "#1a1b27",
   bg2: "#24283b",
   line: "#2f334d",
@@ -24,6 +24,25 @@ const T = {
   cyan: "#2ac3de",
 };
 
+// Acik temada zemin beyazlasir, vurgu renkleri beyaz uzerinde okunacak
+// kadar koyulasir; yapi ayni kalir.
+const ACIK = {
+  bg: "#ffffff",
+  bg2: "#f2f4fb",
+  line: "#d9dee9",
+  text: "#1f2437",
+  muted: "#5c6478",
+  blue: "#2f6fd0",
+  purple: "#7c4fc4",
+  green: "#3f8f2f",
+  pink: "#c73a55",
+  yellow: "#9a6b12",
+  cyan: "#0f7a92",
+};
+
+// Kart uretilirken gecerli olan palet. Her tema turunde degistirilir.
+let T = KOYU;
+
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" }[c])
@@ -35,7 +54,7 @@ const short = (n) =>
 const FONT = "'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif";
 
 // Her kartin basinda duran ortak stil: kademeli giris + yumusak hareket.
-const baseStyle = `
+const baseStyle = () => `
     text { font-family: ${FONT}; }
     .card-bg { fill: url(#bg); stroke: ${T.line}; stroke-width: 1; }
     /* Her animasyon "backwards" ile kurulur: animasyon hic calismazsa
@@ -89,7 +108,7 @@ function header({ name, tagline }) {
       </stop>
     </linearGradient>
     <clipPath id="round"><rect width="${W}" height="${H}" rx="16" /></clipPath>
-    <style>${baseStyle}
+    <style>${baseStyle()}
       .name { font-size: 46px; font-weight: 800; fill: url(#ink); letter-spacing: -.5px; }
       .tag { font-size: 17px; fill: ${T.muted}; letter-spacing: .3px; }
       .bar { animation: grow 1.1s .35s cubic-bezier(.2,.7,.3,1) backwards; }
@@ -216,7 +235,7 @@ function stats(d) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="GitHub istatistikleri">
   <defs>
     ${defsBg()}
-    <style>${baseStyle}
+    <style>${baseStyle()}
       .title { font-size: 16px; font-weight: 700; fill: ${T.text}; }
       .num { font-size: 25px; font-weight: 800; }
       .lbl { font-size: 12px; fill: ${T.muted}; }
@@ -273,7 +292,7 @@ function languages(langs) {
   <defs>
     ${defsBg()}
     <clipPath id="barclip"><rect x="${barX}" y="70" width="${barW}" height="12" rx="6" /></clipPath>
-    <style>${baseStyle}
+    <style>${baseStyle()}
       .title { font-size: 16px; font-weight: 700; fill: ${T.text}; }
       .lg { font-size: 13px; fill: ${T.text}; }
       .pc { font-size: 13px; fill: ${T.muted}; font-variant-numeric: tabular-nums; }
@@ -335,7 +354,7 @@ function activity(days, updatedAt) {
       <stop offset="0%" stop-color="${T.blue}" />
       <stop offset="100%" stop-color="${T.purple}" />
     </linearGradient>
-    <style>${baseStyle}
+    <style>${baseStyle()}
       .title { font-size: 16px; font-weight: 700; fill: ${T.text}; }
       .meta { font-size: 12px; fill: ${T.muted}; }
       .line { fill: none; stroke: url(#stroke); stroke-width: 2.5; stroke-linecap: round;
@@ -472,21 +491,28 @@ const stamp = new Intl.DateTimeFormat("tr-TR", {
   timeZone: "Europe/Istanbul",
 }).format(new Date());
 
-await mkdir(OUT, { recursive: true });
-const cards = {
-  "header.svg": header({ name: DISPLAY_NAME, tagline: TAGLINE }),
-  "typing.svg": typing([
-    "Merhaba, ben Ferhat",
-    "Web geliştirici",
-    "Firebase ve PWA meraklısı",
-    "Framework yok, sade JavaScript",
-  ]),
-  "stats.svg": stats(data),
-  "languages.svg": languages(data.langs),
-  "activity.svg": activity(data.days, stamp),
-};
+const LINES = [
+  "Merhaba, ben Ferhat",
+  "Web geliştirici",
+  "Firebase ve PWA meraklısı",
+  "Framework yok, sade JavaScript",
+];
 
-for (const [file, svg] of Object.entries(cards)) {
-  await writeFile(join(OUT, file), svg, "utf8");
-  console.log(`yazildi: assets/${file} (${svg.length} bayt)`);
+await mkdir(OUT, { recursive: true });
+
+// Ayni kartlar iki palette uretilir; README <picture> ile okuyucunun
+// temasina uyan surumu secer.
+for (const [ek, palet] of [["", KOYU], ["-light", ACIK]]) {
+  T = palet;
+  const cards = {
+    [`header${ek}.svg`]: header({ name: DISPLAY_NAME, tagline: TAGLINE }),
+    [`typing${ek}.svg`]: typing(LINES),
+    [`stats${ek}.svg`]: stats(data),
+    [`languages${ek}.svg`]: languages(data.langs),
+    [`activity${ek}.svg`]: activity(data.days, stamp),
+  };
+  for (const [file, svg] of Object.entries(cards)) {
+    await writeFile(join(OUT, file), svg, "utf8");
+    console.log(`yazildi: assets/${file} (${svg.length} bayt)`);
+  }
 }

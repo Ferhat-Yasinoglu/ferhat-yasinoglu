@@ -1,8 +1,14 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/header.svg" alt="Ferhat Yasinoglu" width="100%" />
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/header-light.svg" />
+  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/header.svg" alt="Ferhat Yasinoglu" width="100%" />
+</picture>
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/typing.svg" alt="Web geliştirici · Firebase · PWA" width="100%" />
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/typing-light.svg" />
+  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/typing.svg" alt="Web geliştirici · Firebase · PWA" width="100%" />
+</picture>
 
 <a href="https://github.com/Ferhat-Yasinoglu?tab=followers"><img src="https://img.shields.io/github/followers/Ferhat-Yasinoglu?label=Takip%C3%A7i&style=for-the-badge&logo=github&color=70a5fd&labelColor=1a1b27" alt="takipçi" /></a>
 <a href="https://github.com/Ferhat-Yasinoglu?tab=repositories"><img src="https://img.shields.io/badge/Repolar-Bak-70a5fd?style=for-the-badge&logo=github&labelColor=1a1b27" alt="repolar" /></a>
@@ -91,10 +97,19 @@
 
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/stats.svg" alt="GitHub istatistikleri" />
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/languages.svg" alt="En çok kullandığım diller" />
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/stats-light.svg" />
+  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/stats.svg" alt="GitHub istatistikleri" />
+</picture>
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/languages-light.svg" />
+  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/languages.svg" alt="En çok kullandığım diller" />
+</picture>
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/activity.svg" alt="Son 90 günün katkı grafiği" width="100%" />
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/activity-light.svg" />
+  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/activity.svg" alt="Son 90 günün katkı grafiği" width="100%" />
+</picture>
 
 </div>
 
