@@ -16,20 +16,25 @@
     <style>
     text { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; }
     .card-bg { fill: url(#bg); stroke: #2f334d; stroke-width: 1; }
-    .rise { opacity: 0; animation: rise .7s cubic-bezier(.2,.7,.3,1) forwards; }
+    /* Her animasyon "backwards" ile kurulur: animasyon hic calismazsa
+       ogenin dogal hali gecerli olur, yani icerik yine de gorunur. */
+    .rise { animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
     @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
     @media (prefers-reduced-motion: reduce) {
-      .rise { animation-duration: .01ms; opacity: 1; }
+      * { animation-duration: .01ms !important; animation-delay: 0s !important; }
     }
       .title { font-size: 16px; font-weight: 700; fill: #c0caf5; }
       .meta { font-size: 12px; fill: #7982a9; }
       .line { fill: none; stroke: url(#stroke); stroke-width: 2.5; stroke-linecap: round;
-              stroke-dasharray: 4000; animation: draw 2.6s .2s cubic-bezier(.4,0,.2,1) backwards; }
-      @keyframes draw { from { stroke-dashoffset: 4000; } to { stroke-dashoffset: 0; } }
-      .fill { opacity: 0; animation: fade 1.2s 1.5s forwards; }
-      .tip { opacity: 0; animation: fade .6s 2.6s forwards; }
-      .stamp { font-size: 10.5px; fill: #7982a9; opacity: 0; animation: fade .8s 3s forwards; }
+              animation: draw 2.6s .2s cubic-bezier(.4,0,.2,1) backwards; }
+      @keyframes draw {
+        from { stroke-dasharray: 4000; stroke-dashoffset: 4000; }
+        to { stroke-dasharray: 4000; stroke-dashoffset: 0; }
+      }
+      .fill { animation: fade 1.2s 1.5s backwards; }
+      .tip { animation: fade .6s 2.6s backwards; }
+      .stamp { font-size: 10.5px; fill: #7982a9; animation: fade .8s 3s backwards; }
       .ping { animation: ping 2s ease-out infinite; transform-origin: center; }
       @keyframes ping { 0% { r: 4; opacity: .9; } 70%,100% { r: 13; opacity: 0; } }
     </style>
@@ -43,5 +48,5 @@
     <circle class="ping" cx="976.0" cy="82.0" r="4" fill="#bf91f3" />
     <circle cx="976.0" cy="82.0" r="4" fill="#c0caf5" />
   </g>
-  <text class="stamp" x="30" y="188">🔄 21 Ağustos 20:23 · her 6 saatte bir yenilenir</text>
+  <text class="stamp" x="30" y="188">🔄 21 Ağustos 20:30 · her 6 saatte bir yenilenir</text>
 </svg>
