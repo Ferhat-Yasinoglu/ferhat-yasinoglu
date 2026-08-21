@@ -33,62 +33,10 @@
 # 💻 Kullandığım araçlar ve teknolojiler
 
 <div align="center">
-    <table align="center">
-        <tr>
-            <td align="center" width="96">
-                <img src="https://techstack-generator.vercel.app/js-icon.svg" width="48" height="48" alt="JavaScript" />
-                <br>JavaScript
-            </td>
-            <td align="center" width="96">
-                <img src="https://skillicons.dev/icons?i=html" width="48" height="48" alt="HTML5" />
-                <br>HTML5
-            </td>
-            <td align="center" width="96">
-                <img src="https://skillicons.dev/icons?i=css" width="48" height="48" alt="CSS3" />
-                <br>CSS3
-            </td>
-            <td align="center" width="96">
-                <img src="https://skillicons.dev/icons?i=firebase" width="48" height="48" alt="Firebase" />
-                <br>Firebase
-            </td>
-        </tr>
-        <tr>
-            <td align="center" width="96">
-                <img src="https://techstack-generator.vercel.app/restapi-icon.svg" width="48" height="48" alt="REST API" />
-                <br>REST API
-            </td>
-            <td align="center" width="96">
-                <img src="https://skillicons.dev/icons?i=nodejs" width="48" height="48" alt="Node.js" />
-                <br>Node.js
-            </td>
-            <td align="center" width="96">
-                <img src="https://skillicons.dev/icons?i=git" width="48" height="48" alt="Git" />
-                <br>Git
-            </td>
-            <td align="center" width="96">
-                <img src="https://skillicons.dev/icons?i=github" width="48" height="48" alt="GitHub" />
-                <br>GitHub
-            </td>
-        </tr>
-        <tr>
-            <td align="center" width="96">
-                <img src="https://skillicons.dev/icons?i=vscode" width="48" height="48" alt="VS Code" />
-                <br>VS Code
-            </td>
-            <td align="center" width="96">
-                <img src="https://skillicons.dev/icons?i=linux" width="48" height="48" alt="Linux" />
-                <br>Linux
-            </td>
-            <td align="center" width="96">
-                <img src="https://skillicons.dev/icons?i=figma" width="48" height="48" alt="Figma" />
-                <br>Figma
-            </td>
-            <td align="center" width="96">
-                <img src="https://skillicons.dev/icons?i=md" width="48" height="48" alt="Markdown" />
-                <br>Markdown
-            </td>
-        </tr>
-    </table>
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/tools-light.svg" />
+    <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/tools.svg" alt="JavaScript, HTML5, CSS, Firebase, PWA, Node.js, Git, GitHub, Linux, Figma, Markdown, JSON" />
+  </picture>
 </div>
 
 ---

@@ -3,12 +3,16 @@
 // Veriyi GitHub GraphQL API'sinden ceker, assets/ altina SVG yazar.
 // Yerel deneme icin: node cards.mjs --mock
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+const HERE = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(HERE, "..", "..");
 const OUT = join(ROOT, "assets");
+
+// simple-icons'tan bir kez cikarilmis marka logolari (24x24 viewBox yollari).
+const ICONS = JSON.parse(await readFile(join(HERE, "icons.json"), "utf8"));
 
 const KOYU = {
   bg: "#1a1b27",
@@ -246,6 +250,75 @@ function stats(d) {
   <rect class="card-bg" width="${W}" height="${H}" rx="14" />
   <circle class="pulse" cx="30" cy="34" r="4" fill="${T.green}" />
   <text class="title" x="46" y="39">📊 GitHub İstatistikleri</text>
+  ${cells}
+</svg>
+`;
+}
+
+// ------------------------------------------------------------------ araclar
+
+// Marka renkleri zemine gore okunmayabiliyor (GitHub siyah, JavaScript sari).
+// Cok koyu olani acik, cok acik olani koyu tarafa cekiyoruz.
+function fitColor(hex) {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const lin = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  const lum = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  const mix = (hedef, oran) => {
+    const h = [1, 3, 5].map((i) => parseInt(hedef.slice(i, i + 2), 16));
+    const s = [r, g, b].map((c) => c * 255);
+    return (
+      "#" +
+      s.map((c, i) => Math.round(c + (h[i] - c) * oran).toString(16).padStart(2, "0")).join("")
+    );
+  };
+  const koyuTema = T.bg === KOYU.bg;
+  if (koyuTema && lum < 0.16) return mix("#ffffff", 0.86);
+  if (!koyuTema && lum > 0.62) return mix("#000000", 0.3);
+  return hex;
+}
+
+function tools(icons) {
+  const cols = 4;
+  const rows = Math.ceil(icons.length / cols);
+  const pad = 20;
+  const tw = 132;
+  const th = 100;
+  const W = pad * 2 + cols * tw;
+  const H = pad * 2 + rows * th;
+
+  const cells = icons
+    .map((ic, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = pad + col * tw;
+      const y = pad + row * th;
+      const cx = x + tw / 2;
+      const scale = 42 / 24;
+      // Kosegen boyunca ilerleyen dalga: her karo bir oncekinden biraz gecikmeli.
+      const gecikme = ((col + row) * 0.16).toFixed(2);
+      return `
+    <g transform="translate(${cx} ${y + 30})">
+      <g class="bob" style="animation-delay:${gecikme}s">
+        <g transform="translate(-21 -21) scale(${scale.toFixed(4)})">
+          <path d="${ic.path}" fill="${fitColor(ic.hex)}" />
+        </g>
+      </g>
+    </g>
+    <text class="tl" x="${cx}" y="${y + 76}" text-anchor="middle"
+          style="animation-delay:${gecikme}s">${esc(ic.ad)}</text>`;
+    })
+    .join("");
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(icons.map((i) => i.ad).join(", "))}">
+  <defs>
+    ${defsBg()}
+    <style>${baseStyle()}
+      .tl { font-size: 12.5px; fill: ${T.muted}; animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
+      .bob { animation: bob 3.2s ease-in-out infinite alternate; }
+      @keyframes bob { from { transform: translateY(-3px); } to { transform: translateY(3px); } }
+    </style>
+  </defs>
+  <rect class="card-bg" width="${W}" height="${H}" rx="14" />
   ${cells}
 </svg>
 `;
@@ -515,6 +588,7 @@ for (const [ek, palet] of [["", KOYU], ["-light", ACIK]]) {
   const cards = {
     [`header${ek}.svg`]: header({ name: DISPLAY_NAME, tagline: TAGLINE }),
     [`typing${ek}.svg`]: typing(LINES),
+    [`tools${ek}.svg`]: tools(ICONS),
     [`stats${ek}.svg`]: stats(data),
     [`languages${ek}.svg`]: languages(data.langs),
     [`activity${ek}.svg`]: activity(data.days, stamp),
