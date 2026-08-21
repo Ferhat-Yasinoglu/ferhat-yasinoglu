@@ -60,7 +60,7 @@
                 <br>Git
             </td>
             <td align="center" width="96">
-                <img src="https://techstack-generator.vercel.app/github-icon.svg" width="48" height="48" alt="GitHub" />
+                <img src="https://skillicons.dev/icons?i=github" width="48" height="48" alt="GitHub" />
                 <br>GitHub
             </td>
         </tr>
@@ -70,7 +70,7 @@
                 <br>VS Code
             </td>
             <td align="center" width="96">
-                <img src="https://techstack-generator.vercel.app/ubuntu-icon.svg" width="48" height="48" alt="Linux" />
+                <img src="https://skillicons.dev/icons?i=linux" width="48" height="48" alt="Linux" />
                 <br>Linux
             </td>
             <td align="center" width="96">
@@ -90,8 +90,8 @@
 # 📊 GitHub İstatistikleri
 
 <p align="center">
-    <a href="https://github.com/Ferhat-Yasinoglu?tab=repositories"><img height="165" src="https://github-readme-stats.vercel.app/api?username=Ferhat-Yasinoglu&show_icons=true&theme=tokyonight&hide_border=true&include_all_commits=true&locale=tr" alt="istatistik" /></a>
-    <a href="https://github.com/Ferhat-Yasinoglu?tab=repositories"><img height="165" src="https://github-readme-stats.vercel.app/api/top-langs/?username=Ferhat-Yasinoglu&layout=compact&theme=tokyonight&hide_border=true&locale=tr" alt="diller" /></a>
+    <a href="https://github.com/Ferhat-Yasinoglu?tab=repositories"><img height="165" src="https://github-profile-summary-cards.vercel.app/api/cards/stats?username=Ferhat-Yasinoglu&theme=tokyonight" alt="istatistik" /></a>
+    <a href="https://github.com/Ferhat-Yasinoglu?tab=repositories"><img height="165" src="https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=Ferhat-Yasinoglu&theme=tokyonight" alt="diller" /></a>
 </p>
 
 <p align="center">
