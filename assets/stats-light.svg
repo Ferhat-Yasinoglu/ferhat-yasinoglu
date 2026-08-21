@@ -29,12 +29,12 @@
   
     <g class="rise" style="animation-delay:0.12s">
       <rect x="28" y="52" width="3" height="40" rx="1.5" fill="#2f6fd0" />
-      <text class="num" x="42" y="78" fill="#2f6fd0">26</text>
+      <text class="num" x="42" y="78" fill="#2f6fd0">27</text>
       <text class="lbl" x="42" y="96">Toplam katkı</text>
     </g>
     <g class="rise" style="animation-delay:0.21s">
       <rect x="176" y="52" width="3" height="40" rx="1.5" fill="#3f8f2f" />
-      <text class="num" x="190" y="78" fill="#3f8f2f">17</text>
+      <text class="num" x="190" y="78" fill="#3f8f2f">18</text>
       <text class="lbl" x="190" y="96">Commit</text>
     </g>
     <g class="rise" style="animation-delay:0.30s">
