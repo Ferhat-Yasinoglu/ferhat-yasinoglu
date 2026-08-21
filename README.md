@@ -217,4 +217,7 @@
 
 <p align="center"><i>⭐ Beğendiğin bir repoya yıldız bırakmayı unutma!</i></p>
 
-<img src="https://capsule-render.vercel.app/api?type=waving&section=footer&height=120&color=0:bf91f3,100:70a5fd" width="100%" alt="alt" />
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/footer-light.svg" />
+  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/footer.svg" width="100%" alt="" />
+</picture>

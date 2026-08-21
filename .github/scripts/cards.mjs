@@ -255,6 +255,59 @@ function stats(d) {
 `;
 }
 
+// ------------------------------------------------------------------ dalga
+
+// Kapanis dalgasi. Yol, gorunen alanin iki kati genisliginde ciziliyor ve
+// tam bir periyot kadar kaydiriliyor; boylece dikissiz donuyor.
+function footer() {
+  const W = 1000;
+  const H = 140;
+  const periyot = 500;
+
+  const dalga = (genlik, taban, faz) => {
+    const nokta = [];
+    for (let x = 0; x <= W * 2; x += 10) {
+      const y = taban + genlik * Math.sin((2 * Math.PI * x) / periyot + faz);
+      nokta.push(`${x} ${y.toFixed(1)}`);
+    }
+    return `M${nokta.join("L")}L${W * 2} ${H}L0 ${H}Z`;
+  };
+
+  const katman = [
+    { genlik: 14, taban: 62, faz: 0, renk: T.blue, op: 0.35, sure: 14 },
+    { genlik: 18, taban: 78, faz: 2.1, renk: T.purple, op: 0.4, sure: 20 },
+    { genlik: 11, taban: 96, faz: 4.2, renk: T.cyan, op: 0.5, sure: 27 },
+  ]
+    .map(
+      (k, i) => `
+    <g opacity="${k.op}">
+      <animateTransform attributeName="transform" type="translate"
+        values="0 0; -${periyot} 0" dur="${k.sure}s" repeatCount="indefinite" />
+      <path d="${dalga(k.genlik, k.taban, k.faz)}" fill="${k.renk}" />
+    </g>`
+    )
+    .join("");
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="">
+  <defs>
+    <linearGradient id="ust" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="${T.purple}" />
+      <stop offset="50%" stop-color="${T.blue}" />
+      <stop offset="100%" stop-color="${T.cyan}" />
+    </linearGradient>
+    <clipPath id="kutu"><rect width="${W}" height="${H}" /></clipPath>
+  </defs>
+  <g clip-path="url(#kutu)">
+    ${katman}
+    <path d="${dalga(16, 110, 1.1)}" fill="url(#ust)" opacity=".85">
+      <animateTransform attributeName="transform" type="translate"
+        values="0 0; -${periyot} 0" dur="11s" repeatCount="indefinite" />
+    </path>
+  </g>
+</svg>
+`;
+}
+
 // ------------------------------------------------------------------ terminal
 
 // Komut satirlari harf harf yazilir, ciktilar beliriverir; tum dizi
@@ -783,6 +836,7 @@ for (const [ek, palet] of [["", KOYU], ["-light", ACIK]]) {
     [`header${ek}.svg`]: header({ name: DISPLAY_NAME, tagline: TAGLINE }),
     [`typing${ek}.svg`]: typing(LINES),
     ...Object.fromEntries(ICONS.map((ic) => [`icon-${ic.slug}${ek}.svg`, iconTile(ic)])),
+    [`footer${ek}.svg`]: footer(),
     [`terminal${ek}.svg`]: terminal([
       { tip: "komut", metin: "whoami" },
       { tip: "cikti", metin: "Ferhat — web geliştirici", renk: T.blue },
