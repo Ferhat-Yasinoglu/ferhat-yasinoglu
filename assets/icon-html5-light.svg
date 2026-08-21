@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72" role="img" aria-label="HTML5">
+  <defs>
+    <filter id="h" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="9" />
+    </filter>
+    <style>
+      .bob { animation: bob 3.2s ease-in-out infinite alternate; }
+      @keyframes bob { from { transform: translateY(-2.5px); } to { transform: translateY(2.5px); } }
+      .nabiz { animation: nabiz 2.6s ease-in-out infinite; }
+      @keyframes nabiz { 0%,100% { transform: scale(1); } 50% { transform: scale(1.14); } }
+      .sallan { animation: sallan 3s ease-in-out infinite; }
+      @keyframes sallan { 0%,100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
+      .don { animation: don 9s linear infinite; }
+      @keyframes don { to { transform: rotate(360deg); } }
+      .alev { animation: alev 1.8s ease-in-out infinite; }
+      @keyframes alev {
+        0%,100% { transform: scale(1) rotate(-3deg); }
+        35% { transform: scale(1.1) rotate(2deg); }
+        70% { transform: scale(.96) rotate(-1deg); }
+      }
+      .isik { animation: isik 2.6s ease-in-out infinite; }
+      @keyframes isik { 0%,100% { opacity: .08; } 50% { opacity: .28; } }
+      @media (prefers-reduced-motion: reduce) {
+        * { animation-duration: .01ms !important; }
+      }
+    </style>
+  </defs>
+  <g transform="translate(36 36)">
+    <circle class="isik" r="26" fill="#E34F26" filter="url(#h)" opacity=".08" />
+    <g class="bob">
+      <g class="sallan">
+        <g transform="translate(-22 -22) scale(1.8333)">
+          <path d="M1.5 0h21l-1.91 21.563L11.977 24l-8.564-2.438L1.5 0zm7.031 9.75l-.232-2.718 10.059.003.23-2.622L5.412 4.41l.698 8.01h9.126l-.326 3.426-2.91.804-2.955-.81-.188-2.11H6.248l.33 4.171L12 19.351l5.379-1.443.744-8.157H8.531z" fill="#E34F26" />
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

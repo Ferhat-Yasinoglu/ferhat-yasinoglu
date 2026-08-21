@@ -397,6 +397,55 @@ const KARAKTER = {
   JSON: "don",
 };
 
+// Tek logoluk kucuk kart. Izgara tek parca SVG olsaydi icindeki baglantilar
+// <img> olarak gosterilirken calismazdi; bu yuzden her logo ayri dosya ve
+// README'de <a> ile sariliyor.
+function iconTile(ic) {
+  const S = 72;
+  const scale = 44 / 24;
+  const kar = KARAKTER[ic.ad] || "nabiz";
+  const renk = fitColor(ic.hex);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" role="img" aria-label="${esc(ic.ad)}">
+  <defs>
+    <filter id="h" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="9" />
+    </filter>
+    <style>
+      .bob { animation: bob 3.2s ease-in-out infinite alternate; }
+      @keyframes bob { from { transform: translateY(-2.5px); } to { transform: translateY(2.5px); } }
+      .nabiz { animation: nabiz 2.6s ease-in-out infinite; }
+      @keyframes nabiz { 0%,100% { transform: scale(1); } 50% { transform: scale(1.14); } }
+      .sallan { animation: sallan 3s ease-in-out infinite; }
+      @keyframes sallan { 0%,100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
+      .don { animation: don 9s linear infinite; }
+      @keyframes don { to { transform: rotate(360deg); } }
+      .alev { animation: alev 1.8s ease-in-out infinite; }
+      @keyframes alev {
+        0%,100% { transform: scale(1) rotate(-3deg); }
+        35% { transform: scale(1.1) rotate(2deg); }
+        70% { transform: scale(.96) rotate(-1deg); }
+      }
+      .isik { animation: isik 2.6s ease-in-out infinite; }
+      @keyframes isik { 0%,100% { opacity: .08; } 50% { opacity: .28; } }
+      @media (prefers-reduced-motion: reduce) {
+        * { animation-duration: .01ms !important; }
+      }
+    </style>
+  </defs>
+  <g transform="translate(${S / 2} ${S / 2})">
+    <circle class="isik" r="26" fill="${renk}" filter="url(#h)" opacity=".08" />
+    <g class="bob">
+      <g class="${kar}">
+        <g transform="translate(-22 -22) scale(${scale.toFixed(4)})">
+          <path d="${ic.path}" fill="${renk}" />
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
+`;
+}
+
 function tools(icons) {
   const cols = 4;
   const rows = Math.ceil(icons.length / cols);
@@ -733,7 +782,7 @@ for (const [ek, palet] of [["", KOYU], ["-light", ACIK]]) {
   const cards = {
     [`header${ek}.svg`]: header({ name: DISPLAY_NAME, tagline: TAGLINE }),
     [`typing${ek}.svg`]: typing(LINES),
-    [`tools${ek}.svg`]: tools(ICONS),
+    ...Object.fromEntries(ICONS.map((ic) => [`icon-${ic.slug}${ek}.svg`, iconTile(ic)])),
     [`terminal${ek}.svg`]: terminal([
       { tip: "komut", metin: "whoami" },
       { tip: "cikti", metin: "Ferhat — web geliştirici", renk: T.blue },

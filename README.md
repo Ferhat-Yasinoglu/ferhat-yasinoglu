@@ -39,10 +39,123 @@
 # 💻 Kullandığım araçlar ve teknolojiler
 
 <div align="center">
-  <picture>
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/tools-light.svg" />
-    <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/tools.svg" alt="JavaScript, HTML5, CSS, Firebase, PWA, Node.js, Git, GitHub, Linux, Figma, Markdown, JSON" />
-  </picture>
+    <table align="center">
+        <tr>
+            <td align="center" width="96">
+                <a href="https://developer.mozilla.org/tr/docs/Web/JavaScript" title="JavaScript">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-javascript-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-javascript.svg" width="52" height="52" alt="JavaScript" />
+                    </picture>
+                </a>
+                <br>JavaScript
+            </td>
+            <td align="center" width="96">
+                <a href="https://developer.mozilla.org/tr/docs/Web/HTML" title="HTML5">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-html5-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-html5.svg" width="52" height="52" alt="HTML5" />
+                    </picture>
+                </a>
+                <br>HTML5
+            </td>
+            <td align="center" width="96">
+                <a href="https://developer.mozilla.org/tr/docs/Web/CSS" title="CSS">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-css-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-css.svg" width="52" height="52" alt="CSS" />
+                    </picture>
+                </a>
+                <br>CSS
+            </td>
+            <td align="center" width="96">
+                <a href="https://firebase.google.com/" title="Firebase">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-firebase-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-firebase.svg" width="52" height="52" alt="Firebase" />
+                    </picture>
+                </a>
+                <br>Firebase
+            </td>
+        </tr>
+        <tr>
+            <td align="center" width="96">
+                <a href="https://web.dev/explore/progressive-web-apps" title="PWA">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-pwa-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-pwa.svg" width="52" height="52" alt="PWA" />
+                    </picture>
+                </a>
+                <br>PWA
+            </td>
+            <td align="center" width="96">
+                <a href="https://nodejs.org/" title="Node.js">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-nodejs-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-nodejs.svg" width="52" height="52" alt="Node.js" />
+                    </picture>
+                </a>
+                <br>Node.js
+            </td>
+            <td align="center" width="96">
+                <a href="https://git-scm.com/" title="Git">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-git-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-git.svg" width="52" height="52" alt="Git" />
+                    </picture>
+                </a>
+                <br>Git
+            </td>
+            <td align="center" width="96">
+                <a href="https://github.com/" title="GitHub">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-github-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-github.svg" width="52" height="52" alt="GitHub" />
+                    </picture>
+                </a>
+                <br>GitHub
+            </td>
+        </tr>
+        <tr>
+            <td align="center" width="96">
+                <a href="https://www.kernel.org/" title="Linux">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-linux-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-linux.svg" width="52" height="52" alt="Linux" />
+                    </picture>
+                </a>
+                <br>Linux
+            </td>
+            <td align="center" width="96">
+                <a href="https://www.figma.com/" title="Figma">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-figma-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-figma.svg" width="52" height="52" alt="Figma" />
+                    </picture>
+                </a>
+                <br>Figma
+            </td>
+            <td align="center" width="96">
+                <a href="https://www.markdownguide.org/" title="Markdown">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-markdown-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-markdown.svg" width="52" height="52" alt="Markdown" />
+                    </picture>
+                </a>
+                <br>Markdown
+            </td>
+            <td align="center" width="96">
+                <a href="https://www.json.org/json-tr.html" title="JSON">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-json-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-json.svg" width="52" height="52" alt="JSON" />
+                    </picture>
+                </a>
+                <br>JSON
+            </td>
+        </tr>
+    </table>
+    <sub>Her logoya tıklayınca kendi sayfasına gider</sub>
 </div>
 
 ---
