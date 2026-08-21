@@ -38,11 +38,13 @@ const FONT = "'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif";
 const baseStyle = `
     text { font-family: ${FONT}; }
     .card-bg { fill: url(#bg); stroke: ${T.line}; stroke-width: 1; }
-    .rise { opacity: 0; animation: rise .7s cubic-bezier(.2,.7,.3,1) forwards; }
+    /* Her animasyon "backwards" ile kurulur: animasyon hic calismazsa
+       ogenin dogal hali gecerli olur, yani icerik yine de gorunur. */
+    .rise { animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
     @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
     @media (prefers-reduced-motion: reduce) {
-      .rise { animation-duration: .01ms; opacity: 1; }
+      * { animation-duration: .01ms !important; animation-delay: 0s !important; }
     }`;
 
 const defsBg = (id = "bg") => `
@@ -147,12 +149,13 @@ function typing(lines) {
       const shape = [[0, 0], [1.3, w], [2.6, w], [3.4, 0]];
       const clip = track(t0, shape);
       const show = track(t0, [[0, 1], [3.4, 0]]);
+      const left = ((W - w) / 2).toFixed(1); // her satir kendi genisligine gore ortalanir
       return `
     <clipPath id="clip${i}"><rect x="0" y="0" width="0" height="${H}">
       <animate attributeName="width" values="${clip.values}" keyTimes="${clip.keyTimes}"
                dur="${cycle}s" repeatCount="indefinite" />
     </rect></clipPath>
-    <g opacity="0">
+    <g opacity="0" transform="translate(${left} 0)">
       <animate attributeName="opacity" values="${show.values}" keyTimes="${show.keyTimes}"
                dur="${cycle}s" repeatCount="indefinite" calcMode="discrete" />
       <g clip-path="url(#clip${i})">
@@ -175,7 +178,7 @@ function typing(lines) {
       @keyframes blink { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
     </style>
   </defs>
-  <g transform="translate(30 0)">${groups}
+  <g>${groups}
   </g>
 </svg>
 `;
@@ -336,11 +339,14 @@ function activity(days, updatedAt) {
       .title { font-size: 16px; font-weight: 700; fill: ${T.text}; }
       .meta { font-size: 12px; fill: ${T.muted}; }
       .line { fill: none; stroke: url(#stroke); stroke-width: 2.5; stroke-linecap: round;
-              stroke-dasharray: 4000; animation: draw 2.6s .2s cubic-bezier(.4,0,.2,1) backwards; }
-      @keyframes draw { from { stroke-dashoffset: 4000; } to { stroke-dashoffset: 0; } }
-      .fill { opacity: 0; animation: fade 1.2s 1.5s forwards; }
-      .tip { opacity: 0; animation: fade .6s 2.6s forwards; }
-      .stamp { font-size: 10.5px; fill: ${T.muted}; opacity: 0; animation: fade .8s 3s forwards; }
+              animation: draw 2.6s .2s cubic-bezier(.4,0,.2,1) backwards; }
+      @keyframes draw {
+        from { stroke-dasharray: 4000; stroke-dashoffset: 4000; }
+        to { stroke-dasharray: 4000; stroke-dashoffset: 0; }
+      }
+      .fill { animation: fade 1.2s 1.5s backwards; }
+      .tip { animation: fade .6s 2.6s backwards; }
+      .stamp { font-size: 10.5px; fill: ${T.muted}; animation: fade .8s 3s backwards; }
       .ping { animation: ping 2s ease-out infinite; transform-origin: center; }
       @keyframes ping { 0% { r: 4; opacity: .9; } 70%,100% { r: 13; opacity: 0; } }
     </style>
@@ -450,6 +456,8 @@ function mockData() {
 
 // ------------------------------------------------------------------ main
 
+// GitHub profilindeki ad alani sustu harfler icerebiliyor; basligi sabit tutuyoruz.
+const DISPLAY_NAME = "Ferhat Yasinoglu";
 const TAGLINE = "Web geliştirici · Firebase · PWA · sade JavaScript";
 
 const useMock = process.argv.includes("--mock");
@@ -466,7 +474,7 @@ const stamp = new Intl.DateTimeFormat("tr-TR", {
 
 await mkdir(OUT, { recursive: true });
 const cards = {
-  "header.svg": header({ name: data.name, tagline: TAGLINE }),
+  "header.svg": header({ name: DISPLAY_NAME, tagline: TAGLINE }),
   "typing.svg": typing([
     "Merhaba, ben Ferhat",
     "Web geliştirici",
