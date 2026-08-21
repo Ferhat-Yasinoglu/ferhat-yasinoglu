@@ -321,27 +321,35 @@ function activity(days, updatedAt) {
   const padR = 24;
   const top = 58;
   const bottom = H - 34;
-  const pts = days.slice(-90);
+  const son90 = days.slice(-90);
+
+  // Gunleri ikiserli kovalara topluyoruz: egri ayni kaliyor ama yol verisi
+  // ucte birine iniyor. Buyuk "d" niteligi tarayicida gec cizilmeye yol aciyor.
+  const pts = [];
+  for (let i = 0; i < son90.length; i += 2) {
+    pts.push({ count: son90.slice(i, i + 2).reduce((s, d) => s + d.count, 0) });
+  }
+
   const max = Math.max(1, ...pts.map((p) => p.count));
   const stepX = (W - padL - padR) / Math.max(1, pts.length - 1);
 
   const xy = pts.map((p, i) => [
-    padL + i * stepX,
-    bottom - (p.count / max) * (bottom - top),
+    Math.round(padL + i * stepX),
+    Math.round(bottom - (p.count / max) * (bottom - top)),
   ]);
 
   // Yumusak egri: her nokta arasinda kubik bezier.
-  let path = `M ${xy[0][0].toFixed(1)} ${xy[0][1].toFixed(1)}`;
+  let path = `M${xy[0][0]} ${xy[0][1]}`;
   for (let i = 1; i < xy.length; i++) {
     const [px, py] = xy[i - 1];
     const [cx, cy] = xy[i];
-    const mx = (px + cx) / 2;
-    path += ` C ${mx.toFixed(1)} ${py.toFixed(1)}, ${mx.toFixed(1)} ${cy.toFixed(1)}, ${cx.toFixed(1)} ${cy.toFixed(1)}`;
+    const mx = Math.round((px + cx) / 2);
+    path += `C${mx} ${py} ${mx} ${cy} ${cx} ${cy}`;
   }
-  const area = `${path} L ${xy[xy.length - 1][0].toFixed(1)} ${bottom} L ${xy[0][0].toFixed(1)} ${bottom} Z`;
+  const area = `${path}L${xy.at(-1)[0]} ${bottom}L${xy[0][0]} ${bottom}Z`;
 
-  const busiest = pts.reduce((a, b) => (b.count > a.count ? b : a), pts[0]);
-  const sum = pts.reduce((s, p) => s + p.count, 0);
+  const busiest = son90.reduce((a, b) => (b.count > a.count ? b : a), son90[0]);
+  const sum = son90.reduce((s, d) => s + d.count, 0);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Son 90 günün katkı grafiği">
   <defs>
