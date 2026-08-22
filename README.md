@@ -7,13 +7,13 @@
 
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/typing-light.svg" />
-  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/typing.svg" alt="Web geliştirici · Firebase · PWA" width="100%" />
+  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/typing.svg" alt="Web Geliştirici · Firebase · PWA · Modern Web Teknolojileri" width="100%" />
 </picture>
 
-<a href="https://github.com/Ferhat-Yasinoglu?tab=followers"><img src="https://img.shields.io/github/followers/Ferhat-Yasinoglu?label=Takip%C3%A7i&style=for-the-badge&logo=github&color=70a5fd&labelColor=1a1b27" alt="takipçi" /></a>
-<a href="https://github.com/Ferhat-Yasinoglu?tab=repositories"><img src="https://img.shields.io/badge/Repolar-Bak-70a5fd?style=for-the-badge&logo=github&labelColor=1a1b27" alt="repolar" /></a>
+<a href="https://github.com/Ferhat-Yasinoglu?tab=followers"><img src="https://img.shields.io/github/followers/Ferhat-Yasinoglu?label=Takipçi&style=for-the-badge&logo=github&color=70a5fd&labelColor=1a1b27" alt="followers" /></a>
+<a href="https://github.com/Ferhat-Yasinoglu?tab=repositories"><img src="https://img.shields.io/badge/Repolar-Bak-70a5fd?style=for-the-badge&logo=github&labelColor=1a1b27" alt="repositories" /></a>
 <a href="mailto:farhadyaqoobi.kunduz@gmail.com"><img src="https://img.shields.io/badge/E--posta-Yaz-f7768e?style=for-the-badge&logo=gmail&logoColor=white&labelColor=1a1b27" alt="e-posta" /></a>
-<img src="https://komarev.com/ghpvc/?username=Ferhat-Yasinoglu&label=Profil%20G%C3%B6r%C3%BCnt%C3%BClenme&color=bf91f3&style=for-the-badge" alt="görüntülenme" />
+<img src="https://komarev.com/ghpvc/?username=Ferhat-Yasinoglu&label=Profil%20Görüntülenme&color=bf91f3&style=for-the-badge" alt="görüntülenme" />
 
 </div>
 
@@ -24,19 +24,31 @@
 <div align="center">
   <picture>
     <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal-light.svg" />
-    <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" alt="whoami: Ferhat — web geliştirici. Yığın: HTML, CSS, JavaScript, Firebase, PWA. Projeler: açık-defter, netstore." />
+    <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" alt="whoami: Ferhat — web geliştirici" />
   </picture>
 </div>
 
+Merhaba! 👋 Ben Ferhat, modern web teknolojileriyle ilgilenen bir web geliştiriciyi. Yeni başladığım bu yolculukta, kullanıcı deneyimini ön planda tutan, performanslı ve ölçeklenebilir uygulamalar geliştirmeyi hedefliyorum.
+
+**🎯 Vizyonum:**
+> "Teknoloji ile insanların hayatını daha kolay ve erişilebilir hale getirmek. Her satır kodda kalite, her projede öğrenme."
+
+### 🚀 Ne Yapıyorum?
+- 💻 **Frontend Geliştirme**: HTML5, CSS3, JavaScript ile modern ve responsive web uygulamaları
+- 🔥 **Firebase Geliştirme**: Realtime database, Authentication ve Cloud Functions
+- 📱 **PWA Teknolojileri**: Çevrimdışı çalışan, kurulabilir web uygulamaları
+- 🎨 **UI/UX**: Kullanıcı odaklı arayüzler tasarlamak ve geliştirmek
+- 🛠️ **Araç Kullanımı**: Git, GitHub, VS Code ile verimli geliştirme
+
 <p align="center">
-  <a href="https://github.com/Ferhat-Yasinoglu/acik-defter">📓 açık-defter</a> &nbsp;·&nbsp;
-  <a href="https://github.com/Ferhat-Yasinoglu/acik-defter/tree/main/netstore">🛒 netstore</a> &nbsp;·&nbsp;
-  <a href="mailto:farhadyaqoobi.kunduz@gmail.com">✉️ farhadyaqoobi.kunduz@gmail.com</a>
+  <a href="https://github.com/Ferhat-Yasinoglu/acik-defter">📓 Açık Defter Projesine Git</a> &nbsp;·&nbsp;
+  <a href="https://github.com/Ferhat-Yasinoglu/acik-defter/tree/main/netstore">🛒 NetStore Mağazasına Git</a> &nbsp;·&nbsp;
+  <a href="mailto:farhadyaqoobi.kunduz@gmail.com">✉️ Bana Ulaş</a>
 </p>
 
 ---
 
-# 💻 Kullandığım araçlar ve teknolojiler
+# 💻 Kullandığım Araçlar ve Teknolojiler
 
 <div align="center">
     <table align="center">
@@ -154,8 +166,46 @@
                 <br>JSON
             </td>
         </tr>
+        <tr>
+            <td align="center" width="96">
+                <a href="https://www.w3schools.com/whatis/whatis_restapi.asp" title="REST API">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-api-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-api.svg" width="52" height="52" alt="REST API" />
+                    </picture>
+                </a>
+                <br>REST API
+            </td>
+            <td align="center" width="96">
+                <a href="https://code.visualstudio.com/" title="VS Code">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-vscode-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-vscode.svg" width="52" height="52" alt="VS Code" />
+                    </picture>
+                </a>
+                <br>VS Code
+            </td>
+            <td align="center" width="96">
+                <a href="https://webpack.js.org/" title="Webpack">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-webpack-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-webpack.svg" width="52" height="52" alt="Webpack" />
+                    </picture>
+                </a>
+                <br>Webpack
+            </td>
+            <td align="center" width="96">
+                <a href="https://www.npmjs.com/" title="NPM">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-npm-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-npm.svg" width="52" height="52" alt="NPM" />
+                    </picture>
+                </a>
+                <br>NPM
+            </td>
+        </tr>
     </table>
-    <sub>Her logoya tıklayınca kendi sayfasına gider</sub>
+    <sub>💡 Her logoya tıklayınca kendi sayfasına gider</sub>
 </div>
 
 ---
@@ -168,6 +218,7 @@
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/stats-light.svg" />
   <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/stats.svg" alt="GitHub istatistikleri" />
 </picture>
+
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/languages-light.svg" />
   <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/languages.svg" alt="En çok kullandığım diller" />
@@ -182,7 +233,7 @@
 
 ---
 
-# 🐍 Katkılarımı yiyen yılan
+# 🐍 Katkılarımı Yiyen Yılan
 
 <div align="center">
     <picture>
@@ -194,30 +245,114 @@
 
 ---
 
-# 📌 Öne çıkan projeler
+# 📌 Öne Çıkan Projeler
 
 <div align="center">
     <table align="center">
         <tr>
             <td align="center" width="300">
-                <b>📓 açık-defter</b>
+                <b>📓 Açık Defter</b>
                 <br><sub>Firebase/Firestore ile ortak kullanılan defter + kişisel site</sub>
                 <br><br>
-                <a href="https://github.com/Ferhat-Yasinoglu/acik-defter"><img src="https://img.shields.io/badge/Repoya%20git-70a5fd?style=flat-square&logo=github&logoColor=white" alt="repo" /></a>
+                <p><strong>Özellikler:</strong></p>
+                <ul align="left">
+                  <li>🔐 Gerçek zamanlı Firebase Authentication</li>
+                  <li>📝 Firestore ile veri senkronizasyonu</li>
+                  <li>👥 Çok kullanıcılı not sistemi</li>
+                  <li>📱 Responsive tasarım</li>
+                </ul>
+                <br>
+                <a href="https://github.com/Ferhat-Yasinoglu/acik-defter"><img src="https://img.shields.io/badge/Repoya%20Git-70a5fd?style=flat-square&logo=github&logoColor=white" alt="repo" /></a>
+                <a href="https://github.com/Ferhat-Yasinoglu/acik-defter"><img src="https://img.shields.io/github/stars/Ferhat-Yasinoglu/acik-defter?style=flat-square&logo=github" alt="stars" /></a>
             </td>
             <td align="center" width="300">
-                <b>🛒 netstore</b>
+                <b>🛒 NetStore</b>
                 <br><sub>Çevrimdışı çalışan, kurulabilir PWA mağaza arayüzü</sub>
                 <br><br>
-                <a href="https://github.com/Ferhat-Yasinoglu/acik-defter/tree/main/netstore"><img src="https://img.shields.io/badge/Repoya%20git-70a5fd?style=flat-square&logo=github&logoColor=white" alt="repo" /></a>
+                <p><strong>Özellikler:</strong></p>
+                <ul align="left">
+                  <li>📱 Progressive Web App teknolojisi</li>
+                  <li>🔌 Çevrimdışı çalışma desteği</li>
+                  <li>💾 Service Worker entegrasyonu</li>
+                  <li>🎨 Modern e-ticaret arayüzü</li>
+                </ul>
+                <br>
+                <a href="https://github.com/Ferhat-Yasinoglu/acik-defter/tree/main/netstore"><img src="https://img.shields.io/badge/Repoya%20Git-70a5fd?style=flat-square&logo=github&logoColor=white" alt="repo" /></a>
+                <a href="https://github.com/Ferhat-Yasinoglu/acik-defter/tree/main/netstore"><img src="https://img.shields.io/badge/PWA-Teknolojisi-f7768e?style=flat-square" alt="pwa" /></a>
             </td>
         </tr>
     </table>
 </div>
 
-<p align="center"><i>⭐ Beğendiğin bir repoya yıldız bırakmayı unutma!</i></p>
+---
+
+# 🎯 Öğrenme Yolculuğum
+
+<div align="center">
+
+| Kategori | Durum | Hedef |
+|----------|-------|-------|
+| 📚 **Frontend Temelleri** | ✅ Tamamlandı | HTML5, CSS3, JavaScript mastery |
+| 🔥 **Firebase Ekosistemi** | 🔄 Devam Ediyor | Firestore, Cloud Functions |
+| 📱 **PWA Geliştirme** | 🔄 Devam Ediyor | Service Workers, Web APIs |
+| 🎨 **UI/UX Tasarım** | 📅 Planlı | Figma, Design Systems |
+| ⚛️ **Modern Frameworks** | 📅 Planlı | React, Vue.js |
+| 🗄️ **Backend Geliştirme** | 📅 Planlı | Node.js, Express, Databases |
+
+</div>
+
+---
+
+# 💬 İletişim Kuralım!
+
+<div align="center">
+
+📧 **Email:** [farhadyaqoobi.kunduz@gmail.com](mailto:farhadyaqoobi.kunduz@gmail.com)
+
+💼 **GitHub:** [@Ferhat-Yasinoglu](https://github.com/Ferhat-Yasinoglu)
+
+> 💡 **Soru, öğrenme isteği veya iş birliği için bana ulaşmaktan çekinmeyin!**
+
+</div>
+
+---
+
+# 🏆 Başarılar & Hedefler
+
+<div align="center">
+
+- ⭐ **2023**: Web geliştirmeye başlama
+- 🎯 **2024**: İlk açık kaynak projeler
+- 🚀 **2025**: Profesyonel web geliştirici olmak
+- 🌟 **2026**: Ekip liderliği ve mentorshop
+
+</div>
+
+---
+
+# 📖 En Sevdiğim Kaynaklar
+
+<div align="center">
+
+- 📚 [MDN Web Docs](https://developer.mozilla.org/tr/)
+- 🎓 [FreeCodeCamp](https://www.freecodecamp.org/)
+- 📖 [Firebase Dokumentasyon](https://firebase.google.com/docs)
+- 🎨 [CSS-Tricks](https://css-tricks.com/)
+- 💡 [Web.dev](https://web.dev/)
+
+</div>
+
+---
 
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/footer-light.svg" />
   <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/footer.svg" width="100%" alt="" />
 </picture>
+
+<div align="center">
+
+### ⭐ Beğendiğin bir repoya yıldız bırakmayı unutma!
+
+**Son güncelleme:** 2026 | Yapım Aşamasında 🚀
+
+</div>
