@@ -31,9 +31,9 @@
           stroke-dasharray="14 8" />
   <text class="title" x="46" y="39">🎨 En çok kullandığım diller</text>
   <g clip-path="url(#barclip)">
-    <rect x="28.0" y="70" width="262.9" height="12"
+    <rect x="28.0" y="70" width="263.0" height="12"
           fill="#f1e05a" class="seg" style="animation-delay:0.15s" />
-    <rect x="290.9" y="70" width="81.4" height="12"
+    <rect x="291.0" y="70" width="81.4" height="12"
           fill="#663399" class="seg" style="animation-delay:0.26s" />
     <rect x="372.3" y="70" width="79.7" height="12"
           fill="#e34c26" class="seg" style="animation-delay:0.37s" /></g>
