@@ -4,22 +4,23 @@
       <feGaussianBlur stdDeviation="9" />
     </filter>
     <style>
-      .bob { animation: bob 3.2s ease-in-out infinite alternate; }
-      @keyframes bob { from { transform: translateY(-2.5px); } to { transform: translateY(2.5px); } }
-      .nabiz { animation: nabiz 2.6s ease-in-out infinite; }
-      @keyframes nabiz { 0%,100% { transform: scale(1); } 50% { transform: scale(1.14); } }
-      .sallan { animation: sallan 3s ease-in-out infinite; }
-      @keyframes sallan { 0%,100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
-      .don { animation: don 9s linear infinite; }
+      /* Hareket bilincli sekilde hafif: sayfada baska seyler de oynuyor,
+         ikonlar dikkati calmadan yasiyor olsun. */
+      .bob { animation: bob 5s ease-in-out infinite alternate; }
+      @keyframes bob { from { transform: translateY(-1.5px); } to { transform: translateY(1.5px); } }
+      .nabiz { animation: nabiz 4.5s ease-in-out infinite; }
+      @keyframes nabiz { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+      .sallan { animation: sallan 5s ease-in-out infinite; }
+      @keyframes sallan { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+      .don { animation: don 22s linear infinite; }
       @keyframes don { to { transform: rotate(360deg); } }
-      .alev { animation: alev 1.8s ease-in-out infinite; }
+      .alev { animation: alev 3s ease-in-out infinite; }
       @keyframes alev {
-        0%,100% { transform: scale(1) rotate(-3deg); }
-        35% { transform: scale(1.1) rotate(2deg); }
-        70% { transform: scale(.96) rotate(-1deg); }
+        0%,100% { transform: scale(1) rotate(-1.5deg); }
+        50% { transform: scale(1.05) rotate(1.5deg); }
       }
-      .isik { animation: isik 2.6s ease-in-out infinite; }
-      @keyframes isik { 0%,100% { opacity: .08; } 50% { opacity: .28; } }
+      .isik { animation: isik 4.5s ease-in-out infinite; }
+      @keyframes isik { 0%,100% { opacity: .05; } 50% { opacity: .14; } }
       @media (prefers-reduced-motion: reduce) {
         * { animation-duration: .01ms !important; }
       }

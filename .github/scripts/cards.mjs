@@ -413,7 +413,6 @@ function terminal(satirlar) {
 }
 
 // ------------------------------------------------------------------ araclar
-
 // Marka renkleri zemine gore okunmayabiliyor (GitHub siyah, JavaScript sari).
 // Cok koyu olani acik, cok acik olani koyu tarafa cekiyoruz.
 function fitColor(hex) {
@@ -464,22 +463,23 @@ function iconTile(ic) {
       <feGaussianBlur stdDeviation="9" />
     </filter>
     <style>
-      .bob { animation: bob 3.2s ease-in-out infinite alternate; }
-      @keyframes bob { from { transform: translateY(-2.5px); } to { transform: translateY(2.5px); } }
-      .nabiz { animation: nabiz 2.6s ease-in-out infinite; }
-      @keyframes nabiz { 0%,100% { transform: scale(1); } 50% { transform: scale(1.14); } }
-      .sallan { animation: sallan 3s ease-in-out infinite; }
-      @keyframes sallan { 0%,100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
-      .don { animation: don 9s linear infinite; }
+      /* Hareket bilincli sekilde hafif: sayfada baska seyler de oynuyor,
+         ikonlar dikkati calmadan yasiyor olsun. */
+      .bob { animation: bob 5s ease-in-out infinite alternate; }
+      @keyframes bob { from { transform: translateY(-1.5px); } to { transform: translateY(1.5px); } }
+      .nabiz { animation: nabiz 4.5s ease-in-out infinite; }
+      @keyframes nabiz { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+      .sallan { animation: sallan 5s ease-in-out infinite; }
+      @keyframes sallan { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+      .don { animation: don 22s linear infinite; }
       @keyframes don { to { transform: rotate(360deg); } }
-      .alev { animation: alev 1.8s ease-in-out infinite; }
+      .alev { animation: alev 3s ease-in-out infinite; }
       @keyframes alev {
-        0%,100% { transform: scale(1) rotate(-3deg); }
-        35% { transform: scale(1.1) rotate(2deg); }
-        70% { transform: scale(.96) rotate(-1deg); }
+        0%,100% { transform: scale(1) rotate(-1.5deg); }
+        50% { transform: scale(1.05) rotate(1.5deg); }
       }
-      .isik { animation: isik 2.6s ease-in-out infinite; }
-      @keyframes isik { 0%,100% { opacity: .08; } 50% { opacity: .28; } }
+      .isik { animation: isik 4.5s ease-in-out infinite; }
+      @keyframes isik { 0%,100% { opacity: .05; } 50% { opacity: .14; } }
       @media (prefers-reduced-motion: reduce) {
         * { animation-duration: .01ms !important; }
       }
@@ -495,78 +495,6 @@ function iconTile(ic) {
       </g>
     </g>
   </g>
-</svg>
-`;
-}
-
-function tools(icons) {
-  const cols = 4;
-  const rows = Math.ceil(icons.length / cols);
-  const pad = 20;
-  const tw = 132;
-  const th = 100;
-  const W = pad * 2 + cols * tw;
-  const H = pad * 2 + rows * th;
-
-  const cells = icons
-    .map((ic, i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const x = pad + col * tw;
-      const y = pad + row * th;
-      const cx = x + tw / 2;
-      const scale = 42 / 24;
-      // Kosegen boyunca ilerleyen dalga: her karo bir oncekinden biraz gecikmeli.
-      const gecikme = ((col + row) * 0.16).toFixed(2);
-      const kar = KARAKTER[ic.ad] || "nabiz";
-      const renk = fitColor(ic.hex);
-      return `
-    <g transform="translate(${cx} ${y + 30})">
-      <circle class="isik" r="26" fill="${renk}" filter="url(#hale)"
-              style="animation-delay:${gecikme}s" />
-      <g class="bob" style="animation-delay:${gecikme}s">
-        <g class="${kar}" style="animation-delay:${gecikme}s">
-          <g transform="translate(-21 -21) scale(${scale.toFixed(4)})">
-            <path d="${ic.path}" fill="${renk}" />
-          </g>
-        </g>
-      </g>
-    </g>
-    <text class="tl" x="${cx}" y="${y + 76}" text-anchor="middle"
-          style="animation-delay:${gecikme}s">${esc(ic.ad)}</text>`;
-    })
-    .join("");
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(icons.map((i) => i.ad).join(", "))}">
-  <defs>
-    ${defsBg()}
-    <filter id="hale" x="-100%" y="-100%" width="300%" height="300%">
-      <feGaussianBlur stdDeviation="10" />
-    </filter>
-    <style>${baseStyle()}
-      .tl { font-size: 12.5px; fill: ${T.muted}; animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
-      /* Tasiyici sallanma: hepsinde ayni, gecikmeyle kosegen dalga olusturur. */
-      .bob { animation: bob 3.2s ease-in-out infinite alternate; }
-      @keyframes bob { from { transform: translateY(-3px); } to { transform: translateY(3px); } }
-      /* Ustune her logonun kendi karakteri biniyor. */
-      .nabiz { animation: nabiz 2.6s ease-in-out infinite; }
-      @keyframes nabiz { 0%,100% { transform: scale(1); } 50% { transform: scale(1.14); } }
-      .sallan { animation: sallan 3s ease-in-out infinite; }
-      @keyframes sallan { 0%,100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
-      .don { animation: don 9s linear infinite; }
-      @keyframes don { to { transform: rotate(360deg); } }
-      .alev { animation: alev 1.8s ease-in-out infinite; }
-      @keyframes alev {
-        0%,100% { transform: scale(1) rotate(-3deg); }
-        35% { transform: scale(1.1) rotate(2deg); }
-        70% { transform: scale(.96) rotate(-1deg); }
-      }
-      .isik { opacity: 0; animation: isik 2.6s ease-in-out infinite; }
-      @keyframes isik { 0%,100% { opacity: .07; } 50% { opacity: .26; } }
-    </style>
-  </defs>
-  <rect class="card-bg" width="${W}" height="${H}" rx="14" />
-  ${cells}
 </svg>
 `;
 }
