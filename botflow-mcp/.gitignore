@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.log
+.env
+.env.local
+.DS_Store
+spec/*.raw.json
+
+# The database holds bot tokens in plain text. Never commit it.
+*.db
+*.db-shm
+*.db-wal

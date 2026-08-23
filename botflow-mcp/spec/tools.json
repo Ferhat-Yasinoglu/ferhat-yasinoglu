@@ -1,0 +1,583 @@
+{
+  "source": {
+    "origin": "authored",
+    "note": "Botflow's own surface. Every tool here is backed by a real implementation in src/handlers/tools.ts."
+  },
+  "serverInfo": {
+    "name": "botflow-mcp",
+    "version": "0.1.0",
+    "title": "Botflow"
+  },
+  "instructions": "Build and run Telegram chatbot funnels. Start with connect_bot to register a bot token, then create_flow to define what it says, then set_trigger to decide when the flow runs. Flow text supports {{variable}} interpolation from answers captured by question and buttons steps. Call list_bots first — every other tool needs a bot_id.",
+  "tools": [
+    {
+      "name": "connect_bot",
+      "title": "Connect a Telegram bot",
+      "description": "Register a Telegram bot by its token. The token is verified against Telegram before being stored. Get a token from @BotFather.",
+      "annotations": { "openWorldHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "token": { "type": "string", "minLength": 10, "description": "Bot token from @BotFather, like 123456:ABC-DEF..." },
+          "label": { "type": "string", "maxLength": 120, "description": "Your name for this bot. Defaults to its Telegram username." }
+        },
+        "required": ["token"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "bot_id": { "type": "string" },
+          "username": { "type": "string" },
+          "label": { "type": "string" }
+        },
+        "required": ["bot_id", "username", "label"]
+      }
+    },
+    {
+      "name": "list_bots",
+      "title": "List connected bots",
+      "description": "List the Telegram bots registered on this server, with subscriber counts.",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "bots": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bot_id": { "type": "string" },
+                "username": { "type": "string" },
+                "label": { "type": "string" },
+                "subscribers": { "type": "integer" },
+                "connected_at": { "type": "string", "format": "date-time" }
+              },
+              "required": ["bot_id", "username", "label", "subscribers"]
+            }
+          }
+        },
+        "required": ["bots"]
+      }
+    },
+    {
+      "name": "disconnect_bot",
+      "title": "Disconnect a bot",
+      "description": "Remove a bot and everything belonging to it: its flows, triggers, subscribers and message history. This cannot be undone.",
+      "annotations": { "destructiveHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": { "bot_id": { "type": "string" } },
+        "required": ["bot_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": { "bot_id": { "type": "string" }, "deleted": { "type": "boolean" } },
+        "required": ["bot_id", "deleted"]
+      }
+    },
+    {
+      "name": "create_flow",
+      "title": "Create a flow",
+      "description": "Define an ordered sequence of steps a subscriber moves through. Steps run in order until one waits for input. Text fields support {{variable}} interpolation, where variables come from question and buttons steps. The flow is created as a draft; publish_flow makes it runnable.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "bot_id": { "type": "string" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "steps": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["message", "question", "buttons", "delay", "tag", "goto", "end"],
+                  "description": "message: send text. question: send text and wait for a typed reply. buttons: send text with choices and wait for one. delay: pause. tag: add/remove tags. goto: jump to another step. end: finish the run."
+                },
+                "text": { "type": "string", "maxLength": 4000, "description": "For message, question and buttons." },
+                "save_as": { "type": "string", "maxLength": 40, "description": "For question and buttons: variable name to store the answer under." },
+                "choices": {
+                  "type": "array",
+                  "maxItems": 10,
+                  "description": "For buttons. Each choice may jump to a step.",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "label": { "type": "string", "minLength": 1, "maxLength": 64 },
+                      "value": { "type": "string", "maxLength": 64, "description": "Stored under save_as. Defaults to the label." },
+                      "goto": { "type": "integer", "minimum": 0, "description": "Step index to jump to when chosen." }
+                    },
+                    "required": ["label"]
+                  }
+                },
+                "seconds": { "type": "integer", "minimum": 0, "maximum": 86400, "description": "For delay." },
+                "add_tags": { "type": "array", "items": { "type": "string", "maxLength": 40 }, "description": "For tag." },
+                "remove_tags": { "type": "array", "items": { "type": "string", "maxLength": 40 }, "description": "For tag." },
+                "goto": { "type": "integer", "minimum": 0, "description": "For goto: step index to jump to." }
+              },
+              "required": ["type"]
+            }
+          }
+        },
+        "required": ["bot_id", "name", "steps"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "flow_id": { "type": "string" },
+          "name": { "type": "string" },
+          "step_count": { "type": "integer" },
+          "status": { "type": "string", "enum": ["draft", "published"] }
+        },
+        "required": ["flow_id", "name", "step_count", "status"]
+      }
+    },
+    {
+      "name": "list_flows",
+      "title": "List flows",
+      "description": "List the flows defined on a bot.",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "bot_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["draft", "published"] }
+        },
+        "required": ["bot_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "flows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "flow_id": { "type": "string" },
+                "name": { "type": "string" },
+                "status": { "type": "string" },
+                "step_count": { "type": "integer" },
+                "active_runs": { "type": "integer" }
+              },
+              "required": ["flow_id", "name", "status", "step_count"]
+            }
+          }
+        },
+        "required": ["flows"]
+      }
+    },
+    {
+      "name": "get_flow",
+      "title": "Get a flow",
+      "description": "Read a flow back, including its full step definition.",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": { "flow_id": { "type": "string" } },
+        "required": ["flow_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "flow_id": { "type": "string" },
+          "name": { "type": "string" },
+          "status": { "type": "string" },
+          "steps": { "type": "array", "items": { "type": "object" } }
+        },
+        "required": ["flow_id", "name", "status", "steps"]
+      }
+    },
+    {
+      "name": "update_flow",
+      "title": "Update a flow",
+      "description": "Replace a flow's steps or rename it. Editing a published flow returns it to draft, so publish_flow must be called again; runs already in progress finish on the version they started with.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "flow_id": { "type": "string" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "steps": { "type": "array", "minItems": 1, "maxItems": 100, "items": { "type": "object" } }
+        },
+        "required": ["flow_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "flow_id": { "type": "string" },
+          "status": { "type": "string" },
+          "step_count": { "type": "integer" }
+        },
+        "required": ["flow_id", "status", "step_count"]
+      }
+    },
+    {
+      "name": "publish_flow",
+      "title": "Publish a flow",
+      "description": "Make a draft flow runnable. Triggers only fire published flows.",
+      "annotations": { "idempotentHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": { "flow_id": { "type": "string" } },
+        "required": ["flow_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "flow_id": { "type": "string" },
+          "status": { "type": "string" },
+          "published_at": { "type": "string", "format": "date-time" }
+        },
+        "required": ["flow_id", "status"]
+      }
+    },
+    {
+      "name": "delete_flow",
+      "title": "Delete a flow",
+      "description": "Delete a flow, its triggers and any in-progress runs of it.",
+      "annotations": { "destructiveHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": { "flow_id": { "type": "string" } },
+        "required": ["flow_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": { "flow_id": { "type": "string" }, "deleted": { "type": "boolean" } },
+        "required": ["flow_id", "deleted"]
+      }
+    },
+    {
+      "name": "set_trigger",
+      "title": "Set a trigger",
+      "description": "Decide when a flow runs. `start` fires on /start (a new subscriber). `keyword` fires when an incoming message contains one of the keywords. `any_message` fires on any message that is not already answering a running flow.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "flow_id": { "type": "string" },
+          "event": { "type": "string", "enum": ["start", "keyword", "any_message"] },
+          "keywords": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1, "maxLength": 60 },
+            "description": "Required for keyword events. Matched case-insensitively as substrings."
+          }
+        },
+        "required": ["flow_id", "event"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "trigger_id": { "type": "string" },
+          "event": { "type": "string" },
+          "active": { "type": "boolean" }
+        },
+        "required": ["trigger_id", "event", "active"]
+      }
+    },
+    {
+      "name": "list_triggers",
+      "title": "List triggers",
+      "description": "List the triggers configured on a bot.",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": { "bot_id": { "type": "string" } },
+        "required": ["bot_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "triggers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "trigger_id": { "type": "string" },
+                "flow_id": { "type": "string" },
+                "flow_name": { "type": "string" },
+                "event": { "type": "string" },
+                "keywords": { "type": "array", "items": { "type": "string" } }
+              },
+              "required": ["trigger_id", "flow_id", "event"]
+            }
+          }
+        },
+        "required": ["triggers"]
+      }
+    },
+    {
+      "name": "delete_trigger",
+      "title": "Delete a trigger",
+      "description": "Remove a trigger. The flow itself is left alone.",
+      "annotations": { "destructiveHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": { "trigger_id": { "type": "string" } },
+        "required": ["trigger_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": { "trigger_id": { "type": "string" }, "deleted": { "type": "boolean" } },
+        "required": ["trigger_id", "deleted"]
+      }
+    },
+    {
+      "name": "start_flow",
+      "title": "Run a flow for a subscriber",
+      "description": "Start a published flow for one subscriber immediately, without waiting for a trigger. Useful for testing a flow on yourself.",
+      "annotations": { "openWorldHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "flow_id": { "type": "string" },
+          "subscriber_id": { "type": "string" }
+        },
+        "required": ["flow_id", "subscriber_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "run_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["waiting", "finished"] },
+          "steps_executed": { "type": "integer" }
+        },
+        "required": ["run_id", "status", "steps_executed"]
+      }
+    },
+    {
+      "name": "send_message",
+      "title": "Send a message",
+      "description": "Send a one-off message to a subscriber, outside any flow.",
+      "annotations": { "openWorldHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "subscriber_id": { "type": "string" },
+          "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+          "buttons": {
+            "type": "array",
+            "maxItems": 10,
+            "items": { "type": "string", "minLength": 1, "maxLength": 64 },
+            "description": "Optional reply keyboard labels."
+          }
+        },
+        "required": ["subscriber_id", "text"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "message_id": { "type": "string" },
+          "delivered": { "type": "boolean" },
+          "error": { "type": "string" }
+        },
+        "required": ["delivered"]
+      }
+    },
+    {
+      "name": "broadcast",
+      "title": "Broadcast to a segment",
+      "description": "Queue a message to every subscriber of a bot, optionally narrowed by tags. Returns as soon as the job is queued: delivery runs in the background, paced to stay inside Telegram's roughly 30-messages-per-second ceiling, so a large list takes minutes. Poll get_broadcast for progress. Blocked subscribers are recorded and skipped rather than aborting the run.",
+      "annotations": { "destructiveHint": true, "openWorldHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "bot_id": { "type": "string" },
+          "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Only subscribers carrying ALL of these tags. Omit to reach everyone."
+          },
+          "dry_run": {
+            "type": "boolean",
+            "default": false,
+            "description": "Count the recipients without queueing anything."
+          }
+        },
+        "required": ["bot_id", "text"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "broadcast_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["dry_run", "queued", "sending", "finished", "failed"] },
+          "recipients": { "type": "integer" },
+          "sent": { "type": "integer" },
+          "failed": { "type": "integer" },
+          "started_at": { "type": "string", "format": "date-time" },
+          "finished_at": { "type": "string", "format": "date-time" },
+          "error": { "type": "string" }
+        },
+        "required": ["status", "recipients", "sent", "failed"]
+      }
+    },
+    {
+      "name": "get_broadcast",
+      "title": "Check a broadcast",
+      "description": "Read the progress of a queued or completed broadcast.",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": { "broadcast_id": { "type": "string" } },
+        "required": ["broadcast_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "broadcast_id": { "type": "string" },
+          "status": { "type": "string" },
+          "recipients": { "type": "integer" },
+          "sent": { "type": "integer" },
+          "failed": { "type": "integer" },
+          "started_at": { "type": "string" },
+          "finished_at": { "type": "string" },
+          "error": { "type": "string" }
+        },
+        "required": ["broadcast_id", "status", "recipients", "sent", "failed"]
+      }
+    },
+    {
+      "name": "list_broadcasts",
+      "title": "List broadcasts",
+      "description": "List a bot's broadcasts, most recent first.",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "bot_id": { "type": "string" },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 }
+        },
+        "required": ["bot_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "broadcasts": { "type": "array", "items": { "type": "object" } }
+        },
+        "required": ["broadcasts"]
+      }
+    },
+    {
+      "name": "list_subscribers",
+      "title": "List subscribers",
+      "description": "Page through a bot's subscribers, optionally filtered by tag.",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "bot_id": { "type": "string" },
+          "tag": { "type": "string" },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 200, "default": 50 },
+          "offset": { "type": "integer", "minimum": 0, "default": 0 }
+        },
+        "required": ["bot_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "subscribers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "subscriber_id": { "type": "string" },
+                "name": { "type": "string" },
+                "username": { "type": "string" },
+                "tags": { "type": "array", "items": { "type": "string" } },
+                "blocked": { "type": "boolean" },
+                "subscribed_at": { "type": "string", "format": "date-time" }
+              },
+              "required": ["subscriber_id", "name", "tags"]
+            }
+          },
+          "total": { "type": "integer" }
+        },
+        "required": ["subscribers", "total"]
+      }
+    },
+    {
+      "name": "tag_subscriber",
+      "title": "Tag a subscriber",
+      "description": "Add or remove tags on a subscriber. Tags drive broadcast segments.",
+      "annotations": { "idempotentHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "subscriber_id": { "type": "string" },
+          "add": { "type": "array", "items": { "type": "string", "maxLength": 40 } },
+          "remove": { "type": "array", "items": { "type": "string", "maxLength": 40 } }
+        },
+        "required": ["subscriber_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "subscriber_id": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["subscriber_id", "tags"]
+      }
+    },
+    {
+      "name": "get_analytics",
+      "title": "Get analytics",
+      "description": "Counts for a bot over a time window: subscribers gained, messages in and out, flow runs started and completed, and per-flow completion rates.",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "bot_id": { "type": "string" },
+          "days": { "type": "integer", "minimum": 1, "maximum": 365, "default": 30 }
+        },
+        "required": ["bot_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "window_days": { "type": "integer" },
+          "subscribers_total": { "type": "integer" },
+          "subscribers_new": { "type": "integer" },
+          "messages_in": { "type": "integer" },
+          "messages_out": { "type": "integer" },
+          "runs_started": { "type": "integer" },
+          "runs_completed": { "type": "integer" },
+          "flows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "flow_id": { "type": "string" },
+                "name": { "type": "string" },
+                "started": { "type": "integer" },
+                "completed": { "type": "integer" }
+              },
+              "required": ["flow_id", "name", "started", "completed"]
+            }
+          }
+        },
+        "required": ["window_days", "subscribers_total", "messages_in", "messages_out"]
+      }
+    }
+  ]
+}
