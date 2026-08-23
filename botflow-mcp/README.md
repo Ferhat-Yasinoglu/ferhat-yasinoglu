@@ -22,16 +22,16 @@ model: → connect_bot → create_flow → publish_flow → set_trigger
 | Flows | Working. Messages, questions, inline-button branching, delays, tagging, `goto` |
 | Variables | Working. Answers are captured and interpolated as `{{name}}` |
 | Triggers | Working. `/start`, keyword, or any-message |
-| Broadcasts | Working. AND-segments by tag, with `dry_run` and blocked-user handling |
+| Broadcasts | Working. Background jobs, rate-limited, resumable. AND-segments by tag, with `dry_run` |
 | Analytics | Working. Subscribers, messages, per-flow completion |
-| Storage | SQLite, no external service |
+| Storage | SQLite, no external service, migrated in place on upgrade |
 | Instagram / TikTok | Not built. Both need a Meta or TikTok app and their review process |
 
 ## Quick start
 
 ```bash
 npm install
-npm test          # 127 tests, no network needed
+npm test          # 142 tests, no network needed
 npm run dev       # http://localhost:3000/mcp
 ```
 
@@ -83,7 +83,7 @@ A flow starts as a draft. `publish_flow` makes it runnable; editing a published
 flow returns it to draft. Runs already in progress finish on the version they
 started with, because each run snapshots its steps.
 
-### Two behaviours worth knowing
+### Three behaviours worth knowing
 
 **An answer beats a trigger.** If the bot just asked "which city?" and the reply
 happens to contain a keyword that triggers another flow, the answer wins. The
@@ -94,6 +94,21 @@ match the keyword `indirim`, and `gunaydin` matches `günaydın`. This is not wh
 `toLowerCase()` does on its own — Turkish `İ` lowercases to `i` plus a combining
 dot, and dotless `ı` does not decompose at all — so `src/text.ts` handles both
 explicitly.
+
+**Broadcasts do not send inline.** Telegram caps bulk delivery at roughly 30
+messages per second, so twenty thousand subscribers is about eleven minutes of
+wall clock. `broadcast` queues the job and returns; delivery runs in the
+background at that pace, checkpointing after every send. Poll `get_broadcast`
+for progress. A restart resumes from the checkpoint rather than messaging the
+first few thousand people twice.
+
+## Upgrading
+
+The database migrates itself in place on startup, tracked in SQLite's own
+`PRAGMA user_version`. Migrations live in `src/store/schema.ts` as an ordered
+list; each runs in a transaction, so a failure leaves the version untouched
+rather than half-applied. Never edit a migration that has shipped — append a new
+one, or existing databases will disagree with the code reading them.
 
 ## Configuration
 
@@ -157,8 +172,9 @@ src/handlers/tools.ts  what each tool actually does
 src/engine/steps.ts    step definitions, flow validation, {{variable}} interpolation
 src/engine/runner.ts   executes a run until it blocks or ends
 src/engine/dispatch.ts routes an incoming Telegram update to a run or a trigger
-src/store/             SQLite schema and all data access
+src/store/             SQLite schema, migrations, and all data access
 src/telegram.ts        Bot API client, with fetch injected so it can be faked
+src/broadcast.ts       paced, resumable background delivery
 src/worker.ts          long-polls Telegram, wakes runs parked on a delay
 src/server.ts          builds the MCP server from the spec
 src/http.ts            Streamable HTTP transport + bearer auth
@@ -175,7 +191,7 @@ the spec without a handler falls back to a stub that answers in the shape its
 npm test
 ```
 
-127 tests, no network and no real bot token. `test/fake-telegram.ts` stands in
+142 tests, no network and no real bot token. `test/fake-telegram.ts` stands in
 for the Bot API and can be told to fail the way Telegram does — a user blocking
 the bot, a rate limit, a revoked token — so the end-to-end tests in
 `test/e2e.test.ts` drive real flows over real SQLite through actual MCP tool

@@ -27,11 +27,16 @@ async function main(argv: string[]): Promise<void> {
   registerTools(app);
 
   const worker = new Worker(app);
-  if (!argv.includes("--no-worker")) worker.start();
+  if (!argv.includes("--no-worker")) {
+    worker.start();
+    // A broadcast interrupted by a restart resumes from its checkpoint rather
+    // than messaging the first N recipients twice.
+    app.broadcasts.resumeUnfinished();
+  }
 
   const shutdown = async () => {
     await worker.stop();
-    app.close();
+    await app.shutdown();
     process.exit(0);
   };
   process.on("SIGINT", () => void shutdown());

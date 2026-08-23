@@ -391,7 +391,7 @@
     {
       "name": "broadcast",
       "title": "Broadcast to a segment",
-      "description": "Send a message to every subscriber of a bot, optionally narrowed by tags. Sends are paced to stay inside Telegram's rate limits, and blocked subscribers are recorded rather than aborting the run.",
+      "description": "Queue a message to every subscriber of a bot, optionally narrowed by tags. Returns as soon as the job is queued: delivery runs in the background, paced to stay inside Telegram's roughly 30-messages-per-second ceiling, so a large list takes minutes. Poll get_broadcast for progress. Blocked subscribers are recorded and skipped rather than aborting the run.",
       "annotations": { "destructiveHint": true, "openWorldHint": true },
       "inputSchema": {
         "type": "object",
@@ -406,7 +406,7 @@
           "dry_run": {
             "type": "boolean",
             "default": false,
-            "description": "Count the recipients without sending anything."
+            "description": "Count the recipients without queueing anything."
           }
         },
         "required": ["bot_id", "text"],
@@ -416,12 +416,63 @@
         "type": "object",
         "properties": {
           "broadcast_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["dry_run", "queued", "sending", "finished", "failed"] },
           "recipients": { "type": "integer" },
           "sent": { "type": "integer" },
           "failed": { "type": "integer" },
-          "dry_run": { "type": "boolean" }
+          "started_at": { "type": "string", "format": "date-time" },
+          "finished_at": { "type": "string", "format": "date-time" },
+          "error": { "type": "string" }
         },
-        "required": ["recipients", "sent", "failed", "dry_run"]
+        "required": ["status", "recipients", "sent", "failed"]
+      }
+    },
+    {
+      "name": "get_broadcast",
+      "title": "Check a broadcast",
+      "description": "Read the progress of a queued or completed broadcast.",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": { "broadcast_id": { "type": "string" } },
+        "required": ["broadcast_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "broadcast_id": { "type": "string" },
+          "status": { "type": "string" },
+          "recipients": { "type": "integer" },
+          "sent": { "type": "integer" },
+          "failed": { "type": "integer" },
+          "started_at": { "type": "string" },
+          "finished_at": { "type": "string" },
+          "error": { "type": "string" }
+        },
+        "required": ["broadcast_id", "status", "recipients", "sent", "failed"]
+      }
+    },
+    {
+      "name": "list_broadcasts",
+      "title": "List broadcasts",
+      "description": "List a bot's broadcasts, most recent first.",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "bot_id": { "type": "string" },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 }
+        },
+        "required": ["bot_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "broadcasts": { "type": "array", "items": { "type": "object" } }
+        },
+        "required": ["broadcasts"]
       }
     },
     {

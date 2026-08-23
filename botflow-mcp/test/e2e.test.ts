@@ -41,14 +41,15 @@ async function call<T = Record<string, unknown>>(name: string, args: Record<stri
 beforeEach(async () => {
   handlers.clear();
   telegram = new FakeTelegram();
-  app = new App({ dbPath: ":memory:", fetcher: telegram.fetcher, telegramBaseUrl: "https://fake.telegram" });
+  app = new App({ dbPath: ":memory:", fetcher: telegram.fetcher, telegramBaseUrl: "https://fake.telegram", sendIntervalMs: 0 });
   registerTools(app);
   client = await connectClient();
 });
 
 afterEach(async () => {
   await client.close();
-  app.close();
+  // shutdown drains in-flight broadcasts before closing the database.
+  await app.shutdown();
   handlers.clear();
 });
 
@@ -144,20 +145,29 @@ describe("a complete funnel", () => {
     );
     expect(subscribers[0]?.tags).toEqual(["business"]);
 
-    const dry = await call<{ recipients: number; sent: number }>("broadcast", {
+    const dry = await call<{ recipients: number; sent: number; status: string }>("broadcast", {
       bot_id,
       text: "Case study drop",
       tags: ["business"],
       dry_run: true,
     });
-    expect(dry).toMatchObject({ recipients: 1, sent: 0 });
+    expect(dry).toMatchObject({ recipients: 1, sent: 0, status: "dry_run" });
+    expect(telegram.sentTo("555")).not.toContain("Case study drop");
 
-    const real = await call<{ sent: number; failed: number }>("broadcast", {
+    // A real broadcast is queued, not sent inline.
+    const queued = await call<{ broadcast_id: string; status: string }>("broadcast", {
       bot_id,
       text: "Case study drop",
       tags: ["business"],
     });
-    expect(real).toMatchObject({ sent: 1, failed: 0 });
+    expect(queued.status).toMatch(/queued|sending/);
+
+    await app.broadcasts.whenIdle();
+
+    const done = await call<{ status: string; sent: number; failed: number }>("get_broadcast", {
+      broadcast_id: queued.broadcast_id,
+    });
+    expect(done).toMatchObject({ status: "finished", sent: 1, failed: 0 });
     expect(telegram.sentTo("555")).toContain("Case study drop");
 
     // And the run is recorded as completed.
@@ -291,11 +301,17 @@ describe("blocked subscribers", () => {
     // One of them blocks the bot.
     telegram.blockChat("201");
 
-    const out = await call<{ sent: number; failed: number; recipients: number }>("broadcast", {
+    const queued = await call<{ broadcast_id: string; recipients: number }>("broadcast", {
       bot_id,
       text: "Announcement",
     });
+    expect(queued.recipients).toBe(2);
 
+    await app.broadcasts.whenIdle();
+
+    const out = await call<{ sent: number; failed: number; recipients: number }>("get_broadcast", {
+      broadcast_id: queued.broadcast_id,
+    });
     expect(out).toMatchObject({ recipients: 2, sent: 1, failed: 1 });
     expect(telegram.sentTo("202")).toContain("Announcement");
 

@@ -1,11 +1,19 @@
 /**
- * The database schema, applied on open.
+ * Ordered schema migrations.
+ *
+ * `MIGRATIONS[i]` upgrades the database to version `i + 1`, tracked in SQLite's
+ * own `PRAGMA user_version`. Never edit or reorder a migration that has shipped
+ * — append a new one instead, or existing databases will silently disagree with
+ * the code reading them.
  *
  * Cascades are load-bearing: `disconnect_bot` is a single DELETE on `bots`, and
  * everything downstream of it has to go with it. Foreign keys are enabled per
- * connection in `db.ts` — SQLite ignores them otherwise.
+ * connection in `index.ts` — SQLite ignores them otherwise.
  */
-export const SCHEMA = `
+export const MIGRATIONS: string[] = [];
+
+/** v1 — the original schema. */
+MIGRATIONS.push(`
 CREATE TABLE IF NOT EXISTS bots (
   id          TEXT PRIMARY KEY,
   token       TEXT NOT NULL,
@@ -98,4 +106,21 @@ CREATE TABLE IF NOT EXISTS update_offsets (
   bot_id     TEXT PRIMARY KEY REFERENCES bots(id) ON DELETE CASCADE,
   update_id  INTEGER NOT NULL
 );
-`;
+`);
+
+/**
+ * v2 — broadcasts became background jobs rather than something that ran inside
+ * a tool call, so they need a lifecycle of their own.
+ *
+ * `cursor` records how far the send got, so a broadcast interrupted by a restart
+ * can be resumed without messaging the first N people a second time.
+ */
+MIGRATIONS.push(`
+ALTER TABLE broadcasts ADD COLUMN status      TEXT NOT NULL DEFAULT 'finished';
+ALTER TABLE broadcasts ADD COLUMN tags        TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE broadcasts ADD COLUMN cursor      INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE broadcasts ADD COLUMN started_at  TEXT;
+ALTER TABLE broadcasts ADD COLUMN finished_at TEXT;
+ALTER TABLE broadcasts ADD COLUMN error       TEXT;
+CREATE INDEX IF NOT EXISTS idx_broadcasts_status ON broadcasts(status);
+`);

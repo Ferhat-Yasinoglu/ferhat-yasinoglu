@@ -1,8 +1,10 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Store } from "../src/store/index.js";
+import { MIGRATIONS } from "../src/store/schema.js";
 
 let dir: string;
 let dbPath: string;
@@ -32,6 +34,44 @@ describe("persistence", () => {
     expect(second.getTags(sub.id)).toEqual(["vip"]);
     expect(second.getFlow(flow.id)?.status).toBe("published");
     expect(second.getOffset(bot.id)).toBe(42);
+    second.close();
+  });
+});
+
+describe("migrations", () => {
+  it("upgrades a database created before the broadcast columns existed", () => {
+    // Build a v1 database by hand, the way an earlier release would have left it.
+    const legacy = new DatabaseSync(dbPath);
+    legacy.exec("PRAGMA foreign_keys = ON");
+    legacy.exec(MIGRATIONS[0]!);
+    legacy.exec("PRAGMA user_version = 1");
+    legacy.exec(
+      `INSERT INTO bots (id, token, username, label, created_at)
+       VALUES ('bot_old', 'tok', 'oldbot', 'Old', '2026-01-01T00:00:00.000Z')`,
+    );
+    legacy.exec(
+      `INSERT INTO broadcasts (id, bot_id, text, recipients, sent, failed, created_at)
+       VALUES ('bc_old', 'bot_old', 'hi', 3, 3, 0, '2026-01-01T00:00:00.000Z')`,
+    );
+    legacy.close();
+
+    // Opening it with the current code migrates it in place.
+    const store = new Store(dbPath);
+    expect(store.schemaVersion).toBe(MIGRATIONS.length);
+
+    // Existing rows survive, and the new columns get sensible defaults: an old
+    // broadcast is finished, not stuck queued.
+    const migrated = store.getBroadcast("bc_old");
+    expect(migrated).toMatchObject({ sent: 3, status: "finished", cursor: 0 });
+    expect(store.getBot("bot_old")?.username).toBe("oldbot");
+    expect(store.unfinishedBroadcasts()).toEqual([]);
+    store.close();
+  });
+
+  it("is idempotent across repeated opens", () => {
+    new Store(dbPath).close();
+    const second = new Store(dbPath);
+    expect(second.schemaVersion).toBe(MIGRATIONS.length);
     second.close();
   });
 });

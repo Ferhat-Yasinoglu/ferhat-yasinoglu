@@ -149,7 +149,9 @@ export class FakeTelegram {
         ok: false,
         error_code: code,
         description,
-        ...(retryAfter ? { parameters: { retry_after: retryAfter } } : {}),
+        // Explicit undefined check: retry_after of 0 is meaningful (retry now),
+        // and a truthiness test would drop it.
+        ...(retryAfter !== undefined ? { parameters: { retry_after: retryAfter } } : {}),
       }),
       { status: code, headers: { "Content-Type": "application/json" } },
     );

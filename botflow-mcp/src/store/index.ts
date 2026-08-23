@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
-import { SCHEMA } from "./schema.js";
+import { MIGRATIONS } from "./schema.js";
 
 /**
  * All persistence for the server, over `node:sqlite` (built into Node 22, so no
@@ -35,6 +35,22 @@ export type Trigger = {
   keywords: string;
   created_at: string;
 };
+export type Broadcast = {
+  id: string;
+  bot_id: string;
+  text: string;
+  tags: string;
+  recipients: number;
+  sent: number;
+  failed: number;
+  cursor: number;
+  status: string;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  error: string | null;
+};
+
 export type Run = {
   id: string;
   flow_id: string;
@@ -67,7 +83,36 @@ export class Store {
     // pragma is set, per connection.
     this.db.exec("PRAGMA foreign_keys = ON");
     this.db.exec("PRAGMA journal_mode = WAL");
-    this.db.exec(SCHEMA);
+    this.migrate();
+  }
+
+  /**
+   * Apply whichever migrations this database has not seen, using SQLite's own
+   * `user_version` as the marker. Each runs in a transaction so a failure
+   * halfway through leaves the version untouched rather than half-applied.
+   */
+  private migrate(): void {
+    const current = Number(
+      (this.db.prepare("PRAGMA user_version").get() as { user_version: number }).user_version,
+    );
+
+    for (let version = current; version < MIGRATIONS.length; version += 1) {
+      this.db.exec("BEGIN");
+      try {
+        this.db.exec(MIGRATIONS[version]!);
+        // user_version does not accept a bound parameter.
+        this.db.exec(`PRAGMA user_version = ${version + 1}`);
+        this.db.exec("COMMIT");
+      } catch (cause) {
+        this.db.exec("ROLLBACK");
+        throw new Error(`Migration to schema version ${version + 1} failed.`, { cause });
+      }
+    }
+  }
+
+  /** The schema version this database is on. */
+  get schemaVersion(): number {
+    return Number((this.db.prepare("PRAGMA user_version").get() as { user_version: number }).user_version);
   }
 
   close(): void {
@@ -403,12 +448,41 @@ export class Store {
     return Number((row as { n: number }).n);
   }
 
-  recordBroadcast(botId: string, text: string, recipients: number, sent: number, failed: number): string {
+  createBroadcast(botId: string, text: string, tags: string[], recipients: number): Broadcast {
     const id = newId("bc");
+    const stamp = now();
     this.db
-      .prepare("INSERT INTO broadcasts (id, bot_id, text, recipients, sent, failed, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
-      .run(id, botId, text, recipients, sent, failed, now());
-    return id;
+      .prepare(
+        `INSERT INTO broadcasts (id, bot_id, text, tags, recipients, sent, failed, cursor, status, created_at)
+         VALUES (?, ?, ?, ?, ?, 0, 0, 0, 'queued', ?)`,
+      )
+      .run(id, botId, text, JSON.stringify(tags), recipients, stamp);
+    return this.getBroadcast(id)!;
+  }
+
+  getBroadcast(id: string): Broadcast | undefined {
+    return this.db.prepare("SELECT * FROM broadcasts WHERE id = ?").get(id) as Broadcast | undefined;
+  }
+
+  listBroadcasts(botId: string, limit = 20): Broadcast[] {
+    return this.db
+      .prepare("SELECT * FROM broadcasts WHERE bot_id = ? ORDER BY created_at DESC LIMIT ?")
+      .all(botId, limit) as Broadcast[];
+  }
+
+  /** Broadcasts left mid-flight by a restart, so they can be picked back up. */
+  unfinishedBroadcasts(): Broadcast[] {
+    return this.db
+      .prepare("SELECT * FROM broadcasts WHERE status IN ('queued', 'sending') ORDER BY created_at")
+      .all() as Broadcast[];
+  }
+
+  updateBroadcast(id: string, patch: Partial<Broadcast>): void {
+    const fields = Object.keys(patch).filter((k) => k !== "id");
+    if (fields.length === 0) return;
+    const assignments = fields.map((f) => `${f} = ?`).join(", ");
+    const values = fields.map((f) => (patch as Record<string, unknown>)[f]);
+    this.db.prepare(`UPDATE broadcasts SET ${assignments} WHERE id = ?`).run(...(values as never[]), id);
   }
 
   // --- update cursor --------------------------------------------------------

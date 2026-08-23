@@ -1,4 +1,5 @@
 import type { App } from "../app.js";
+import { DEFAULT_SEND_INTERVAL_MS, describeBroadcast } from "../broadcast.js";
 import { validateSteps, type Step } from "../engine/steps.js";
 import { TelegramError, looksLikeToken } from "../telegram.js";
 import type { ToolHandler, ToolResult } from "../types.js";
@@ -257,45 +258,56 @@ function build(app: App): Record<string, ToolHandler> {
       const bot = requireBot(String(args.bot_id));
       const text = String(args.text);
       const tags = (args.tags as string[] | undefined) ?? [];
-      const dryRun = args.dry_run === true;
 
       const recipients = store.segment(bot.id, tags).filter((s) => !s.blocked);
-      if (dryRun) {
+
+      if (args.dry_run === true) {
         return result(`${recipients.length} subscriber(s) would receive this. Nothing was sent.`, {
           recipients: recipients.length,
+          status: "dry_run",
           sent: 0,
           failed: 0,
-          dry_run: true,
         });
       }
-
-      const client = app.clientForBot(bot.id);
-      let sent = 0;
-      let failed = 0;
-
-      for (const subscriber of recipients) {
-        try {
-          await client.sendMessage(subscriber.chat_id, text);
-          store.logMessage(bot.id, subscriber.id, "out", text);
-          sent += 1;
-        } catch (error) {
-          failed += 1;
-          if (error instanceof TelegramError) {
-            if (error.isBlocked) store.setSubscriberBlocked(subscriber.id, true);
-            // Telegram tells us how long to wait; obeying it beats being cut off.
-            if (error.isRateLimited && error.retryAfter) await sleep(error.retryAfter * 1000);
-          }
-        }
+      if (recipients.length === 0) {
+        throw new Error(
+          tags.length ? `No unblocked subscriber carries all of: ${tags.join(", ")}.` : "This bot has no reachable subscribers yet.",
+        );
       }
 
-      const id = store.recordBroadcast(bot.id, text, recipients.length, sent, failed);
-      return result(`Broadcast ${id}: ${sent} sent, ${failed} failed, out of ${recipients.length}.`, {
-        broadcast_id: id,
-        recipients: recipients.length,
-        sent,
-        failed,
-        dry_run: false,
-      });
+      // Queued rather than sent inline: delivery is paced to Telegram's limits,
+      // so a large list takes minutes and must not hold this call open.
+      const broadcast = store.createBroadcast(bot.id, text, tags, recipients.length);
+      app.broadcasts.start(broadcast.id);
+
+      const estimate = Math.ceil((recipients.length * DEFAULT_SEND_INTERVAL_MS) / 1000);
+      return result(
+        `Queued ${broadcast.id} to ${recipients.length} subscriber(s); roughly ${estimate}s at Telegram's rate limit. ` +
+          `Check progress with get_broadcast.`,
+        describeBroadcast(store.getBroadcast(broadcast.id)!),
+      );
+    },
+
+    get_broadcast: async (args) => {
+      const id = String(args.broadcast_id);
+      const broadcast = store.getBroadcast(id);
+      if (!broadcast) throw new Error(`Unknown broadcast "${id}".`);
+
+      const pct = broadcast.recipients > 0 ? Math.round((broadcast.cursor / broadcast.recipients) * 100) : 100;
+      return result(
+        `${broadcast.id} is ${broadcast.status}: ${broadcast.sent} sent, ${broadcast.failed} failed, ` +
+          `${broadcast.cursor}/${broadcast.recipients} processed (${pct}%).`,
+        describeBroadcast(broadcast),
+      );
+    },
+
+    list_broadcasts: async (args) => {
+      const bot = requireBot(String(args.bot_id));
+      const broadcasts = store.listBroadcasts(bot.id, Number(args.limit ?? 20)).map(describeBroadcast);
+      const summary = broadcasts.length
+        ? broadcasts.map((b) => `${b.broadcast_id}  [${b.status}]  ${b.sent} sent, ${b.failed} failed`).join("\n")
+        : "No broadcasts yet.";
+      return result(summary, { broadcasts });
     },
 
     list_subscribers: async (args) => {
@@ -375,6 +387,3 @@ function result(text: string, structured: Record<string, unknown>): ToolResult {
   return { content: [{ type: "text", text }], structuredContent: structured };
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}

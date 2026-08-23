@@ -1,3 +1,4 @@
+import { BroadcastRunner } from "./broadcast.js";
 import { Dispatcher } from "./engine/dispatch.js";
 import { FlowRunner } from "./engine/runner.js";
 import { Store } from "./store/index.js";
@@ -14,12 +15,15 @@ export type AppOptions = {
   dbPath?: string;
   fetcher?: Fetcher;
   telegramBaseUrl?: string;
+  /** Milliseconds between broadcast sends. Tests set this to 0. */
+  sendIntervalMs?: number;
 };
 
 export class App {
   readonly store: Store;
   readonly runner: FlowRunner;
   readonly dispatcher: Dispatcher;
+  readonly broadcasts: BroadcastRunner;
 
   private readonly fetcher: Fetcher;
   private readonly telegramBaseUrl: string;
@@ -33,6 +37,9 @@ export class App {
     const clientFor = (botId: string) => this.clientForBot(botId);
     this.runner = new FlowRunner(this.store, clientFor);
     this.dispatcher = new Dispatcher(this.store, this.runner, clientFor);
+    this.broadcasts = new BroadcastRunner(this, {
+      ...(options.sendIntervalMs !== undefined ? { sendIntervalMs: options.sendIntervalMs } : {}),
+    });
   }
 
   /** A client bound to a stored bot's token, cached per bot. */
@@ -55,6 +62,11 @@ export class App {
 
   forgetClient(botId: string): void {
     this.clients.delete(botId);
+  }
+
+  async shutdown(): Promise<void> {
+    await this.broadcasts.stop();
+    this.store.close();
   }
 
   close(): void {
