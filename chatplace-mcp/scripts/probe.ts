@@ -32,35 +32,82 @@ async function main(argv: string[]): Promise<void> {
 
   const serverInfo = client.getServerVersion();
   const instructions = client.getInstructions();
+  const capabilities = client.getServerCapabilities();
+
   const { tools } = await client.listTools();
 
-  const spec = specFromToolsList(
-    { tools },
-    {
-      server: url,
-      serverInfo: serverInfo
-        ? { name: serverInfo.name, version: serverInfo.version }
-        : { name: "chatplace-mcp", version: "0.1.0" },
-    },
-  );
-  if (instructions) spec.instructions = instructions;
+  // Prompts and resources are optional halves of the surface. Only ask for the
+  // ones the handshake advertised, and tolerate a server that advertises them
+  // but answers "method not found" anyway.
+  const prompts = capabilities?.prompts
+    ? await tryList(() => client.listPrompts(), "prompts", "prompts")
+    : undefined;
+  const resources = capabilities?.resources
+    ? await tryList(() => client.listResources(), "resources", "resources")
+    : undefined;
+  const resourceTemplates = capabilities?.resources
+    ? await tryList(() => client.listResourceTemplates(), "resourceTemplates", "resourceTemplates")
+    : undefined;
+
+  const surface = {
+    tools,
+    ...(prompts ? { prompts } : {}),
+    ...(resources ? { resources } : {}),
+    ...(resourceTemplates ? { resourceTemplates } : {}),
+  };
+
+  const spec = specFromToolsList(surface, {
+    server: url,
+    serverInfo: serverInfo
+      ? { name: serverInfo.name, version: serverInfo.version }
+      : { name: "chatplace-mcp", version: "0.1.0" },
+    ...(instructions ? { instructions } : {}),
+  });
 
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, `${JSON.stringify(spec, null, 2)}\n`, "utf8");
 
   // Keep the untouched response next to it for diffing against future imports.
   const rawPath = out.replace(/\.json$/, ".raw.json");
-  writeFileSync(rawPath, `${JSON.stringify({ serverInfo, instructions, tools }, null, 2)}\n`, "utf8");
+  writeFileSync(
+    rawPath,
+    `${JSON.stringify({ serverInfo, instructions, capabilities, ...surface }, null, 2)}\n`,
+    "utf8",
+  );
 
-  console.log(`Wrote ${spec.tools.length} tools to ${out}`);
-  console.log(`Raw response saved to ${rawPath}`);
+  console.log(`Wrote ${out}`);
+  console.log(`Raw response saved to ${rawPath}\n`);
+  console.log(`${spec.tools.length} tools:`);
   for (const tool of spec.tools) {
     const required = tool.inputSchema.required?.length ?? 0;
     const total = Object.keys(tool.inputSchema.properties ?? {}).length;
     console.log(`  - ${tool.name}  (${total} args, ${required} required)`);
   }
+  if (spec.prompts) console.log(`\n${spec.prompts.length} prompts:\n${list(spec.prompts.map((p) => p.name))}`);
+  if (spec.resources) console.log(`\n${spec.resources.length} resources:\n${list(spec.resources.map((r) => r.uri))}`);
+  if (spec.resourceTemplates) {
+    console.log(`\n${spec.resourceTemplates.length} resource templates:\n${list(spec.resourceTemplates.map((r) => r.uriTemplate))}`);
+  }
 
   await client.close();
+}
+
+/** Ask for an optional part of the surface, treating refusal as "not offered". */
+async function tryList<T extends object, K extends keyof T>(
+  call: () => Promise<T>,
+  key: K,
+  label: string,
+): Promise<T[K] | undefined> {
+  try {
+    return (await call())[key];
+  } catch (error) {
+    console.error(`  (skipping ${label}: ${error instanceof Error ? error.message : String(error)})`);
+    return undefined;
+  }
+}
+
+function list(names: string[]): string {
+  return names.map((n) => `  - ${n}`).join("\n");
 }
 
 function valueOf(argv: string[], flag: string): string | undefined {

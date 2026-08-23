@@ -15,7 +15,8 @@ with a bearer API key, exposing a tool surface loaded from data.
 | --------------------------------- | ------ |
 | Transport, framing, handshake     | Done — real Streamable HTTP, verified against the official SDK client |
 | Bearer API-key auth               | Done — constant-time check against a configured allowlist |
-| Tool surface (names, schemas)     | Reproducible exactly — see [Matching the real surface](#matching-the-real-surface) |
+| Advertised surface (tools, prompts, resources) | Reproducible exactly — see [Matching the real surface](#matching-the-real-surface) |
+| Capability advertisement          | Done — the handshake declares only what the spec actually contains |
 | Tool behaviour                    | Stubbed. Each tool answers in the shape its `outputSchema` promises |
 | ChatPlace's backend               | Not cloneable. Their Instagram automation runs on a Meta API partnership; you would need your own Meta app and app review |
 
@@ -26,7 +27,7 @@ What each tool *does* is yours to implement.
 
 ```bash
 npm install
-npm test          # 54 tests, including a real HTTP handshake
+npm test          # 71 tests, including a real HTTP handshake
 npm run dev       # http://localhost:3000/mcp
 ```
 
@@ -46,8 +47,14 @@ curl -s localhost:3000/healthz
 
 ## Matching the real surface
 
-`spec/tools.json` is the **entire** tool surface. No tool is listed in code, so
+`spec/tools.json` is the **entire** advertised surface — tools, and optionally
+prompts, resources and resource templates. Nothing is listed in code, so
 replacing that file replaces what the server is.
+
+Capabilities follow the spec rather than being hardcoded: declare `prompts` and
+the handshake advertises prompts; leave it out and it doesn't. An empty array is
+deliberately distinct from an absent one, because "supports prompts, has none"
+and "does not support prompts" are different servers.
 
 What ships in it today is a **placeholder** — names and schemas reconstructed
 from public descriptions of ChatPlace, not read off the real server. Its
@@ -60,7 +67,8 @@ To make it exact, point the probe at the live server:
 npm run probe -- --url https://mcp.chatplace.io/mcp --key "$CHATPLACE_API_KEY"
 ```
 
-That connects as a real MCP client, calls `tools/list`, and rewrites
+That connects as a real MCP client, reads `tools/list` — plus `prompts/list` and
+`resources/list` when the handshake says they exist — and rewrites
 `spec/tools.json` with `source.origin: "imported"`. Restart, and the clone serves
 that surface verbatim.
 
@@ -152,9 +160,9 @@ in public — the startup banner says so, and `/healthz` reports `authRequired`.
 ## Layout
 
 ```
-spec/tools.json        the tool surface — the thing you swap to match upstream
-src/spec.ts            loads and validates it; converts a tools/list response into one
-src/server.ts          builds an MCP server from the spec
+spec/tools.json        the advertised surface — the thing you swap to match upstream
+src/spec.ts            loads and validates it; converts a probe result into one
+src/server.ts          builds an MCP server from the spec, capabilities included
 src/jsonschema.ts      argument validation and default-filling
 src/handlers/          real implementations; anything missing falls back to a stub
 src/http.ts            Streamable HTTP transport + bearer auth

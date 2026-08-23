@@ -1,5 +1,13 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import {
+  CallToolRequestSchema,
+  GetPromptRequestSchema,
+  ListPromptsRequestSchema,
+  ListResourcesRequestSchema,
+  ListResourceTemplatesRequestSchema,
+  ListToolsRequestSchema,
+  ReadResourceRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import { handlerFor, isImplemented } from "./handlers/index.js";
 import { applyDefaults, formatErrors, isPlainObject, validate } from "./jsonschema.js";
 import type { ServerSpec, ToolResult, ToolSpec } from "./types.js";
@@ -17,6 +25,9 @@ export type CreateServerOptions = {
  * loaded from data at runtime; there is nothing to register statically.
  */
 export function createServer({ spec, apiKey = null }: CreateServerOptions): Server {
+  const hasPrompts = spec.prompts !== undefined;
+  const hasResources = spec.resources !== undefined || spec.resourceTemplates !== undefined;
+
   const server = new Server(
     {
       name: spec.serverInfo.name,
@@ -24,7 +35,13 @@ export function createServer({ spec, apiKey = null }: CreateServerOptions): Serv
       ...(spec.serverInfo.title ? { title: spec.serverInfo.title } : {}),
     },
     {
-      capabilities: { tools: { listChanged: false } },
+      // Advertise only what the spec actually declares. Claiming a capability we
+      // cannot serve would make the clone diverge from upstream on handshake.
+      capabilities: {
+        tools: { listChanged: false },
+        ...(hasPrompts ? { prompts: { listChanged: false } } : {}),
+        ...(hasResources ? { resources: { listChanged: false, subscribe: false } } : {}),
+      },
       ...(spec.instructions ? { instructions: spec.instructions } : {}),
     },
   );
@@ -68,7 +85,79 @@ export function createServer({ spec, apiKey = null }: CreateServerOptions): Serv
     }
   });
 
+  if (hasPrompts) registerPrompts(server, spec);
+  if (hasResources) registerResources(server, spec);
+
   return server;
+}
+
+function registerPrompts(server: Server, spec: ServerSpec): void {
+  const prompts = spec.prompts ?? [];
+  const byName = new Map(prompts.map((prompt) => [prompt.name, prompt]));
+
+  server.setRequestHandler(ListPromptsRequestSchema, async () => ({ prompts }));
+
+  server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+    const { name, arguments: args } = request.params;
+    const prompt = byName.get(name);
+    if (!prompt) throw new Error(`Unknown prompt "${name}".`);
+
+    const missing = (prompt.arguments ?? [])
+      .filter((arg) => arg.required && !(args ?? {})[arg.name])
+      .map((arg) => arg.name);
+    if (missing.length > 0) {
+      throw new Error(`Prompt "${name}" is missing required arguments: ${missing.join(", ")}.`);
+    }
+
+    // Stubbed like tools: the shape is real, the wording is a placeholder until
+    // the prompt is implemented.
+    const filled = Object.entries(args ?? {})
+      .map(([key, value]) => `${key}: ${String(value)}`)
+      .join("\n");
+    return {
+      ...(prompt.description ? { description: prompt.description } : {}),
+      messages: [
+        {
+          role: "user" as const,
+          content: {
+            type: "text" as const,
+            text: [`[stub] Prompt "${name}" has no implementation yet.`, filled && `\nArguments:\n${filled}`]
+              .filter(Boolean)
+              .join("\n"),
+          },
+        },
+      ],
+    };
+  });
+}
+
+function registerResources(server: Server, spec: ServerSpec): void {
+  const resources = spec.resources ?? [];
+  const resourceTemplates = spec.resourceTemplates ?? [];
+  const byUri = new Map(resources.map((resource) => [resource.uri, resource]));
+
+  server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+    // `text` is our storage for inline content, not part of the list wire shape.
+    resources: resources.map(({ text: _text, ...rest }) => rest),
+  }));
+
+  server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => ({ resourceTemplates }));
+
+  server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+    const { uri } = request.params;
+    const resource = byUri.get(uri);
+    if (!resource) throw new Error(`Unknown resource "${uri}".`);
+
+    return {
+      contents: [
+        {
+          uri,
+          ...(resource.mimeType ? { mimeType: resource.mimeType } : {}),
+          text: resource.text ?? `[stub] "${resource.name}" has no content in the spec.`,
+        },
+      ],
+    };
+  });
 }
 
 /** Strip our spec-only fields and emit the MCP `Tool` wire shape. */

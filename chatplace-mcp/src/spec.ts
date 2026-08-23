@@ -73,21 +73,62 @@ export function assertSpec(value: unknown, path = "spec"): ServerSpec {
     }
   });
 
+  assertUniqueNamed(spec.prompts, "prompts", "name", path);
+  assertUniqueNamed(spec.resources, "resources", "uri", path);
+  assertUniqueNamed(spec.resourceTemplates, "resourceTemplates", "uriTemplate", path);
+
   return {
     source: spec.source ?? { origin: "placeholder" },
     serverInfo: spec.serverInfo,
     instructions: spec.instructions,
     tools: spec.tools,
+    // Keep these absent rather than empty: presence decides which capabilities
+    // the server advertises, and an empty array is not the same as "no support".
+    ...(spec.prompts ? { prompts: spec.prompts } : {}),
+    ...(spec.resources ? { resources: spec.resources } : {}),
+    ...(spec.resourceTemplates ? { resourceTemplates: spec.resourceTemplates } : {}),
   };
 }
 
-/** Convert a raw `tools/list` result into a spec file we can serve. */
+/** Every entry must exist, carry its identifying key, and be unique on it. */
+function assertUniqueNamed(
+  entries: unknown,
+  field: string,
+  key: string,
+  path: string,
+): void {
+  if (entries === undefined) return;
+  if (!Array.isArray(entries)) throw new Error(`${path}: "${field}" must be an array.`);
+
+  const seen = new Set<string>();
+  entries.forEach((entry, i) => {
+    const id = (entry as Record<string, unknown> | null)?.[key];
+    if (typeof id !== "string" || id.length === 0) {
+      throw new Error(`${path}: ${field}[${i}] has no "${key}".`);
+    }
+    if (seen.has(id)) throw new Error(`${path}: duplicate ${field} ${key} "${id}".`);
+    seen.add(id);
+  });
+}
+
+/**
+ * Convert a captured `tools/list` result into a spec file we can serve.
+ *
+ * The same object may also carry `prompts`, `resources` and `resourceTemplates`
+ * (that is what `scripts/probe.ts` hands over), and those are carried through so
+ * an imported spec reproduces the whole advertised surface, not just the tools.
+ */
 export function specFromToolsList(
   toolsListResult: unknown,
-  meta: { server?: string; protocolVersion?: string; serverInfo?: { name: string; version: string } } = {},
+  meta: {
+    server?: string;
+    protocolVersion?: string;
+    serverInfo?: { name: string; version: string };
+    instructions?: string;
+  } = {},
 ): ServerSpec {
-  const container = unwrapJsonRpc(toolsListResult);
-  const tools = (container as { tools?: ToolSpec[] }).tools;
+  const container = unwrapJsonRpc(toolsListResult) as Record<string, unknown>;
+  const tools = container.tools;
   if (!Array.isArray(tools)) {
     throw new Error(
       'Could not find a "tools" array. Pass either the full JSON-RPC response to tools/list, ' +
@@ -101,10 +142,14 @@ export function specFromToolsList(
       server: meta.server,
       protocolVersion: meta.protocolVersion,
       importedAt: new Date().toISOString(),
-      note: "Imported verbatim from a live tools/list response.",
+      note: "Imported verbatim from a live server's advertised surface.",
     },
     serverInfo: meta.serverInfo ?? { name: "chatplace-mcp", version: "0.1.0" },
+    ...(meta.instructions ? { instructions: meta.instructions } : {}),
     tools,
+    ...(container.prompts ? { prompts: container.prompts } : {}),
+    ...(container.resources ? { resources: container.resources } : {}),
+    ...(container.resourceTemplates ? { resourceTemplates: container.resourceTemplates } : {}),
   });
 }
 

@@ -59,6 +59,7 @@ does the handshake for you.
   "source":     { "origin": "placeholder" | "imported", "server": "...", "importedAt": "..." },
   "serverInfo": { "name": "...", "version": "...", "title": "..." },
   "instructions": "shown to the model when it connects",
+
   "tools": [
     {
       "name": "list_channels",
@@ -68,6 +69,21 @@ does the handshake for you.
       "outputSchema": { "type": "object", "properties": { ... } },   // optional
       "annotations":  { "readOnlyHint": true }                        // optional
     }
+  ],
+
+  // All three below are optional. Their PRESENCE decides which capabilities the
+  // handshake advertises, so leave them out entirely if upstream has none.
+  "prompts": [
+    { "name": "draft_funnel", "description": "...",
+      "arguments": [{ "name": "goal", "required": true }] }
+  ],
+  "resources": [
+    { "uri": "chatplace://channels", "name": "Channels",
+      "mimeType": "application/json",
+      "text": "inline content returned by resources/read" }   // optional
+  ],
+  "resourceTemplates": [
+    { "uriTemplate": "chatplace://bot/{bot_id}", "name": "Bot" }
   ]
 }
 ```
@@ -76,3 +92,12 @@ does the handshake for you.
 anything else. `outputSchema` is optional but worth keeping: the stub handler
 uses it to synthesize structurally valid sample responses, so an unimplemented
 tool still answers in the right shape.
+
+An **empty array is not the same as an absent key**. `"prompts": []` means "this
+server supports prompts and currently has none"; omitting `prompts` means "this
+server does not support prompts at all". They produce different handshakes, so
+the loader preserves the distinction rather than normalising it away.
+
+`text` on a resource is this project's storage for inline content. It is served
+by `resources/read` and deliberately stripped from `resources/list`, which is why
+a probed spec comes back without it.

@@ -63,11 +63,49 @@ export type SpecSource = {
   note?: string;
 };
 
+/** One entry of `prompts/list`. */
+export type PromptSpec = {
+  name: string;
+  title?: string;
+  description?: string;
+  arguments?: { name: string; description?: string; required?: boolean }[];
+  _meta?: Record<string, unknown>;
+};
+
+/** One entry of `resources/list`. `text` lets a spec carry the content inline. */
+export type ResourceSpec = {
+  uri: string;
+  name: string;
+  title?: string;
+  description?: string;
+  mimeType?: string;
+  text?: string;
+  _meta?: Record<string, unknown>;
+};
+
+/** One entry of `resources/templates/list`. */
+export type ResourceTemplateSpec = {
+  uriTemplate: string;
+  name: string;
+  title?: string;
+  description?: string;
+  mimeType?: string;
+  _meta?: Record<string, unknown>;
+};
+
+/**
+ * A server's whole advertised surface. Only `tools` is required; the optional
+ * halves exist because a faithful clone has to reproduce whatever upstream
+ * declares, and capabilities are advertised based on which of these are present.
+ */
 export type ServerSpec = {
   source: SpecSource;
   serverInfo: { name: string; version: string; title?: string };
   instructions?: string;
   tools: ToolSpec[];
+  prompts?: PromptSpec[];
+  resources?: ResourceSpec[];
+  resourceTemplates?: ResourceTemplateSpec[];
 };
 
 /** Per-call context handed to every tool handler. */
