@@ -28,21 +28,6 @@ const KOYU = {
   cyan: "#a3f0ff",
 };
 
-// Acik temada zemin beyazlasir, vurgu renkleri beyaz uzerinde okunacak
-// kadar koyulasir; yapi ayni kalir.
-const ACIK = {
-  bg: "#2472ab",
-  bg2: "#1b968e",
-  line: "#eaf6fb",
-  text: "#f2f9ff",
-  muted: "#cbe4ee",
-  blue: "#a9d3ff",
-  purple: "#e3c9ff",
-  green: "#c5efa2",
-  pink: "#ffbecb",
-  yellow: "#ffe19a",
-  cyan: "#a3f0ff",
-};
 
 // Kart uretilirken gecerli olan palet. Her tema turunde degistirilir.
 let T = KOYU;
@@ -132,127 +117,6 @@ function header({ name, tagline }) {
       <text class="tag" x="56" y="186">${esc(tagline)}</text>
     </g>
   </g>
-</svg>
-`;
-}
-
-// ------------------------------------------------------- yazan metin
-
-// Satirlari sirayla yazip silen daktilo animasyonu.
-// Her satir icin kirpma dikdortgeninin genisligi steps() ile buyur/kucultulur.
-function typing(lines) {
-  const W = 1000;
-  const H = 64;
-  const size = 26;
-  const charW = size * 0.6; // monospace: karakter genisligi sabit
-  const per = 3.4; // satir basina saniye
-  const cycle = (lines.length * per).toFixed(2);
-
-  const total = lines.length * per;
-  const at = (s) => Math.min(1, s / total);
-
-  // keyTimes 0 ile baslayip 1 ile bitmeli. Penceresi disinda her satir kapali (0)
-  // baslar; ayni ana denk gelen adimlarda sonuncusu gecerli olur.
-  const track = (t0, stops) => {
-    const rows = [[0, 0], ...stops.map(([s, v]) => [at(t0 + s), v]), [1, stops.at(-1)[1]]];
-    const keep = [];
-    for (const row of rows) {
-      if (keep.length && Math.abs(keep.at(-1)[0] - row[0]) < 1e-6) keep[keep.length - 1] = row;
-      else keep.push(row);
-    }
-    return {
-      keyTimes: keep.map(([k]) => k.toFixed(4)).join(";"),
-      values: keep.map(([, v]) => v).join(";"),
-    };
-  };
-
-  const groups = lines
-    .map((line, i) => {
-      const w = ([...line].length * charW).toFixed(1);
-      const t0 = i * per;
-      // yaz (1.3s) → bekle (1.3s) → sil (0.8s)
-      const shape = [[0, 0], [1.3, w], [2.6, w], [3.4, 0]];
-      const clip = track(t0, shape);
-      const show = track(t0, [[0, 1], [3.4, 0]]);
-      const left = ((W - w) / 2).toFixed(1); // her satir kendi genisligine gore ortalanir
-      return `
-    <clipPath id="clip${i}"><rect x="0" y="0" width="0" height="${H}">
-      <animate attributeName="width" values="${clip.values}" keyTimes="${clip.keyTimes}"
-               dur="${cycle}s" repeatCount="indefinite" />
-    </rect></clipPath>
-    <g opacity="0" transform="translate(${left} 0)">
-      <animate attributeName="opacity" values="${show.values}" keyTimes="${show.keyTimes}"
-               dur="${cycle}s" repeatCount="indefinite" calcMode="discrete" />
-      <g clip-path="url(#clip${i})">
-        <text class="ty" x="0" y="${size + 14}">${esc(line)}</text>
-      </g>
-      <rect class="caret" x="0" y="${size - 10}" width="2.5" height="${size + 2}" fill="${T.purple}">
-        <animate attributeName="x" values="${clip.values}" keyTimes="${clip.keyTimes}"
-                 dur="${cycle}s" repeatCount="indefinite" />
-      </rect>
-    </g>`;
-    })
-    .join("");
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(lines.join(" · "))}">
-  <defs>
-    <style>
-      .ty { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-            font-size: ${size}px; font-weight: 600; fill: ${T.blue}; }
-      .caret { animation: blink 1s steps(1) infinite; }
-      @keyframes blink { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
-    </style>
-  </defs>
-  <g>${groups}
-  </g>
-</svg>
-`;
-}
-
-// ------------------------------------------------------------ istatistik
-
-function stats(d) {
-  const W = 480;
-  const H = 190;
-  const tiles = [
-    { label: "Contributions", value: d.totalContributions, color: T.blue },
-    { label: "Commits", value: d.commits, color: T.green },
-    { label: "Repositories", value: d.repos, color: T.purple },
-    { label: "Stars", value: d.stars, color: T.yellow },
-    { label: "Followers", value: d.followers, color: T.cyan },
-    { label: "Pull requests", value: d.prs, color: T.pink },
-  ];
-
-  const cells = tiles
-    .map((t, i) => {
-      const col = i % 3;
-      const row = Math.floor(i / 3);
-      const x = 28 + col * 148;
-      const y = 78 + row * 68;
-      return `
-    <g class="rise" style="animation-delay:${(0.12 + i * 0.09).toFixed(2)}s">
-      <rect x="${x}" y="${y - 26}" width="3" height="40" rx="1.5" fill="${t.color}" />
-      <text class="num" x="${x + 14}" y="${y}" fill="${t.color}">${esc(short(t.value))}</text>
-      <text class="lbl" x="${x + 14}" y="${y + 18}">${esc(t.label)}</text>
-    </g>`;
-    })
-    .join("");
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="GitHub statistics">
-  <defs>
-    ${defsBg()}
-    <style>${baseStyle()}
-      .title { font-size: 16px; font-weight: 700; fill: ${T.text}; }
-      .num { font-size: 25px; font-weight: 800; }
-      .lbl { font-size: 12px; fill: ${T.muted}; }
-      .pulse { animation: pulse 2.4s ease-in-out infinite; }
-      @keyframes pulse { 0%,100% { opacity: .45; r: 4; } 50% { opacity: 1; r: 5.5; } }
-    </style>
-  </defs>
-  <rect class="card-bg" width="${W}" height="${H}" rx="14" />
-  <circle class="pulse" cx="30" cy="34" r="4" fill="${T.green}" />
-  <text class="title" x="46" y="39">📊 GitHub Statistics</text>
-  ${cells}
 </svg>
 `;
 }
@@ -757,26 +621,17 @@ const stamp = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/Berlin",
 }).format(new Date());
 
-const LINES = [
-  "Hi, I am Farhad",
-  "Full-Stack Developer",
-  "Firebase and PWA enthusiast",
-  "AI content creator",
-];
-
 await mkdir(OUT, { recursive: true });
 
-// Ayni kartlar iki palette uretilir; README <picture> ile okuyucunun
-// temasina uyan surumu secer.
-for (const [ek, palet] of [["", KOYU], ["-light", ACIK]]) {
-  T = palet;
-  SAYFA_KOYU = ek === "";
+// Cam kartlar her iki GitHub temasinda ayni gorundugu icin tek surum uretilir.
+{
+  T = KOYU;
+  SAYFA_KOYU = true;
   const cards = {
-    [`header${ek}.svg`]: header({ name: DISPLAY_NAME, tagline: TAGLINE }),
-    [`typing${ek}.svg`]: typing(LINES),
-    ...Object.fromEntries(ICONS.map((ic) => [`icon-${ic.slug}${ek}.svg`, iconTile(ic)])),
-    [`footer${ek}.svg`]: footer(),
-    [`terminal${ek}.svg`]: terminal([
+    "header.svg": header({ name: DISPLAY_NAME, tagline: TAGLINE }),
+    ...Object.fromEntries(ICONS.map((ic) => [`icon-${ic.slug}.svg`, iconTile(ic)])),
+    "footer.svg": footer(),
+    "terminal.svg": terminal([
       { tip: "komut", metin: "whoami" },
       { tip: "cikti", metin: "Farhad Yaqoobi - developer, NRW", renk: T.blue },
       { tip: "komut", metin: "cat stack.txt" },
@@ -790,9 +645,8 @@ for (const [ek, palet] of [["", KOYU], ["-light", ACIK]]) {
       { tip: "komut", metin: "echo $MOTTO" },
       { tip: "cikti", metin: "Build it to understand it", renk: T.yellow },
     ]),
-    [`stats${ek}.svg`]: stats(data),
-    [`languages${ek}.svg`]: languages(data.langs),
-    [`activity${ek}.svg`]: activity(data.days, stamp),
+    "languages.svg": languages(data.langs),
+    "activity.svg": activity(data.days, stamp),
   };
   for (const [file, svg] of Object.entries(cards)) {
     await writeFile(join(OUT, file), svg, "utf8");

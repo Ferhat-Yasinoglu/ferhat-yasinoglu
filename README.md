@@ -1,9 +1,6 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/header-light.svg" />
-  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/header.svg" alt="Farhad Yaqoobi" width="100%" />
-</picture>
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/header.svg" alt="Farhad Yaqoobi" width="100%" />
 
 **I build offline-first web apps with vanilla JavaScript and Firebase.**
 
@@ -68,10 +65,7 @@ into this repo; a workflow reruns it every six hours.
 
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal-light.svg" />
-  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" alt="whoami: Farhad Yaqoobi, developer in NRW. Stack: JavaScript, CSS3, Firebase, PWA." />
-</picture>
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" alt="whoami: Farhad Yaqoobi, developer in NRW. Stack: JavaScript, CSS3, Firebase, PWA." />
 
 </div>
 
@@ -103,15 +97,9 @@ into this repo; a workflow reruns it every six hours.
 
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/languages-light.svg" />
-  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/languages.svg" alt="Most used languages" />
-</picture>
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/languages.svg" alt="Most used languages" />
 
-<picture>
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/activity-light.svg" />
-  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/activity.svg" alt="Contribution graph, last 90 days" width="100%" />
-</picture>
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/activity.svg" alt="Contribution graph, last 90 days" width="100%" />
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/output/github-snake-dark.svg" />
@@ -136,7 +124,4 @@ into this repo; a workflow reruns it every six hours.
 
 </div>
 
-<picture>
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/footer-light.svg" />
-  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/footer.svg" width="100%" alt="" />
-</picture>
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/footer.svg" width="100%" alt="" />
