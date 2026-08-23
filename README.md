@@ -80,111 +80,19 @@ into this repo; a workflow reruns it every six hours.
 ## 💻 Tech
 
 <div align="center">
-    <table align="center">
-        <tr>
-            <td align="center" width="88">
-                <a href="https://developer.mozilla.org/tr/docs/Web/JavaScript" title="JavaScript">
-                    <picture>
-                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-javascript-light.svg" />
-                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-javascript.svg" width="44" height="44" alt="JavaScript" />
-                    </picture>
-                </a>
-                <br><sub>JavaScript</sub>
-            </td>
-            <td align="center" width="88">
-                <a href="https://developer.mozilla.org/tr/docs/Web/HTML" title="HTML5">
-                    <picture>
-                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-html5-light.svg" />
-                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-html5.svg" width="44" height="44" alt="HTML5" />
-                    </picture>
-                </a>
-                <br><sub>HTML5</sub>
-            </td>
-            <td align="center" width="88">
-                <a href="https://developer.mozilla.org/tr/docs/Web/CSS" title="CSS">
-                    <picture>
-                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-css-light.svg" />
-                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-css.svg" width="44" height="44" alt="CSS" />
-                    </picture>
-                </a>
-                <br><sub>CSS</sub>
-            </td>
-            <td align="center" width="88">
-                <a href="https://firebase.google.com/" title="Firebase">
-                    <picture>
-                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-firebase-light.svg" />
-                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-firebase.svg" width="44" height="44" alt="Firebase" />
-                    </picture>
-                </a>
-                <br><sub>Firebase</sub>
-            </td>
-            <td align="center" width="88">
-                <a href="https://web.dev/explore/progressive-web-apps" title="PWA">
-                    <picture>
-                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-pwa-light.svg" />
-                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-pwa.svg" width="44" height="44" alt="PWA" />
-                    </picture>
-                </a>
-                <br><sub>PWA</sub>
-            </td>
-            <td align="center" width="88">
-                <a href="https://git-scm.com/" title="Git">
-                    <picture>
-                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-git-light.svg" />
-                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-git.svg" width="44" height="44" alt="Git" />
-                    </picture>
-                </a>
-                <br><sub>Git</sub>
-            </td>
-        </tr>
-        <tr>
-            <td align="center" width="88">
-                <a href="https://github.com/" title="GitHub">
-                    <picture>
-                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-github-light.svg" />
-                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-github.svg" width="44" height="44" alt="GitHub" />
-                    </picture>
-                </a>
-                <br><sub>GitHub</sub>
-            </td>
-            <td align="center" width="88">
-                <a href="https://www.kernel.org/" title="Linux">
-                    <picture>
-                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-linux-light.svg" />
-                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-linux.svg" width="44" height="44" alt="Linux" />
-                    </picture>
-                </a>
-                <br><sub>Linux</sub>
-            </td>
-            <td align="center" width="88">
-                <a href="https://www.figma.com/" title="Figma">
-                    <picture>
-                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-figma-light.svg" />
-                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-figma.svg" width="44" height="44" alt="Figma" />
-                    </picture>
-                </a>
-                <br><sub>Figma</sub>
-            </td>
-            <td align="center" width="88">
-                <a href="https://www.markdownguide.org/" title="Markdown">
-                    <picture>
-                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-markdown-light.svg" />
-                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-markdown.svg" width="44" height="44" alt="Markdown" />
-                    </picture>
-                </a>
-                <br><sub>Markdown</sub>
-            </td>
-            <td align="center" width="88">
-                <a href="https://www.json.org/json-tr.html" title="JSON">
-                    <picture>
-                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-json-light.svg" />
-                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-json.svg" width="44" height="44" alt="JSON" />
-                    </picture>
-                </a>
-                <br><sub>JSON</sub>
-            </td>
-        </tr>
-    </table>
+
+<a href="https://developer.mozilla.org/tr/docs/Web/JavaScript" title="JavaScript"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-javascript.svg" width="80" alt="JavaScript" /></a>
+<a href="https://developer.mozilla.org/tr/docs/Web/HTML" title="HTML5"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-html5.svg" width="80" alt="HTML5" /></a>
+<a href="https://developer.mozilla.org/tr/docs/Web/CSS" title="CSS"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-css.svg" width="80" alt="CSS" /></a>
+<a href="https://firebase.google.com/" title="Firebase"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-firebase.svg" width="80" alt="Firebase" /></a>
+<a href="https://web.dev/explore/progressive-web-apps" title="PWA"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-pwa.svg" width="80" alt="PWA" /></a>
+<a href="https://git-scm.com/" title="Git"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-git.svg" width="80" alt="Git" /></a>
+<a href="https://github.com/" title="GitHub"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-github.svg" width="80" alt="GitHub" /></a>
+<a href="https://www.kernel.org/" title="Linux"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-linux.svg" width="80" alt="Linux" /></a>
+<a href="https://www.figma.com/" title="Figma"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-figma.svg" width="80" alt="Figma" /></a>
+<a href="https://www.markdownguide.org/" title="Markdown"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-markdown.svg" width="80" alt="Markdown" /></a>
+<a href="https://www.json.org/json-tr.html" title="JSON"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-json.svg" width="80" alt="JSON" /></a>
+
 </div>
 
 <div align="center"><sub>Currently learning <b>React</b> and backend fundamentals with <b>Node.js</b>.</sub></div>

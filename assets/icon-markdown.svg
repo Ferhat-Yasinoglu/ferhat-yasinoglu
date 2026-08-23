@@ -1,9 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72" role="img" aria-label="Markdown">
+<svg xmlns="http://www.w3.org/2000/svg" width="92" height="108" viewBox="0 0 92 108" role="img" aria-label="Markdown">
   <defs>
+    
+    <linearGradient id="tbg" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".18" />
+      <stop offset="0.16" stop-color="#2472ab" stop-opacity="1" />
+      <stop offset="1" stop-color="#1b968e" stop-opacity="1" />
+    </linearGradient>
     <filter id="h" x="-100%" y="-100%" width="300%" height="300%">
       <feGaussianBlur stdDeviation="9" />
     </filter>
     <style>
+      .kutu { fill: url(#tbg); stroke: #eaf6fb; stroke-opacity: .3; stroke-width: 1; }
+      .etk { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; font-size: 13px; font-weight: 600; fill: #f2f9ff; }
       /* Hareket bilincli sekilde hafif: sayfada baska seyler de oynuyor,
          ikonlar dikkati calmadan yasiyor olsun. */
       .bob { animation: bob 5s ease-in-out infinite alternate; }
@@ -26,14 +34,16 @@
       }
     </style>
   </defs>
-  <g transform="translate(36 36)">
-    <circle class="isik" r="26" fill="#dbdbdb" filter="url(#h)" opacity=".08" />
+  <rect class="kutu" x="3" y="3" width="86" height="102" rx="18" />
+  <g transform="translate(46 40)">
+    <circle class="isik" r="24" fill="#dbdbdb" filter="url(#h)" opacity=".1" />
     <g class="bob">
       <g class="nabiz">
-        <g transform="translate(-22 -22) scale(1.8333)">
+        <g transform="translate(-20 -20) scale(1.6667)">
           <path d="M22.27 19.385H1.73A1.73 1.73 0 010 17.655V6.345a1.73 1.73 0 011.73-1.73h20.54A1.73 1.73 0 0124 6.345v11.308a1.73 1.73 0 01-1.73 1.731zM5.769 15.923v-4.5l2.308 2.885 2.307-2.885v4.5h2.308V8.078h-2.308l-2.307 2.885-2.308-2.885H3.46v7.847zM21.232 12h-2.309V8.077h-2.307V12h-2.308l3.461 4.039z" fill="#dbdbdb" />
         </g>
       </g>
     </g>
   </g>
+  <text class="etk" x="46" y="90" text-anchor="middle">Markdown</text>
 </svg>

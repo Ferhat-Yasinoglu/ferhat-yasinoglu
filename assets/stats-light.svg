@@ -30,22 +30,22 @@
   
     <g class="rise" style="animation-delay:0.12s">
       <rect x="28" y="52" width="3" height="40" rx="1.5" fill="#a9d3ff" />
-      <text class="num" x="42" y="78" fill="#a9d3ff">43</text>
+      <text class="num" x="42" y="78" fill="#a9d3ff">21</text>
       <text class="lbl" x="42" y="96">Contributions</text>
     </g>
     <g class="rise" style="animation-delay:0.21s">
       <rect x="176" y="52" width="3" height="40" rx="1.5" fill="#c5efa2" />
-      <text class="num" x="190" y="78" fill="#c5efa2">34</text>
+      <text class="num" x="190" y="78" fill="#c5efa2">18</text>
       <text class="lbl" x="190" y="96">Commits</text>
     </g>
     <g class="rise" style="animation-delay:0.30s">
       <rect x="324" y="52" width="3" height="40" rx="1.5" fill="#e3c9ff" />
-      <text class="num" x="338" y="78" fill="#e3c9ff">2</text>
+      <text class="num" x="338" y="78" fill="#e3c9ff">3</text>
       <text class="lbl" x="338" y="96">Repositories</text>
     </g>
     <g class="rise" style="animation-delay:0.39s">
       <rect x="28" y="120" width="3" height="40" rx="1.5" fill="#ffe19a" />
-      <text class="num" x="42" y="146" fill="#ffe19a">3</text>
+      <text class="num" x="42" y="146" fill="#ffe19a">4</text>
       <text class="lbl" x="42" y="164">Stars</text>
     </g>
     <g class="rise" style="animation-delay:0.48s">
@@ -55,7 +55,7 @@
     </g>
     <g class="rise" style="animation-delay:0.57s">
       <rect x="324" y="120" width="3" height="40" rx="1.5" fill="#ffbecb" />
-      <text class="num" x="338" y="146" fill="#ffbecb">5</text>
+      <text class="num" x="338" y="146" fill="#ffbecb">2</text>
       <text class="lbl" x="338" y="164">Pull requests</text>
     </g>
 </svg>

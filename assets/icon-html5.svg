@@ -1,9 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72" role="img" aria-label="HTML5">
+<svg xmlns="http://www.w3.org/2000/svg" width="92" height="108" viewBox="0 0 92 108" role="img" aria-label="HTML5">
   <defs>
+    
+    <linearGradient id="tbg" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".18" />
+      <stop offset="0.16" stop-color="#2472ab" stop-opacity="1" />
+      <stop offset="1" stop-color="#1b968e" stop-opacity="1" />
+    </linearGradient>
     <filter id="h" x="-100%" y="-100%" width="300%" height="300%">
       <feGaussianBlur stdDeviation="9" />
     </filter>
     <style>
+      .kutu { fill: url(#tbg); stroke: #eaf6fb; stroke-opacity: .3; stroke-width: 1; }
+      .etk { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; font-size: 13px; font-weight: 600; fill: #f2f9ff; }
       /* Hareket bilincli sekilde hafif: sayfada baska seyler de oynuyor,
          ikonlar dikkati calmadan yasiyor olsun. */
       .bob { animation: bob 5s ease-in-out infinite alternate; }
@@ -26,14 +34,16 @@
       }
     </style>
   </defs>
-  <g transform="translate(36 36)">
-    <circle class="isik" r="26" fill="#E34F26" filter="url(#h)" opacity=".08" />
+  <rect class="kutu" x="3" y="3" width="86" height="102" rx="18" />
+  <g transform="translate(46 40)">
+    <circle class="isik" r="24" fill="#E34F26" filter="url(#h)" opacity=".1" />
     <g class="bob">
       <g class="sallan">
-        <g transform="translate(-22 -22) scale(1.8333)">
+        <g transform="translate(-20 -20) scale(1.6667)">
           <path d="M1.5 0h21l-1.91 21.563L11.977 24l-8.564-2.438L1.5 0zm7.031 9.75l-.232-2.718 10.059.003.23-2.622L5.412 4.41l.698 8.01h9.126l-.326 3.426-2.91.804-2.955-.81-.188-2.11H6.248l.33 4.171L12 19.351l5.379-1.443.744-8.157H8.531z" fill="#E34F26" />
         </g>
       </g>
     </g>
   </g>
+  <text class="etk" x="46" y="90" text-anchor="middle">HTML5</text>
 </svg>

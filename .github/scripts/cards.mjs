@@ -416,7 +416,7 @@ function terminal(satirlar) {
 // ------------------------------------------------------------------ araclar
 // Marka renkleri zemine gore okunmayabiliyor (GitHub siyah, JavaScript sari).
 // Cok koyu olani acik, cok acik olani koyu tarafa cekiyoruz.
-function fitColor(hex) {
+function fitColor(hex, zeminKoyu = SAYFA_KOYU) {
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
   const lin = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
   const lum = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
@@ -428,9 +428,8 @@ function fitColor(hex) {
       s.map((c, i) => Math.round(c + (h[i] - c) * oran).toString(16).padStart(2, "0")).join("")
     );
   };
-  const koyuTema = SAYFA_KOYU;
-  if (koyuTema && lum < 0.16) return mix("#ffffff", 0.86);
-  if (!koyuTema && lum > 0.62) return mix("#000000", 0.3);
+  if (zeminKoyu && lum < 0.16) return mix("#ffffff", 0.86);
+  if (!zeminKoyu && lum > 0.62) return mix("#000000", 0.3);
   return hex;
 }
 
@@ -454,16 +453,24 @@ const KARAKTER = {
 // <img> olarak gosterilirken calismazdi; bu yuzden her logo ayri dosya ve
 // README'de <a> ile sariliyor.
 function iconTile(ic) {
-  const S = 72;
-  const scale = 44 / 24;
+  const W = 92;
+  const H = 108;
+  const scale = 40 / 24;
   const kar = KARAKTER[ic.ad] || "nabiz";
-  const renk = fitColor(ic.hex);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" role="img" aria-label="${esc(ic.ad)}">
+  // Ikon artik cam karo (koyu teal) uzerinde: sayfa temasindan bagimsiz,
+  // koyu zemine gore renklendir. Cok koyu logolar acik, gerisi oldugu gibi.
+  const renk = fitColor(ic.hex, true);
+  const pad = 3;
+  const cx = W / 2;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(ic.ad)}">
   <defs>
+    ${defsBg("tbg")}
     <filter id="h" x="-100%" y="-100%" width="300%" height="300%">
       <feGaussianBlur stdDeviation="9" />
     </filter>
     <style>
+      .kutu { fill: url(#tbg); stroke: ${T.line}; stroke-opacity: .3; stroke-width: 1; }
+      .etk { font-family: ${FONT}; font-size: 13px; font-weight: 600; fill: ${T.text}; }
       /* Hareket bilincli sekilde hafif: sayfada baska seyler de oynuyor,
          ikonlar dikkati calmadan yasiyor olsun. */
       .bob { animation: bob 5s ease-in-out infinite alternate; }
@@ -486,16 +493,18 @@ function iconTile(ic) {
       }
     </style>
   </defs>
-  <g transform="translate(${S / 2} ${S / 2})">
-    <circle class="isik" r="26" fill="${renk}" filter="url(#h)" opacity=".08" />
+  <rect class="kutu" x="${pad}" y="${pad}" width="${W - 2 * pad}" height="${H - 2 * pad}" rx="18" />
+  <g transform="translate(${cx} 40)">
+    <circle class="isik" r="24" fill="${renk}" filter="url(#h)" opacity=".1" />
     <g class="bob">
       <g class="${kar}">
-        <g transform="translate(-22 -22) scale(${scale.toFixed(4)})">
+        <g transform="translate(-20 -20) scale(${scale.toFixed(4)})">
           <path d="${ic.path}" fill="${renk}" />
         </g>
       </g>
     </g>
   </g>
+  <text class="etk" x="${cx}" y="${H - 18}" text-anchor="middle">${esc(ic.ad)}</text>
 </svg>
 `;
 }
