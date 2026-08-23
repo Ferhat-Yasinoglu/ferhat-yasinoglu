@@ -1,0 +1,40 @@
+{
+  "name": "botflow-mcp",
+  "version": "0.1.0",
+  "description": "Build and run Telegram chatbot funnels from an MCP client — connect a bot, define keyword-triggered flows, broadcast to segments, read analytics.",
+  "type": "module",
+  "bin": {
+    "botflow-mcp": "./dist/src/index.js"
+  },
+  "main": "./dist/src/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch --disable-warning=ExperimentalWarning src/index.ts --http",
+    "start": "node --disable-warning=ExperimentalWarning dist/src/index.js --http",
+    "stdio": "tsx --disable-warning=ExperimentalWarning src/index.ts --stdio",
+    "probe": "tsx scripts/probe.ts",
+    "import-spec": "tsx scripts/import-spec.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "files": [
+    "dist",
+    "spec"
+  ],
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "express": "^5.2.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.20.1",
+    "tsx": "^4.23.12",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  }
+}

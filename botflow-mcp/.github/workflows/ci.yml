@@ -1,0 +1,28 @@
+# This workflow activates once this directory becomes its own repository.
+# GitHub only reads workflows from .github/workflows at the repo root, so while
+# this lives inside another repo as a subdirectory it is inert.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # node:sqlite's DatabaseSync landed in 22.5, so 22 is the floor.
+        node: ["22", "24"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
