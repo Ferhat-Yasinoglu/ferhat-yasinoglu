@@ -242,12 +242,12 @@ These are on my roadmap rather than in my shipped projects yet — I'd rather sh
 
 ## 🎓 Learning Journey
 
-| Stage | Focus | Status |
-|:--|:--|:--:|
-| **The Beginning** | HTML &amp; CSS fundamentals · JavaScript basics &amp; DOM · Responsive design · Git | ✅ |
-| **Project Development** | Firebase &amp; Firestore · PWA &amp; service workers · Modern JavaScript · Real-time apps | ✅ |
-| **Professionalization** | Framework fundamentals (React, Vue) · Backend development · Collaboration | 🔄 |
-| **Leadership** | Full-stack expertise · Open-source leadership · Technical mentoring | 📅 |
+| Year | Stage | Focus | Status |
+|:--:|:--|:--|:--:|
+| **2023** | The Beginning | HTML &amp; CSS fundamentals · JavaScript basics &amp; DOM · Responsive design · Git | ✅ |
+| **2024** | Project Development | Firebase &amp; Firestore · PWA &amp; service workers · Modern JavaScript · Real-time apps | ✅ |
+| **2025** | Professionalization | Framework fundamentals (React, Vue) · Backend development · Collaboration | 🔄 |
+| **2026** | Leadership | Full-stack expertise · Open-source leadership · Technical mentoring | 📅 |
 
 ---
 
