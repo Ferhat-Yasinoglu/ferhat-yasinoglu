@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="64" viewBox="0 0 1000 64" role="img" aria-label="Merhaba, ben Ferhat · Web geliştirici · Firebase ve PWA meraklısı · Framework yok, sade JavaScript">
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="64" viewBox="0 0 1000 64" role="img" aria-label="Hi, I am Farhad · Full-Stack Developer · Firebase and PWA enthusiast · AI content creator">
   <defs>
     <style>
       .ty { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
@@ -9,62 +9,62 @@
   </defs>
   <g>
     <clipPath id="clip0"><rect x="0" y="0" width="0" height="64">
-      <animate attributeName="width" values="0;296.4;296.4;0;0" keyTimes="0.0000;0.0956;0.1912;0.2500;1.0000"
+      <animate attributeName="width" values="0;234.0;234.0;0;0" keyTimes="0.0000;0.0956;0.1912;0.2500;1.0000"
                dur="13.60s" repeatCount="indefinite" />
     </rect></clipPath>
-    <g opacity="0" transform="translate(351.8 0)">
+    <g opacity="0" transform="translate(383.0 0)">
       <animate attributeName="opacity" values="1;0;0" keyTimes="0.0000;0.2500;1.0000"
                dur="13.60s" repeatCount="indefinite" calcMode="discrete" />
       <g clip-path="url(#clip0)">
-        <text class="ty" x="0" y="40">Merhaba, ben Ferhat</text>
+        <text class="ty" x="0" y="40">Hi, I am Farhad</text>
       </g>
       <rect class="caret" x="0" y="16" width="2.5" height="28" fill="#bf91f3">
-        <animate attributeName="x" values="0;296.4;296.4;0;0" keyTimes="0.0000;0.0956;0.1912;0.2500;1.0000"
+        <animate attributeName="x" values="0;234.0;234.0;0;0" keyTimes="0.0000;0.0956;0.1912;0.2500;1.0000"
                  dur="13.60s" repeatCount="indefinite" />
       </rect>
     </g>
     <clipPath id="clip1"><rect x="0" y="0" width="0" height="64">
-      <animate attributeName="width" values="0;0;234.0;234.0;0;0" keyTimes="0.0000;0.2500;0.3456;0.4412;0.5000;1.0000"
+      <animate attributeName="width" values="0;0;312.0;312.0;0;0" keyTimes="0.0000;0.2500;0.3456;0.4412;0.5000;1.0000"
                dur="13.60s" repeatCount="indefinite" />
     </rect></clipPath>
-    <g opacity="0" transform="translate(383.0 0)">
+    <g opacity="0" transform="translate(344.0 0)">
       <animate attributeName="opacity" values="0;1;0;0" keyTimes="0.0000;0.2500;0.5000;1.0000"
                dur="13.60s" repeatCount="indefinite" calcMode="discrete" />
       <g clip-path="url(#clip1)">
-        <text class="ty" x="0" y="40">Web geliştirici</text>
+        <text class="ty" x="0" y="40">Full-Stack Developer</text>
       </g>
       <rect class="caret" x="0" y="16" width="2.5" height="28" fill="#bf91f3">
-        <animate attributeName="x" values="0;0;234.0;234.0;0;0" keyTimes="0.0000;0.2500;0.3456;0.4412;0.5000;1.0000"
+        <animate attributeName="x" values="0;0;312.0;312.0;0;0" keyTimes="0.0000;0.2500;0.3456;0.4412;0.5000;1.0000"
                  dur="13.60s" repeatCount="indefinite" />
       </rect>
     </g>
     <clipPath id="clip2"><rect x="0" y="0" width="0" height="64">
-      <animate attributeName="width" values="0;0;390.0;390.0;0;0" keyTimes="0.0000;0.5000;0.5956;0.6912;0.7500;1.0000"
+      <animate attributeName="width" values="0;0;421.2;421.2;0;0" keyTimes="0.0000;0.5000;0.5956;0.6912;0.7500;1.0000"
                dur="13.60s" repeatCount="indefinite" />
     </rect></clipPath>
-    <g opacity="0" transform="translate(305.0 0)">
+    <g opacity="0" transform="translate(289.4 0)">
       <animate attributeName="opacity" values="0;1;0;0" keyTimes="0.0000;0.5000;0.7500;1.0000"
                dur="13.60s" repeatCount="indefinite" calcMode="discrete" />
       <g clip-path="url(#clip2)">
-        <text class="ty" x="0" y="40">Firebase ve PWA meraklısı</text>
+        <text class="ty" x="0" y="40">Firebase and PWA enthusiast</text>
       </g>
       <rect class="caret" x="0" y="16" width="2.5" height="28" fill="#bf91f3">
-        <animate attributeName="x" values="0;0;390.0;390.0;0;0" keyTimes="0.0000;0.5000;0.5956;0.6912;0.7500;1.0000"
+        <animate attributeName="x" values="0;0;421.2;421.2;0;0" keyTimes="0.0000;0.5000;0.5956;0.6912;0.7500;1.0000"
                  dur="13.60s" repeatCount="indefinite" />
       </rect>
     </g>
     <clipPath id="clip3"><rect x="0" y="0" width="0" height="64">
-      <animate attributeName="width" values="0;0;468.0;468.0;0" keyTimes="0.0000;0.7500;0.8456;0.9412;1.0000"
+      <animate attributeName="width" values="0;0;280.8;280.8;0" keyTimes="0.0000;0.7500;0.8456;0.9412;1.0000"
                dur="13.60s" repeatCount="indefinite" />
     </rect></clipPath>
-    <g opacity="0" transform="translate(266.0 0)">
+    <g opacity="0" transform="translate(359.6 0)">
       <animate attributeName="opacity" values="0;1;0" keyTimes="0.0000;0.7500;1.0000"
                dur="13.60s" repeatCount="indefinite" calcMode="discrete" />
       <g clip-path="url(#clip3)">
-        <text class="ty" x="0" y="40">Framework yok, sade JavaScript</text>
+        <text class="ty" x="0" y="40">AI content creator</text>
       </g>
       <rect class="caret" x="0" y="16" width="2.5" height="28" fill="#bf91f3">
-        <animate attributeName="x" values="0;0;468.0;468.0;0" keyTimes="0.0000;0.7500;0.8456;0.9412;1.0000"
+        <animate attributeName="x" values="0;0;280.8;280.8;0" keyTimes="0.0000;0.7500;0.8456;0.9412;1.0000"
                  dur="13.60s" repeatCount="indefinite" />
       </rect>
     </g>

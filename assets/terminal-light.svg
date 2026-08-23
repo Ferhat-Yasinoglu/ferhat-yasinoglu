@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="760" height="396" viewBox="0 0 760 396" role="img" aria-label="whoami · Ferhat — web geliştirici · cat yigin.txt · HTML · CSS · JavaScript · Firebase · PWA · ls projeler/ · acik-defter/   netstore/ · cat ogrendiklerim.md · Firestore guvenlik kurallari · App Check · Service Worker · locale -a · tr_TR   en_US   fa_AF · echo $FELSEFE · Bir şeyi anlamanın en hızlı yolu, onu sıfırdan yazmak">
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="396" viewBox="0 0 760 396" role="img" aria-label="whoami · Farhad Yaqoobi - full-stack developer, NRW Germany · cat stack.txt · HTML5 - CSS3 - JavaScript - Firebase - PWA · ls projects/ · acik-defter/   netstore/ · cat learning.md · Firestore rules - App Check - React - Node.js · locale -a · de_DE   tr_TR   en_US   fa_AF · echo $MOTTO · The fastest way to understand something is to build it">
   <defs>
     
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
@@ -25,99 +25,99 @@
   </defs>
   <rect class="card-bg" width="760" height="396" rx="14" />
   <circle cx="26" cy="26" r="5.5" fill="#ff5f57" /><circle cx="44" cy="26" r="5.5" fill="#febc2e" /><circle cx="62" cy="26" r="5.5" fill="#28c840" />
-  <text class="baslik" x="380" y="30" text-anchor="middle">ferhat@github · ~</text>
+  <text class="baslik" x="380" y="30" text-anchor="middle">farhad@github ~</text>
   <line x1="0" y1="48" x2="760" y2="48" stroke="#d9dee9" stroke-width="1" />
   
     <clipPath id="k0"><rect x="0" y="46" width="0" height="22">
       <animate attributeName="width" values="24;24;102.0;102.0;24"
-               keyTimes="0;0.0346860908775581;0.057578910856746456;0.9965313909122442;1"
-               dur="14.41s" repeatCount="indefinite" />
+               keyTimes="0;0.03563791874554526;0.05915894511760514;0.9964362081254454;1"
+               dur="14.03s" repeatCount="indefinite" />
     </rect></clipPath>
     <g clip-path="url(#k0)">
       <text class="tr" x="24" y="62" fill="#1f2437">$ whoami</text>
     </g>
     <g opacity="0">
       <animate attributeName="opacity" values="0;0;1;1;0"
-               keyTimes="0;0.08879639264654875;0.10613943808532779;0.9965313909122442;1"
-               dur="14.41s" repeatCount="indefinite" calcMode="linear" />
-      <text class="tr" x="24" y="88" fill="#2f6fd0">  Ferhat — web geliştirici</text>
+               keyTimes="0;0.09123307198859587;0.1090520313613685;0.9964362081254454;1"
+               dur="14.03s" repeatCount="indefinite" calcMode="linear" />
+      <text class="tr" x="24" y="88" fill="#2f6fd0">  Farhad Yaqoobi - full-stack developer, NRW Germany</text>
     </g>
     <clipPath id="k2"><rect x="0" y="98" width="0" height="22">
       <animate attributeName="width" values="24;24;165.0;165.0;24"
-               keyTimes="0;0.12001387443635103;0.1696149843912591;0.9965313909122442;1"
-               dur="14.41s" repeatCount="indefinite" />
+               keyTimes="0;0.1233071988595866;0.17426942266571632;0.9964362081254454;1"
+               dur="14.03s" repeatCount="indefinite" />
     </rect></clipPath>
     <g clip-path="url(#k2)">
-      <text class="tr" x="24" y="114" fill="#1f2437">$ cat yigin.txt</text>
+      <text class="tr" x="24" y="114" fill="#1f2437">$ cat stack.txt</text>
     </g>
     <g opacity="0">
       <animate attributeName="opacity" values="0;0;1;1;0"
-               keyTimes="0;0.2008324661810614;0.21817551161984045;0.9965313909122442;1"
-               dur="14.41s" repeatCount="indefinite" calcMode="linear" />
-      <text class="tr" x="24" y="140" fill="#3f8f2f">  HTML · CSS · JavaScript · Firebase · PWA</text>
+               keyTimes="0;0.20634354953670705;0.2241625089094797;0.9964362081254454;1"
+               dur="14.03s" repeatCount="indefinite" calcMode="linear" />
+      <text class="tr" x="24" y="140" fill="#3f8f2f">  HTML5 - CSS3 - JavaScript - Firebase - PWA</text>
     </g>
     <clipPath id="k4"><rect x="0" y="150" width="0" height="22">
       <animate attributeName="width" values="24;24;156.0;156.0;24"
-               keyTimes="0;0.2320499479708637;0.2778355879292404;0.9965313909122442;1"
-               dur="14.41s" repeatCount="indefinite" />
+               keyTimes="0;0.23841767640769781;0.28545972915181755;0.9964362081254454;1"
+               dur="14.03s" repeatCount="indefinite" />
     </rect></clipPath>
     <g clip-path="url(#k4)">
-      <text class="tr" x="24" y="166" fill="#1f2437">$ ls projeler/</text>
+      <text class="tr" x="24" y="166" fill="#1f2437">$ ls projects/</text>
     </g>
     <g opacity="0">
       <animate attributeName="opacity" values="0;0;1;1;0"
-               keyTimes="0;0.3090530697190427;0.32639611515782174;0.9965313909122442;1"
-               dur="14.41s" repeatCount="indefinite" calcMode="linear" />
+               keyTimes="0;0.3175338560228083;0.3353528153955809;0.9964362081254454;1"
+               dur="14.03s" repeatCount="indefinite" calcMode="linear" />
       <text class="tr" x="24" y="192" fill="#7c4fc4">  acik-defter/   netstore/</text>
     </g>
     <clipPath id="k6"><rect x="0" y="202" width="0" height="22">
-      <animate attributeName="width" values="24;24;228.0;228.0;24"
-               keyTimes="0;0.340270551508845;0.41657995143947285;0.9965313909122442;1"
-               dur="14.41s" repeatCount="indefinite" />
+      <animate attributeName="width" values="24;24;183.0;183.0;24"
+               keyTimes="0;0.349607982893799;0.4084105488239487;0.9964362081254454;1"
+               dur="14.03s" repeatCount="indefinite" />
     </rect></clipPath>
     <g clip-path="url(#k6)">
-      <text class="tr" x="24" y="218" fill="#1f2437">$ cat ogrendiklerim.md</text>
+      <text class="tr" x="24" y="218" fill="#1f2437">$ cat learning.md</text>
     </g>
     <g opacity="0">
       <animate attributeName="opacity" values="0;0;1;1;0"
-               keyTimes="0;0.44779743322927507;0.46514047866805414;0.9965313909122442;1"
-               dur="14.41s" repeatCount="indefinite" calcMode="linear" />
-      <text class="tr" x="24" y="244" fill="#0f7a92">  Firestore guvenlik kurallari · App Check · Service Worker</text>
+               keyTimes="0;0.44048467569493943;0.45830363506771205;0.9964362081254454;1"
+               dur="14.03s" repeatCount="indefinite" calcMode="linear" />
+      <text class="tr" x="24" y="244" fill="#0f7a92">  Firestore rules - App Check - React - Node.js</text>
     </g>
     <clipPath id="k8"><rect x="0" y="254" width="0" height="22">
       <animate attributeName="width" values="24;24;129.0;129.0;24"
-               keyTimes="0;0.4790149150190774;0.5133541449878599;0.9965313909122442;1"
-               dur="14.41s" repeatCount="indefinite" />
+               keyTimes="0;0.47255880256593014;0.50784034212402;0.9964362081254454;1"
+               dur="14.03s" repeatCount="indefinite" />
     </rect></clipPath>
     <g clip-path="url(#k8)">
       <text class="tr" x="24" y="270" fill="#1f2437">$ locale -a</text>
     </g>
     <g opacity="0">
       <animate attributeName="opacity" values="0;0;1;1;0"
-               keyTimes="0;0.5445716267776622;0.5619146722164413;0.9965313909122442;1"
-               dur="14.41s" repeatCount="indefinite" calcMode="linear" />
-      <text class="tr" x="24" y="296" fill="#c73a55">  tr_TR   en_US   fa_AF</text>
+               keyTimes="0;0.5399144689950107;0.5577334283677834;0.9964362081254454;1"
+               dur="14.03s" repeatCount="indefinite" calcMode="linear" />
+      <text class="tr" x="24" y="296" fill="#c73a55">  de_DE   tr_TR   en_US   fa_AF</text>
     </g>
     <clipPath id="k10"><rect x="0" y="306" width="0" height="22">
-      <animate attributeName="width" values="24;24;165.0;165.0;24"
-               keyTimes="0;0.5757891085674646;0.6253902185223726;0.9965313909122442;1"
-               dur="14.41s" repeatCount="indefinite" />
+      <animate attributeName="width" values="24;24;147.0;147.0;24"
+               keyTimes="0;0.5719885958660015;0.6151104775481113;0.9964362081254454;1"
+               dur="14.03s" repeatCount="indefinite" />
     </rect></clipPath>
     <g clip-path="url(#k10)">
-      <text class="tr" x="24" y="322" fill="#1f2437">$ echo $FELSEFE</text>
+      <text class="tr" x="24" y="322" fill="#1f2437">$ echo $MOTTO</text>
     </g>
     <g opacity="0">
       <animate attributeName="opacity" values="0;0;1;1;0"
-               keyTimes="0;0.6566077003121749;0.6739507457509539;0.9965313909122442;1"
-               dur="14.41s" repeatCount="indefinite" calcMode="linear" />
-      <text class="tr" x="24" y="348" fill="#9a6b12">  Bir şeyi anlamanın en hızlı yolu, onu sıfırdan yazmak</text>
+               keyTimes="0;0.647184604419102;0.6650035637918746;0.9964362081254454;1"
+               dur="14.03s" repeatCount="indefinite" calcMode="linear" />
+      <text class="tr" x="24" y="348" fill="#9a6b12">  The fastest way to understand something is to build it</text>
     </g>
   <g class="imlec">
     <rect x="24" y="72" width="9" height="2.5" fill="#3f8f2f">
-      <animate attributeName="x" values="24;96.0;258.0;159.0;402.0;150.0;258.0;222.0;555.0;123.0;231.0;159.0;519.0;519.0" keyTimes="0;0.0576;0.1061;0.1696;0.2182;0.2778;0.3264;0.4166;0.4651;0.5134;0.5619;0.6254;0.6740;1"
-               dur="14.41s" repeatCount="indefinite" calcMode="discrete" />
-      <animate attributeName="y" values="72;72;98;124;150;176;202;228;254;280;306;332;358;358" keyTimes="0;0.0576;0.1061;0.1696;0.2182;0.2778;0.3264;0.4166;0.4651;0.5134;0.5619;0.6254;0.6740;1"
-               dur="14.41s" repeatCount="indefinite" calcMode="discrete" />
+      <animate attributeName="x" values="24;96.0;492.0;159.0;420.0;150.0;258.0;177.0;447.0;123.0;303.0;141.0;528.0;528.0" keyTimes="0;0.0592;0.1091;0.1743;0.2242;0.2855;0.3354;0.4084;0.4583;0.5078;0.5577;0.6151;0.6650;1"
+               dur="14.03s" repeatCount="indefinite" calcMode="discrete" />
+      <animate attributeName="y" values="72;72;98;124;150;176;202;228;254;280;306;332;358;358" keyTimes="0;0.0592;0.1091;0.1743;0.2242;0.2855;0.3354;0.4084;0.4583;0.5078;0.5577;0.6151;0.6650;1"
+               dur="14.03s" repeatCount="indefinite" calcMode="discrete" />
     </rect>
   </g>
 </svg>

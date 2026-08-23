@@ -1,15 +1,23 @@
-
-# 🚀 Farhad Yaqoobi
-
 <div align="center">
 
-### AI Content Creator & Full-Stack Developer
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/header-light.svg" />
+  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/header.svg" alt="Farhad Yaqoobi" width="100%" />
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/typing-light.svg" />
+  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/typing.svg" alt="Full-Stack Developer, Firebase and PWA enthusiast" width="100%" />
+</picture>
+
+### AI Content Creator &amp; Full-Stack Developer
 
 [![GitHub](https://img.shields.io/badge/GitHub-Ferhat--Yasinoglu-0f172a?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu)
-[![Instagram](https://img.shields.io/badge/Instagram-%40farhad__\_yaqoobi-0f172a?style=for-the-badge&logo=instagram&logoColor=E4405F)](https://instagram.com/farhad___yaqoobi)
-[![Email](https://img.shields.io/badge/Email-farhadyaqoobi@gmail.com-0f172a?style=for-the-badge&logo=gmail&logoColor=EA4335)](mailto:farhadyaqoobi.kunduz@gmail.com)
+[![Instagram](https://img.shields.io/badge/Instagram-%40farhad______yaqoobi-0f172a?style=for-the-badge&logo=instagram&logoColor=E4405F)](https://instagram.com/farhad___yaqoobi)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Ferhat%20Yasinoglu-0f172a?style=for-the-badge&logo=linkedin&logoColor=0A66C2)](https://linkedin.com/in/ferhat-yasinoglu)
+[![Email](https://img.shields.io/badge/Email-farhadyaqoobi.kunduz%40gmail.com-0f172a?style=for-the-badge&logo=gmail&logoColor=EA4335)](mailto:farhadyaqoobi.kunduz@gmail.com)
 
-📍 **NRW, Germany** | 🌍 **Multilingual Developer** | 💻 **Building the Future with Code**
+📍 **NRW, Germany** &nbsp;|&nbsp; 🌍 **Multilingual Developer** &nbsp;|&nbsp; 💻 **Building the Future with Code**
 
 </div>
 
@@ -17,85 +25,182 @@
 
 ## 🎯 About Me
 
-I'm a passionate **full-stack developer** and **AI content creator** from Germany, dedicated to building innovative web applications and creating educational content. My focus lies in:
+<div align="center">
 
-- 🎨 **Frontend Development** - Creating responsive, beautiful, and performant user interfaces
-- 🔥 **Firebase & Real-time Applications** - Building scalable backend solutions
-- 📱 **Progressive Web Apps (PWA)** - Delivering app-like experiences on the web
-- 🌐 **Multilingual Solutions** - Supporting German, Turkish, English, and Farsi
-- 💡 **AI & Technology Content** - Sharing knowledge with the developer community
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal-light.svg" />
+  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" alt="whoami: Farhad Yaqoobi, full-stack developer in NRW Germany. Stack: HTML5, CSS3, JavaScript, Firebase, PWA." />
+</picture>
 
-I believe in **continuous learning**, **open-source contribution**, and **creating technology that makes a difference**.
+</div>
+
+I'm a **web developer** and **AI content creator** based in Germany, building web applications and
+creating educational content. My focus lies in:
+
+- 🎨 **Frontend Development** — responsive, accessible, performant interfaces built without a framework
+- 🔥 **Firebase &amp; Real-time Applications** — Firestore, security rules, App Check
+- 📱 **Progressive Web Apps** — service workers, offline-first, installable
+- 🌐 **Multilingual Solutions** — German, Turkish, English and Farsi in one interface
+- 💡 **AI &amp; Technology Content** — sharing what I learn with the developer community
+
+I believe in **continuous learning**, **open-source contribution**, and **building technology that makes a difference**.
 
 ---
 
 ## 🌟 Featured Projects
 
-### 📓 **Açık Defter (Open Notebook)**
-*An IT Student's Digital Learning Journal*
+### 📓 Açık Defter — *An IT Student's Digital Learning Journal*
 
-A comprehensive personal portfolio and learning journal built with vanilla JavaScript, showcasing my web development journey.
+A personal portfolio and learning journal built with vanilla JavaScript, documenting my web development journey.
 
-**Key Features:**
-- ✨ Multilingual support (TR, EN, DE, FA)
-- 📝 Real-time note-taking
-- 🎨 Responsive & mobile-first design
-- ⚡ PWA technology for offline access
+- ✨ Multilingual interface (TR · EN · DE · FA)
+- 📝 Real-time notes backed by Firestore
+- 🎨 Responsive, mobile-first design
+- ⚡ PWA with offline access
 - 🎓 Learning progress tracking
 
-**Tech Stack:** `HTML5` `CSS3` `JavaScript (ES6+)` `Service Workers` `Firestore`
+**Tech:** `HTML5` `CSS3` `JavaScript (ES6+)` `Service Workers` `Firestore`
 
-🔗 **[View Live](https://ferhat-yasinoglu.github.io/acik-defter/)** | 📂 **[GitHub Repo](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu)**
+[![Repo](https://img.shields.io/badge/GitHub-Repository-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/acik-defter)
+[![Live](https://img.shields.io/badge/View-Live%20Site-9ece6a?style=flat-square&logo=googlechrome&logoColor=white)](https://ferhat-yasinoglu.github.io/acik-defter/)
 
----
+### 🛒 netstore — *Offline-First Store Interface*
 
-### 📚 **LinguaCards**
-*Multilingual Learning Platform with Spaced Repetition*
+An installable PWA storefront that keeps working without a connection, with cached assets and a service worker.
 
-An intelligent flashcard application using advanced spaced repetition algorithm for effective language learning.
+**Tech:** `JavaScript` `Service Workers` `Firestore` `Web App Manifest`
 
-**Key Features:**
-- 🧠 Spaced repetition algorithm
-- 🌐 4 language support (FA, TR, DE, EN)
-- 📊 Learning analytics & progress tracking
-- ⚙️ Customizable deck management
-- 📱 Offline-first architecture
+[![Repo](https://img.shields.io/badge/GitHub-Repository-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/acik-defter/tree/main/netstore)
 
-**Tech Stack:** `React` `JavaScript` `Spaced Repetition Algorithm` `Local Storage` `PWA`
+### 📚 LinguaCards — *Multilingual Flashcards with Spaced Repetition* &nbsp;`🚧 in development`
 
-🔗 **[GitHub](https://github.com/Ferhat-Yasinoglu)** | 📖 **[Documentation](https://github.com/Ferhat-Yasinoglu)**
+A flashcard application built around a spaced repetition algorithm for language learning.
+Currently being designed and prototyped — not yet published.
+
+**Planned tech:** `React` `Spaced Repetition` `Local Storage` `PWA`
 
 ---
 
-## 💻 Tech Stack & Skills
+## 💻 Tech Stack
 
-### 🎨 Frontend Technologies
-```
-HTML5 • CSS3 • JavaScript (ES6+) • React.js • Vue.js
-Responsive Design • Mobile-First • UI/UX Principles
-Bootstrap • Tailwind CSS • SASS • Service Workers
-```
+### Working with
 
-### 🔥 Backend & Databases
-```
-Node.js • Express.js • Firebase • Firestore
-Real-time Applications • Cloud Functions
-Authentication & Security • REST APIs
-```
+<div align="center">
+    <table align="center">
+        <tr>
+            <td align="center" width="96">
+                <a href="https://developer.mozilla.org/tr/docs/Web/JavaScript" title="JavaScript">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-javascript-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-javascript.svg" width="52" height="52" alt="JavaScript" />
+                    </picture>
+                </a>
+                <br>JavaScript
+            </td>
+            <td align="center" width="96">
+                <a href="https://developer.mozilla.org/tr/docs/Web/HTML" title="HTML5">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-html5-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-html5.svg" width="52" height="52" alt="HTML5" />
+                    </picture>
+                </a>
+                <br>HTML5
+            </td>
+            <td align="center" width="96">
+                <a href="https://developer.mozilla.org/tr/docs/Web/CSS" title="CSS">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-css-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-css.svg" width="52" height="52" alt="CSS" />
+                    </picture>
+                </a>
+                <br>CSS
+            </td>
+            <td align="center" width="96">
+                <a href="https://firebase.google.com/" title="Firebase">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-firebase-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-firebase.svg" width="52" height="52" alt="Firebase" />
+                    </picture>
+                </a>
+                <br>Firebase
+            </td>
+        </tr>
+        <tr>
+            <td align="center" width="96">
+                <a href="https://web.dev/explore/progressive-web-apps" title="PWA">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-pwa-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-pwa.svg" width="52" height="52" alt="PWA" />
+                    </picture>
+                </a>
+                <br>PWA
+            </td>
+            <td align="center" width="96">
+                <a href="https://git-scm.com/" title="Git">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-git-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-git.svg" width="52" height="52" alt="Git" />
+                    </picture>
+                </a>
+                <br>Git
+            </td>
+            <td align="center" width="96">
+                <a href="https://github.com/" title="GitHub">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-github-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-github.svg" width="52" height="52" alt="GitHub" />
+                    </picture>
+                </a>
+                <br>GitHub
+            </td>
+            <td align="center" width="96">
+                <a href="https://www.kernel.org/" title="Linux">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-linux-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-linux.svg" width="52" height="52" alt="Linux" />
+                    </picture>
+                </a>
+                <br>Linux
+            </td>
+        </tr>
+        <tr>
+            <td align="center" width="96">
+                <a href="https://www.figma.com/" title="Figma">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-figma-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-figma.svg" width="52" height="52" alt="Figma" />
+                    </picture>
+                </a>
+                <br>Figma
+            </td>
+            <td align="center" width="96">
+                <a href="https://www.markdownguide.org/" title="Markdown">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-markdown-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-markdown.svg" width="52" height="52" alt="Markdown" />
+                    </picture>
+                </a>
+                <br>Markdown
+            </td>
+            <td align="center" width="96">
+                <a href="https://www.json.org/json-tr.html" title="JSON">
+                    <picture>
+                        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-json-light.svg" />
+                        <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-json.svg" width="52" height="52" alt="JSON" />
+                    </picture>
+                </a>
+                <br>JSON
+            </td>
+        </tr>
+    </table>
+</div>
 
-### 🛠️ Tools & Platforms
-```
-Git & GitHub • VS Code • Figma
-Docker • Linux • npm & yarn • Webpack
-Postman • GitHub Pages • Google Cloud
-```
+### 📖 Currently learning
 
-### 🌐 Languages
-```
-JavaScript (Expert) • TypeScript (Intermediate)
-HTML5 (Expert) • CSS3 (Expert)
-Regular Expressions • Web APIs
-```
+`React` &nbsp;·&nbsp; `Vue.js` &nbsp;·&nbsp; `Node.js` &nbsp;·&nbsp; `Express.js` &nbsp;·&nbsp; `TypeScript`
+&nbsp;·&nbsp; `Tailwind CSS` &nbsp;·&nbsp; `Cloud Functions` &nbsp;·&nbsp; `Docker`
+
+These are on my roadmap rather than in my shipped projects yet — I'd rather show what I've actually built.
 
 ---
 
@@ -103,42 +208,46 @@ Regular Expressions • Web APIs
 
 <div align="center">
 
-![GitHub Stats](https://github-readme-stats.vercel.app/api?username=Ferhat-Yasinoglu&theme=radical&show_icons=true&include_all_commits=true&count_private=true)
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/stats-light.svg" />
+  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/stats.svg" alt="GitHub statistics" />
+</picture>
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/languages-light.svg" />
+  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/languages.svg" alt="Most used languages" />
+</picture>
 
-![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username=Ferhat-Yasinoglu&theme=radical&layout=compact&langs_count=8)
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/activity-light.svg" />
+  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/activity.svg" alt="Contribution graph, last 90 days" width="100%" />
+</picture>
 
-![GitHub Streak](https://streak-stats.demolab.com?user=Ferhat-Yasinoglu&theme=radical)
+<sub>Generated from the GitHub API and refreshed every 6 hours by a workflow in this repository.</sub>
 
+</div>
+
+---
+
+## 🐍 Watch my contributions get eaten
+
+<div align="center">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/output/github-snake-dark.svg" />
+        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/output/github-snake.svg" />
+        <img alt="snake animation" src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/output/github-snake.svg" />
+    </picture>
 </div>
 
 ---
 
 ## 🎓 Learning Journey
 
-### 📅 **2023 - The Beginning**
-- ✅ HTML & CSS Fundamentals
-- ✅ JavaScript Basics & DOM Manipulation
-- ✅ Responsive Web Design
-- ✅ Version Control with Git
-
-### 🚀 **2024 - Project Development**
-- ✅ Firebase Integration & Firestore
-- ✅ PWA Technologies & Service Workers
-- ✅ Modern JavaScript (ES6+)
-- ✅ Real-time Applications
-- ✅ First Open-Source Projects
-
-### ⭐ **2025 - Professionalization**
-- 🔄 Advanced Framework Mastery (React, Vue)
-- 🔄 Backend Development Deepening
-- 🔄 Team Collaboration & Mentorship
-- 🔄 Community Contribution
-
-### 💫 **2026 - Leadership**
-- 📅 Full-Stack Developer Expertise
-- 📅 Open Source Project Leadership
-- 📅 Technical Mentoring
-- 📅 Community Building
+| Stage | Focus | Status |
+|:--|:--|:--:|
+| **The Beginning** | HTML &amp; CSS fundamentals · JavaScript basics &amp; DOM · Responsive design · Git | ✅ |
+| **Project Development** | Firebase &amp; Firestore · PWA &amp; service workers · Modern JavaScript · Real-time apps | ✅ |
+| **Professionalization** | Framework fundamentals (React, Vue) · Backend development · Collaboration | 🔄 |
+| **Leadership** | Full-stack expertise · Open-source leadership · Technical mentoring | 📅 |
 
 ---
 
@@ -146,14 +255,14 @@ Regular Expressions • Web APIs
 
 <div align="center">
 
-| Achievement | Status | Date |
-|:---:|:---:|:---:|
-| 🎯 First GitHub Repo | ✅ | 2023 |
-| 🚀 Firebase Mastery | ✅ | 2024 |
-| 📚 Open Source Contribution | ✅ | 2024 |
-| 🌟 PWA Implementation | ✅ | 2024 |
-| 💼 Professional Projects | 🔄 | 2025 |
-| 👥 Mentorship Program | 📅 | 2025 |
+| Achievement | Status |
+|:--|:--:|
+| 🎯 First GitHub repository | ✅ |
+| 🚀 Firebase &amp; Firestore in production | ✅ |
+| 🌟 PWA with offline support | ✅ |
+| 📚 Public open-source repositories | ✅ |
+| 💼 Professional client project | 🔄 |
+| 👥 Mentorship program | 📅 |
 
 </div>
 
@@ -163,10 +272,10 @@ Regular Expressions • Web APIs
 
 <div align="center">
 
-| Link | URL |
-|:---:|:---:|
+| | |
+|:--|:--|
 | 🏠 **Personal Site** | [Açık Defter](https://ferhat-yasinoglu.github.io/acik-defter/) |
-| 📂 **GitHub Profile** | [Ferhat-Yasinoglu](https://github.com/Ferhat-Yasinoglu) |
+| 📂 **GitHub** | [Ferhat-Yasinoglu](https://github.com/Ferhat-Yasinoglu) |
 | 📸 **Instagram** | [@farhad___yaqoobi](https://instagram.com/farhad___yaqoobi) |
 | 💼 **LinkedIn** | [Ferhat Yasinoglu](https://linkedin.com/in/ferhat-yasinoglu) |
 | 📧 **Email** | [farhadyaqoobi.kunduz@gmail.com](mailto:farhadyaqoobi.kunduz@gmail.com) |
@@ -177,45 +286,39 @@ Regular Expressions • Web APIs
 
 ## 💡 Latest Activities
 
-- 🔄 Currently enhancing **Açık Defter** with advanced features
-- 📚 Building **LinguaCards** multilingual platform
-- ✍️ Creating tech content for web developers
-- 🎓 Learning advanced backend architectures
-- 🌱 Mentoring junior developers
+- 🔄 Extending **Açık Defter** with new features
+- 🎨 Building this profile's animated cards — every SVG here is generated in this repository
+- 📚 Designing **LinguaCards**, a spaced-repetition flashcard app
+- 🎓 Learning React and backend architecture
+- ✍️ Writing technical content for other developers
 
 ---
 
-## 📈 Goals & Vision
+## 📈 Goals
 
-### **Short Term (2025)**
-- Complete advanced backend development certification
-- Contribute to major open-source projects
-- Build 3+ production-ready applications
-- Establish mentorship relationships
+**Short term** — finish a backend development course, contribute to an open-source project,
+ship a production-ready application, and find people to learn alongside.
 
-### **Long Term (2026+)**
-- Become a recognized tech leader in my community
-- Lead open-source projects with 100+ contributors
-- Share knowledge through technical writing and speaking
-- Build tools that impact thousands of developers
+**Long term** — lead open-source projects, share knowledge through writing and speaking,
+and build tools that other developers actually reach for.
 
 ---
 
-## 🤝 Let's Connect!
+## 🤝 Let's Connect
 
-I'm always interested in:
-- 💬 Discussing new technologies & ideas
-- 🤝 Collaboration on exciting projects
-- 📚 Mentoring & learning from others
-- 🌍 Building community initiatives
+I'm always interested in discussing new technologies, collaborating on projects,
+and learning from other developers.
 
 <div align="center">
 
-**Feel free to reach out! Let's build something amazing together.** 🚀
+**Feel free to reach out — let's build something together.** 🚀
 
-[![Email](https://img.shields.io/badge/Contact%20Me-Email-FF6B6B?style=flat-square&logo=gmail)](mailto:farhadyaqoobi.kunduz@gmail.com)
-[![LinkedIn](https://img.shields.io/badge/Connect-LinkedIn-0077B5?style=flat-square&logo=linkedin)](https://linkedin.com/in/ferhat-yasinoglu)
-[![Instagram](https://img.shields.io/badge/Follow-Instagram-E4405F?style=flat-square&logo=instagram)](https://instagram.com/farhad___yaqoobi)
+[![Email](https://img.shields.io/badge/Contact-Email-f7768e?style=flat-square&logo=gmail&logoColor=white)](mailto:farhadyaqoobi.kunduz@gmail.com)
+[![LinkedIn](https://img.shields.io/badge/Connect-LinkedIn-70a5fd?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/ferhat-yasinoglu)
+[![Instagram](https://img.shields.io/badge/Follow-Instagram-bf91f3?style=flat-square&logo=instagram&logoColor=white)](https://instagram.com/farhad___yaqoobi)
+<img src="https://komarev.com/ghpvc/?username=Ferhat-Yasinoglu&label=Profile%20views&color=bf91f3&style=flat-square" alt="profile views" />
+
+**⭐ If you find my work interesting, a star means a lot.**
 
 </div>
 
@@ -223,14 +326,12 @@ I'm always interested in:
 
 ## 📝 License
 
-This README profile is open source and available under the MIT License.
+This profile README is open source under the MIT License.
+The animated cards are generated by [`.github/scripts/cards.mjs`](.github/scripts/cards.mjs) — feel free to borrow the approach.
 
-<div align="center">
+<div align="center"><sub><i>Last updated automatically · continuously learning &amp; growing 🌱</i></sub></div>
 
-**⭐ If you find my work interesting, give it a star! It means a lot to me.** ⭐
-
----
-
-*Last updated: August 2026* | *Continuously learning & growing* 🌱
-
-</div>
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/footer-light.svg" />
+  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/footer.svg" width="100%" alt="" />
+</picture>

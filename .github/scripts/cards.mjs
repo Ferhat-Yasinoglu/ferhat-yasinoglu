@@ -213,12 +213,12 @@ function stats(d) {
   const W = 480;
   const H = 190;
   const tiles = [
-    { label: "Toplam katkı", value: d.totalContributions, color: T.blue },
-    { label: "Commit", value: d.commits, color: T.green },
-    { label: "Depo", value: d.repos, color: T.purple },
-    { label: "Yıldız", value: d.stars, color: T.yellow },
-    { label: "Takipçi", value: d.followers, color: T.cyan },
-    { label: "Pull request", value: d.prs, color: T.pink },
+    { label: "Contributions", value: d.totalContributions, color: T.blue },
+    { label: "Commits", value: d.commits, color: T.green },
+    { label: "Repositories", value: d.repos, color: T.purple },
+    { label: "Stars", value: d.stars, color: T.yellow },
+    { label: "Followers", value: d.followers, color: T.cyan },
+    { label: "Pull requests", value: d.prs, color: T.pink },
   ];
 
   const cells = tiles
@@ -236,7 +236,7 @@ function stats(d) {
     })
     .join("");
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="GitHub istatistikleri">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="GitHub statistics">
   <defs>
     ${defsBg()}
     <style>${baseStyle()}
@@ -249,7 +249,7 @@ function stats(d) {
   </defs>
   <rect class="card-bg" width="${W}" height="${H}" rx="14" />
   <circle class="pulse" cx="30" cy="34" r="4" fill="${T.green}" />
-  <text class="title" x="46" y="39">📊 GitHub İstatistikleri</text>
+  <text class="title" x="46" y="39">📊 GitHub Statistics</text>
   ${cells}
 </svg>
 `;
@@ -397,7 +397,7 @@ function terminal(satirlar) {
   </defs>
   <rect class="card-bg" width="${W}" height="${H}" rx="14" />
   ${dots}
-  <text class="baslik" x="${W / 2}" y="30" text-anchor="middle">ferhat@github · ~</text>
+  <text class="baslik" x="${W / 2}" y="30" text-anchor="middle">farhad@github ~</text>
   <line x1="0" y1="48" x2="${W}" y2="48" stroke="${T.line}" stroke-width="1" />
   ${govde}
   <g class="imlec">
@@ -608,7 +608,7 @@ function languages(langs) {
     })
     .join("");
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="En çok kullanılan diller">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Most used languages">
   <defs>
     ${defsBg()}
     <clipPath id="barclip"><rect x="${barX}" y="70" width="${barW}" height="12" rx="6" /></clipPath>
@@ -625,7 +625,7 @@ function languages(langs) {
   <rect class="card-bg" width="${W}" height="${H}" rx="14" />
   <circle class="spin" cx="30" cy="34" r="4.5" fill="none" stroke="${T.purple}" stroke-width="2"
           stroke-dasharray="14 8" />
-  <text class="title" x="46" y="39">🎨 En çok kullandığım diller</text>
+  <text class="title" x="46" y="39">🎨 Most used languages</text>
   <g clip-path="url(#barclip)">${segs}</g>
   ${legend}
 </svg>
@@ -671,7 +671,7 @@ function activity(days, updatedAt) {
   const busiest = son90.reduce((a, b) => (b.count > a.count ? b : a), son90[0]);
   const sum = son90.reduce((s, d) => s + d.count, 0);
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Son 90 günün katkı grafiği">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Contribution graph, last 90 days">
   <defs>
     ${defsBg()}
     <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
@@ -699,15 +699,15 @@ function activity(days, updatedAt) {
     </style>
   </defs>
   <rect class="card-bg" width="${W}" height="${H}" rx="14" />
-  <text class="title" x="30" y="39">📈 Son 90 gün</text>
-  <text class="meta" x="${W - 30}" y="39" text-anchor="end">${sum} katkı · en yoğun gün ${busiest.count}</text>
+  <text class="title" x="30" y="39">📈 Last 90 days</text>
+  <text class="meta" x="${W - 30}" y="39" text-anchor="end">${sum} contributions · busiest day ${busiest.count}</text>
   <path class="fill" d="${area}" fill="url(#area)" />
   <path class="line" d="${path}" />
   <g class="tip">
     <circle class="ping" cx="${xy[xy.length - 1][0].toFixed(1)}" cy="${xy[xy.length - 1][1].toFixed(1)}" r="4" fill="${T.purple}" />
     <circle cx="${xy[xy.length - 1][0].toFixed(1)}" cy="${xy[xy.length - 1][1].toFixed(1)}" r="4" fill="${T.text}" />
   </g>
-  <text class="stamp" x="30" y="${H - 12}">🔄 ${esc(updatedAt)} · her 6 saatte bir yenilenir</text>
+  <text class="stamp" x="30" y="${H - 12}">🔄 ${esc(updatedAt)} · refreshed every 6 hours</text>
 </svg>
 `;
 }
@@ -804,26 +804,26 @@ function mockData() {
 // ------------------------------------------------------------------ main
 
 // GitHub profilindeki ad alani sustu harfler icerebiliyor; basligi sabit tutuyoruz.
-const DISPLAY_NAME = "Ferhat Yasinoglu";
-const TAGLINE = "Web geliştirici · Firebase · PWA · sade JavaScript";
+const DISPLAY_NAME = "Farhad Yaqoobi";
+const TAGLINE = "Full-Stack Developer · Firebase · PWA · Vanilla JavaScript";
 
 const useMock = process.argv.includes("--mock");
 const login = process.env.GH_LOGIN || "Ferhat-Yasinoglu";
 const data = useMock ? mockData() : await fetchData(login, process.env.GITHUB_TOKEN);
 
-const stamp = new Intl.DateTimeFormat("tr-TR", {
+const stamp = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
   month: "long",
   hour: "2-digit",
   minute: "2-digit",
-  timeZone: "Europe/Istanbul",
+  timeZone: "Europe/Berlin",
 }).format(new Date());
 
 const LINES = [
-  "Merhaba, ben Ferhat",
-  "Web geliştirici",
-  "Firebase ve PWA meraklısı",
-  "Framework yok, sade JavaScript",
+  "Hi, I am Farhad",
+  "Full-Stack Developer",
+  "Firebase and PWA enthusiast",
+  "AI content creator",
 ];
 
 await mkdir(OUT, { recursive: true });
@@ -839,17 +839,17 @@ for (const [ek, palet] of [["", KOYU], ["-light", ACIK]]) {
     [`footer${ek}.svg`]: footer(),
     [`terminal${ek}.svg`]: terminal([
       { tip: "komut", metin: "whoami" },
-      { tip: "cikti", metin: "Ferhat — web geliştirici", renk: T.blue },
-      { tip: "komut", metin: "cat yigin.txt" },
-      { tip: "cikti", metin: "HTML · CSS · JavaScript · Firebase · PWA", renk: T.green },
-      { tip: "komut", metin: "ls projeler/" },
+      { tip: "cikti", metin: "Farhad Yaqoobi - full-stack developer, NRW Germany", renk: T.blue },
+      { tip: "komut", metin: "cat stack.txt" },
+      { tip: "cikti", metin: "HTML5 - CSS3 - JavaScript - Firebase - PWA", renk: T.green },
+      { tip: "komut", metin: "ls projects/" },
       { tip: "cikti", metin: "acik-defter/   netstore/", renk: T.purple },
-      { tip: "komut", metin: "cat ogrendiklerim.md" },
-      { tip: "cikti", metin: "Firestore guvenlik kurallari · App Check · Service Worker", renk: T.cyan },
+      { tip: "komut", metin: "cat learning.md" },
+      { tip: "cikti", metin: "Firestore rules - App Check - React - Node.js", renk: T.cyan },
       { tip: "komut", metin: "locale -a" },
-      { tip: "cikti", metin: "tr_TR   en_US   fa_AF", renk: T.pink },
-      { tip: "komut", metin: "echo $FELSEFE" },
-      { tip: "cikti", metin: "Bir şeyi anlamanın en hızlı yolu, onu sıfırdan yazmak", renk: T.yellow },
+      { tip: "cikti", metin: "de_DE   tr_TR   en_US   fa_AF", renk: T.pink },
+      { tip: "komut", metin: "echo $MOTTO" },
+      { tip: "cikti", metin: "The fastest way to understand something is to build it", renk: T.yellow },
     ]),
     [`stats${ek}.svg`]: stats(data),
     [`languages${ek}.svg`]: languages(data.langs),
