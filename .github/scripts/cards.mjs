@@ -80,7 +80,7 @@ const defsBg = (id = "bg") => `
 
 function header({ name, tagline }) {
   const W = 1000;
-  const H = 200;
+  const H = 250;
   // Arka planda suzulen isik lekeleri: sonsuz donen, yavas hareket.
   const orbs = [
     { cx: 160, cy: 60, r: 130, c: T.blue, dur: 19, dx: 60, dy: 24 },
@@ -113,8 +113,8 @@ function header({ name, tagline }) {
     </linearGradient>
     <clipPath id="round"><rect width="${W}" height="${H}" rx="16" /></clipPath>
     <style>${baseStyle()}
-      .name { font-size: 46px; font-weight: 800; fill: url(#ink); letter-spacing: -.5px; }
-      .tag { font-size: 17px; fill: ${T.muted}; letter-spacing: .3px; }
+      .name { font-size: 60px; font-weight: 800; fill: url(#ink); letter-spacing: -1px; }
+      .tag { font-size: 22px; fill: ${T.muted}; letter-spacing: .2px; }
       .bar { animation: grow 1.1s .35s cubic-bezier(.2,.7,.3,1) backwards; }
       @keyframes grow { from { width: 0; } }
     </style>
@@ -123,11 +123,11 @@ function header({ name, tagline }) {
     <rect class="card-bg" width="${W}" height="${H}" rx="16" />
     ${orbs}
     <g class="rise" style="animation-delay:.05s">
-      <text class="name" x="50" y="92">${esc(name)}</text>
+      <text class="name" x="56" y="118">${esc(name)}</text>
     </g>
-    <rect class="bar" x="52" y="112" width="120" height="4" rx="2" fill="url(#ink)" />
+    <rect class="bar" x="58" y="142" width="150" height="5" rx="2.5" fill="url(#ink)" />
     <g class="rise" style="animation-delay:.25s">
-      <text class="tag" x="50" y="146">${esc(tagline)}</text>
+      <text class="tag" x="56" y="186">${esc(tagline)}</text>
     </g>
   </g>
 </svg>
@@ -313,11 +313,11 @@ function footer() {
 // Komut satirlari harf harf yazilir, ciktilar beliriverir; tum dizi
 // bitince bastan baslar. Satirlar birikimli: yazilan ekranda kalir.
 function terminal(satirlar) {
-  const W = 760;
-  const satirH = 26;
+  const W = 570;
+  const satirH = 29;
   const ustBosluk = 62;
   const H = ustBosluk + satirlar.length * satirH + 22;
-  const size = 15;
+  const size = 17;
   const charW = size * 0.6;
   const bekle = 4.5; // dizi bitince ekranda kalma suresi
 
@@ -563,7 +563,7 @@ function languages(langs) {
 // --------------------------------------------------------------- hareket
 
 function activity(days, updatedAt) {
-  const W = 1000;
+  const W = 820;
   const H = 200;
   const padL = 34;
   const padR = 24;
@@ -611,8 +611,8 @@ function activity(days, updatedAt) {
       <stop offset="100%" stop-color="${T.purple}" />
     </linearGradient>
     <style>${baseStyle()}
-      .title { font-size: 16px; font-weight: 700; fill: ${T.text}; }
-      .meta { font-size: 12px; fill: ${T.muted}; }
+      .title { font-size: 21px; font-weight: 700; fill: ${T.text}; }
+      .meta { font-size: 16px; fill: ${T.muted}; }
       .line { fill: none; stroke: url(#stroke); stroke-width: 2.5; stroke-linecap: round;
               animation: draw 2.6s .2s cubic-bezier(.4,0,.2,1) backwards; }
       @keyframes draw {
@@ -621,7 +621,7 @@ function activity(days, updatedAt) {
       }
       .fill { animation: fade 1.2s 1.5s backwards; }
       .tip { animation: fade .6s 2.6s backwards; }
-      .stamp { font-size: 10.5px; fill: ${T.muted}; animation: fade .8s 3s backwards; }
+      .stamp { font-size: 14px; fill: ${T.muted}; animation: fade .8s 3s backwards; }
       .ping { animation: ping 2s ease-out infinite; transform-origin: center; }
       @keyframes ping { 0% { r: 4; opacity: .9; } 70%,100% { r: 13; opacity: 0; } }
     </style>
@@ -733,7 +733,7 @@ function mockData() {
 
 // GitHub profilindeki ad alani sustu harfler icerebiliyor; basligi sabit tutuyoruz.
 const DISPLAY_NAME = "Farhad Yaqoobi";
-const TAGLINE = "Full-Stack Developer · Firebase · PWA · Vanilla JavaScript";
+const TAGLINE = "Offline-first web apps · vanilla JavaScript · Firebase";
 
 const useMock = process.argv.includes("--mock");
 const login = process.env.GH_LOGIN || "Ferhat-Yasinoglu";
@@ -767,17 +767,17 @@ for (const [ek, palet] of [["", KOYU], ["-light", ACIK]]) {
     [`footer${ek}.svg`]: footer(),
     [`terminal${ek}.svg`]: terminal([
       { tip: "komut", metin: "whoami" },
-      { tip: "cikti", metin: "Farhad Yaqoobi - full-stack developer, NRW Germany", renk: T.blue },
+      { tip: "cikti", metin: "Farhad Yaqoobi - developer, NRW", renk: T.blue },
       { tip: "komut", metin: "cat stack.txt" },
-      { tip: "cikti", metin: "HTML5 - CSS3 - JavaScript - Firebase - PWA", renk: T.green },
+      { tip: "cikti", metin: "JavaScript - CSS3 - Firebase - PWA", renk: T.green },
       { tip: "komut", metin: "ls projects/" },
       { tip: "cikti", metin: "acik-defter/   netstore/", renk: T.purple },
       { tip: "komut", metin: "cat learning.md" },
-      { tip: "cikti", metin: "Firestore rules - App Check - React - Node.js", renk: T.cyan },
+      { tip: "cikti", metin: "Firestore rules - App Check - React", renk: T.cyan },
       { tip: "komut", metin: "locale -a" },
       { tip: "cikti", metin: "de_DE   tr_TR   en_US   fa_AF", renk: T.pink },
       { tip: "komut", metin: "echo $MOTTO" },
-      { tip: "cikti", metin: "The fastest way to understand something is to build it", renk: T.yellow },
+      { tip: "cikti", metin: "Build it to understand it", renk: T.yellow },
     ]),
     [`stats${ek}.svg`]: stats(data),
     [`languages${ek}.svg`]: languages(data.langs),
