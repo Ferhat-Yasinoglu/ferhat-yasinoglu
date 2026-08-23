@@ -7,7 +7,7 @@
 
 **I build offline-first web apps with vanilla JavaScript and Firebase.**
 
-<sub>🇩🇪 Deutsch &nbsp;·&nbsp; 🇹🇷 Türkçe &nbsp;·&nbsp; 🇬🇧 English &nbsp;·&nbsp; 🇦🇫 فارسی &nbsp;&nbsp;|&nbsp;&nbsp; NRW, Germany</sub>
+<sub>Deutsch &nbsp;·&nbsp; Türkçe &nbsp;·&nbsp; English &nbsp;·&nbsp; فارسی &nbsp;&nbsp;|&nbsp;&nbsp; NRW, Germany</sub>
 
 <br>
 

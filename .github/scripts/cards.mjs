@@ -15,37 +15,38 @@ const OUT = join(ROOT, "assets");
 const ICONS = JSON.parse(await readFile(join(HERE, "icons.json"), "utf8"));
 
 const KOYU = {
-  bg: "#1a1b27",
-  bg2: "#24283b",
-  line: "#2f334d",
-  text: "#c0caf5",
-  muted: "#7982a9",
-  blue: "#70a5fd",
-  purple: "#bf91f3",
-  green: "#9ece6a",
-  pink: "#f7768e",
-  yellow: "#e0af68",
-  cyan: "#2ac3de",
+  bg: "#2472ab",
+  bg2: "#1b968e",
+  line: "#eaf6fb",
+  text: "#f2f9ff",
+  muted: "#cbe4ee",
+  blue: "#a9d3ff",
+  purple: "#e3c9ff",
+  green: "#c5efa2",
+  pink: "#ffbecb",
+  yellow: "#ffe19a",
+  cyan: "#a3f0ff",
 };
 
 // Acik temada zemin beyazlasir, vurgu renkleri beyaz uzerinde okunacak
 // kadar koyulasir; yapi ayni kalir.
 const ACIK = {
-  bg: "#ffffff",
-  bg2: "#f2f4fb",
-  line: "#d9dee9",
-  text: "#1f2437",
-  muted: "#5c6478",
-  blue: "#2f6fd0",
-  purple: "#7c4fc4",
-  green: "#3f8f2f",
-  pink: "#c73a55",
-  yellow: "#9a6b12",
-  cyan: "#0f7a92",
+  bg: "#2472ab",
+  bg2: "#1b968e",
+  line: "#eaf6fb",
+  text: "#f2f9ff",
+  muted: "#cbe4ee",
+  blue: "#a9d3ff",
+  purple: "#e3c9ff",
+  green: "#c5efa2",
+  pink: "#ffbecb",
+  yellow: "#ffe19a",
+  cyan: "#a3f0ff",
 };
 
 // Kart uretilirken gecerli olan palet. Her tema turunde degistirilir.
 let T = KOYU;
+let SAYFA_KOYU = true; // ikon tiles saydam: sayfa temasina gore renk uyarlama
 
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) =>
@@ -60,7 +61,7 @@ const FONT = "'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif";
 // Her kartin basinda duran ortak stil: kademeli giris + yumusak hareket.
 const baseStyle = () => `
     text { font-family: ${FONT}; }
-    .card-bg { fill: url(#bg); stroke: ${T.line}; stroke-width: 1; }
+    .card-bg { fill: url(#bg); stroke: ${T.line}; stroke-opacity: .32; stroke-width: 1.2; }
     /* Her animasyon "backwards" ile kurulur: animasyon hic calismazsa
        ogenin dogal hali gecerli olur, yani icerik yine de gorunur. */
     .rise { animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
@@ -71,9 +72,10 @@ const baseStyle = () => `
     }`;
 
 const defsBg = (id = "bg") => `
-    <linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="${T.bg}" />
-      <stop offset="100%" stop-color="${T.bg2}" />
+    <linearGradient id="${id}" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".18" />
+      <stop offset="0.16" stop-color="${T.bg}" stop-opacity="1" />
+      <stop offset="1" stop-color="${T.bg2}" stop-opacity="1" />
     </linearGradient>`;
 
 // ---------------------------------------------------------------- baslik
@@ -104,11 +106,11 @@ function header({ name, tagline }) {
       <feGaussianBlur stdDeviation="45" />
     </filter>
     <linearGradient id="ink" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="${T.blue}">
-        <animate attributeName="stop-color" values="${T.blue};${T.cyan};${T.purple};${T.blue}" dur="9s" repeatCount="indefinite" />
+      <stop offset="0%" stop-color="#eafff9">
+        <animate attributeName="stop-color" values="#eafff9;#ffffff;#d9ecff;#eafff9" dur="9s" repeatCount="indefinite" />
       </stop>
-      <stop offset="100%" stop-color="${T.purple}">
-        <animate attributeName="stop-color" values="${T.purple};${T.blue};${T.cyan};${T.purple}" dur="9s" repeatCount="indefinite" />
+      <stop offset="100%" stop-color="#d9ecff">
+        <animate attributeName="stop-color" values="#d9ecff;#eafff9;#ffffff;#d9ecff" dur="9s" repeatCount="indefinite" />
       </stop>
     </linearGradient>
     <clipPath id="round"><rect width="${W}" height="${H}" rx="16" /></clipPath>
@@ -274,9 +276,9 @@ function footer() {
   };
 
   const katman = [
-    { genlik: 14, taban: 62, faz: 0, renk: T.blue, op: 0.35, sure: 14 },
-    { genlik: 18, taban: 78, faz: 2.1, renk: T.purple, op: 0.4, sure: 20 },
-    { genlik: 11, taban: 96, faz: 4.2, renk: T.cyan, op: 0.5, sure: 27 },
+    { genlik: 14, taban: 62, faz: 0, renk: "#2472ab", op: 0.5, sure: 14 },
+    { genlik: 18, taban: 78, faz: 2.1, renk: "#1f83a0", op: 0.55, sure: 20 },
+    { genlik: 11, taban: 96, faz: 4.2, renk: "#1b968e", op: 0.65, sure: 27 },
   ]
     .map(
       (k, i) => `
@@ -291,9 +293,8 @@ function footer() {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="">
   <defs>
     <linearGradient id="ust" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="${T.purple}" />
-      <stop offset="50%" stop-color="${T.blue}" />
-      <stop offset="100%" stop-color="${T.cyan}" />
+      <stop offset="0%" stop-color="#2472ab" />
+      <stop offset="100%" stop-color="#1b968e" />
     </linearGradient>
     <clipPath id="kutu"><rect width="${W}" height="${H}" /></clipPath>
   </defs>
@@ -427,7 +428,7 @@ function fitColor(hex) {
       s.map((c, i) => Math.round(c + (h[i] - c) * oran).toString(16).padStart(2, "0")).join("")
     );
   };
-  const koyuTema = T.bg === KOYU.bg;
+  const koyuTema = SAYFA_KOYU;
   if (koyuTema && lum < 0.16) return mix("#ffffff", 0.86);
   if (!koyuTema && lum > 0.62) return mix("#000000", 0.3);
   return hex;
@@ -760,6 +761,7 @@ await mkdir(OUT, { recursive: true });
 // temasina uyan surumu secer.
 for (const [ek, palet] of [["", KOYU], ["-light", ACIK]]) {
   T = palet;
+  SAYFA_KOYU = ek === "";
   const cards = {
     [`header${ek}.svg`]: header({ name: DISPLAY_NAME, tagline: TAGLINE }),
     [`typing${ek}.svg`]: typing(LINES),

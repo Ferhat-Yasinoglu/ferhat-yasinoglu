@@ -2,7 +2,7 @@
   <defs>
     <style>
       .ty { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-            font-size: 26px; font-weight: 600; fill: #2f6fd0; }
+            font-size: 26px; font-weight: 600; fill: #a9d3ff; }
       .caret { animation: blink 1s steps(1) infinite; }
       @keyframes blink { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
     </style>
@@ -18,7 +18,7 @@
       <g clip-path="url(#clip0)">
         <text class="ty" x="0" y="40">Hi, I am Farhad</text>
       </g>
-      <rect class="caret" x="0" y="16" width="2.5" height="28" fill="#7c4fc4">
+      <rect class="caret" x="0" y="16" width="2.5" height="28" fill="#e3c9ff">
         <animate attributeName="x" values="0;234.0;234.0;0;0" keyTimes="0.0000;0.0956;0.1912;0.2500;1.0000"
                  dur="13.60s" repeatCount="indefinite" />
       </rect>
@@ -33,7 +33,7 @@
       <g clip-path="url(#clip1)">
         <text class="ty" x="0" y="40">Full-Stack Developer</text>
       </g>
-      <rect class="caret" x="0" y="16" width="2.5" height="28" fill="#7c4fc4">
+      <rect class="caret" x="0" y="16" width="2.5" height="28" fill="#e3c9ff">
         <animate attributeName="x" values="0;0;312.0;312.0;0;0" keyTimes="0.0000;0.2500;0.3456;0.4412;0.5000;1.0000"
                  dur="13.60s" repeatCount="indefinite" />
       </rect>
@@ -48,7 +48,7 @@
       <g clip-path="url(#clip2)">
         <text class="ty" x="0" y="40">Firebase and PWA enthusiast</text>
       </g>
-      <rect class="caret" x="0" y="16" width="2.5" height="28" fill="#7c4fc4">
+      <rect class="caret" x="0" y="16" width="2.5" height="28" fill="#e3c9ff">
         <animate attributeName="x" values="0;0;421.2;421.2;0;0" keyTimes="0.0000;0.5000;0.5956;0.6912;0.7500;1.0000"
                  dur="13.60s" repeatCount="indefinite" />
       </rect>
@@ -63,7 +63,7 @@
       <g clip-path="url(#clip3)">
         <text class="ty" x="0" y="40">AI content creator</text>
       </g>
-      <rect class="caret" x="0" y="16" width="2.5" height="28" fill="#7c4fc4">
+      <rect class="caret" x="0" y="16" width="2.5" height="28" fill="#e3c9ff">
         <animate attributeName="x" values="0;0;280.8;280.8;0" keyTimes="0.0000;0.7500;0.8456;0.9412;1.0000"
                  dur="13.60s" repeatCount="indefinite" />
       </rect>
