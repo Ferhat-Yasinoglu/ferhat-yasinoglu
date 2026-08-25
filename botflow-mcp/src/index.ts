@@ -6,6 +6,14 @@ import { registerTools } from "./handlers/tools.js";
 import { startHttpServer } from "./http.js";
 import { createServer } from "./server.js";
 import { defaultSpecPath, loadSpec } from "./spec.js";
+import type { ServerSpec } from "./types.js";
+import {
+  attachUpstream,
+  normalizeConfig,
+  UpstreamServer,
+  upstreamsFromEnv,
+  type UpstreamAttachment,
+} from "./upstream.js";
 import { Worker } from "./worker.js";
 
 /**
@@ -16,6 +24,9 @@ import { Worker } from "./worker.js";
  *
  * Either way a background worker long-polls Telegram for the connected bots, so
  * flows keep running between tool calls. Pass --no-worker to leave it off.
+ *
+ * Pass --upstream <url> (or set BOTFLOW_UPSTREAM_URL) to also republish another
+ * MCP server's tools through this one; see src/upstream.ts.
  */
 async function main(argv: string[]): Promise<void> {
   const mode = argv.includes("--stdio") ? "stdio" : "http";
@@ -25,6 +36,8 @@ async function main(argv: string[]): Promise<void> {
   const dbPath = valueOf(argv, "--db") ?? process.env.BOTFLOW_DB ?? "botflow.db";
   const app = new App({ dbPath });
   registerTools(app);
+
+  const upstreams = await connectUpstreams(argv, spec);
 
   const worker = new Worker(app);
   if (!argv.includes("--no-worker")) {
@@ -36,6 +49,7 @@ async function main(argv: string[]): Promise<void> {
 
   const shutdown = async () => {
     await worker.stop();
+    await Promise.all(upstreams.map((upstream) => upstream.close().catch(() => {})));
     await app.shutdown();
     process.exit(0);
   };
@@ -53,13 +67,16 @@ async function main(argv: string[]): Promise<void> {
   const auth = authFromEnv();
   const path = valueOf(argv, "--path") ?? process.env.MCP_PATH ?? "/mcp";
   const port = Number(valueOf(argv, "--port") ?? process.env.PORT ?? 3000);
-  const httpServer = await startHttpServer({ spec, auth, path, port });
+  const httpServer = await startHttpServer({ spec, auth, path, port, upstreams });
   const address = httpServer.address();
   const shown = typeof address === "object" && address ? `${address.address}:${address.port}` : String(address);
 
   const bots = app.store.listBots();
   console.error(`botflow-mcp listening on http://${shown}${path}`);
   console.error(`  tools:  ${spec.tools.length}`);
+  for (const upstream of upstreams) {
+    console.error(`  from:   ${upstream.name} → ${upstream.url}`);
+  }
   console.error(`  db:     ${dbPath} (${bots.length} bot(s) connected)`);
   console.error(
     auth.disabled
@@ -69,6 +86,50 @@ async function main(argv: string[]): Promise<void> {
   if (bots.length === 0) {
     console.error(`\n  No bots yet. Call connect_bot with a token from @BotFather to start.`);
   }
+}
+
+/**
+ * Bring up every configured upstream and splice its surface into `spec`.
+ *
+ * An unreachable upstream is reported and skipped rather than fatal: a
+ * connector being down should not take this server's own tools with it. The
+ * ones that did connect are returned so they can be closed on shutdown.
+ */
+async function connectUpstreams(argv: string[], spec: ServerSpec): Promise<UpstreamServer[]> {
+  const flagUrl = valueOf(argv, "--upstream");
+  const configs = flagUrl
+    ? [normalizeConfig({ url: flagUrl, apiKey: process.env.BOTFLOW_UPSTREAM_KEY, name: valueOf(argv, "--upstream-name") })]
+    : upstreamsFromEnv();
+
+  const connected: UpstreamServer[] = [];
+  for (const config of configs) {
+    const upstream = new UpstreamServer(config);
+    try {
+      const attachment = await attachUpstream(spec, upstream);
+      console.error(`upstream ${config.name}: ${describeAttachment(attachment)} from ${config.url}`);
+      for (const { kind, name, reason } of attachment.skipped) {
+        console.error(`  skipped ${kind} ${name}: ${reason}`);
+      }
+      connected.push(upstream);
+    } catch (cause) {
+      await upstream.close().catch(() => {});
+      const message = cause instanceof Error ? cause.message : String(cause);
+      console.error(`upstream ${config.name}: unavailable, continuing without its tools — ${message}`);
+    }
+  }
+  return connected;
+}
+
+/** "14 tool(s), 2 prompt(s)" — naming only the halves that came across. */
+function describeAttachment(attachment: UpstreamAttachment): string {
+  const counts: [number, string][] = [
+    [attachment.tools.length, "tool"],
+    [attachment.prompts.length, "prompt"],
+    [attachment.resources.length, "resource"],
+    [attachment.resourceTemplates.length, "resource template"],
+  ];
+  const parts = counts.filter(([n]) => n > 0).map(([n, label]) => `${n} ${label}(s)`);
+  return parts.length > 0 ? parts.join(", ") : "nothing";
 }
 
 function valueOf(argv: string[], flag: string): string | undefined {

@@ -52,6 +52,15 @@ server supports prompts and currently has none"; omitting `prompts` means "this
 server does not support prompts at all". They produce different handshakes, so
 the loader preserves the distinction.
 
+## Serving another server's surface live
+
+Importing copies a surface once. The other option is to keep speaking to that
+server: set `BOTFLOW_UPSTREAM_URL` and its tools, prompts and resources are read
+at startup and every call is forwarded to it, with nothing written into this
+file at all. `src/upstream.ts` has the details, and the root README has the
+configuration. Use the import below when you want a frozen copy, and an upstream
+when you want the real thing.
+
 ## Importing a surface from another server
 
 The spec loader can also take a surface from a running MCP server, which is

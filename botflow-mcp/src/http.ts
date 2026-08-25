@@ -2,14 +2,20 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import express, { type Request, type Response } from "express";
 import type { Server as HttpServer } from "node:http";
 import { authenticate, authFromEnv, type AuthConfig } from "./auth.js";
+import type { Registry } from "./handlers/index.js";
 import { createServer } from "./server.js";
 import type { ServerSpec } from "./types.js";
+import type { UpstreamServer } from "./upstream.js";
 
 export type HttpOptions = {
   spec: ServerSpec;
   auth?: AuthConfig;
   /** Mount path for the MCP endpoint. ChatPlace serves its connector at /mcp. */
   path?: string;
+  /** Upstream servers whose tools are forwarded, reported by /healthz. */
+  upstreams?: UpstreamServer[];
+  /** Handler registry for the servers this app builds. Defaults to the global one. */
+  registry?: Registry;
 };
 
 /**
@@ -22,7 +28,7 @@ export type HttpOptions = {
  * is the right trade for a hosted connector.
  */
 export function createHttpApp(options: HttpOptions) {
-  const { spec, path = "/mcp" } = options;
+  const { spec, path = "/mcp", upstreams = [] } = options;
   const auth = options.auth ?? authFromEnv();
   const app = express();
 
@@ -35,6 +41,14 @@ export function createHttpApp(options: HttpOptions) {
       tools: spec.tools.length,
       specOrigin: spec.source.origin,
       authRequired: !auth.disabled,
+      // Never the key: just enough to see whether a forwarded surface is wired up.
+      upstreams: upstreams.map((upstream) => ({
+        name: upstream.name,
+        url: upstream.url,
+        prefix: upstream.prefix,
+        auth: upstream.authMode,
+        connected: upstream.connected,
+      })),
     });
   });
 
@@ -47,7 +61,7 @@ export function createHttpApp(options: HttpOptions) {
       return;
     }
 
-    const server = createServer({ spec, apiKey: result.apiKey });
+    const server = createServer({ spec, apiKey: result.apiKey, ...(options.registry ? { registry: options.registry } : {}) });
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
 
     // The transport owns the response lifecycle; tear both down when it ends.

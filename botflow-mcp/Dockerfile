@@ -16,8 +16,11 @@ COPY --from=build /app/dist ./dist
 COPY spec ./spec
 
 # The database lives here; mount a volume on it so bots and flows survive a
-# container replacement.
+# container replacement. Upstream OAuth sessions go on the same volume — left in
+# the working directory they would be lost on every restart, and an upstream
+# authorized by a person would need signing in again each time.
 ENV BOTFLOW_DB=/data/botflow.db
+ENV BOTFLOW_OAUTH_STORE=/data/oauth
 RUN mkdir -p /data && chown node:node /data
 VOLUME ["/data"]
 

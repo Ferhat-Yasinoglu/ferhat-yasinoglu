@@ -6,6 +6,9 @@ dist/
 .DS_Store
 spec/*.raw.json
 
+# OAuth sessions for upstream servers: refresh tokens, in the clear.
+.botflow-oauth/
+
 # The database holds bot tokens in plain text. Never commit it.
 *.db
 *.db-shm

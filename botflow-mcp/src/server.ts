@@ -8,7 +8,14 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { handlerFor, isImplemented } from "./handlers/index.js";
+import {
+  defaultRegistry,
+  handlerFor,
+  isImplemented,
+  promptHandlerFor,
+  resourceHandlerFor,
+  type Registry,
+} from "./handlers/index.js";
 import { applyDefaults, formatErrors, isPlainObject, validate } from "./jsonschema.js";
 import type { ServerSpec, ToolResult, ToolSpec } from "./types.js";
 
@@ -16,6 +23,11 @@ export type CreateServerOptions = {
   spec: ServerSpec;
   /** The authenticated caller's key, threaded through to handlers. */
   apiKey?: string | null;
+  /**
+   * Where the implementations live. Defaults to the process-wide registry;
+   * pass one when a second server has to answer with handlers of its own.
+   */
+  registry?: Registry;
 };
 
 /**
@@ -24,7 +36,7 @@ export type CreateServerOptions = {
  * We use the low-level `Server` rather than `McpServer` because the tool list is
  * loaded from data at runtime; there is nothing to register statically.
  */
-export function createServer({ spec, apiKey = null }: CreateServerOptions): Server {
+export function createServer({ spec, apiKey = null, registry = defaultRegistry }: CreateServerOptions): Server {
   const hasPrompts = spec.prompts !== undefined;
   const hasResources = spec.resources !== undefined || spec.resourceTemplates !== undefined;
 
@@ -71,10 +83,10 @@ export function createServer({ spec, apiKey = null }: CreateServerOptions): Serv
     const withDefaults = applyDefaults(args, tool.inputSchema) as Record<string, unknown>;
 
     try {
-      const result = await handlerFor(name)(withDefaults, {
+      const result = await handlerFor(name, registry)(withDefaults, {
         apiKey,
         tool,
-        live: isImplemented(name),
+        live: isImplemented(name, registry),
       });
       return result as unknown as Record<string, unknown>;
     } catch (cause) {
@@ -85,13 +97,13 @@ export function createServer({ spec, apiKey = null }: CreateServerOptions): Serv
     }
   });
 
-  if (hasPrompts) registerPrompts(server, spec);
-  if (hasResources) registerResources(server, spec);
+  if (hasPrompts) registerPrompts(server, spec, apiKey, registry);
+  if (hasResources) registerResources(server, spec, apiKey, registry);
 
   return server;
 }
 
-function registerPrompts(server: Server, spec: ServerSpec): void {
+function registerPrompts(server: Server, spec: ServerSpec, apiKey: string | null, registry: Registry): void {
   const prompts = spec.prompts ?? [];
   const byName = new Map(prompts.map((prompt) => [prompt.name, prompt]));
 
@@ -108,6 +120,9 @@ function registerPrompts(server: Server, spec: ServerSpec): void {
     if (missing.length > 0) {
       throw new Error(`Prompt "${name}" is missing required arguments: ${missing.join(", ")}.`);
     }
+
+    const handler = promptHandlerFor(name, registry);
+    if (handler) return await handler(args ?? {}, { apiKey, prompt });
 
     // Stubbed like tools: the shape is real, the wording is a placeholder until
     // the prompt is implemented.
@@ -131,7 +146,7 @@ function registerPrompts(server: Server, spec: ServerSpec): void {
   });
 }
 
-function registerResources(server: Server, spec: ServerSpec): void {
+function registerResources(server: Server, spec: ServerSpec, apiKey: string | null, registry: Registry): void {
   const resources = spec.resources ?? [];
   const resourceTemplates = spec.resourceTemplates ?? [];
   const byUri = new Map(resources.map((resource) => [resource.uri, resource]));
@@ -146,6 +161,12 @@ function registerResources(server: Server, spec: ServerSpec): void {
   server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     const { uri } = request.params;
     const resource = byUri.get(uri);
+
+    // A handler wins over the spec's inline text, the same way a tool handler
+    // wins over the stub — and it is the only way a templated URI resolves.
+    const handler = resourceHandlerFor(uri, registry);
+    if (handler) return await handler(uri, { apiKey, ...(resource ? { resource } : {}) });
+
     if (!resource) throw new Error(`Unknown resource "${uri}".`);
 
     return {

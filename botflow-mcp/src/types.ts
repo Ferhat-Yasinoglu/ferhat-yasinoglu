@@ -138,3 +138,40 @@ export type ToolHandler = (
   args: Record<string, unknown>,
   ctx: ToolContext,
 ) => Promise<ToolResult> | ToolResult;
+
+/**
+ * The other two halves of the surface. Both are kept loose for the same reason
+ * the schemas are: when a prompt or a resource is served on another server's
+ * behalf, whatever it answered is what the caller should get.
+ */
+export type PromptResult = {
+  description?: string;
+  messages: { role: "user" | "assistant"; content: unknown }[];
+  _meta?: Record<string, unknown>;
+};
+
+export type ResourceResult = {
+  contents: {
+    uri: string;
+    mimeType?: string;
+    text?: string;
+    blob?: string;
+    _meta?: Record<string, unknown>;
+  }[];
+  _meta?: Record<string, unknown>;
+};
+
+export type PromptContext = { apiKey: string | null; prompt: PromptSpec };
+
+export type PromptHandler = (
+  args: Record<string, string>,
+  ctx: PromptContext,
+) => Promise<PromptResult> | PromptResult;
+
+/** `resource` is absent when the URI came from a template rather than the list. */
+export type ResourceContext = { apiKey: string | null; resource?: ResourceSpec };
+
+export type ResourceHandler = (
+  uri: string,
+  ctx: ResourceContext,
+) => Promise<ResourceResult> | ResourceResult;

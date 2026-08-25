@@ -1,6 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { describe, expect, it } from "vitest";
+import { createRegistry, type Registry } from "../src/handlers/index.js";
 import { assertSpec } from "../src/spec.js";
 import { createServer } from "../src/server.js";
 import type { ServerSpec } from "../src/types.js";
@@ -15,9 +16,9 @@ const base = {
   tools: [{ name: "noop", inputSchema: { type: "object" as const } }],
 };
 
-async function connect(spec: ServerSpec): Promise<Client> {
+async function connect(spec: ServerSpec, registry?: Registry): Promise<Client> {
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  const server = createServer({ spec });
+  const server = createServer({ spec, ...(registry ? { registry } : {}) });
   const client = new Client({ name: "test", version: "0.0.0" });
   await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
   return client;
@@ -172,5 +173,64 @@ describe("spec validation of the optional halves", () => {
 
   it("rejects a non-array declaration", () => {
     expect(() => assertSpec({ ...base, prompts: {} })).toThrow(/must be an array/);
+  });
+});
+
+/**
+ * A prompt or resource with something real behind it is served by a handler
+ * rather than the spec's stub. That is the seam an upstream attachment uses, so
+ * it is worth pinning down on its own.
+ */
+describe("handlers behind the optional halves", () => {
+  const spec = assertSpec({
+    ...base,
+    prompts: [{ name: "greet", arguments: [{ name: "who", required: true }] }],
+    resources: [{ uri: "botflow://live", name: "Live", text: "from the spec" }],
+    resourceTemplates: [{ uriTemplate: "botflow://live/{id}", name: "One" }],
+  });
+
+  it("lets a handler answer a prompt instead of the stub", async () => {
+    const registry = createRegistry();
+    registry.prompts.set("greet", (args, ctx) => ({
+      description: ctx.prompt.name,
+      messages: [{ role: "user", content: { type: "text", text: `hello ${args.who}` } }],
+    }));
+
+    const client = await connect(spec, registry);
+    const result = await client.getPrompt({ name: "greet", arguments: { who: "ada" } });
+
+    expect((result.messages[0]?.content as { text?: string }).text).toBe("hello ada");
+    await client.close();
+  });
+
+  it("lets a handler answer a resource, winning over the spec's own text", async () => {
+    const registry = createRegistry();
+    registry.resources.set("botflow://live", (uri) => ({ contents: [{ uri, text: "from the handler" }] }));
+
+    const client = await connect(spec, registry);
+    const { contents } = await client.readResource({ uri: "botflow://live" });
+
+    expect(contents[0]?.text).toBe("from the handler");
+    await client.close();
+  });
+
+  it("resolves a templated uri through a router", async () => {
+    const registry = createRegistry();
+    registry.routers.push({
+      match: (uri) => uri.startsWith("botflow://live/"),
+      handler: (uri) => ({ contents: [{ uri, text: `read ${uri}` }] }),
+    });
+
+    const client = await connect(spec, registry);
+    const { contents } = await client.readResource({ uri: "botflow://live/9" });
+
+    expect(contents[0]?.text).toBe("read botflow://live/9");
+    await client.close();
+  });
+
+  it("still rejects a uri no resource, handler or router claims", async () => {
+    const client = await connect(spec, createRegistry());
+    await expect(client.readResource({ uri: "botflow://nowhere" })).rejects.toThrow(/Unknown resource/);
+    await client.close();
   });
 });
