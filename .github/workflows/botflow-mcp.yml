@@ -1,0 +1,40 @@
+# botflow-mcp's tests. It lives here rather than next to the project because
+# GitHub only reads workflows from .github/workflows at the repository root —
+# a copy inside botflow-mcp/ is never run.
+name: botflow-mcp testleri
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "botflow-mcp/**"
+      - ".github/workflows/botflow-mcp.yml"
+  pull_request:
+    paths:
+      - "botflow-mcp/**"
+      - ".github/workflows/botflow-mcp.yml"
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: botflow-mcp
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # node:sqlite's DatabaseSync landed in 22.5, so 22 is the floor.
+        node: ["22", "24"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          # The lockfile is not at the root, so the cache has to be pointed at it.
+          cache-dependency-path: botflow-mcp/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
