@@ -32,8 +32,28 @@ export class FlowRunner {
     private readonly budget: StepBudget = DEFAULT_BUDGET,
   ) {}
 
-  /** Run from the current step until the flow blocks or ends. */
+  /**
+   * Run from the current step until the flow blocks or ends.
+   *
+   * A run is created in the `waiting` state, so a throw partway through would
+   * otherwise leave a row that looks like a live conversation forever — and an
+   * active run suppresses `any_message` triggers, so that subscriber would go
+   * permanently deaf. Mark it failed on the way out instead.
+   */
   async advance(run: Run): Promise<AdvanceResult> {
+    try {
+      return await this.execute(run);
+    } catch (error) {
+      run.status = "failed";
+      run.waiting_for = null;
+      run.save_as = null;
+      run.resume_at = null;
+      this.store.saveRun(run);
+      throw error;
+    }
+  }
+
+  private async execute(run: Run): Promise<AdvanceResult> {
     const steps = JSON.parse(run.steps) as Step[];
     const vars = JSON.parse(run.vars) as Record<string, string>;
     const subscriber = this.store.getSubscriber(run.subscriber_id);
@@ -58,11 +78,15 @@ export class FlowRunner {
           return this.park(run, vars, "reply", step.save_as ?? null, null, executed);
 
         case "buttons": {
+          const atStep = run.step_index;
           const labels = step.choices.map((c, i) => ({
             label: interpolate(c.label, vars),
             // Index the choice rather than its label: labels are user text and
-            // callback_data is capped at 64 bytes.
-            data: `c:${run.id}:${i}`,
+            // callback_data is capped at 64 bytes. The step index is part of the
+            // payload so a button from an earlier, already-answered question
+            // cannot be applied to whatever the run is parked on now — Telegram
+            // leaves old inline keyboards tappable forever.
+            data: `c:${run.id}:${atStep}:${i}`,
           }));
           await this.send(subscriber, interpolate(step.text, vars), { inlineButtons: labels });
           return this.park(run, vars, "choice", step.save_as ?? null, null, executed);
@@ -100,7 +124,11 @@ export class FlowRunner {
 
   /**
    * Feed an answer into a parked run and keep going.
-   * Returns null when the run was not waiting for this kind of input.
+   *
+   * Returns null when the input cannot be accepted — the run is not waiting for
+   * this kind of input, or it is parked on buttons and the text matches no
+   * choice. A null means "the run is untouched and still waiting", which lets
+   * the caller re-prompt instead of silently advancing on nonsense.
    */
   async resume(run: Run, input: { kind: "reply" | "choice"; text: string }): Promise<AdvanceResult | null> {
     if (run.status !== "waiting" || run.waiting_for !== input.kind) return null;
@@ -108,17 +136,21 @@ export class FlowRunner {
     const steps = JSON.parse(run.steps) as Step[];
     const vars = JSON.parse(run.vars) as Record<string, string>;
 
-    if (run.save_as) vars[run.save_as] = input.text;
-
     // A chosen button may redirect; a typed reply always falls through.
     let next = run.step_index + 1;
     if (input.kind === "choice") {
       const step = steps[run.step_index];
-      if (step?.type === "buttons") {
-        const choice = matchChoice(step.choices, input.text);
-        if (choice?.goto !== undefined) next = choice.goto;
-        if (run.save_as && choice) vars[run.save_as] = choice.value ?? choice.label;
-      }
+      if (step?.type !== "buttons") return null;
+
+      const choice = matchChoice(step.choices, input.text);
+      // Storing unmatched text as if it were a choice would corrupt the
+      // variable and skip the question the person never actually answered.
+      if (!choice) return null;
+
+      if (choice.goto !== undefined) next = choice.goto;
+      if (run.save_as) vars[run.save_as] = choice.value ?? choice.label;
+    } else if (run.save_as) {
+      vars[run.save_as] = input.text;
     }
 
     run.step_index = next;
@@ -128,13 +160,36 @@ export class FlowRunner {
     return this.advance(run);
   }
 
-  /** Resolve which choice a callback payload refers to. */
-  choiceIndexFromCallback(data: string): { runId: string; index: number } | null {
-    const match = /^c:([^:]+):(\d+)$/.exec(data);
-    return match ? { runId: match[1]!, index: Number(match[2]) } : null;
+  /** Re-send the prompt of the step a run is parked on. */
+  async reprompt(run: Run): Promise<void> {
+    const steps = JSON.parse(run.steps) as Step[];
+    const vars = JSON.parse(run.vars) as Record<string, string>;
+    const step = steps[run.step_index];
+    if (step?.type !== "buttons") return;
+
+    const subscriber = this.store.getSubscriber(run.subscriber_id);
+    if (!subscriber) return;
+
+    const labels = step.choices.map((c, i) => ({
+      label: interpolate(c.label, vars),
+      data: `c:${run.id}:${run.step_index}:${i}`,
+    }));
+    await this.send(subscriber, interpolate(step.text, vars), { inlineButtons: labels });
   }
 
-  labelForChoice(run: Run, index: number): string | null {
+  /** Resolve which choice a callback payload refers to. */
+  choiceIndexFromCallback(data: string): { runId: string; stepIndex: number; index: number } | null {
+    const match = /^c:([^:]+):(\d+):(\d+)$/.exec(data);
+    return match ? { runId: match[1]!, stepIndex: Number(match[2]), index: Number(match[3]) } : null;
+  }
+
+  /**
+   * The label of a choice, but only when the press belongs to the step the run
+   * is actually parked on. Telegram leaves old inline keyboards tappable, so a
+   * press from an earlier question must be rejected rather than applied here.
+   */
+  labelForChoice(run: Run, stepIndex: number, index: number): string | null {
+    if (stepIndex !== run.step_index) return null;
     const steps = JSON.parse(run.steps) as Step[];
     const step = steps[run.step_index];
     if (step?.type !== "buttons") return null;

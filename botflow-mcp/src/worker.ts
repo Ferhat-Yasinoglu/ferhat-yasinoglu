@@ -17,6 +17,8 @@ export type WorkerOptions = {
   pollTimeout?: number;
   /** How often to check for delay-parked runs that are due. */
   tickMs?: number;
+  /** How long to re-park a run whose wake-up failed before trying again. */
+  retryDelayMs?: number;
   onError?: (error: unknown, context: string) => void;
 };
 
@@ -26,6 +28,8 @@ export class Worker {
   private readonly tickMs: number;
   private readonly onError: (error: unknown, context: string) => void;
   private readonly loops = new Map<string, Promise<void>>();
+  private readonly waking = new Set<string>();
+  private readonly retryDelayMs: number;
   private timer?: NodeJS.Timeout;
 
   constructor(
@@ -34,6 +38,7 @@ export class Worker {
   ) {
     this.pollTimeout = options.pollTimeout ?? 25;
     this.tickMs = options.tickMs ?? 5_000;
+    this.retryDelayMs = options.retryDelayMs ?? 60_000;
     this.onError = options.onError ?? ((error, context) => console.error(`[worker] ${context}:`, error));
   }
 
@@ -84,16 +89,30 @@ export class Worker {
     let advanced = 0;
 
     for (const run of due) {
+      // Guard against a second tick picking up a run this one is still walking.
+      // An in-memory claim rather than a database write, so a failed advance
+      // leaves the row exactly as it was and the run stays retryable.
+      if (this.waking.has(run.id)) continue;
+      this.waking.add(run.id);
+
       try {
-        // Clear the parking marker first so a slow advance is not picked up twice.
         run.waiting_for = null;
         run.resume_at = null;
-        this.app.store.saveRun(run);
-
         await this.app.runner.advance(run);
         advanced += 1;
       } catch (error) {
-        this.onError(error, `waking run ${run.id}`);
+        // advance() has already marked the run failed. Re-park it on the delay
+        // instead, with a backoff, so a transient send failure costs a minute
+        // rather than stranding the rest of the flow forever.
+        this.app.store.saveRun({
+          ...run,
+          status: "waiting",
+          waiting_for: "delay",
+          resume_at: new Date(Date.now() + this.retryDelayMs).toISOString(),
+        });
+        this.onError(error, `waking run ${run.id}, retrying in ${Math.round(this.retryDelayMs / 1000)}s`);
+      } finally {
+        this.waking.delete(run.id);
       }
     }
     return advanced;

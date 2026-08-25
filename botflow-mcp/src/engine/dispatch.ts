@@ -1,4 +1,4 @@
-import type { Store } from "../store/index.js";
+import type { Run, Store } from "../store/index.js";
 import { containsKeyword } from "../text.js";
 import type { TelegramClient, TelegramUpdate } from "../telegram.js";
 import type { FlowRunner } from "./runner.js";
@@ -59,9 +59,14 @@ export class Dispatcher {
     if (active?.waiting_for === "choice") {
       const result = await this.runner.resume(active, { kind: "choice", text });
       if (result) return { kind: "resumed", runId: result.run.id, status: result.status };
+
+      // The text matched no choice. Ask again rather than advancing on it or
+      // letting it fall through to a trigger — the question is still open.
+      await this.runner.reprompt(active);
+      return { kind: "ignored", reason: "reply matched no choice; re-prompted" };
     }
 
-    return this.fireTrigger(botId, subscriber.id, text, active !== undefined);
+    return this.fireTrigger(botId, subscriber.id, text, active);
   }
 
   private async handleCallback(
@@ -79,8 +84,12 @@ export class Dispatcher {
       return { kind: "ignored", reason: "the run this button belongs to is no longer waiting" };
     }
 
-    const label = this.runner.labelForChoice(run, parsed.index);
-    if (label === null) return { kind: "ignored", reason: "choice index is out of range" };
+    const label = this.runner.labelForChoice(run, parsed.stepIndex, parsed.index);
+    if (label === null) {
+      // Either a stale keyboard from an earlier question, or an index that no
+      // longer exists. Both must be dropped, not applied to the current step.
+      return { kind: "ignored", reason: "button belongs to a step this run has moved past" };
+    }
 
     this.store.logMessage(botId, run.subscriber_id, "in", label);
     const result = await this.runner.resume(run, { kind: "choice", text: label });
@@ -94,8 +103,9 @@ export class Dispatcher {
     botId: string,
     subscriberId: string,
     text: string,
-    hasActiveRun: boolean,
+    activeRun: Run | undefined,
   ): Promise<DispatchOutcome> {
+    const hasActiveRun = activeRun !== undefined;
     const isStart = text === "/start" || text.startsWith("/start ");
 
     const candidates = this.store.listTriggers(botId).filter((trigger) => {
@@ -122,6 +132,17 @@ export class Dispatcher {
 
     const flow = this.store.getFlow(chosen.flow_id);
     if (!flow) return { kind: "ignored", reason: "trigger points at a missing flow" };
+
+    // Starting a flow supersedes whatever conversation was running. Leaving the
+    // old run waiting would orphan it: two runs would compete for the next
+    // reply, and the loser's question would sit unanswered forever.
+    if (activeRun) {
+      activeRun.status = "superseded";
+      activeRun.waiting_for = null;
+      activeRun.save_as = null;
+      activeRun.resume_at = null;
+      this.store.saveRun(activeRun);
+    }
 
     const run = this.store.createRun(flow.id, subscriberId, JSON.parse(flow.steps) as Step[]);
     const result = await this.runner.advance(run);

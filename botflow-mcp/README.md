@@ -84,11 +84,24 @@ A flow starts as a draft. `publish_flow` makes it runnable; editing a published
 flow returns it to draft. Runs already in progress finish on the version they
 started with, because each run snapshots its steps.
 
-### Three behaviours worth knowing
+### Behaviours worth knowing
 
 **An answer beats a trigger.** If the bot just asked "which city?" and the reply
 happens to contain a keyword that triggers another flow, the answer wins. The
 alternative is people derailing their own funnel by saying an ordinary word.
+
+**A trigger that does fire supersedes the running flow.** When nothing is being
+asked and a trigger matches, the previous run is closed rather than left open.
+Two live runs would compete for the next reply, and the loser's question would
+sit unanswered forever.
+
+**Old buttons stop working once you move on.** Telegram leaves inline keyboards
+tappable indefinitely, so each button carries the step it belongs to. Tapping a
+button from a question already answered does nothing, instead of applying that
+answer to whatever is being asked now.
+
+**A reply matching no choice re-asks the question.** It is not stored as if it
+were a choice, and the flow does not advance past a question nobody answered.
 
 **Matching ignores case and diacritics.** `İNDİRİM`, `indirim` and `İndirim` all
 match the keyword `indirim`, and `gunaydin` matches `günaydın`. This is not what
@@ -102,6 +115,10 @@ wall clock. `broadcast` queues the job and returns; delivery runs in the
 background at that pace, checkpointing after every send. Poll `get_broadcast`
 for progress. A restart resumes from the checkpoint rather than messaging the
 first few thousand people twice.
+
+The recipient list is frozen when the job is queued, so someone tagged into the
+segment mid-flight is not included and nobody is messaged twice. Anyone who
+blocks the bot before their turn comes is skipped and counted as failed.
 
 ## Borrowing another server's surface
 
