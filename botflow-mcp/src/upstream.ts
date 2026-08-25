@@ -1,7 +1,10 @@
+import { UnauthorizedError } from "@modelcontextprotocol/sdk/client/auth.js";
+import { OAuthError } from "@modelcontextprotocol/sdk/server/auth/errors.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { McpError } from "@modelcontextprotocol/sdk/types.js";
 import { defaultRegistry, type Registry } from "./handlers/index.js";
+import { FileOAuthProvider, storePathFor, type OAuthSettings } from "./oauth.js";
 import type {
   PromptResult,
   PromptSpec,
@@ -40,6 +43,12 @@ export type UpstreamConfig = {
   url: string;
   /** Sent as `Authorization: Bearer`. Omit for a server that needs no auth. */
   apiKey?: string;
+  /**
+   * Authorize with OAuth instead of a static key. `true` takes the defaults;
+   * a client id and secret select the client_credentials grant, and anything
+   * else expects a session stored by `npm run login`. See src/oauth.ts.
+   */
+  oauth?: boolean | OAuthSettings;
   /** Tool-name prefix. Defaults to `<name>_`; an empty string disables it. */
   prefix?: string;
   /** Per-request timeout in milliseconds, including the handshake. */
@@ -69,6 +78,7 @@ export class UpstreamServer {
   readonly prefix: string;
 
   #apiKey: string | undefined;
+  #oauth: FileOAuthProvider | undefined;
   #timeoutMs: number;
   #client: Client | null = null;
   #connecting: Promise<Client> | null = null;
@@ -79,6 +89,7 @@ export class UpstreamServer {
     this.url = config.url;
     this.prefix = config.prefix ?? `${config.name}_`;
     this.#apiKey = config.apiKey;
+    this.#oauth = config.oauth ? oauthProviderFor(config) : undefined;
     this.#timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
@@ -89,6 +100,12 @@ export class UpstreamServer {
 
   get connected(): boolean {
     return this.#client !== null;
+  }
+
+  /** How this upstream authorizes, for logs and /healthz. */
+  get authMode(): "none" | "api-key" | "oauth-client-credentials" | "oauth-user" {
+    if (!this.#oauth) return this.#apiKey ? "api-key" : "none";
+    return this.#oauth.isClientCredentials ? "oauth-client-credentials" : "oauth-user";
   }
 
   async connect(): Promise<void> {
@@ -213,8 +230,24 @@ export class UpstreamServer {
   }
 
   async #open(): Promise<Client> {
+    // Say so before opening anything. Left to the SDK, an interactive upstream
+    // with no stored session ends in a registration nobody asked for and an
+    // error about token requests, neither of which names the fix.
+    if (this.#oauth && !this.#oauth.isClientCredentials && !this.#oauth.hasSession) {
+      throw new Error(
+        `Upstream "${this.name}" at ${this.url} is set to use OAuth but has no stored session. ` +
+          `Sign in once with \`npm run login -- --url ${this.url}\`, or set a client id and secret ` +
+          `to use the client_credentials grant instead.`,
+      );
+    }
+
+    // The auth provider owns the Authorization header when OAuth is in play:
+    // it attaches the token, refreshes it, and retries a 401 on its own.
     const transport = new StreamableHTTPClientTransport(new URL(this.url), {
-      requestInit: this.#apiKey ? { headers: { Authorization: `Bearer ${this.#apiKey}` } } : undefined,
+      ...(this.#oauth ? { authProvider: this.#oauth } : {}),
+      ...(this.#apiKey && !this.#oauth
+        ? { requestInit: { headers: { Authorization: `Bearer ${this.#apiKey}` } } }
+        : {}),
     });
     const client = new Client(CLIENT_INFO);
     // A dropped stream must not leave a dead client cached for the next call.
@@ -226,6 +259,18 @@ export class UpstreamServer {
       await client.connect(transport, { timeout: this.#timeoutMs });
     } catch (cause) {
       await client.close().catch(() => {});
+      // An OAuth error carries a code and often no message at all, so say what
+      // the code means for this upstream rather than passing an empty string on.
+      if (this.#oauth && (cause instanceof UnauthorizedError || cause instanceof OAuthError)) {
+        const detail = cause instanceof OAuthError ? cause.errorCode : "unauthorized";
+        throw new Error(
+          `Upstream "${this.name}" at ${this.url} refused the authorization (${detail}). ` +
+            (this.#oauth.isClientCredentials
+              ? `Check the client id and secret.`
+              : `Sign in again with \`npm run login -- --url ${this.url}\`.`),
+          { cause },
+        );
+      }
       const message = cause instanceof Error ? cause.message : String(cause);
       throw new Error(`Could not connect to upstream "${this.name}" at ${this.url}: ${message}`, { cause });
     }
@@ -373,6 +418,15 @@ export async function attachUpstream(
   return at;
 }
 
+/**
+ * Build the OAuth provider for an upstream, storing its session under the
+ * upstream's name so two of them never share a refresh token.
+ */
+export function oauthProviderFor(config: UpstreamConfig): FileOAuthProvider {
+  const settings: OAuthSettings = typeof config.oauth === "object" ? config.oauth : {};
+  return new FileOAuthProvider(storePathFor(config.name), settings);
+}
+
 /** Stamp where something came from, keeping whatever `_meta` it already had. */
 function origin(
   meta: Record<string, unknown> | undefined,
@@ -451,6 +505,8 @@ export function upstreamsFromEnv(env: NodeJS.ProcessEnv = process.env): Upstream
   const url = env.BOTFLOW_UPSTREAM_URL?.trim();
   if (!url) return [];
 
+  const oauth = oauthFromEnv(env);
+
   return [
     normalizeConfig({
       name: env.BOTFLOW_UPSTREAM_NAME?.trim() || undefined,
@@ -458,8 +514,29 @@ export function upstreamsFromEnv(env: NodeJS.ProcessEnv = process.env): Upstream
       apiKey: env.BOTFLOW_UPSTREAM_KEY?.trim() || undefined,
       prefix: env.BOTFLOW_UPSTREAM_PREFIX,
       timeoutMs: env.BOTFLOW_UPSTREAM_TIMEOUT_MS ? Number(env.BOTFLOW_UPSTREAM_TIMEOUT_MS) : undefined,
+      ...(oauth ? { oauth } : {}),
     }),
   ];
+}
+
+/**
+ * OAuth settings for the single-upstream form.
+ *
+ * Client credentials on their own are enough to mean "use OAuth" — nobody sets
+ * a client id and secret for an upstream they intend to reach with an API key.
+ */
+function oauthFromEnv(env: NodeJS.ProcessEnv): OAuthSettings | undefined {
+  const clientId = env.BOTFLOW_UPSTREAM_CLIENT_ID?.trim();
+  const clientSecret = env.BOTFLOW_UPSTREAM_CLIENT_SECRET?.trim();
+  const scope = env.BOTFLOW_UPSTREAM_SCOPE?.trim();
+  const asked = env.BOTFLOW_UPSTREAM_OAUTH === "1";
+
+  if (!asked && !clientId) return undefined;
+  return {
+    ...(clientId ? { clientId } : {}),
+    ...(clientSecret ? { clientSecret } : {}),
+    ...(scope ? { scope } : {}),
+  };
 }
 
 function parseUpstreams(json: string): UpstreamConfig[] {
@@ -509,10 +586,15 @@ export function normalizeConfig(config: Partial<UpstreamConfig>, at = "upstream"
     throw new Error(`${at}: "timeoutMs" must be a positive number.`);
   }
 
+  if (config.oauth && config.apiKey) {
+    throw new Error(`${at}: set either an API key or OAuth for an upstream, not both.`);
+  }
+
   return {
     name,
     url,
     ...(config.apiKey ? { apiKey: config.apiKey } : {}),
+    ...(config.oauth ? { oauth: config.oauth } : {}),
     ...(config.prefix !== undefined ? { prefix: sanitize(config.prefix) } : {}),
     ...(timeoutMs !== undefined ? { timeoutMs } : {}),
   };

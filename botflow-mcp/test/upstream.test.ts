@@ -525,9 +525,11 @@ describe("a server with an upstream attached", () => {
 
   it("reports the upstream on the health check without leaking the key", async () => {
     const res = await fetch(new URL("/healthz", localUrl));
-    const body = (await res.json()) as { upstreams: { name: string; url: string; connected: boolean }[] };
+    const body = (await res.json()) as { upstreams: Record<string, unknown>[] };
 
-    expect(body.upstreams).toEqual([{ name: "up", url: upstreamUrl, prefix: "up_", connected: true }]);
+    expect(body.upstreams).toEqual([
+      { name: "up", url: upstreamUrl, prefix: "up_", auth: "api-key", connected: true },
+    ]);
     expect(JSON.stringify(body)).not.toContain(UPSTREAM_KEY);
   });
 });

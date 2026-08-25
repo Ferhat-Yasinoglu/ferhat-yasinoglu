@@ -32,7 +32,7 @@ model: → connect_bot → create_flow → publish_flow → set_trigger
 
 ```bash
 npm install
-npm test          # 183 tests, no network needed
+npm test          # 199 tests, no network needed
 npm run dev       # http://localhost:3000/mcp
 ```
 
@@ -156,6 +156,48 @@ environment, so anyone who can reach this endpoint can spend it — configure
 `BOTFLOW_API_KEYS` before attaching an upstream to a server anyone else can
 reach.
 
+### When the upstream wants OAuth
+
+Not every server issues API keys. For the ones that authorize with OAuth there
+are two ways in, and which one you use is decided by what the upstream gives
+you.
+
+**A client id and secret** — nothing to sign in to, which is what a server that
+starts unattended wants:
+
+```bash
+BOTFLOW_UPSTREAM_URL=https://mcp.chatplace.io/mcp \
+BOTFLOW_UPSTREAM_CLIENT_ID=… \
+BOTFLOW_UPSTREAM_CLIENT_SECRET=… \
+npm start
+```
+
+It fetches its own token at startup and again whenever one expires. Check a pair
+before deploying it with `npm run login -- --url … --client-id … --client-secret …`.
+
+**A sign-in page** — a person authorizes once, and the server carries the
+session from then on:
+
+```bash
+npm run login -- --url https://mcp.chatplace.io/mcp
+# opens the upstream's sign-in page, catches the redirect on 127.0.0.1
+BOTFLOW_UPSTREAM_URL=https://mcp.chatplace.io/mcp BOTFLOW_UPSTREAM_OAUTH=1 npm start
+```
+
+`login` registers a client if the upstream supports it, does the authorization
+code exchange with PKCE, and writes the session to `.botflow-oauth/<name>.json`
+(0600, and git-ignored). The server refreshes the token by itself after that;
+the login is only needed again if the upstream revokes it or issued no refresh
+token in the first place — `login` says so at the time if it did not.
+
+Both paths use the SDK's own OAuth client, so discovery, dynamic registration
+and refresh-on-401 are the standard behaviour rather than something invented
+here. `/healthz` reports which mode each upstream is in.
+
+That session file is a credential. It holds a refresh token in the clear, so it
+belongs on the same footing as the database: back it up like a secret, and mount
+it as one in a container.
+
 ## Upgrading
 
 The database migrates itself in place on startup, tracked in SQLite's own
@@ -178,6 +220,10 @@ one, or existing databases will disagree with the code reading them.
 | `BOTFLOW_UPSTREAM_KEY` | — | Bearer token for that server |
 | `BOTFLOW_UPSTREAM_NAME` / `_PREFIX` | *(from the host)* | Namespace for its tools |
 | `BOTFLOW_UPSTREAMS` | — | JSON array, for more than one upstream |
+| `BOTFLOW_UPSTREAM_OAUTH` | — | `1` to authorize with a session from `npm run login` |
+| `BOTFLOW_UPSTREAM_CLIENT_ID` / `_SECRET` | — | OAuth client credentials. Setting them implies OAuth |
+| `BOTFLOW_UPSTREAM_SCOPE` | — | Scope to ask the authorization server for |
+| `BOTFLOW_OAUTH_STORE` | `.botflow-oauth` | Directory holding upstream OAuth sessions |
 
 Auth is **off** when no keys are configured — fine locally, wrong in public. The
 startup banner says which mode it is in, and `/healthz` reports `authRequired`.
@@ -220,7 +266,9 @@ docker build -t botflow-mcp .
 docker run -p 3000:3000 -v botflow-data:/data -e BOTFLOW_API_KEYS=… botflow-mcp
 ```
 
-The volume matters: the database holds your bots, flows and subscribers.
+The volume matters: the database holds your bots, flows and subscribers, and
+`/data/oauth` holds any upstream sessions. Lose it and you are reconnecting bots
+and signing in again.
 
 ## Layout
 
@@ -232,6 +280,7 @@ src/engine/runner.ts   executes a run until it blocks or ends
 src/engine/dispatch.ts routes an incoming Telegram update to a run or a trigger
 src/store/             SQLite schema, migrations, and all data access
 src/upstream.ts        MCP client for another server, and how its surface joins ours
+src/oauth.ts           OAuth for an upstream: which grant, and where the session lives
 src/handlers/index.ts  the registry a server answers from: tools, prompts, resources
 src/telegram.ts        Bot API client, with fetch injected so it can be faked
 src/broadcast.ts       paced, resumable background delivery
@@ -251,7 +300,7 @@ the spec without a handler falls back to a stub that answers in the shape its
 npm test
 ```
 
-183 tests, no network and no real bot token. `test/fake-telegram.ts` stands in
+199 tests, no network and no real bot token. `test/fake-telegram.ts` stands in
 for the Bot API and can be told to fail the way Telegram does — a user blocking
 the bot, a rate limit, a revoked token — so the end-to-end tests in
 `test/e2e.test.ts` drive real flows over real SQLite through actual MCP tool
@@ -263,6 +312,11 @@ and forwards tool calls, prompts and resource reads through both — the same
 Streamable HTTP a hosted connector speaks, over a real socket. The two get
 separate handler registries, because sharing one in a single process would have
 each forward to the other for ever.
+
+`test/oauth.test.ts` puts a real authorization server (`test/fake-oauth.ts`) on
+a third port and makes the client earn its token: discovery, dynamic
+registration, PKCE — verified, not waved through — the code exchange, and a
+refresh after the tokens are expired underneath a running client.
 
 ## Requirements
 

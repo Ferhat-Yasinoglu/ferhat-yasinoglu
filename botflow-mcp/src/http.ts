@@ -46,6 +46,7 @@ export function createHttpApp(options: HttpOptions) {
         name: upstream.name,
         url: upstream.url,
         prefix: upstream.prefix,
+        auth: upstream.authMode,
         connected: upstream.connected,
       })),
     });
