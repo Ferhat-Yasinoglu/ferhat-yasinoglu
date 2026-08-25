@@ -63,14 +63,17 @@ export function createServer({ spec, apiKey = null }: CreateServerOptions): Serv
     }
 
     const args = isPlainObject(rawArgs) ? rawArgs : {};
-    const errors = validate(args, tool.inputSchema);
-    if (errors.length > 0) {
-      return errorResult(`Invalid arguments for "${name}":\n${formatErrors(errors)}`);
-    }
-
-    const withDefaults = applyDefaults(args, tool.inputSchema) as Record<string, unknown>;
 
     try {
+      // Validation is inside the try as well: schemas can be imported from
+      // another server, and a malformed one must surface as a tool error rather
+      // than an opaque protocol failure.
+      const errors = validate(args, tool.inputSchema);
+      if (errors.length > 0) {
+        return errorResult(`Invalid arguments for "${name}":\n${formatErrors(errors)}`);
+      }
+
+      const withDefaults = applyDefaults(args, tool.inputSchema) as Record<string, unknown>;
       const result = await handlerFor(name)(withDefaults, {
         apiKey,
         tool,

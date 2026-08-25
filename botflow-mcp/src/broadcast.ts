@@ -86,17 +86,13 @@ export class BroadcastRunner {
     let retries = 0;
 
     try {
-      // Re-resolve the segment now rather than trusting a list captured at
-      // queue time: people tagged since then should be included.
-      const recipients = store
-        .segment(broadcast.bot_id, JSON.parse(broadcast.tags) as string[])
-        .filter((s) => !s.blocked);
-
-      store.updateBroadcast(broadcastId, { recipients: recipients.length });
-
+      // The recipient list was frozen at queue time. Walking a list that is
+      // re-resolved on every resume would let a mid-flight tag or block shift
+      // entries under the cursor, skipping people or messaging them twice.
+      const recipientIds = JSON.parse(broadcast.recipient_ids) as string[];
       const client = this.app.clientForBot(broadcast.bot_id);
 
-      for (let i = broadcast.cursor; i < recipients.length; i += 1) {
+      for (let i = broadcast.cursor; i < recipientIds.length; i += 1) {
         if (this.stopped) {
           // Leave it 'sending' with the cursor parked; resumeUnfinished picks
           // it up next boot.
@@ -104,7 +100,14 @@ export class BroadcastRunner {
           return;
         }
 
-        const subscriber = recipients[i]!;
+        const subscriber = store.getSubscriber(recipientIds[i]!);
+        // Gone or blocked since queueing — step over without counting a send.
+        if (!subscriber || subscriber.blocked) {
+          if (subscriber?.blocked) failed += 1;
+          store.updateBroadcast(broadcastId, { cursor: i + 1, sent, failed });
+          continue;
+        }
+
         try {
           await client.sendMessage(subscriber.chat_id, broadcast.text);
           store.logMessage(broadcast.bot_id, subscriber.id, "out", broadcast.text);
@@ -134,7 +137,7 @@ export class BroadcastRunner {
 
         // Checkpoint past the recipient just handled.
         store.updateBroadcast(broadcastId, { cursor: i + 1, sent, failed });
-        if (this.sendIntervalMs > 0 && i + 1 < recipients.length) await sleep(this.sendIntervalMs);
+        if (this.sendIntervalMs > 0 && i + 1 < recipientIds.length) await sleep(this.sendIntervalMs);
       }
 
       store.updateBroadcast(broadcastId, {

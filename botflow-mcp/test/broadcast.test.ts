@@ -36,8 +36,8 @@ afterEach(async () => {
 
 describe("delivery", () => {
   it("reaches every unblocked subscriber", async () => {
-    await seed(5);
-    const broadcast = app.store.createBroadcast(botId, "Hello", [], 5);
+    const ids = await seed(5);
+    const broadcast = app.store.createBroadcast(botId, "Hello", [], ids);
 
     app.broadcasts.start(broadcast.id);
     await app.broadcasts.whenIdle();
@@ -50,8 +50,8 @@ describe("delivery", () => {
   });
 
   it("records a completion timestamp", async () => {
-    await seed(1);
-    const broadcast = app.store.createBroadcast(botId, "Hello", [], 1);
+    const ids = await seed(1);
+    const broadcast = app.store.createBroadcast(botId, "Hello", [], ids);
 
     app.broadcasts.start(broadcast.id);
     await app.broadcasts.whenIdle();
@@ -64,7 +64,7 @@ describe("delivery", () => {
   it("counts a block as a failure and keeps going", async () => {
     const ids = await seed(3);
     telegram.blockChat("2");
-    const broadcast = app.store.createBroadcast(botId, "Hello", [], 3);
+    const broadcast = app.store.createBroadcast(botId, "Hello", [], ids);
 
     app.broadcasts.start(broadcast.id);
     await app.broadcasts.whenIdle();
@@ -76,10 +76,17 @@ describe("delivery", () => {
     expect(app.store.getSubscriber(ids[1]!)?.blocked).toBe(1);
   });
 
-  it("re-resolves the segment at send time, not at queue time", async () => {
+  /**
+   * The recipient list is frozen at queue time. Re-resolving it on each resume
+   * used to shift entries under the cursor: someone tagged mid-flight pushed the
+   * list along and an already-messaged person got a second copy, while someone
+   * blocking mid-flight pulled it back and a person was skipped entirely — both
+   * while the broadcast still reported a clean `finished`.
+   */
+  it("does not send to someone who joined the segment after queueing", async () => {
     const ids = await seed(2);
     app.store.addTags(ids[0]!, ["vip"]);
-    const broadcast = app.store.createBroadcast(botId, "VIP only", ["vip"], 1);
+    const broadcast = app.store.createBroadcast(botId, "VIP only", ["vip"], [ids[0]!]);
 
     // Someone joins the segment between queueing and sending.
     app.store.addTags(ids[1]!, ["vip"]);
@@ -87,16 +94,50 @@ describe("delivery", () => {
     app.broadcasts.start(broadcast.id);
     await app.broadcasts.whenIdle();
 
-    expect(app.store.getBroadcast(broadcast.id)!.sent).toBe(2);
+    expect(app.store.getBroadcast(broadcast.id)!.sent).toBe(1);
+    expect(telegram.sentTo("2")).toEqual([]);
+  });
+
+  it("does not repeat a recipient when the segment shifts mid-flight", async () => {
+    const ids = await seed(4);
+    const broadcast = app.store.createBroadcast(botId, "Hello", [], ids);
+
+    // Interrupted after two, then the underlying set changes before resuming.
+    app.store.updateBroadcast(broadcast.id, { status: "sending", cursor: 2, sent: 2 });
+    app.store.upsertSubscriber(botId, "99", "Latecomer", null);
+    app.store.setSubscriberBlocked(ids[0]!, true);
+
+    app.broadcasts.start(broadcast.id);
+    await app.broadcasts.whenIdle();
+
+    const done = app.store.getBroadcast(broadcast.id)!;
+    expect(done.status).toBe("finished");
+    // Exactly the two that had not been reached, and nobody twice.
+    expect(telegram.sent.map((m) => m.chatId)).toEqual(["3", "4"]);
+    expect(done.sent).toBe(4);
+  });
+
+  it("skips a recipient who blocked the bot after queueing", async () => {
+    const ids = await seed(3);
+    const broadcast = app.store.createBroadcast(botId, "Hello", [], ids);
+    app.store.setSubscriberBlocked(ids[1]!, true);
+
+    app.broadcasts.start(broadcast.id);
+    await app.broadcasts.whenIdle();
+
+    const done = app.store.getBroadcast(broadcast.id)!;
+    expect(telegram.sent.map((m) => m.chatId)).toEqual(["1", "3"]);
+    expect(done.sent).toBe(2);
+    expect(done.failed).toBe(1);
   });
 });
 
 describe("rate limiting", () => {
   it("waits out a 429 and retries the same recipient", async () => {
-    await seed(2);
+    const ids = await seed(2);
     // Fail the first send with a rate limit; nobody should be skipped for it.
     telegram.failNext(429, "Too Many Requests: retry later", { retryAfter: 0 });
-    const broadcast = app.store.createBroadcast(botId, "Hello", [], 2);
+    const broadcast = app.store.createBroadcast(botId, "Hello", [], ids);
 
     app.broadcasts.start(broadcast.id);
     await app.broadcasts.whenIdle();
@@ -108,11 +149,11 @@ describe("rate limiting", () => {
   });
 
   it("retries a 429 that carries no retry_after instead of dropping the recipient", async () => {
-    await seed(1);
+    const ids = await seed(1);
     // Telegram usually sends retry_after, but it is not guaranteed. A 429 is
     // temporary either way, so the recipient must not be counted as failed.
     telegram.failNext(429, "Too Many Requests");
-    const broadcast = app.store.createBroadcast(botId, "Hello", [], 1);
+    const broadcast = app.store.createBroadcast(botId, "Hello", [], ids);
 
     app.broadcasts.start(broadcast.id);
     await app.broadcasts.whenIdle();
@@ -123,10 +164,10 @@ describe("rate limiting", () => {
   }, 10_000);
 
   it("gives up on a recipient that is rate limited over and over", async () => {
-    await seed(1);
+    const ids = await seed(1);
     // Far more failures than the retry budget allows.
     telegram.failNext(429, "Too Many Requests", { retryAfter: 0, times: 50 });
-    const broadcast = app.store.createBroadcast(botId, "Hello", [], 1);
+    const broadcast = app.store.createBroadcast(botId, "Hello", [], ids);
 
     app.broadcasts.start(broadcast.id);
     await app.broadcasts.whenIdle();
@@ -138,10 +179,10 @@ describe("rate limiting", () => {
   });
 
   it("paces sends when an interval is configured", async () => {
-    await seed(4);
+    const ids = await seed(4);
     // A deliberately slow runner: 3 gaps of 20ms across 4 recipients.
     const paced = new BroadcastRunner(app, { sendIntervalMs: 20 });
-    const broadcast = app.store.createBroadcast(botId, "Hello", [], 4);
+    const broadcast = app.store.createBroadcast(botId, "Hello", [], ids);
 
     const started = Date.now();
     paced.start(broadcast.id);
@@ -155,8 +196,8 @@ describe("rate limiting", () => {
 
 describe("interruption", () => {
   it("checkpoints progress so a restart resumes instead of restarting", async () => {
-    await seed(4);
-    const broadcast = app.store.createBroadcast(botId, "Hello", [], 4);
+    const ids = await seed(4);
+    const broadcast = app.store.createBroadcast(botId, "Hello", [], ids);
 
     // Simulate a process that died after delivering two.
     app.store.updateBroadcast(broadcast.id, { status: "sending", cursor: 2, sent: 2 });
@@ -172,8 +213,8 @@ describe("interruption", () => {
   });
 
   it("picks up unfinished broadcasts on boot", async () => {
-    await seed(2);
-    const broadcast = app.store.createBroadcast(botId, "Hello", [], 2);
+    const ids = await seed(2);
+    const broadcast = app.store.createBroadcast(botId, "Hello", [], ids);
     app.store.updateBroadcast(broadcast.id, { status: "sending" });
 
     app.broadcasts.resumeUnfinished();
@@ -183,8 +224,8 @@ describe("interruption", () => {
   });
 
   it("does not start the same broadcast twice", async () => {
-    await seed(3);
-    const broadcast = app.store.createBroadcast(botId, "Hello", [], 3);
+    const ids = await seed(3);
+    const broadcast = app.store.createBroadcast(botId, "Hello", [], ids);
 
     app.broadcasts.start(broadcast.id);
     app.broadcasts.start(broadcast.id);
@@ -194,8 +235,8 @@ describe("interruption", () => {
   });
 
   it("marks a broadcast failed when the bot is gone", async () => {
-    await seed(1);
-    const broadcast = app.store.createBroadcast(botId, "Hello", [], 1);
+    const ids = await seed(1);
+    const broadcast = app.store.createBroadcast(botId, "Hello", [], ids);
     app.store.deleteBot(botId);
 
     app.broadcasts.start(broadcast.id);
@@ -208,6 +249,6 @@ describe("interruption", () => {
 
 describe("schema migrations", () => {
   it("reports the current schema version", () => {
-    expect(app.store.schemaVersion).toBe(2);
+    expect(app.store.schemaVersion).toBe(3);
   });
 });

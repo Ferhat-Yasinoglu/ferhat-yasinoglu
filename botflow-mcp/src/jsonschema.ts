@@ -60,8 +60,16 @@ export function validate(value: unknown, schema: JsonSchema | undefined, path = 
     if (schema.maxLength !== undefined && value.length > schema.maxLength) {
       errors.push({ path: at, message: `must be at most ${schema.maxLength} characters` });
     }
-    if (schema.pattern !== undefined && !new RegExp(schema.pattern).test(value)) {
-      errors.push({ path: at, message: `must match /${schema.pattern}/` });
+    if (schema.pattern !== undefined) {
+      // An imported spec can carry a pattern this engine cannot compile. Report
+      // that as a validation problem rather than throwing out of the validator.
+      try {
+        if (!new RegExp(schema.pattern).test(value)) {
+          errors.push({ path: at, message: `must match /${schema.pattern}/` });
+        }
+      } catch {
+        errors.push({ path: at, message: `schema has an invalid pattern: ${schema.pattern}` });
+      }
     }
   }
 
