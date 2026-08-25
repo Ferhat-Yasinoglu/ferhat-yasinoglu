@@ -25,14 +25,14 @@ model: → connect_bot → create_flow → publish_flow → set_trigger
 | Broadcasts | Working. Background jobs, rate-limited, resumable. AND-segments by tag, with `dry_run` |
 | Analytics | Working. Subscribers, messages, per-flow completion |
 | Storage | SQLite, no external service, migrated in place on upgrade |
-| Upstream servers | Working. Another MCP server's tools can be republished through this one |
+| Upstream servers | Working. Another MCP server's tools, prompts and resources can be republished through this one |
 | Instagram / TikTok | Not built. Both need a Meta or TikTok app and their review process |
 
 ## Quick start
 
 ```bash
 npm install
-npm test          # 168 tests, no network needed
+npm test          # 183 tests, no network needed
 npm run dev       # http://localhost:3000/mcp
 ```
 
@@ -103,10 +103,11 @@ background at that pace, checkpointing after every send. Poll `get_broadcast`
 for progress. A restart resumes from the checkpoint rather than messaging the
 first few thousand people twice.
 
-## Borrowing another server's tools
+## Borrowing another server's surface
 
-This server can also be an MCP *client*. Point it at another server and its tools
-join the list this one advertises, forwarded call by call:
+This server can also be an MCP *client*. Point it at another server and its
+tools, prompts and resources join the ones this server advertises, forwarded
+call by call:
 
 ```bash
 BOTFLOW_UPSTREAM_URL=https://mcp.chatplace.io/mcp \
@@ -115,28 +116,35 @@ npm start
 ```
 
 ```
-upstream chatplace: <n> tool(s) from https://mcp.chatplace.io/mcp
+upstream chatplace: <n> tool(s), <n> prompt(s), <n> resource(s) from https://mcp.chatplace.io/mcp
 botflow-mcp listening on http://0.0.0.0:3000/mcp
   tools:  20 + <n>
   from:   chatplace → https://mcp.chatplace.io/mcp
 ```
 
 Nothing about that server is written down here. Its surface is read at startup
-with `tools/list`, so its schemas, titles and descriptions are whatever it says
+from `tools/list`, so its schemas, titles and descriptions are whatever it says
 they are today — the opposite of `npm run probe`, which copies a surface into
 `spec/tools.json` once and serves that copy.
 
-Forwarded tools are namespaced — `chatplace_send_message` — from
-`BOTFLOW_UPSTREAM_NAME` or the hostname, and a name that would collide with a
-tool this server implements is skipped rather than allowed to shadow it. Set
-`BOTFLOW_UPSTREAM_PREFIX` to choose the prefix, or to an empty string for none.
+All three halves come across. Tools and prompts are namespaced —
+`chatplace_send_message` — from `BOTFLOW_UPSTREAM_NAME` or the hostname, and a
+name that would collide with something this server serves itself is skipped
+rather than allowed to shadow it. Set `BOTFLOW_UPSTREAM_PREFIX` to choose the
+prefix, or to an empty string for none. Resources keep their own URIs, prefix or
+no prefix, because a URI already identifies a thing globally; a resource
+template is matched by shape, so `notes://{id}` sends `notes://7` upstream too.
 For several upstreams at once, set `BOTFLOW_UPSTREAMS` to a JSON array of
 `{name, url, apiKey, prefix, timeoutMs}`.
 
+Whatever an upstream does not offer stays absent rather than empty, so this
+server never advertises a capability on its behalf that it cannot serve.
+
 Arguments are validated against the upstream's own schema before the call leaves
 this process, and its result — content, structured output, errors — is passed
-back untouched. `/healthz` lists each upstream and whether it is currently
-connected.
+back untouched. Resource content is read from the upstream every time rather
+than copied here, so the two cannot drift apart. `/healthz` lists each upstream
+and whether it is currently connected.
 
 An upstream that is down at startup is reported and skipped; this server's own
 tools still come up. The connection is opened lazily and reopened if it drops,
@@ -166,7 +174,7 @@ one, or existing databases will disagree with the code reading them.
 | `PORT` / `HOST` | `3000` / `0.0.0.0` | Listen address |
 | `MCP_PATH` | `/mcp` | Endpoint path |
 | `TELEGRAM_API_URL` | `https://api.telegram.org` | Override to point at a mock |
-| `BOTFLOW_UPSTREAM_URL` | — | Another MCP server whose tools are republished here |
+| `BOTFLOW_UPSTREAM_URL` | — | Another MCP server whose surface is republished here |
 | `BOTFLOW_UPSTREAM_KEY` | — | Bearer token for that server |
 | `BOTFLOW_UPSTREAM_NAME` / `_PREFIX` | *(from the host)* | Namespace for its tools |
 | `BOTFLOW_UPSTREAMS` | — | JSON array, for more than one upstream |
@@ -223,7 +231,8 @@ src/engine/steps.ts    step definitions, flow validation, {{variable}} interpola
 src/engine/runner.ts   executes a run until it blocks or ends
 src/engine/dispatch.ts routes an incoming Telegram update to a run or a trigger
 src/store/             SQLite schema, migrations, and all data access
-src/upstream.ts        MCP client for another server, and how its tools join ours
+src/upstream.ts        MCP client for another server, and how its surface joins ours
+src/handlers/index.ts  the registry a server answers from: tools, prompts, resources
 src/telegram.ts        Bot API client, with fetch injected so it can be faked
 src/broadcast.ts       paced, resumable background delivery
 src/worker.ts          long-polls Telegram, wakes runs parked on a delay
@@ -242,7 +251,7 @@ the spec without a handler falls back to a stub that answers in the shape its
 npm test
 ```
 
-168 tests, no network and no real bot token. `test/fake-telegram.ts` stands in
+183 tests, no network and no real bot token. `test/fake-telegram.ts` stands in
 for the Bot API and can be told to fail the way Telegram does — a user blocking
 the bot, a rate limit, a revoked token — so the end-to-end tests in
 `test/e2e.test.ts` drive real flows over real SQLite through actual MCP tool
@@ -250,8 +259,10 @@ calls.
 
 `test/upstream.test.ts` does the same for the client side: it stands a second
 instance of this server up on a loopback port, points the upstream client at it,
-and forwards calls through both — the same Streamable HTTP a hosted connector
-speaks, over a real socket.
+and forwards tool calls, prompts and resource reads through both — the same
+Streamable HTTP a hosted connector speaks, over a real socket. The two get
+separate handler registries, because sharing one in a single process would have
+each forward to the other for ever.
 
 ## Requirements
 

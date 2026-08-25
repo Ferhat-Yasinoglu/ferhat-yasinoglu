@@ -4,12 +4,13 @@ import type { Server as HttpServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { authFromEnv } from "../src/auth.js";
-import { handlers } from "../src/handlers/index.js";
+import { createRegistry, handlers, type Registry } from "../src/handlers/index.js";
 import { startHttpServer } from "../src/http.js";
 import type { ServerSpec, ToolHandler } from "../src/types.js";
 import {
   attachUpstream,
   localName,
+  matcherFor,
   nameFromUrl,
   normalizeConfig,
   UpstreamServer,
@@ -58,6 +59,14 @@ const upstreamSpec: ServerSpec = {
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
     },
   ],
+  prompts: [
+    { name: "greet", description: "Greets someone.", arguments: [{ name: "who", required: true }] },
+  ],
+  resources: [
+    { uri: "memo://notes", name: "Notes", mimeType: "text/plain", text: "upstream note" },
+    { uri: "memo://notes/7", name: "Note 7", text: "note seven" },
+  ],
+  resourceTemplates: [{ uriTemplate: "memo://notes/{id}", name: "One note" }],
 };
 
 const echoHandler: ToolHandler = (args) => {
@@ -219,27 +228,33 @@ describe("attachUpstream", () => {
   it("adds the upstream's tools to the local surface under a prefix", async () => {
     const spec = localSpec();
     const upstream = connectTo();
-    const handlerMap = new Map<string, ToolHandler>();
+    const targets = createRegistry();
 
-    const { added, skipped } = await attachUpstream(spec, upstream, handlerMap);
+    const attachment = await attachUpstream(spec, upstream, targets);
 
-    expect(added).toEqual(["up_echo", "up_boom"]);
-    expect(skipped).toEqual([]);
+    expect(attachment.tools).toEqual(["up_echo", "up_boom"]);
+    expect(attachment.skipped).toEqual([]);
     expect(spec.tools.map((t) => t.name)).toEqual(["up_echo", "up_boom"]);
-    expect([...handlerMap.keys()]).toEqual(["up_echo", "up_boom"]);
+    expect([...targets.tools.keys()]).toEqual(["up_echo", "up_boom"]);
 
     await upstream.close();
   });
 
-  it("records where each forwarded tool came from", async () => {
+  it("records where each forwarded thing came from", async () => {
     const spec = localSpec();
     const upstream = connectTo();
-    await attachUpstream(spec, upstream, new Map());
+    await attachUpstream(spec, upstream, createRegistry());
 
     expect(spec.tools[0]?._meta?.[UPSTREAM_META_KEY]).toEqual({
       server: "up",
       url: upstreamUrl,
-      tool: "echo",
+      kind: "tool",
+      name: "echo",
+    });
+    expect(spec.prompts?.[0]?._meta?.[UPSTREAM_META_KEY]).toMatchObject({ kind: "prompt", name: "greet" });
+    expect(spec.resources?.[0]?._meta?.[UPSTREAM_META_KEY]).toMatchObject({
+      kind: "resource",
+      name: "memo://notes",
     });
 
     await upstream.close();
@@ -248,7 +263,7 @@ describe("attachUpstream", () => {
   it("tells the model which tools are forwarded and passes the upstream's instructions on", async () => {
     const spec = localSpec();
     const upstream = connectTo();
-    await attachUpstream(spec, upstream, new Map());
+    await attachUpstream(spec, upstream, createRegistry());
 
     expect(spec.instructions).toContain("Local instructions.");
     expect(spec.instructions).toContain("up_*");
@@ -263,16 +278,102 @@ describe("attachUpstream", () => {
       { name: "echo", description: "Ours.", inputSchema: { type: "object", properties: {} } },
     ]);
     const upstream = new UpstreamServer({ name: "up", url: upstreamUrl, apiKey: UPSTREAM_KEY, prefix: "" });
-    const handlerMap = new Map<string, ToolHandler>();
+    const targets = createRegistry();
 
-    const { added, skipped } = await attachUpstream(spec, upstream, handlerMap);
+    const attachment = await attachUpstream(spec, upstream, targets);
 
-    expect(added).toEqual(["boom"]);
-    expect(skipped).toEqual([{ tool: "echo", reason: '"echo" is already served here' }]);
-    expect(handlerMap.has("echo")).toBe(false);
+    expect(attachment.tools).toEqual(["boom"]);
+    expect(attachment.skipped).toContainEqual({
+      kind: "tool",
+      name: "echo",
+      reason: '"echo" is already served here',
+    });
+    expect(targets.tools.has("echo")).toBe(false);
     expect(spec.tools.find((t) => t.name === "echo")?.description).toBe("Ours.");
 
     await upstream.close();
+  });
+
+  it("brings the prompts across under the same prefix", async () => {
+    const spec = localSpec();
+    const upstream = connectTo();
+    const targets = createRegistry();
+
+    const attachment = await attachUpstream(spec, upstream, targets);
+
+    expect(attachment.prompts).toEqual(["up_greet"]);
+    expect(spec.prompts?.map((p) => p.name)).toEqual(["up_greet"]);
+    expect(spec.prompts?.[0]?.arguments).toEqual([{ name: "who", required: true }]);
+    expect(targets.prompts.has("up_greet")).toBe(true);
+
+    await upstream.close();
+  });
+
+  it("keeps resource URIs as they are, because a URI is already global", async () => {
+    const spec = localSpec();
+    const upstream = connectTo();
+    const targets = createRegistry();
+
+    const attachment = await attachUpstream(spec, upstream, targets);
+
+    expect(attachment.resources).toEqual(["memo://notes", "memo://notes/7"]);
+    expect(spec.resources?.map((r) => r.uri)).toEqual(["memo://notes", "memo://notes/7"]);
+    expect(targets.resources.has("memo://notes")).toBe(true);
+
+    await upstream.close();
+  });
+
+  it("does not keep a copy of resource content that the upstream owns", async () => {
+    const spec = localSpec();
+    const upstream = connectTo();
+    await attachUpstream(spec, upstream, createRegistry());
+
+    expect(spec.resources?.[0]).not.toHaveProperty("text");
+
+    await upstream.close();
+  });
+
+  it("routes a templated URI to the upstream by its shape", async () => {
+    const spec = localSpec();
+    const upstream = connectTo();
+    const targets = createRegistry();
+
+    const attachment = await attachUpstream(spec, upstream, targets);
+
+    expect(attachment.resourceTemplates).toEqual(["memo://notes/{id}"]);
+    expect(targets.routers).toHaveLength(1);
+    const route = targets.routers[0]!;
+    expect(route.match("memo://notes/42")).toBe(true);
+    expect(route.match("other://notes/42")).toBe(false);
+
+    // The router's handler is the forwarder: what comes back is the upstream's.
+    const read = await route.handler("memo://notes/7", { apiKey: null });
+    expect(read.contents[0]?.text).toBe("note seven");
+
+    await upstream.close();
+  });
+
+  it("leaves out the halves an upstream does not offer", async () => {
+    const toolsOnly = await startHttpServer({
+      spec: { ...upstreamSpec, prompts: undefined, resources: undefined, resourceTemplates: undefined },
+      port: 0,
+      host: "127.0.0.1",
+    });
+    const { port } = toolsOnly.address() as AddressInfo;
+    const upstream = connectTo(`http://127.0.0.1:${port}/mcp`, undefined);
+
+    const spec = localSpec();
+    const attachment = await attachUpstream(spec, upstream, createRegistry());
+
+    expect(attachment.tools).toHaveLength(2);
+    expect(attachment.prompts).toEqual([]);
+    // Absent, not empty: presence is what decides the capabilities we advertise.
+    expect(spec.prompts).toBeUndefined();
+    expect(spec.resources).toBeUndefined();
+    expect(spec.resourceTemplates).toBeUndefined();
+
+    await upstream.close();
+    await stop(toolsOnly);
   });
 });
 
@@ -281,21 +382,33 @@ describe("a server with an upstream attached", () => {
   let localUrl: URL;
   let upstream: UpstreamServer;
 
+  /**
+   * Its own registry, not the process-wide one: the fake upstream is a server
+   * in this same process, and sharing implementations would have each forward
+   * to the other for ever.
+   */
+  const registry: Registry = createRegistry();
+
   beforeAll(async () => {
     const spec = localSpec([
       { name: "ping", description: "Local tool.", inputSchema: { type: "object", properties: {} } },
     ]);
     upstream = connectTo();
-    await attachUpstream(spec, upstream, handlers);
+    await attachUpstream(spec, upstream, registry);
 
-    local = await startHttpServer({ spec, auth: authFromEnv({} as NodeJS.ProcessEnv), port: 0, host: "127.0.0.1", upstreams: [upstream] });
+    local = await startHttpServer({
+      spec,
+      auth: authFromEnv({} as NodeJS.ProcessEnv),
+      port: 0,
+      host: "127.0.0.1",
+      upstreams: [upstream],
+      registry,
+    });
     const { port } = local.address() as AddressInfo;
     localUrl = new URL(`http://127.0.0.1:${port}/mcp`);
   });
 
   afterAll(async () => {
-    handlers.delete("up_echo");
-    handlers.delete("up_boom");
     await upstream.close();
     await stop(local);
   });
@@ -348,6 +461,64 @@ describe("a server with an upstream attached", () => {
 
     expect(result.isError).toBe(true);
     expect(JSON.stringify(result.content)).toContain("upstream exploded");
+
+    await c.close();
+  });
+
+  it("advertises the capabilities the upstream brought with it", async () => {
+    const c = await client();
+    const caps = c.getServerCapabilities();
+
+    // The local spec had tools only; prompts and resources arrived with the upstream.
+    expect(caps?.prompts).toBeDefined();
+    expect(caps?.resources).toBeDefined();
+
+    await c.close();
+  });
+
+  it("serves a forwarded prompt from the upstream, not from a local stub", async () => {
+    const c = await client();
+
+    const { prompts } = await c.listPrompts();
+    expect(prompts.map((p) => p.name)).toEqual(["up_greet"]);
+
+    const result = await c.getPrompt({ name: "up_greet", arguments: { who: "world" } });
+    const text = result.messages.map((m) => (m.content as { text?: string }).text ?? "").join("\n");
+    // The upstream answered under its own name for the prompt, and saw the argument.
+    expect(text).toContain('Prompt "greet"');
+    expect(text).not.toContain("up_greet");
+    expect(text).toContain("who: world");
+
+    await c.close();
+  });
+
+  it("refuses a forwarded prompt that is missing a required argument", async () => {
+    const c = await client();
+    await expect(c.getPrompt({ name: "up_greet", arguments: {} })).rejects.toThrow(/who/);
+    await c.close();
+  });
+
+  it("reads a forwarded resource's content from the upstream on every read", async () => {
+    const c = await client();
+
+    const { resources } = await c.listResources();
+    expect(resources.map((r) => r.uri)).toEqual(["memo://notes", "memo://notes/7"]);
+
+    const read = await c.readResource({ uri: "memo://notes" });
+    // A local answer would be the spec stub; only the upstream knows this text.
+    expect(read.contents[0]?.text).toBe("upstream note");
+
+    await c.close();
+  });
+
+  it("passes a templated read through as well", async () => {
+    const c = await client();
+
+    const { resourceTemplates } = await c.listResourceTemplates();
+    expect(resourceTemplates.map((t) => t.uriTemplate)).toEqual(["memo://notes/{id}"]);
+
+    const read = await c.readResource({ uri: "memo://notes/7" });
+    expect(read.contents[0]?.text).toBe("note seven");
 
     await c.close();
   });
@@ -435,5 +606,17 @@ describe("configuration", () => {
     expect(localName("cp_", "send_message")).toBe("cp_send_message");
     expect(localName("cp_", "chat.send")).toBe("cp_chat_send");
     expect(localName("", "chat/send")).toBe("chat_send");
+  });
+
+  it("matches a URI template against the URIs it covers, and nothing else", () => {
+    const match = matcherFor("notes://{user}/posts/{id}");
+
+    expect(match("notes://ada/posts/7")).toBe(true);
+    expect(match("notes://ada/posts/7/extra")).toBe(false);
+    expect(match("notes://ada/posts/")).toBe(false);
+    expect(match("notes://ada/drafts/7")).toBe(false);
+
+    // The literal halves are matched literally, dots and all.
+    expect(matcherFor("file://a.b/{x}")("file://axb/1")).toBe(false);
   });
 });

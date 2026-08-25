@@ -1,22 +1,32 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { McpError } from "@modelcontextprotocol/sdk/types.js";
-import { handlers as defaultHandlers } from "./handlers/index.js";
-import type { ServerSpec, ToolHandler, ToolResult, ToolSpec } from "./types.js";
+import { defaultRegistry, type Registry } from "./handlers/index.js";
+import type {
+  PromptResult,
+  PromptSpec,
+  ResourceResult,
+  ResourceSpec,
+  ResourceTemplateSpec,
+  ServerSpec,
+  ToolResult,
+  ToolSpec,
+} from "./types.js";
 
 /**
- * Speak MCP as a *client* to another MCP server and republish its tools as ours.
+ * Speak MCP as a *client* to another MCP server and republish its surface as ours.
  *
  * This is the other direction from `scripts/probe.ts`: probe copies a surface
  * into `spec/tools.json` once, at build time. Here the surface is discovered at
  * startup and the calls are forwarded live, so a remote connector such as
- * `https://mcp.chatplace.io/mcp` becomes part of the tool list this server
- * advertises without anyone writing its schemas down first.
+ * `https://mcp.chatplace.io/mcp` becomes part of what this server advertises
+ * without anyone writing its schemas down first.
  *
  *   BOTFLOW_UPSTREAM_URL=https://mcp.chatplace.io/mcp BOTFLOW_UPSTREAM_KEY=… npm start
  *
- * Upstream tools are namespaced (`chatplace_send_message`) so they can never
- * collide with, or quietly shadow, a tool this server implements itself.
+ * Tools and prompts are namespaced (`chatplace_send_message`) so they can never
+ * collide with, or quietly shadow, something this server serves itself.
+ * Resources keep their URIs, which already identify them globally.
  */
 
 const CLIENT_INFO = { name: "botflow-mcp", version: "0.1.0" };
@@ -39,6 +49,9 @@ export type UpstreamConfig = {
 export type UpstreamInfo = {
   serverInfo?: { name: string; version: string; title?: string };
   instructions?: string;
+  /** Which optional halves of the surface the handshake advertised. */
+  hasPrompts?: boolean;
+  hasResources?: boolean;
 };
 
 const DEFAULT_TIMEOUT_MS = 15_000;
@@ -95,6 +108,62 @@ export class UpstreamServer {
       ...(tool.annotations ? { annotations: tool.annotations as ToolSpec["annotations"] } : {}),
       ...(tool._meta ? { _meta: tool._meta } : {}),
     }));
+  }
+
+  /**
+   * The optional halves of the surface, or `undefined` when the upstream does
+   * not offer them.
+   *
+   * A server may advertise a capability and still answer "method not found",
+   * which is a refusal rather than a failure — treat it as "nothing offered"
+   * so one grumpy half does not sink the rest of the attachment.
+   */
+  async listPrompts(): Promise<PromptSpec[] | undefined> {
+    const client = await this.#connected();
+    if (!this.#info.hasPrompts) return undefined;
+    return this.#tryList(async () => {
+      const { prompts } = await client.listPrompts(undefined, { timeout: this.#timeoutMs });
+      return prompts as PromptSpec[];
+    });
+  }
+
+  async listResources(): Promise<ResourceSpec[] | undefined> {
+    const client = await this.#connected();
+    if (!this.#info.hasResources) return undefined;
+    return this.#tryList(async () => {
+      const { resources } = await client.listResources(undefined, { timeout: this.#timeoutMs });
+      return resources as ResourceSpec[];
+    });
+  }
+
+  async listResourceTemplates(): Promise<ResourceTemplateSpec[] | undefined> {
+    const client = await this.#connected();
+    if (!this.#info.hasResources) return undefined;
+    return this.#tryList(async () => {
+      const { resourceTemplates } = await client.listResourceTemplates(undefined, { timeout: this.#timeoutMs });
+      return resourceTemplates as ResourceTemplateSpec[];
+    });
+  }
+
+  async getPrompt(name: string, args: Record<string, string>): Promise<PromptResult> {
+    const client = await this.#connected();
+    const result = await client.getPrompt({ name, arguments: args }, { timeout: this.#timeoutMs });
+    return result as unknown as PromptResult;
+  }
+
+  async readResource(uri: string): Promise<ResourceResult> {
+    const client = await this.#connected();
+    const result = await client.readResource({ uri }, { timeout: this.#timeoutMs });
+    return result as unknown as ResourceResult;
+  }
+
+  async #tryList<T>(list: () => Promise<T>): Promise<T | undefined> {
+    try {
+      return await list();
+    } catch (cause) {
+      if (cause instanceof McpError) return undefined;
+      throw cause;
+    }
   }
 
   /**
@@ -163,9 +232,12 @@ export class UpstreamServer {
 
     const serverInfo = client.getServerVersion();
     const instructions = client.getInstructions();
+    const capabilities = client.getServerCapabilities();
     this.#info = {
       ...(serverInfo ? { serverInfo: serverInfo as UpstreamInfo["serverInfo"] } : {}),
       ...(instructions ? { instructions } : {}),
+      hasPrompts: capabilities?.prompts !== undefined,
+      hasResources: capabilities?.resources !== undefined,
     };
     this.#client = client;
     return client;
@@ -180,18 +252,29 @@ export class UpstreamServer {
 
 export type UpstreamAttachment = {
   upstream: UpstreamServer;
-  /** Local names now served on the upstream's behalf. */
-  added: string[];
-  /** Upstream tools left out, and why. */
-  skipped: { tool: string; reason: string }[];
+  /** Local names now served on the upstream's behalf, by kind. */
+  tools: string[];
+  prompts: string[];
+  resources: string[];
+  resourceTemplates: string[];
+  /** What was left out, and why. */
+  skipped: { kind: AttachKind; name: string; reason: string }[];
 };
 
+export type AttachKind = "tool" | "prompt" | "resource" | "resourceTemplate";
+
 /**
- * Discover an upstream's tools and splice them into the surface we serve.
+ * Discover an upstream's surface and splice it into the one we serve.
  *
- * The spec is data, so adding tools is a push and a handler registration —
- * `createServer` reads `spec.tools` on every request and picks them up. Call
- * this at startup, before the first request is served.
+ * The spec is data, so adding a tool is a push and a handler registration —
+ * `createServer` reads the spec on every request and picks them up. Call this
+ * at startup, before the first request is served.
+ *
+ * All three halves come across: tools, prompts, and resources with their
+ * templates. Whatever the upstream does not offer is left absent rather than
+ * empty, because presence is what decides the capabilities we advertise — and
+ * advertising prompts on behalf of a server that has none would be a lie the
+ * first `prompts/list` exposes.
  *
  * Arguments reach the forwarding handler already validated against the
  * upstream's own `inputSchema` and with its defaults applied, because that is
@@ -200,42 +283,123 @@ export type UpstreamAttachment = {
 export async function attachUpstream(
   spec: ServerSpec,
   upstream: UpstreamServer,
-  handlers: Map<string, ToolHandler> = defaultHandlers,
+  registry: Registry = defaultRegistry,
 ): Promise<UpstreamAttachment> {
+  const at: UpstreamAttachment = {
+    upstream,
+    tools: [],
+    prompts: [],
+    resources: [],
+    resourceTemplates: [],
+    skipped: [],
+  };
+
+  // Tools first: listing them is what opens the connection, so the handshake
+  // has told us which of the other halves are worth asking about.
   const tools = await upstream.listTools();
-  const taken = new Set(spec.tools.map((tool) => tool.name));
-
-  const added: string[] = [];
-  const skipped: { tool: string; reason: string }[] = [];
-
+  const takenTools = new Set(spec.tools.map((tool) => tool.name));
   for (const tool of tools) {
     const local = localName(upstream.prefix, tool.name);
-    if (taken.has(local)) {
+    if (takenTools.has(local)) {
       // Never shadow a local tool: the caller asked for ours, they get ours.
-      skipped.push({ tool: tool.name, reason: `"${local}" is already served here` });
+      at.skipped.push({ kind: "tool", name: tool.name, reason: `"${local}" is already served here` });
       continue;
     }
-
-    spec.tools.push({
-      ...tool,
-      name: local,
-      _meta: {
-        ...tool._meta,
-        [UPSTREAM_META_KEY]: { server: upstream.name, url: upstream.url, tool: tool.name },
-      },
-    });
-    handlers.set(local, forwarder(upstream, tool.name));
-    taken.add(local);
-    added.push(local);
+    spec.tools.push({ ...tool, name: local, _meta: origin(tool._meta, upstream, "tool", tool.name) });
+    registry.tools.set(local, (args) => upstream.callTool(tool.name, args));
+    takenTools.add(local);
+    at.tools.push(local);
   }
 
-  if (added.length > 0) spec.instructions = withUpstreamNote(spec.instructions, upstream, added.length);
+  const prompts = await upstream.listPrompts();
+  if (prompts) {
+    spec.prompts ??= [];
+    const taken = new Set(spec.prompts.map((prompt) => prompt.name));
+    for (const prompt of prompts) {
+      const local = localName(upstream.prefix, prompt.name);
+      if (taken.has(local)) {
+        at.skipped.push({ kind: "prompt", name: prompt.name, reason: `"${local}" is already served here` });
+        continue;
+      }
+      spec.prompts.push({ ...prompt, name: local, _meta: origin(prompt._meta, upstream, "prompt", prompt.name) });
+      registry.prompts.set(local, (args) => upstream.getPrompt(prompt.name, args));
+      taken.add(local);
+      at.prompts.push(local);
+    }
+  }
 
-  return { upstream, added, skipped };
+  // A resource is addressed by URI, which is already global — renaming one into
+  // our namespace would break the very thing that identifies it.
+  const resources = await upstream.listResources();
+  if (resources) {
+    spec.resources ??= [];
+    const taken = new Set(spec.resources.map((resource) => resource.uri));
+    for (const resource of resources) {
+      if (taken.has(resource.uri)) {
+        at.skipped.push({ kind: "resource", name: resource.uri, reason: "already served here" });
+        continue;
+      }
+      // `text` is dropped on purpose: the content comes from the upstream on
+      // every read, so caching a copy here would only let the two drift apart.
+      const { text: _text, ...rest } = resource;
+      spec.resources.push({ ...rest, _meta: origin(resource._meta, upstream, "resource", resource.uri) });
+      registry.resources.set(resource.uri, (uri) => upstream.readResource(uri));
+      taken.add(resource.uri);
+      at.resources.push(resource.uri);
+    }
+  }
+
+  const templates = await upstream.listResourceTemplates();
+  if (templates) {
+    spec.resourceTemplates ??= [];
+    const taken = new Set(spec.resourceTemplates.map((template) => template.uriTemplate));
+    for (const template of templates) {
+      if (taken.has(template.uriTemplate)) {
+        at.skipped.push({ kind: "resourceTemplate", name: template.uriTemplate, reason: "already served here" });
+        continue;
+      }
+      spec.resourceTemplates.push({ ...template, _meta: origin(template._meta, upstream, "resourceTemplate", template.uriTemplate) });
+      // A templated URI has no list entry to key a handler on, so route by shape.
+      registry.routers.push({ match: matcherFor(template.uriTemplate), handler: (uri) => upstream.readResource(uri) });
+      taken.add(template.uriTemplate);
+      at.resourceTemplates.push(template.uriTemplate);
+    }
+  }
+
+  if (at.tools.length > 0) {
+    spec.instructions = withUpstreamNote(spec.instructions, upstream, at.tools.length);
+  }
+
+  return at;
 }
 
-function forwarder(upstream: UpstreamServer, remoteName: string): ToolHandler {
-  return (args) => upstream.callTool(remoteName, args);
+/** Stamp where something came from, keeping whatever `_meta` it already had. */
+function origin(
+  meta: Record<string, unknown> | undefined,
+  upstream: UpstreamServer,
+  kind: AttachKind,
+  name: string,
+) {
+  return { ...meta, [UPSTREAM_META_KEY]: { server: upstream.name, url: upstream.url, kind, name } };
+}
+
+/**
+ * Turn `notes://{user}/{id}` into a test for the URIs it covers.
+ *
+ * RFC 6570 has far more in it than this, but MCP templates in the wild are
+ * path-shaped, so a variable matches one segment and everything else is literal.
+ */
+export function matcherFor(uriTemplate: string): (uri: string) => boolean {
+  const pattern = uriTemplate
+    .split(/(\{[^}]*\})/)
+    .map((part) => (part.startsWith("{") && part.endsWith("}") ? "[^/]+" : escapeRegExp(part)))
+    .join("");
+  const regex = new RegExp(`^${pattern}$`);
+  return (uri: string) => regex.test(uri);
+}
+
+function escapeRegExp(literal: string): string {
+  return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**

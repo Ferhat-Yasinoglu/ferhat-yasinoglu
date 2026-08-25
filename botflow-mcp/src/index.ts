@@ -7,7 +7,13 @@ import { startHttpServer } from "./http.js";
 import { createServer } from "./server.js";
 import { defaultSpecPath, loadSpec } from "./spec.js";
 import type { ServerSpec } from "./types.js";
-import { attachUpstream, normalizeConfig, UpstreamServer, upstreamsFromEnv } from "./upstream.js";
+import {
+  attachUpstream,
+  normalizeConfig,
+  UpstreamServer,
+  upstreamsFromEnv,
+  type UpstreamAttachment,
+} from "./upstream.js";
 import { Worker } from "./worker.js";
 
 /**
@@ -83,7 +89,7 @@ async function main(argv: string[]): Promise<void> {
 }
 
 /**
- * Bring up every configured upstream and splice its tools into `spec`.
+ * Bring up every configured upstream and splice its surface into `spec`.
  *
  * An unreachable upstream is reported and skipped rather than fatal: a
  * connector being down should not take this server's own tools with it. The
@@ -99,10 +105,10 @@ async function connectUpstreams(argv: string[], spec: ServerSpec): Promise<Upstr
   for (const config of configs) {
     const upstream = new UpstreamServer(config);
     try {
-      const { added, skipped } = await attachUpstream(spec, upstream);
-      console.error(`upstream ${config.name}: ${added.length} tool(s) from ${config.url}`);
-      for (const { tool, reason } of skipped) {
-        console.error(`  skipped ${tool}: ${reason}`);
+      const attachment = await attachUpstream(spec, upstream);
+      console.error(`upstream ${config.name}: ${describeAttachment(attachment)} from ${config.url}`);
+      for (const { kind, name, reason } of attachment.skipped) {
+        console.error(`  skipped ${kind} ${name}: ${reason}`);
       }
       connected.push(upstream);
     } catch (cause) {
@@ -112,6 +118,18 @@ async function connectUpstreams(argv: string[], spec: ServerSpec): Promise<Upstr
     }
   }
   return connected;
+}
+
+/** "14 tool(s), 2 prompt(s)" — naming only the halves that came across. */
+function describeAttachment(attachment: UpstreamAttachment): string {
+  const counts: [number, string][] = [
+    [attachment.tools.length, "tool"],
+    [attachment.prompts.length, "prompt"],
+    [attachment.resources.length, "resource"],
+    [attachment.resourceTemplates.length, "resource template"],
+  ];
+  const parts = counts.filter(([n]) => n > 0).map(([n, label]) => `${n} ${label}(s)`);
+  return parts.length > 0 ? parts.join(", ") : "nothing";
 }
 
 function valueOf(argv: string[], flag: string): string | undefined {
