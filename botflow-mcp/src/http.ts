@@ -4,12 +4,15 @@ import type { Server as HttpServer } from "node:http";
 import { authenticate, authFromEnv, type AuthConfig } from "./auth.js";
 import { createServer } from "./server.js";
 import type { ServerSpec } from "./types.js";
+import type { UpstreamServer } from "./upstream.js";
 
 export type HttpOptions = {
   spec: ServerSpec;
   auth?: AuthConfig;
   /** Mount path for the MCP endpoint. ChatPlace serves its connector at /mcp. */
   path?: string;
+  /** Upstream servers whose tools are forwarded, reported by /healthz. */
+  upstreams?: UpstreamServer[];
 };
 
 /**
@@ -22,7 +25,7 @@ export type HttpOptions = {
  * is the right trade for a hosted connector.
  */
 export function createHttpApp(options: HttpOptions) {
-  const { spec, path = "/mcp" } = options;
+  const { spec, path = "/mcp", upstreams = [] } = options;
   const auth = options.auth ?? authFromEnv();
   const app = express();
 
@@ -35,6 +38,13 @@ export function createHttpApp(options: HttpOptions) {
       tools: spec.tools.length,
       specOrigin: spec.source.origin,
       authRequired: !auth.disabled,
+      // Never the key: just enough to see whether a forwarded surface is wired up.
+      upstreams: upstreams.map((upstream) => ({
+        name: upstream.name,
+        url: upstream.url,
+        prefix: upstream.prefix,
+        connected: upstream.connected,
+      })),
     });
   });
 
