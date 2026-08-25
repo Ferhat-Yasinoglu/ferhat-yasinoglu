@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "botflow": {
+      "command": "node",
+      "args": ["--disable-warning=ExperimentalWarning", "dist/src/index.js", "--stdio"],
+      "env": {
+        "BOTFLOW_DB": "botflow.db"
+      }
+    }
+  }
+}

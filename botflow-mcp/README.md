@@ -258,7 +258,12 @@ https://your-host.example.com/mcp
 
 with an API key as the bearer token.
 
-**As a local stdio server:**
+**From Claude Code**, running in this directory: nothing to configure. The
+checked-in `.mcp.json` declares the server, so a local session picks it up once
+`npm run build` has produced `dist/`.
+
+**As a local stdio server** in a client configured by hand — Claude Desktop's
+`claude_desktop_config.json`, for instance:
 
 ```jsonc
 {
