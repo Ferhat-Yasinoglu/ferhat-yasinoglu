@@ -32,9 +32,9 @@
           stroke-dasharray="14 8" />
   <text class="title" x="46" y="39">🎨 Most used languages</text>
   <g clip-path="url(#barclip)">
-    <rect x="28.0" y="70" width="177.5" height="12"
+    <rect x="28.0" y="70" width="174.5" height="12"
           fill="#f1e05a" class="seg" style="animation-delay:0.15s" />
-    <rect x="205.5" y="70" width="140.6" height="12"
+    <rect x="202.5" y="70" width="143.5" height="12"
           fill="#3178c6" class="seg" style="animation-delay:0.26s" />
     <rect x="346.1" y="70" width="52.9" height="12"
           fill="#663399" class="seg" style="animation-delay:0.37s" />
@@ -48,12 +48,12 @@
     <g class="rise" style="animation-delay:0.35s">
       <circle cx="35" cy="114" r="5" fill="#f1e05a" />
       <text class="lg" x="48" y="118">JavaScript</text>
-      <text class="pc" x="230" y="118" text-anchor="end">41.9%</text>
+      <text class="pc" x="230" y="118" text-anchor="end">41.2%</text>
     </g>
     <g class="rise" style="animation-delay:0.43s">
       <circle cx="261" cy="114" r="5" fill="#3178c6" />
       <text class="lg" x="274" y="118">TypeScript</text>
-      <text class="pc" x="456" y="118" text-anchor="end">33.2%</text>
+      <text class="pc" x="456" y="118" text-anchor="end">33.9%</text>
     </g>
     <g class="rise" style="animation-delay:0.51s">
       <circle cx="35" cy="140" r="5" fill="#663399" />
