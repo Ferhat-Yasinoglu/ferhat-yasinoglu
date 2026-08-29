@@ -32,7 +32,7 @@ model: → connect_bot → create_flow → publish_flow → set_trigger
 
 ```bash
 npm install
-npm test          # 199 tests, no network needed
+npm test          # 209 tests, no network needed
 npm run dev       # http://localhost:3000/mcp
 ```
 
@@ -322,7 +322,7 @@ the spec without a handler falls back to a stub that answers in the shape its
 npm test
 ```
 
-199 tests, no network and no real bot token. `test/fake-telegram.ts` stands in
+209 tests, no network and no real bot token. `test/fake-telegram.ts` stands in
 for the Bot API and can be told to fail the way Telegram does — a user blocking
 the bot, a rate limit, a revoked token — so the end-to-end tests in
 `test/e2e.test.ts` drive real flows over real SQLite through actual MCP tool
