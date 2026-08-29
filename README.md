@@ -65,6 +65,22 @@ languages, because the comments arrive in four.
 
 <br>
 
+### 🤖 botflow-mcp
+
+<sub>*Telegram chatbot funnels, built by talking to a model instead of clicking a dashboard.*</sub>
+
+Connect a bot, describe a flow in plain steps, and the server runs the conversation —
+asking questions, keeping the answers, branching on button presses, tagging people and
+broadcasting to the segments those tags create. It speaks MCP, so a model drives the
+whole thing; Telegram is reached by long polling, so no public URL is needed.
+
+<sub>**Built with** TypeScript &nbsp;·&nbsp; Node.js &nbsp;·&nbsp; MCP &nbsp;·&nbsp; SQLite &nbsp;·&nbsp; Telegram Bot API</sub><br>
+<sub>**Learned here** the Model Context Protocol &nbsp;·&nbsp; resumable background jobs &nbsp;·&nbsp; migrating a schema in place</sub>
+
+[![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/botflow-mcp)
+
+<br>
+
 ### ✨ This profile
 
 <sub>*Every card on this page is generated in this repository.*</sub>
