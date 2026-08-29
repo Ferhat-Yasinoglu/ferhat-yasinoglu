@@ -30,7 +30,7 @@ modele gider — o da emin olmadığında cevap yazmak yerine susar.
 
 ```bash
 npm install
-npm test                      # 62 test, ağ gerekmez
+npm test                      # 71 test, ağ gerekmez
 cp rules.example.json rules.json
 npm run try -- "fiyat ne kadar?"
 ```

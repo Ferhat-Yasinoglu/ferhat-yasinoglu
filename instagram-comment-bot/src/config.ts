@@ -53,5 +53,21 @@ export function missingForServe(config: Config): string[] {
 }
 
 export function loadRules(file: string): Rule[] {
-  return parseRules(JSON.parse(readFileSync(file, "utf8")));
+  let source: string;
+  try {
+    source = readFileSync(file, "utf8");
+  } catch (error) {
+    // The first run always lands here: the example file is committed, the live
+    // one is gitignored because it carries prices and links.
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      throw new Error(`Rules file not found: ${file}. Start from the example: cp rules.example.json ${file}`);
+    }
+    throw error;
+  }
+
+  try {
+    return parseRules(JSON.parse(source));
+  } catch (error) {
+    throw new Error(`${file}: ${(error as Error).message}`);
+  }
 }
