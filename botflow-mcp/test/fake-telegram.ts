@@ -72,9 +72,14 @@ export class FakeTelegram {
     return button.callback_data;
   }
 
-  /** Make the next `times` sends fail as if the user blocked the bot. */
+  /** Make every send to this chat fail as if the user blocked the bot. */
   blockChat(chatId: string): void {
     this.blocked.add(chatId);
+  }
+
+  /** Undo blockChat, the way a person unblocking the bot would. */
+  unblockChat(chatId: string): void {
+    this.blocked.delete(chatId);
   }
 
   failNext(code: number, description: string, options: { retryAfter?: number; times?: number } = {}): void {

@@ -124,3 +124,15 @@ ALTER TABLE broadcasts ADD COLUMN finished_at TEXT;
 ALTER TABLE broadcasts ADD COLUMN error       TEXT;
 CREATE INDEX IF NOT EXISTS idx_broadcasts_status ON broadcasts(status);
 `);
+
+/**
+ * v3 — the recipient list is frozen when a broadcast is queued.
+ *
+ * `cursor` used to be a position in a list re-resolved on every resume. Tagging
+ * or blocking anyone mid-flight reshuffled that list under the cursor, which
+ * silently skipped people or messaged them twice. Storing the ids once makes
+ * the cursor mean something stable.
+ */
+MIGRATIONS.push(`
+ALTER TABLE broadcasts ADD COLUMN recipient_ids TEXT NOT NULL DEFAULT '[]';
+`);

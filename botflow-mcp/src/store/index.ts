@@ -40,6 +40,8 @@ export type Broadcast = {
   bot_id: string;
   text: string;
   tags: string;
+  /** JSON array of subscriber ids, frozen when the broadcast was queued. */
+  recipient_ids: string;
   recipients: number;
   sent: number;
   failed: number;
@@ -222,7 +224,11 @@ export class Store {
   }
 
   /** Subscribers carrying *all* of `tags` — an AND segment, not an OR one. */
-  segment(botId: string, tags: string[]): Subscriber[] {
+  segment(botId: string, requested: string[]): Subscriber[] {
+    // The HAVING below counts distinct tags, so a repeated tag would demand a
+    // count no subscriber can reach and quietly return nobody.
+    const tags = [...new Set(requested)];
+
     if (tags.length === 0) {
       return this.db
         .prepare("SELECT * FROM subscribers WHERE bot_id = ? ORDER BY created_at")
@@ -448,15 +454,22 @@ export class Store {
     return Number((row as { n: number }).n);
   }
 
-  createBroadcast(botId: string, text: string, tags: string[], recipients: number): Broadcast {
+  /**
+   * Queue a broadcast against a frozen list of recipient ids.
+   *
+   * The list is captured here rather than resolved at send time: the cursor is a
+   * position in it, and a list that shifts under the cursor skips or repeats
+   * people.
+   */
+  createBroadcast(botId: string, text: string, tags: string[], recipientIds: string[]): Broadcast {
     const id = newId("bc");
     const stamp = now();
     this.db
       .prepare(
-        `INSERT INTO broadcasts (id, bot_id, text, tags, recipients, sent, failed, cursor, status, created_at)
-         VALUES (?, ?, ?, ?, ?, 0, 0, 0, 'queued', ?)`,
+        `INSERT INTO broadcasts (id, bot_id, text, tags, recipient_ids, recipients, sent, failed, cursor, status, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, 0, 0, 0, 'queued', ?)`,
       )
-      .run(id, botId, text, JSON.stringify(tags), recipients, stamp);
+      .run(id, botId, text, JSON.stringify(tags), JSON.stringify(recipientIds), recipientIds.length, stamp);
     return this.getBroadcast(id)!;
   }
 

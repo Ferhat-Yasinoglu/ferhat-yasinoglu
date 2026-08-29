@@ -276,8 +276,9 @@ function build(app: App): Record<string, ToolHandler> {
       }
 
       // Queued rather than sent inline: delivery is paced to Telegram's limits,
-      // so a large list takes minutes and must not hold this call open.
-      const broadcast = store.createBroadcast(bot.id, text, tags, recipients.length);
+      // so a large list takes minutes and must not hold this call open. The
+      // recipient list is frozen here, not re-resolved at send time.
+      const broadcast = store.createBroadcast(bot.id, text, tags, recipients.map((s) => s.id));
       app.broadcasts.start(broadcast.id);
 
       const estimate = Math.ceil((recipients.length * DEFAULT_SEND_INTERVAL_MS) / 1000);
