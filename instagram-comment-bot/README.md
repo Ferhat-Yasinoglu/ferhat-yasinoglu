@@ -52,6 +52,10 @@ cp .env.example .env          # doldurun
 npm run dev                   # http://localhost:3000/webhook
 ```
 
+`npm run dev`, `npm start` ve `npm run try` `.env`'i kendileri okur (Node'un
+`--env-file-if-exists`'i, bu yüzden Node 22.9+). Kabuğunuzda **zaten export
+edilmiş** bir değişkeni `.env` ezmez — ortamdaki değer kazanır.
+
 ## Meta tarafında kurulum
 
 1. [developers.facebook.com](https://developers.facebook.com) → yeni uygulama →

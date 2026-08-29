@@ -9,9 +9,9 @@
   "main": "./dist/src/index.js",
   "scripts": {
     "build": "tsc",
-    "dev": "tsx watch --disable-warning=ExperimentalWarning src/index.ts",
-    "start": "node --disable-warning=ExperimentalWarning dist/src/index.js",
-    "try": "tsx src/index.ts --try",
+    "dev": "tsx watch --env-file-if-exists=.env --disable-warning=ExperimentalWarning src/index.ts",
+    "start": "node --env-file-if-exists=.env --disable-warning=ExperimentalWarning dist/src/index.js",
+    "try": "tsx --env-file-if-exists=.env src/index.ts --try",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
@@ -20,7 +20,7 @@
     "rules.example.json"
   ],
   "engines": {
-    "node": ">=22.5.0"
+    "node": ">=22.9.0"
   },
   "license": "MIT",
   "dependencies": {
