@@ -28,24 +28,29 @@
 </a>
 
 Written from scratch — no framework, no build step. Four languages in one interface,
-notes synced through Firestore, and it keeps working with the network off.
+the whole layout flips when you switch to Persian, and it reads with the network off.
+A check script keeps the hand-written chrome from drifting apart across pages.
 
-<sub>**Built with** JavaScript (ES6+) &nbsp;·&nbsp; CSS3 &nbsp;·&nbsp; Firestore &nbsp;·&nbsp; Service Workers &nbsp;·&nbsp; Web App Manifest</sub><br>
-<sub>**Learned here** Firestore security rules &nbsp;·&nbsp; App Check &nbsp;·&nbsp; cache strategies</sub>
+<sub>**Built with** JavaScript (ES6+) &nbsp;·&nbsp; CSS3 &nbsp;·&nbsp; Service Workers &nbsp;·&nbsp; Web App Manifest</sub><br>
+<sub>**Learned here** RTL through logical CSS properties &nbsp;·&nbsp; cache strategies &nbsp;·&nbsp; applying preferences before the page paints</sub>
 
 [![Live](https://img.shields.io/badge/Open-Live%20site-9ece6a?style=flat-square&logo=googlechrome&logoColor=white)](https://ferhat-yasinoglu.github.io/acik-defter/)
 [![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/acik-defter)
 
 <br>
 
-### 🛒 netstore
+### 🛒 NetStore
 
-<sub>*An offline-first storefront that stays usable without a connection.*</sub>
+<sub>*A shop dashboard that keeps working offline.*</sub>
 
-Service worker caching, a web app manifest, and Firestore behind it — installable
-straight from the browser.
+A sales and stock dashboard two people share through their Google accounts. Records
+sync through Firestore, the app keeps working when the network drops, and it installs
+straight from the browser. Afghani is supported and the invoice prints.
 
-[![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/acik-defter/tree/main/netstore)
+<sub>**Built with** JavaScript &nbsp;·&nbsp; Firestore &nbsp;·&nbsp; Service Workers &nbsp;·&nbsp; Web App Manifest</sub><br>
+<sub>**Learned here** Firestore security rules &nbsp;·&nbsp; App Check &nbsp;·&nbsp; why an allowlist has no business in the client</sub>
+
+[![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/NetStore)
 
 <br>
 
