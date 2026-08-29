@@ -49,6 +49,22 @@ straight from the browser.
 
 <br>
 
+### 💬 instagram-comment-bot
+
+<sub>*Answers Instagram comments on its own — keyword rules first, Claude for the rest.*</sub>
+
+Meta's webhook arrives signed; a rules file answers the questions that keep coming
+back — what it's built with, where the source is, where to start learning — and
+anything left over goes to Claude, which stays quiet when it isn't sure. Four
+languages, because the comments arrive in four.
+
+<sub>**Built with** TypeScript &nbsp;·&nbsp; Node.js &nbsp;·&nbsp; Express &nbsp;·&nbsp; Claude API</sub><br>
+<sub>**Learned here** HMAC webhook signatures &nbsp;·&nbsp; Meta Graph API &nbsp;·&nbsp; answering a webhook before doing the work</sub>
+
+[![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/instagram-comment-bot)
+
+<br>
+
 ### ✨ This profile
 
 <sub>*Every card on this page is generated in this repository.*</sub>
