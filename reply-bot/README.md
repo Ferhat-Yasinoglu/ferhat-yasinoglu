@@ -265,6 +265,35 @@ Fly'ın verdiği adres Meta paneline girecek olan adrestir; sonuna
 `/webhook/instagram` ve `/webhook/whatsapp` eklenir. Makine uyumaya
 bırakılmadı: her teslimatta soğuk açılış beklemek webhook'u yavaşlatır.
 
+### GitHub Actions'tan dağıtım
+
+Yerelde Docker ya da `flyctl` kurmak istemiyorsan dağıtımı CI yapsın:
+**Actions → "reply-bot dağıt" → Run workflow**. İmaj Fly'ın uzak kurucusunda
+kurulur, senin makinende hiçbir şey gerekmez.
+
+Bir kerelik hazırlık — hepsi tarayıcıdan, hiçbir token bir dosyaya ya da sohbete
+yazılmadan (**Settings → Secrets and variables → Actions**):
+
+| Gizli değer | Ne için |
+| --- | --- |
+| `FLY_API_TOKEN` | Zorunlu. `fly tokens create deploy` çıktısı |
+| `IG_ACCESS_TOKEN`, `IG_USER_ID`, `IG_VERIFY_TOKEN`, `IG_APP_SECRET` | Instagram kanalı |
+| `WA_ACCESS_TOKEN`, `WA_PHONE_NUMBER_ID`, `WA_VERIFY_TOKEN`, `WA_APP_SECRET` | WhatsApp kanalı |
+| `ANTHROPIC_API_KEY`, `BOT_PERSONA` | Model katmanı (isteğe bağlı) |
+
+Verilmeyen değer Fly'a hiç gönderilmez; o kanal kapalı kalır. Workflow önce
+testleri koşar — kırıksa dağıtmaz — sonra imajı kurar, gizli değerleri
+`--stage` ile koyar (her biri ayrı bir dağıtım tetiklemesin diye) ve tek
+seferde dağıtır. Sonunda `/healthz`'e sorar; cevap gelmezse iş kırmızı olur.
+Çalışma özetinde Meta paneline yapıştırılacak iki satır yazılı gelir.
+
+**Prova** kutusu varsayılan olarak işaretli: `BOT_DRY_RUN=1` ile dağıtır, yani
+bot karar verir ama hiçbir şey göndermez. Canlıya almak için kutuyu kaldırıp
+tekrar çalıştır.
+
+Uygulama adı küresel olarak benzersiz olmak zorunda; `reply-bot` doluysa
+workflow'u çalıştırırken başka bir ad ver (`reply-bot-farhad` gibi).
+
 ## Sınırlar
 
 - Yalnızca webhook'un getirdiği yeni mesajlar işlenir; geçmiş taranmaz.
