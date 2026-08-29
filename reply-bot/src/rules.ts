@@ -1,12 +1,17 @@
 /**
  * Keyword rules: the fast, predictable half of the bot.
  *
- * Most comments under a business post are the same five questions — price,
- * shipping, sizes, "is it in stock", plus praise and spam. Answering those from
- * a file keeps them instant, free and exactly on-message; only what no rule
- * matches is worth spending a model call on.
+ * Most of what arrives is the same handful of questions — what it's built
+ * with, where the source is, where to start, plus praise and spam. Answering
+ * those from a file keeps them instant, free and exactly on-message; only what
+ * no rule matches is worth spending a model call on.
+ *
+ * A rule applies to every channel unless it names the ones it belongs to,
+ * which is how "hide this spam" stays an Instagram rule and a WhatsApp-only
+ * greeting stays out of the comments.
  */
 
+import type { ChannelName } from "./channels/types.js";
 import { contains, normalize } from "./text.js";
 
 export type Rule = {
@@ -23,6 +28,8 @@ export type Rule = {
   hide?: boolean;
   /** Match but stay silent — useful to stop the model answering something. */
   ignore?: boolean;
+  /** Limit the rule to these channels. Absent means every channel. */
+  channels?: ChannelName[];
 };
 
 export type RuleMatch = {
@@ -61,15 +68,26 @@ export function parseRules(input: unknown): Rule[] {
 
     const acts = rule.reply || rule.privateReply || rule.hide || rule.ignore;
     if (!acts) throw new RuleError(`${rule.name}: needs reply, privateReply, hide or ignore`);
+
+    for (const channel of rule.channels ?? []) {
+      if (channel !== "instagram" && channel !== "whatsapp") {
+        throw new RuleError(`${rule.name}: unknown channel "${channel}"`);
+      }
+    }
     return rule;
   });
 }
 
 /** The first rule that matches, in file order — put narrow rules first. */
-export function matchRule(rules: readonly Rule[], text: string): RuleMatch | undefined {
+export function matchRule(
+  rules: readonly Rule[],
+  text: string,
+  channel?: ChannelName,
+): RuleMatch | undefined {
   const normalized = normalize(text);
 
   for (const rule of rules) {
+    if (channel && rule.channels && !rule.channels.includes(channel)) continue;
     const byKeyword = rule.keywords?.some((keyword) => contains(text, keyword)) ?? false;
     const byPattern = rule.pattern ? new RegExp(rule.pattern, "i").test(normalized) : false;
     if (!byKeyword && !byPattern) continue;

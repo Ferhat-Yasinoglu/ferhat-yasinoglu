@@ -1,23 +1,23 @@
-# instagram-comment-bot's tests. It lives here rather than next to the project
+# reply-bot's tests. It lives here rather than next to the project
 # because GitHub only reads workflows from .github/workflows at the repository
-# root — a copy inside instagram-comment-bot/ is never run.
-name: instagram-comment-bot testleri
+# root — a copy inside reply-bot/ is never run.
+name: reply-bot testleri
 
 on:
   push:
     branches: [main]
     paths:
-      - "instagram-comment-bot/**"
-      - ".github/workflows/instagram-comment-bot.yml"
+      - "reply-bot/**"
+      - ".github/workflows/reply-bot.yml"
   pull_request:
     paths:
-      - "instagram-comment-bot/**"
-      - ".github/workflows/instagram-comment-bot.yml"
+      - "reply-bot/**"
+      - ".github/workflows/reply-bot.yml"
   workflow_dispatch:
 
 defaults:
   run:
-    working-directory: instagram-comment-bot
+    working-directory: reply-bot
 
 jobs:
   test:
@@ -32,7 +32,7 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: npm
           # The lockfile is not at the root, so the cache has to be pointed at it.
-          cache-dependency-path: instagram-comment-bot/package-lock.json
+          cache-dependency-path: reply-bot/package-lock.json
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
