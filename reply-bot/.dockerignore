@@ -1,0 +1,12 @@
+# Never bake credentials into an image: .env is the one file that must not
+# travel with the build.
+.env
+.env.local
+
+node_modules
+dist
+test
+*.log
+.git
+.github
+README.md
