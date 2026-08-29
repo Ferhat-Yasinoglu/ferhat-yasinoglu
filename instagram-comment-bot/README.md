@@ -4,18 +4,20 @@ Instagram yorumlarını otomatik cevaplayan bot. Önce anahtar kelime kuralları
 kural yoksa Claude — hiçbiri uymuyorsa susuyor.
 
 ```
-yorum:  "FİYAT ne kadar?"          → kural:price   → "Selam! Güncel fiyat için DM kutumuz açık 🙂" + DM
-yorum:  "bedava takipçi kazan"     → kural:spam    → yorum gizlenir
-yorum:  "bu fotoğrafı nerede çektiniz?" → model    → "İstanbul'daki atölyemizde 🙂"
-yorum:  "❤️🔥"                      → cevap yok (model çağrısı da yapılmaz)
+yorum:  "bunu ne ile yaptın?"       → kural:teknoloji-tr → "Vanilla JavaScript + Firestore — framework yok."
+yorum:  "was kostet so eine Seite?" → kural:is-de        → "Schreib mir gern eine DM 🙂"
+yorum:  "bedava takipçi kazan"      → kural:spam         → yorum gizlenir
+yorum:  "bu fotoğrafı nerede çektiniz?" → model          → yorumun dilinde kısa cevap
+yorum:  "❤️🔥"                       → cevap yok (model çağrısı da yapılmaz)
 ```
 
 ## Neden iki katman
 
-Bir işletme gönderisinin altındaki yorumların çoğu aynı beş soru: fiyat, kargo,
-beden, stok, bir de övgü ve spam. Bunları dosyadan cevaplamak anında, ücretsiz
-ve tam istediğiniz cümleyle olur. Geriye kalan, gerçekten farklı olan yorumlar
-modele gider — o da emin olmadığında cevap yazmak yerine susar.
+Bir gönderinin altındaki yorumların çoğu aynı birkaç soru: ne ile yaptın, kaynak
+kodu nerede, nereden başlamalıyım, bir de iş teklifi, övgü ve spam. Bunları
+dosyadan cevaplamak anında, ücretsiz ve tam istediğiniz cümleyle olur. Geriye
+kalan, gerçekten farklı olan yorumlar modele gider — o da emin olmadığında cevap
+yazmak yerine susar.
 
 | | |
 | --- | --- |
@@ -30,13 +32,18 @@ modele gider — o da emin olmadığında cevap yazmak yerine susar.
 
 ```bash
 npm install
-npm test                      # 71 test, ağ gerekmez
+npm test                      # 74 test, ağ gerekmez
 cp rules.example.json rules.json
-npm run try -- "fiyat ne kadar?"
+npm run try -- "bunu ne ile yaptın?"
 ```
 
 `--try` hiçbir şey göndermez ve Instagram bilgisi istemez — kuralları böyle
 yazın: dosyayı değiştirin, çalıştırın, cevabı görün.
+
+`rules.example.json` bu hesap için hazır geliyor: proje/iş sorusu, kaynak kod,
+kullanılan teknoloji, öğrenmeye nereden başlanacağı ve övgü — dördü de Türkçe,
+Almanca, İngilizce ve Farsça ayrı kurallarla, yani cevap yorumun dilinde
+geliyor. Spam gizleniyor, sadece etiketten ibaret yorumlar sessiz geçiliyor.
 
 Sunucuyu başlatmak için:
 
@@ -75,13 +82,13 @@ loglar, hiçbir şey göndermez.
     "hide": true                             // cevaplama, yorumu gizle
   },
   {
-    "name": "price",
-    "keywords": ["fiyat", "ne kadar", "how much"],  // herhangi biri geçerse eşleşir
+    "name": "is-tr",
+    "keywords": ["iş teklifi", "site yapar mısın", "fiyat"],  // herhangi biri geçerse eşleşir
     "reply": [                               // birden fazlaysa yorumcuya göre değişir
-      "Merhaba {{username}}, DM'den yazıyoruz!",
-      "Selam {{username}}, DM kutumuz açık 🙂"
+      "Merhaba {{username}}! Detayları DM'den konuşalım 🙂",
+      "Selam {{username}}, DM'den yazabilirsin 🙂"
     ],
-    "privateReply": "Fiyat listemiz: ..."    // ayrıca DM gönderir
+    "privateReply": "Merhaba! Projeden biraz bahseder misin?"  // ayrıca DM gönderir
   },
   {
     "name": "etiketleme",
@@ -93,8 +100,15 @@ loglar, hiçbir şey göndermez.
 
 `{{username}}` ve `{{text}}` yerine yorumcunun adı ve yorum metni geçer.
 Eşleştirme normalize edilmiş metin üzerinde yapılır: "FİYAT", "fiyat", "fıyat"
-hepsi aynı kurala düşer. Bozuk bir kural dosyası uygulamayı **açılışta**
-durdurur, gece yarısı değil.
+hepsi aynı kurala düşer. Aynı folding Almanca ve Farsça için de çalışır —
+"schön" ile "schon", "عالیه" ile harekeli hâli aynı yere düşer.
+
+Çok dilli kurallarda tek dikkat edilecek şey, bir dilin kural listesine başka
+bir dilde de kullanılan bir ifadeyi koymamak: Almanca kuralda "open source"
+yazarsa İngilizce yorum ona düşer ve Almanca cevap alır.
+
+Bozuk ya da eksik bir kural dosyası uygulamayı **açılışta** durdurur, gece
+yarısı değil.
 
 Kurallardan sadece biri çalışır ve sırayla bakılır:
 
@@ -108,12 +122,13 @@ Kurallardan sadece biri çalışır ve sırayla bakılır:
 ## Model katmanı
 
 `ANTHROPIC_API_KEY` **ve** `IG_PERSONA` doluysa, kural eşleşmeyen yorumlar
-Claude'a gider. `IG_PERSONA` işletme brifingidir: modelin kullanabileceği
-gerçekler ve ses tonu. Sistem promptu modele şunu dayatır:
+Claude'a gider. `IG_PERSONA` hesap brifingidir: modelin kullanabileceği gerçekler
+ve ses tonu — `.env.example` içindekiler bu hesap için hazır. Sistem promptu
+modele şunu dayatır:
 
 - yorumun dilinde cevap ver, iki cümleyi geçme,
-- brifingde olmayan fiyat/stok/kampanya **uydurma**,
-- sipariş, şikâyet, iade gibi kişisel konularda "DM'den yazın" de,
+- brifingde olmayan şeyi **uydurma** (fiyat, tarih, teknik detay),
+- kişisel konularda ve iş tekliflerinde "DM'den yaz" de,
 - emin değilsen hiç cevap yazma.
 
 İkisinden biri boşsa bot sadece kurallarla çalışır — model katmanı tamamen

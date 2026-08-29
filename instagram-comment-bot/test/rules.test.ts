@@ -28,18 +28,37 @@ describe("parseRules", () => {
 
 describe("matchRule", () => {
   it("matches keywords regardless of case and accents", () => {
-    expect(matchRule(example, "FİYAT nedir acaba?")?.rule.name).toBe("price");
-    expect(matchRule(example, "bu kac para")?.rule.name).toBe("price");
-    expect(matchRule(example, "How much is it?")?.rule.name).toBe("price");
+    expect(matchRule(example, "Bunu NE İLE YAPTIN?")?.rule.name).toBe("teknoloji-tr");
+    expect(matchRule(example, "Eline saglik, harika olmus")?.rule.name).toBe("ovgu-tr");
+    expect(matchRule(example, "Sehr schön gemacht")?.rule.name).toBe("ovgu-de");
   });
 
   it("matches patterns", () => {
-    expect(matchRule(example, "bedava takipçi kazan")?.rule.name).toBe("spam-links");
-    expect(matchRule(example, "@ayse @mehmet")?.rule.name).toBe("tag-a-friend");
+    expect(matchRule(example, "bedava takipçi kazan")?.rule.name).toBe("spam");
+    expect(matchRule(example, "@ayse @mehmet")?.rule.name).toBe("sadece-etiket");
+  });
+
+  it("answers each language with its own rule", () => {
+    expect(matchRule(example, "was kostet so eine Seite?")?.rule.name).toBe("is-de");
+    expect(matchRule(example, "can i hire you for a project")?.rule.name).toBe("is-en");
+    expect(matchRule(example, "پروژه دارم، همکاری می‌کنی؟")?.rule.name).toBe("is-fa");
+    expect(matchRule(example, "با چی نوشتی؟")?.rule.name).toBe("teknoloji-fa");
+    expect(matchRule(example, "از کجا شروع کنم؟")?.rule.name).toBe("ogrenme-fa");
+  });
+
+  it("does not let one language's rule catch another's comment", () => {
+    // "open source" in the German rule would answer an English comment in German.
+    expect(matchRule(example, "is it open source?")?.rule.name).toBe("kaynak-en");
+    expect(matchRule(example, "gibt es den code irgendwo?")?.rule.name).toBe("kaynak-de");
+    expect(matchRule(example, "kaynak kodu paylaşır mısın")?.rule.name).toBe("kaynak-tr");
+  });
+
+  it("answers the question in a comment that also carries praise", () => {
+    expect(matchRule(example, "harika olmuş, kaynak kodu var mı?")?.rule.name).toBe("kaynak-tr");
   });
 
   it("returns nothing when no rule applies", () => {
-    expect(matchRule(example, "bu ürünü nerede çektiniz?")).toBeUndefined();
+    expect(matchRule(example, "bu fotoğrafı nerede çektiniz?")).toBeUndefined();
   });
 
   it("takes the first match, so narrow rules can be put first", () => {
