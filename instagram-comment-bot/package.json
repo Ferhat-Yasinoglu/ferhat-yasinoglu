@@ -1,0 +1,37 @@
+{
+  "name": "instagram-comment-bot",
+  "version": "0.1.0",
+  "description": "Answer Instagram comments automatically — keyword rules first, Claude for everything else.",
+  "type": "module",
+  "bin": {
+    "instagram-comment-bot": "./dist/src/index.js"
+  },
+  "main": "./dist/src/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch --disable-warning=ExperimentalWarning src/index.ts",
+    "start": "node --disable-warning=ExperimentalWarning dist/src/index.js",
+    "try": "tsx src/index.ts --try",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "files": [
+    "dist",
+    "rules.example.json"
+  ],
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.0",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.20.1",
+    "tsx": "^4.23.12",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  }
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "name": "spam-links",
+    "pattern": "(takipci|takipçi|bedava|kazan|bit\\.ly|t\\.me/|wa\\.me/|casino|bahis)",
+    "hide": true
+  },
+  {
+    "name": "price",
+    "keywords": ["fiyat", "kaç para", "kac para", "ne kadar", "ücret", "price", "how much"],
+    "reply": [
+      "Merhaba {{username}} 🙂 Fiyat bilgisini DM'den hemen paylaşıyoruz!",
+      "Selam {{username}}! Güncel fiyat için DM kutumuz açık 🙂"
+    ],
+    "privateReply": "Merhaba! Fiyat listemizi buradan iletebiliriz — hangi ürünle ilgileniyorsunuz?"
+  },
+  {
+    "name": "shipping",
+    "keywords": ["kargo", "gönderim", "teslimat", "shipping", "delivery"],
+    "reply": "Siparişler aynı gün kargoda, teslimat 1-3 iş günü 📦"
+  },
+  {
+    "name": "stock",
+    "keywords": ["stok", "var mı", "var mi", "mevcut", "in stock"],
+    "reply": "Stok durumunu DM'den kontrol edip hemen dönüyoruz 🙂"
+  },
+  {
+    "name": "order-status",
+    "keywords": ["siparişim", "siparisim", "kargom nerede", "iade", "değişim", "degisim"],
+    "reply": "Bunu hemen çözelim {{username}} — sipariş numaranızla DM atabilir misiniz?",
+    "privateReply": "Merhaba! Sipariş numaranızı paylaşırsanız durumu hemen kontrol edelim."
+  },
+  {
+    "name": "praise",
+    "keywords": ["harika", "muhteşem", "çok güzel", "cok guzel", "bayıldım", "süper", "love it"],
+    "reply": ["Çok teşekkürler {{username}} 🤍", "Ne güzel dediniz, teşekkürler {{username}} 🤍"]
+  },
+  {
+    "name": "tag-a-friend",
+    "pattern": "^\\s*@\\w+[\\s@\\w]*$",
+    "ignore": true
+  }
+]
