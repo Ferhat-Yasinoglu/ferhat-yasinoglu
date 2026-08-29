@@ -1,0 +1,223 @@
+# reply-bot
+
+Instagram yorumlarını ve WhatsApp mesajlarını otomatik cevaplayan bot. Önce
+anahtar kelime kuralları, kural yoksa Claude — hiçbiri uymuyorsa susuyor.
+
+```
+instagram:  "bunu ne ile yaptın?"       → kural:teknoloji-tr → "Vanilla JavaScript + Firestore — framework yok."
+instagram:  "bedava takipçi kazan"      → kural:spam         → yorum gizlenir
+whatsapp:   "merhaba"                   → kural:selam-tr     → "Merhaba! Nasıl yardımcı olabilirim? 🙂"
+whatsapp:   "casino linki"              → kural:spam         → sessiz (sohbette gizlenecek bir şey yok)
+her ikisi:  "bu fotoğrafı nerede çektin?" → model            → mesajın dilinde kısa cevap
+her ikisi:  "❤️🔥"                        → cevap yok (model çağrısı da yapılmaz)
+```
+
+## Neden iki katman
+
+Gelen mesajların çoğu aynı birkaç soru: ne ile yaptın, kaynak kodu nerede,
+nereden başlamalıyım, bir de iş teklifi, övgü ve spam. Bunları dosyadan
+cevaplamak anında, ücretsiz ve tam istediğiniz cümleyle olur. Geriye kalan,
+gerçekten farklı olan mesajlar modele gider — o da emin olmadığında cevap
+yazmak yerine susar.
+
+| | |
+| --- | --- |
+| Kanallar | Instagram yorumları ve WhatsApp mesajları; biri, öteki ya da ikisi birden |
+| Kurallar | Anahtar kelime + regex, Türkçe/Almanca/Farsça duyarlı, kanala göre kısıtlanabilir |
+| Aksiyonlar | Açık cevap, DM (Instagram), yorumu gizleme (Instagram), sessiz kalma |
+| Model | Claude (`claude-opus-5`), kural eşleşmeyen mesajlar için — isteğe bağlı |
+| Güvenlik | Kanal başına `X-Hub-Signature-256`, kendi mesajlarını yanıtlamama, tekrar gelen webhook'u yutma |
+| Deneme | `--try` ile terminalde; `BOT_DRY_RUN=1` ile canlıda hiçbir şey göndermeden |
+| Bağımlılık | express + Anthropic SDK. Veritabanı yok |
+
+## Hızlı başlangıç
+
+```bash
+npm install
+npm test                              # 93 test, ağ gerekmez
+cp rules.example.json rules.json
+npm run try -- "bunu ne ile yaptın?"
+npm run try -- --whatsapp "merhaba"
+```
+
+`--try` hiçbir şey göndermez ve hesap bilgisi istemez — kuralları böyle yazın:
+dosyayı değiştirin, çalıştırın, cevabı görün.
+
+`rules.example.json` bu hesap için hazır geliyor: proje/iş sorusu, kaynak kod,
+kullanılan teknoloji, öğrenmeye nereden başlanacağı ve övgü — dördü de Türkçe,
+Almanca, İngilizce ve Farsça ayrı kurallarla. Selamlaşma kuralları yalnızca
+WhatsApp'ta çalışıyor; yorum altında selama otomatik cevap tuhaf kaçardı.
+
+Sunucuyu başlatmak için:
+
+```bash
+cp .env.example .env          # doldurun
+npm run dev                   # /webhook/instagram ve /webhook/whatsapp
+```
+
+`npm run dev`, `npm start` ve `npm run try` `.env`'i kendileri okur (Node'un
+`--env-file-if-exists`'i, bu yüzden Node 22.9+). Kabuğunuzda **zaten export
+edilmiş** bir değişkeni `.env` ezmez — ortamdaki değer kazanır.
+
+## İki kanal, tek çekirdek
+
+Kural motoru, Claude katmanı, Türkçe normalize etme ve imza doğrulama iki
+kanalda da aynı kodu kullanıyor. Kanala özgü olan tek şey adaptör: neyi
+ayrıştırdığı, ne yapabildiği ve nereye yazdığı.
+
+| | Instagram | WhatsApp |
+| --- | --- | --- |
+| Ortam | Herkese açık yorum | Bire bir sohbet |
+| Açık cevap | ✓ | ✓ (mesajı alıntılayarak) |
+| DM | ✓ (yorum başına bir kez, 7 gün) | — cevabın kendisi zaten özel |
+| Gizleme | ✓ | — sohbette gizlenecek bir şey yok |
+| Zaman sınırı | yok | **24 saat**: kişinin son mesajından sonra |
+| Gönderim | form + `access_token` | JSON + `Authorization: Bearer` |
+| Yok sayılan | yorum dışı alanlar | teslimat bildirimleri, fotoğraf/ses/sticker |
+
+Bir kural iki kanalda da geçerlidir; `"channels": ["whatsapp"]` yazarsanız
+yalnızca orada çalışır. Kanalın yapamayacağı bir aksiyon istenirse bot sessiz
+kalır: WhatsApp'ta `hide` eşleşen bir kural yorumu gizlemeye çalışmaz, hiç
+cevap vermez.
+
+### 24 saat penceresi
+
+WhatsApp'ta serbest metinle ancak kişinin son mesajından sonraki 24 saat içinde
+yazabilirsiniz; dışında yalnızca Meta'nın önceden onayladığı şablonlar gider.
+Bot, geç gelen bir teslimatı **göndermeyi denemek yerine** atlar ve sebebini
+loglar. Şablon desteği yok; onay süreci gerektirdiği için bilerek dışarıda
+bırakıldı.
+
+## Kural dosyası
+
+`rules.json` bir liste; **ilk eşleşen kural kazanır**, o yüzden dar kuralları
+üste koyun. Alanlar:
+
+```jsonc
+[
+  {
+    "name": "spam",                          // logda görünen ad
+    "pattern": "(bedava takipci|casino)",    // normalize edilmiş metne regex
+    "hide": true                             // Instagram'da gizler, WhatsApp'ta susar
+  },
+  {
+    "name": "is-tr",
+    "keywords": ["iş teklifi", "site yapar mısın", "fiyat"],  // herhangi biri geçerse eşleşir
+    "reply": [                               // birden fazlaysa gönderene göre değişir
+      "Merhaba {{username}}! Detayları DM'den konuşalım 🙂",
+      "Selam {{username}}, DM'den yazabilirsin 🙂"
+    ],
+    "privateReply": "Merhaba! Projeden biraz bahseder misin?"  // yalnızca Instagram
+  },
+  {
+    "name": "selam-tr",
+    "keywords": ["merhaba", "selam"],
+    "reply": "Merhaba {{username}}! Nasıl yardımcı olabilirim? 🙂",
+    "channels": ["whatsapp"]                 // yalnızca bu kanalda
+  }
+]
+```
+
+`{{username}}` ve `{{text}}` yerine gönderenin adı ve mesaj metni geçer.
+Eşleştirme normalize edilmiş metin üzerinde yapılır: "FİYAT", "fiyat", "fıyat"
+hepsi aynı kurala düşer. Aynı folding Almanca ve Farsça için de çalışır —
+"schön" ile "schon", "عالیه" ile harekeli hâli aynı yere düşer.
+
+Çok dilli kurallarda tek dikkat edilecek şey, bir dilin kural listesine başka
+bir dilde de kullanılan bir ifadeyi koymamak: Almanca kuralda "open source"
+yazarsa İngilizce mesaj ona düşer ve Almanca cevap alır.
+
+Bozuk ya da eksik bir kural dosyası uygulamayı **açılışta** durdurur, gece
+yarısı değil.
+
+| Alan | Sonuç |
+| --- | --- |
+| `reply` | Açık cevap (yorum altına ya da sohbete) |
+| `privateReply` | Yoruma DM — Instagram'da; WhatsApp'ta yok sayılır |
+| `hide` | Yorumu gizle — Instagram'da; WhatsApp'ta sessizlik |
+| `ignore` | Hiçbir şey yapma — modeli de devre dışı bırakır |
+| `channels` | Kuralı bu kanallarla sınırla; yoksa hepsinde geçerli |
+
+## Model katmanı
+
+`ANTHROPIC_API_KEY` **ve** `BOT_PERSONA` doluysa, kural eşleşmeyen mesajlar
+Claude'a gider. `BOT_PERSONA` hesap brifingidir: modelin kullanabileceği
+gerçekler ve ses tonu — `.env.example` içindekiler bu hesap için hazır. Sistem
+promptu modele şunu dayatır:
+
+- mesajın dilinde cevap ver, iki cümleyi geçme,
+- brifingde olmayan şeyi **uydurma** (fiyat, tarih, teknik detay),
+- kişi gerektiren konularda "dönüş yapacağım" de, kendi başına söz verme,
+- emin değilsen hiç cevap yazma.
+
+Prompt hangi odada olduğunu da söylüyor: Instagram'da yazdığı şeyi gönderiyi
+gören herkes okur, WhatsApp'ta yalnızca tek kişi. İkisi ayrı önbellek öneki
+kullanır.
+
+İkisinden biri boşsa bot sadece kurallarla çalışır — model katmanı tamamen
+isteğe bağlıdır.
+
+## Ortam değişkenleri
+
+Tamamı ve açıklamaları `.env.example` içinde. Kısaca:
+
+| Değişken | Ne işe yarar |
+| --- | --- |
+| `IG_ACCESS_TOKEN`, `IG_USER_ID` | Instagram kanalını açar |
+| `WA_ACCESS_TOKEN`, `WA_PHONE_NUMBER_ID` | WhatsApp kanalını açar |
+| `IG_VERIFY_TOKEN`, `WA_VERIFY_TOKEN` | Meta panelindeki Verify token ile aynı olmalı |
+| `IG_APP_SECRET`, `WA_APP_SECRET` | Webhook imzasını doğrular. **Boş bırakmayın** |
+| `WA_WINDOW_HOURS` | 24 saat penceresi (varsayılan 24) |
+| `BOT_RULES_FILE` | Kural dosyası yolu (varsayılan `rules.json`) |
+| `BOT_DRY_RUN=1` | Karar ver, logla, hiçbir şey gönderme |
+| `ANTHROPIC_API_KEY`, `BOT_PERSONA` | Model katmanı (ikisi de gerekli) |
+
+## Nasıl çalışıyor
+
+```
+Meta webhook ─► kanalın imzası ─► 200 (hemen) ─► kuyruk
+                                                   │
+                                    ┌──────────────┴───────────────┐
+                                    │ kendi mesajın mı? → atla     │
+                                    │ pencere kapandı mı? → atla   │
+                                    │ daha önce geldi mi? → atla   │
+                                    │ kural var mı? → cevap/gizle  │
+                                    │ model var mı? → cevap/sus    │
+                                    └──────────────┬───────────────┘
+                                                   ▼
+                                     Graph API: cevap / DM / gizle
+```
+
+Webhook cevapları **işten önce** 200 döner: Meta birkaç saniyede yanıt alamazsa
+aynı teslimatı tekrar gönderir, o da aynı mesaja iki cevap demektir. İşlenen
+id'ler kanal adıyla birlikte hafızada tutulduğu için tekrar gelen teslimat
+yutulur ve iki kanaldaki aynı id birbirini gölgelemez.
+
+Kendi hesabınızın mesajları hiçbir zaman cevaplanmaz. WhatsApp'ta gönderdiğiniz
+her mesaj teslimat bildirimi olarak geri gelir; ayrıştırma onları yok sayar —
+biri gelen mesaj sanılsaydı bot kendi bildirimlerine sonsuza kadar cevap
+yazardı.
+
+## Yayına alma
+
+```bash
+npm run build
+npm start
+```
+
+Tek süreç, durum tutmaz; HTTPS ve herkese açık bir adres yeterli. Birden fazla
+kopya çalıştırırsanız yinelenen mesaj hafızası süreç başına olduğu için aynı
+mesaja iki cevap gidebilir — o durumda tek kopya tutun.
+
+## Sınırlar
+
+- Yalnızca webhook'un getirdiği yeni mesajlar işlenir; geçmiş taranmaz.
+- WhatsApp'ta 24 saat dışına düşen mesaja cevap verilmez (şablon desteği yok).
+- DM (`privateReply`) Instagram'da yorum başına bir kez ve yedi gün içinde.
+- Uzun ömürlü token 60 gün yaşar; bot süresi dolduğunu tanır ve loglar, ama
+  kendi kendine yenilemez.
+- Rate limit'e takılan bir cevap yeniden denenmez; loglanır ve geçilir.
+- Fotoğraf, ses, sticker ve konum mesajları atlanır — metin olmayan şeye kural
+  da model de bir şey söyleyemez.
+
+MIT.
