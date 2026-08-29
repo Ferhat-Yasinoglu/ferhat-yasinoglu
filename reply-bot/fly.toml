@@ -1,0 +1,42 @@
+# Fly.io deploy config. `fly launch --copy-config` fills in the app name and
+# region; nothing here is secret — tokens go in with `fly secrets set`, which
+# keeps them out of the repo and out of the image.
+#
+#   fly launch --copy-config --no-deploy
+#   fly secrets set IG_ACCESS_TOKEN=… IG_USER_ID=… IG_VERIFY_TOKEN=… IG_APP_SECRET=…
+#   fly deploy
+#
+# The public URL Fly prints is what goes into the Meta dashboard, with
+# /webhook/instagram and /webhook/whatsapp on the end.
+
+app = "reply-bot"
+primary_region = "fra"          # Frankfurt: en yakın bölge
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  HOST = "0.0.0.0"
+  PORT = "3000"
+  # Uncomment for the first day: decide and log, send nothing.
+  # BOT_DRY_RUN = "1"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  # Meta retries a webhook it cannot reach, but a cold start still costs
+  # seconds on every delivery — so the machine stays up rather than sleeping.
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/healthz"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

@@ -34,10 +34,16 @@ yazmak yerine susar.
 
 ```bash
 npm install
-npm test                              # 93 test, ağ gerekmez
+npm test                              # 108 test, ağ gerekmez
 cp rules.example.json rules.json
 npm run try -- "bunu ne ile yaptın?"
 npm run try -- --whatsapp "merhaba"
+```
+
+Kurulumun tamam olup olmadığını çalıştırmadan önce sormak için:
+
+```bash
+npm run doctor          # .env, kurallar ve token'lar — sadece okur
 ```
 
 `--try` hiçbir şey göndermez ve hesap bilgisi istemez — kuralları böyle yazın:
@@ -198,6 +204,29 @@ her mesaj teslimat bildirimi olarak geri gelir; ayrıştırma onları yok sayar 
 biri gelen mesaj sanılsaydı bot kendi bildirimlerine sonsuza kadar cevap
 yazardı.
 
+## Ön kontrol
+
+`npm run doctor` bir mesaj beklemeden önce her şeyi bir turda denetler ve
+yalnızca **okur** — test mesajı göndermez:
+
+```
+  ✓ kurallar           rules.json: 27 kural, 5 tanesi kanala özel
+  ! model              kapalı: bot yalnızca kurallarla çalışır, gerisine susar (ücretsiz)
+  ✓ mod                canlı — cevaplar gerçekten gönderilir
+  ✓ instagram          hesap 17841…, yol /webhook/instagram
+  ✓ instagram imza     gelen teslimatlar doğrulanacak
+  ✓ instagram token    farhad___yaqoobi
+  ✗ whatsapp           eksik: WA_PHONE_NUMBER_ID
+
+  Meta paneline yapıştırılacak:
+    instagram  https://…/webhook/instagram   alan: comments   verify: …
+```
+
+Token'ların gerçekten yaşadığını Meta'ya tek bir okuma isteğiyle sorar; ağa
+çıkmasını istemezseniz `--offline`, adresleri tam yazdırmak için
+`--url https://…` ekleyin. Bir şey `✗` ise çıkış kodu 1 olur, yani dağıtım
+betiğine de koyabilirsiniz.
+
 ## Yayına alma
 
 ```bash
@@ -208,6 +237,33 @@ npm start
 Tek süreç, durum tutmaz; HTTPS ve herkese açık bir adres yeterli. Birden fazla
 kopya çalıştırırsanız yinelenen mesaj hafızası süreç başına olduğu için aynı
 mesaja iki cevap gidebilir — o durumda tek kopya tutun.
+
+### Docker
+
+```bash
+cp rules.example.json rules.json     # kurallar imajla birlikte gider
+docker build -t reply-bot .
+docker run -p 3000:3000 --env-file .env reply-bot
+```
+
+Kurallar imajın içine girer, kimlik bilgileri girmez: `.dockerignore` `.env`
+dosyasını dışarıda tutar. Cevapları değiştirmek imajı yeniden kurmak demek —
+taşınacak veri, bağlanacak veritabanı yok.
+
+### Fly.io
+
+`fly.toml` hazır. Gizli değerler depoya da imaja da girmez, `fly secrets` ile
+konur:
+
+```bash
+fly launch --copy-config --no-deploy
+fly secrets set IG_ACCESS_TOKEN=… IG_USER_ID=… IG_VERIFY_TOKEN=… IG_APP_SECRET=…
+fly deploy
+```
+
+Fly'ın verdiği adres Meta paneline girecek olan adrestir; sonuna
+`/webhook/instagram` ve `/webhook/whatsapp` eklenir. Makine uyumaya
+bırakılmadı: her teslimatta soğuk açılış beklemek webhook'u yavaşlatır.
 
 ## Sınırlar
 

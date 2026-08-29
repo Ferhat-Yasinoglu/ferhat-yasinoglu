@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 /**
- * Two ways in:
+ * Three ways in:
  *
  *   reply-bot                                 serve every configured channel
+ *   reply-bot --doctor                        check the setup before the first message
  *   reply-bot --try "fiyat?"                  answer one message on the terminal
  *   reply-bot --try --whatsapp "merhaba"      …as the WhatsApp channel would
  *
  * `--try` sends nothing and needs no credentials, which makes it the way to
- * write rules: change the file, run it, see the reply.
+ * write rules: change the file, run it, see the reply. `--doctor` only reads.
  */
 
 import { claudeReplier } from "./ai.js";
@@ -16,6 +17,8 @@ import { instagramChannel } from "./channels/instagram.js";
 import type { Channel, ChannelName } from "./channels/types.js";
 import { whatsappChannel } from "./channels/whatsapp.js";
 import { loadConfig, loadRules, missingForServe, type Config } from "./config.js";
+import { runDoctor, webhookLines, worstStatus, type Status } from "./doctor.js";
+import type { Rule } from "./rules.js";
 import { createApp } from "./server.js";
 
 const log = (message: string, detail?: unknown) => {
@@ -55,8 +58,55 @@ function buildChannels(config: Config): Channel[] {
   return channels;
 }
 
+const MARK: Record<Status, string> = { ok: "✓", warn: "!", fail: "✗" };
+
+async function doctor(config: Config, argv: string[]): Promise<number> {
+  // Rules are reported as a check rather than thrown, so one run shows
+  // everything that is wrong instead of stopping at the first thing.
+  let rules: Rule[] | undefined;
+  let rulesError: string | undefined;
+  try {
+    rules = loadRules(config.rulesFile);
+  } catch (error) {
+    rulesError = (error as Error).message;
+  }
+
+  const urlIndex = argv.indexOf("--url");
+  const publicUrl = urlIndex !== -1 ? argv[urlIndex + 1] : undefined;
+  const offline = argv.includes("--offline");
+
+  const checks = await runDoctor({
+    config,
+    ...(rules ? { rules } : {}),
+    ...(rulesError ? { rulesError } : {}),
+    ...(offline ? {} : { fetcher: fetch }),
+    ...(publicUrl ? { publicUrl } : {}),
+  });
+
+  console.log();
+  for (const check of checks) {
+    console.log(`  ${MARK[check.status]} ${check.name.padEnd(18)} ${check.detail}`);
+  }
+
+  const lines = webhookLines(config, publicUrl);
+  if (lines.length) {
+    console.log("\n  Meta paneline yapıştırılacak:");
+    for (const line of lines) console.log(`    ${line}`);
+    if (!publicUrl) console.log("    (herkese açık adresini --url ile verirsen tam hâlini yazar)");
+  }
+
+  const worst = worstStatus(checks);
+  console.log(
+    `\n  ${worst === "fail" ? "Eksik var, bot bu hâliyle çalışmaz." : worst === "warn" ? "Çalışır — yukarıdaki uyarılara bak." : "Hazır."}\n`,
+  );
+  return worst === "fail" ? 1 : 0;
+}
+
 async function main(argv: string[]): Promise<number> {
   const config = loadConfig();
+
+  if (argv.includes("--doctor")) return doctor(config, argv);
+
   const rules = loadRules(config.rulesFile);
 
   const replier =

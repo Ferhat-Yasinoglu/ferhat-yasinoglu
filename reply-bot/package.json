@@ -12,6 +12,7 @@
     "dev": "tsx watch --env-file-if-exists=.env --disable-warning=ExperimentalWarning src/index.ts",
     "start": "node --env-file-if-exists=.env --disable-warning=ExperimentalWarning dist/src/index.js",
     "try": "tsx --env-file-if-exists=.env src/index.ts --try",
+    "doctor": "tsx --env-file-if-exists=.env src/index.ts --doctor",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
