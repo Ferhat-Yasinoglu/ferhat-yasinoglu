@@ -607,7 +607,7 @@ function mockData() {
 
 // GitHub profilindeki ad alani sustu harfler icerebiliyor; basligi sabit tutuyoruz.
 const DISPLAY_NAME = "Farhad Yaqoobi";
-const TAGLINE = "Offline-first web apps · vanilla JavaScript · Firebase";
+const TAGLINE = "Offline-first web apps · vanilla JavaScript · TypeScript bots";
 
 const useMock = process.argv.includes("--mock");
 const login = process.env.GH_LOGIN || "Ferhat-Yasinoglu";
@@ -635,9 +635,10 @@ await mkdir(OUT, { recursive: true });
       { tip: "komut", metin: "whoami" },
       { tip: "cikti", metin: "Farhad Yaqoobi - developer, NRW", renk: T.blue },
       { tip: "komut", metin: "cat stack.txt" },
-      { tip: "cikti", metin: "JavaScript - CSS3 - Firebase - PWA", renk: T.green },
+      { tip: "cikti", metin: "JavaScript - TypeScript - Firebase - PWA - Node", renk: T.green },
       { tip: "komut", metin: "ls projects/" },
       { tip: "cikti", metin: "acik-defter/   netstore/", renk: T.purple },
+      { tip: "cikti", metin: "botflow-mcp/   instagram-comment-bot/", renk: T.purple },
       { tip: "komut", metin: "cat learning.md" },
       { tip: "cikti", metin: "Firestore rules - App Check - React", renk: T.cyan },
       { tip: "komut", metin: "locale -a" },

@@ -2,7 +2,7 @@
 
 <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/header.svg" alt="Farhad Yaqoobi" width="100%" />
 
-**I build offline-first web apps with vanilla JavaScript and Firebase.**
+**I build offline-first web apps with vanilla JavaScript — and bots that answer when I'm not there.**
 
 <sub>Deutsch &nbsp;·&nbsp; Türkçe &nbsp;·&nbsp; English &nbsp;·&nbsp; فارسی &nbsp;&nbsp;|&nbsp;&nbsp; NRW, Germany</sub>
 
@@ -97,7 +97,7 @@ into this repo; a workflow reruns it every six hours.
 
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" alt="whoami: Farhad Yaqoobi, developer in NRW. Stack: JavaScript, CSS3, Firebase, PWA." />
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" alt="whoami: Farhad Yaqoobi, developer in NRW. Stack: JavaScript, TypeScript, Firebase, PWA, Node." />
 
 </div>
 

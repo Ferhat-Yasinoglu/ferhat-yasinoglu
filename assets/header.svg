@@ -58,7 +58,7 @@
     </g>
     <rect class="bar" x="58" y="142" width="150" height="5" rx="2.5" fill="url(#ink)" />
     <g class="rise" style="animation-delay:.25s">
-      <text class="tag" x="56" y="186">Offline-first web apps · vanilla JavaScript · Firebase</text>
+      <text class="tag" x="56" y="186">Offline-first web apps · vanilla JavaScript · TypeScript bots</text>
     </g>
   </g>
 </svg>
