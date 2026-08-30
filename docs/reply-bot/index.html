@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="reply-bot'u Instagram ve WhatsApp hesaplarına bağlamak: sırayla tıklanacak adresler, gereken anahtarlar, altı adım ve ters gittiğinde ne yapılacağı.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💬</text></svg>">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="reply-bot'u Bağlamak">
+<meta property="og:description" content="Instagram yorumlarını ve WhatsApp mesajlarını cevaplayan botu kendi hesaplarına bağlama rehberi.">
+<meta name="twitter:card" content="summary">
+
+<title>reply-bot'u Bağlamak</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=Newsreader:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+  /* ---- Palet: gece nöbeti. Menekşeye çalan nötrler, tek mercan vurgu, ---- */
+  /* ---- kararlar için vurgudan ayrı dört semantik renk.                ---- */
+  :root {
+    --ground: #FBF7F7;
+    --surface: #FFFFFF;
+    --surface-2: #F4EEF1;
+    --line: #E4DAE0;
+    --line-soft: #EFE7EC;
+    --ink: #191426;
+    --ink-2: #4A4157;
+    --muted: #7C7288;
+    --accent: #C9453F;
+    --accent-soft: #FAEAE8;
+
+    --answer: #1F6F52;
+    --answer-soft: #E4F2EB;
+    --model: #5B41B8;
+    --model-soft: #ECE7FA;
+    --hide: #8A5510;
+    --hide-soft: #F8EEDE;
+    --quiet: #6C6379;
+    --quiet-soft: #EDEAF0;
+
+    --measure: 68ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #141019;
+      --surface: #1C1724;
+      --surface-2: #241D2E;
+      --line: #362D42;
+      --line-soft: #2A2334;
+      --ink: #F0EAF3;
+      --ink-2: #C6BCD0;
+      --muted: #9A8FA8;
+      --accent: #FF8078;
+      --accent-soft: #35202A;
+
+      --answer: #78D8AB;
+      --answer-soft: #16302A;
+      --model: #B6A2FB;
+      --model-soft: #26203C;
+      --hide: #EDB765;
+      --hide-soft: #33270F;
+      --quiet: #9E93AC;
+      --quiet-soft: #262030;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #141019;
+    --surface: #1C1724;
+    --surface-2: #241D2E;
+    --line: #362D42;
+    --line-soft: #2A2334;
+    --ink: #F0EAF3;
+    --ink-2: #C6BCD0;
+    --muted: #9A8FA8;
+    --accent: #FF8078;
+    --accent-soft: #35202A;
+
+    --answer: #78D8AB;
+    --answer-soft: #16302A;
+    --model: #B6A2FB;
+    --model-soft: #26203C;
+    --hide: #EDB765;
+    --hide-soft: #33270F;
+    --quiet: #9E93AC;
+    --quiet-soft: #262030;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Newsreader", Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: clamp(2rem, 1rem + 4vw, 4.5rem) clamp(1.1rem, 0.6rem + 2.4vw, 2.5rem) 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+  }
+
+  h1, h2, h3, .eyebrow, .stepno, th, .chip, .key code, .kanal {
+    font-family: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  }
+
+  h1 {
+    font-size: clamp(2.3rem, 1.5rem + 3.6vw, 3.6rem);
+    line-height: 1.04;
+    letter-spacing: -0.022em;
+    font-weight: 700;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  h2 {
+    font-size: clamp(1.35rem, 1.1rem + 1vw, 1.75rem);
+    line-height: 1.2;
+    letter-spacing: -0.012em;
+    font-weight: 600;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  h3 { font-size: 1.02rem; font-weight: 600; letter-spacing: -0.004em; margin: 0; }
+
+  p { margin: 0; max-width: var(--measure); }
+
+  .eyebrow {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  a { color: var(--accent); text-underline-offset: 3px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+  code, kbd, .mono {
+    font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.84em;
+    font-variant-ligatures: none;
+  }
+
+  section { display: flex; flex-direction: column; gap: 1.25rem; }
+  header { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .lede {
+    font-size: clamp(1.1rem, 1rem + 0.5vw, 1.3rem);
+    color: var(--ink-2);
+    max-width: 54ch;
+  }
+
+  .status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.75rem;
+    padding: 0.9rem 1.15rem;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: 3px;
+    background: var(--surface);
+  }
+  .status div { display: flex; align-items: baseline; gap: 0.5rem; }
+  .status dt {
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .status dd { margin: 0; font-size: 0.95rem; }
+
+  figure { margin: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+  .figwrap {
+    overflow-x: auto;
+    padding: 1.5rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+  }
+  figure svg { display: block; width: 100%; min-width: 660px; height: auto; color: var(--ink-2); }
+  figcaption { font-size: 0.9rem; color: var(--muted); max-width: var(--measure); }
+
+  .keys { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+  .key {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 1rem 1.1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+  .key code {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--accent);
+    font-family: "JetBrains Mono", monospace;
+  }
+  .key p { font-size: 0.95rem; color: var(--ink-2); }
+  .key .src { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--line-soft); padding-top: 0.55rem; }
+
+  .kanal {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  ol.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  ol.steps > li {
+    display: grid;
+    grid-template-columns: 3.25rem 1fr;
+    gap: 0 1.1rem;
+    padding: 1.35rem 0;
+    border-top: 1px solid var(--line-soft);
+  }
+  ol.steps > li:first-child { border-top: none; padding-top: 0; }
+  .stepno {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    padding-top: 0.32rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .stepbody { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; }
+  .stepbody p { font-size: 0.98rem; color: var(--ink-2); }
+  .stepbody ul { margin: 0; padding-left: 1.1rem; color: var(--ink-2); font-size: 0.95rem; }
+  .stepbody li { margin: 0.2rem 0; }
+
+  pre {
+    margin: 0;
+    padding: 0.9rem 1rem;
+    background: var(--surface-2);
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+    overflow-x: auto;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.8rem;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+  pre .c { color: var(--muted); }
+
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 3px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 36rem; }
+  th, td { text-align: left; padding: 0.72rem 0.95rem; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    background: var(--surface-2);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td { font-size: 0.94rem; color: var(--ink-2); }
+  td.said { color: var(--ink); }
+  td .mono { font-size: 0.78rem; color: var(--muted); display: block; margin-top: 0.15rem; }
+  td.ch { white-space: nowrap; }
+
+  .chip {
+    display: inline-block;
+    padding: 0.16rem 0.5rem;
+    border-radius: 2px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .chip.answer { background: var(--answer-soft); color: var(--answer); }
+  .chip.model { background: var(--model-soft); color: var(--model); }
+  .chip.hide { background: var(--hide-soft); color: var(--hide); }
+  .chip.quiet { background: var(--quiet-soft); color: var(--quiet); }
+
+  /* Madde işareti mutlak konumlu: grid/flex olsaydı içerideki <strong> ve
+     <code> ayrı hücrelere düşüp cümleyi parçalardı. */
+  .notes { display: flex; flex-direction: column; gap: 0.7rem; margin: 0; padding: 0; list-style: none; }
+  .notes li {
+    position: relative;
+    padding-left: 1.15rem;
+    font-size: 0.95rem;
+    color: var(--ink-2);
+    max-width: var(--measure);
+  }
+  .notes li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.62rem;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .links h3 a { color: var(--accent); text-decoration: none; border-bottom: 1px solid currentColor; }
+  .links h3 a:hover { opacity: 0.75; }
+  .fine { font-size: 0.85rem; color: var(--muted); }
+
+  .caveat {
+    border: 1px dashed var(--line);
+    border-radius: 3px;
+    padding: 1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .caveat p { font-size: 0.92rem; color: var(--muted); }
+  .caveat strong { color: var(--ink-2); font-weight: 500; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 1.25rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.5rem;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    a { transition: opacity 120ms ease; }
+    a:hover { opacity: 0.75; }
+  }
+</style>
+
+<style>
+  body { margin: 0; }
+  img { max-width: 100%; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <p class="eyebrow">reply-bot · kurulum</p>
+    <h1>reply-bot'u Bağlamak</h1>
+    <p class="lede">Kod hazır ve testleri geçiyor; eksik olan tek şey onu senin hesaplarına bağlayan değerler ve iki webhook aboneliği. Bu sayfa o yolun tamamı — Instagram yorumları ve WhatsApp mesajları için.</p>
+    <dl class="status">
+      <div><dt>Kod</dt><dd><code>main</code> üzerinde, 108 test</dd></div>
+      <div><dt>Kurallar</dt><dd>27 kural, dört dil</dd></div>
+      <div><dt>Kanallar</dt><dd>Instagram + WhatsApp</dd></div>
+      <div><dt>Bağlantı</dt><dd>henüz kurulmadı</dd></div>
+    </dl>
+  </header>
+
+  <section>
+    <h2>Sırayla buradan</h2>
+    <p>Altı sekme, bu sırayla. Her biri bir öncekinin çıktısını istiyor, o yüzden atlamadan git.</p>
+    <ol class="steps links">
+      <li>
+        <span class="stepno">01</span>
+        <div class="stepbody">
+          <h3><a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/pull/16">PR #16'yı merge et</a></h3>
+          <p>Dağıtım workflow'u bununla <code>main</code>'e giriyor. Merge edilmeden aşağıdaki Actions bağlantısı boş çıkar.</p>
+        </div>
+      </li>
+      <li>
+        <span class="stepno">02</span>
+        <div class="stepbody">
+          <h3><a href="https://developers.facebook.com/apps/">Meta uygulaman</a></h3>
+          <p>Uygulamayı oluştur, Instagram ve/veya WhatsApp ürününü ekle, izinleri iste. Buradan alacakların: access token, hesap kimliği (Instagram) ya da telefon numarası kimliği (WhatsApp), bir de App secret.</p>
+        </div>
+      </li>
+      <li>
+        <span class="stepno">03</span>
+        <div class="stepbody">
+          <h3><a href="https://fly.io/app/sign-up">Fly hesabı</a> → <a href="https://fly.io/user/personal_access_tokens">dağıtım token'ı</a></h3>
+          <p>Hesap açıldıktan sonra token üret. Kart isteyebilir; bu boyuttaki bir makine ücretsiz sınırın içinde kalıyor.</p>
+        </div>
+      </li>
+      <li>
+        <span class="stepno">04</span>
+        <div class="stepbody">
+          <h3><a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/settings/secrets/actions">GitHub gizli değerleri</a></h3>
+          <p>02 ve 03'te aldıklarını buraya gir: <code>FLY_API_TOKEN</code>, sonra kullanacağın kanalın <code>IG_*</code> ya da <code>WA_*</code> değerleri. Tarayıcıdan giriliyor, hiçbir dosyaya yazılmıyor.</p>
+        </div>
+      </li>
+      <li>
+        <span class="stepno">05</span>
+        <div class="stepbody">
+          <h3><a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/actions/workflows/deploy-reply-bot.yml">Dağıtımı çalıştır</a></h3>
+          <p>“Run workflow” — prova kutusu işaretli kalsın. Bittiğinde çalışma özetinde adresin ve Meta paneline yapıştırılacak iki satır yazılı olacak.</p>
+        </div>
+      </li>
+      <li>
+        <span class="stepno">06</span>
+        <div class="stepbody">
+          <h3>Webhook aboneliği</h3>
+          <p>05'in verdiği iki satırı Meta panelinde, uygulamanın Webhooks bölümüne gir: Instagram için <code>comments</code>, WhatsApp için <code>messages</code>. Panelde yeşil görünmesi o kanalın kurulduğu anlamına gelir.</p>
+        </div>
+      </li>
+    </ol>
+    <p class="fine">Meta ve Fly panellerinin iç sayfaları zaman zaman yer değiştiriyor; yukarıdaki adresler giriş noktaları, oradan ilerlersin.</p>
+  </section>
+
+  <section>
+    <h2>Giriş diye bir şey yok</h2>
+    <p>Bot senin adına oturum açmıyor, şifreni hiç görmüyor. Yaptığı tek şey her isteğe bir <strong>access token</strong> eklemek. İki kanal da Meta'nın aynı webhook mekanizmasını kullanıyor: Meta mesajı sana yollar, sen de Graph API üzerinden cevabı geri yazarsın. Fark, kanalın ne yapmana izin verdiğinde.</p>
+
+    <figure>
+      <div class="figwrap">
+        <svg viewBox="0 0 900 380" role="img" aria-label="Bir mesajın yolu: Instagram yorumu ya da WhatsApp mesajı imzalı webhook olarak bota gelir, bot işten önce 200 döner, WhatsApp'ta 24 saat penceresi kontrol edilir, kural ya da model kararı verilir, cevap Graph API ile geri yazılır.">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="currentColor"></path>
+            </marker>
+            <marker id="ar-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"></path>
+            </marker>
+            <marker id="ar-model" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="var(--model)"></path>
+            </marker>
+            <marker id="ar-hide" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="var(--hide)"></path>
+            </marker>
+          </defs>
+
+          <!-- kaynaklar -->
+          <rect x="24" y="46" width="176" height="62" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+          <text x="112" y="72" text-anchor="middle" font-size="13.5" font-weight="600" fill="currentColor">Instagram</text>
+          <text x="112" y="90" text-anchor="middle" font-size="11" fill="var(--muted)">yorum düşer</text>
+
+          <rect x="24" y="132" width="176" height="62" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+          <text x="112" y="158" text-anchor="middle" font-size="13.5" font-weight="600" fill="currentColor">WhatsApp</text>
+          <text x="112" y="176" text-anchor="middle" font-size="11" fill="var(--muted)">mesaj gelir</text>
+
+          <!-- webhook -->
+          <rect x="316" y="86" width="196" height="70" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+          <text x="414" y="113" text-anchor="middle" font-size="13.5" font-weight="600" fill="currentColor">Senin sunucun</text>
+          <text x="414" y="132" text-anchor="middle" font-size="11" fill="var(--muted)">kanalın imzası doğrulanır</text>
+
+          <!-- karar -->
+          <rect x="628" y="86" width="196" height="70" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+          <text x="726" y="113" text-anchor="middle" font-size="13.5" font-weight="600" fill="currentColor">Karar</text>
+          <text x="726" y="132" text-anchor="middle" font-size="11" fill="var(--muted)">kural → model → sessizlik</text>
+
+          <!-- 24 saat kapisi -->
+          <rect x="628" y="196" width="196" height="52" rx="3" fill="none" stroke="var(--hide)" stroke-width="1.5" stroke-dasharray="5 4"></rect>
+          <text x="726" y="219" text-anchor="middle" font-size="12" font-weight="600" fill="var(--hide)">24 saat penceresi</text>
+          <text x="726" y="236" text-anchor="middle" font-size="10.5" fill="var(--hide)">yalnızca WhatsApp</text>
+
+          <!-- Claude -->
+          <rect x="628" y="278" width="196" height="52" rx="3" fill="none" stroke="var(--model)" stroke-width="1.5" stroke-dasharray="5 4"></rect>
+          <text x="726" y="301" text-anchor="middle" font-size="12" font-weight="600" fill="var(--model)">Claude</text>
+          <text x="726" y="318" text-anchor="middle" font-size="10.5" fill="var(--model)">emin değilse susar</text>
+
+          <!-- girisler -->
+          <path d="M200 77 L 258 77 L 258 110 L 308 110" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></path>
+          <path d="M200 163 L 258 163 L 258 132 L 308 132" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></path>
+          <text x="254" y="66" text-anchor="middle" font-size="11" fill="currentColor">webhook, imzalı</text>
+
+          <!-- hemen 200 -->
+          <path d="M330 156 C 300 190, 240 200, 200 186" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#ar)"></path>
+          <text x="292" y="212" text-anchor="middle" font-size="10.5" fill="var(--muted)">200 — işten önce</text>
+
+          <!-- karara -->
+          <line x1="512" y1="121" x2="620" y2="121" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
+          <text x="566" y="111" text-anchor="middle" font-size="11" fill="currentColor">imza geçti</text>
+
+          <!-- kapilar -->
+          <line x1="726" y1="156" x2="726" y2="190" stroke="var(--hide)" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ar-hide)"></line>
+          <line x1="726" y1="248" x2="726" y2="272" stroke="var(--model)" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ar-model)"></line>
+          <text x="738" y="266" font-size="10.5" fill="var(--model)">kural yoksa</text>
+
+          <!-- geri yazma -->
+          <path d="M628 100 L 560 100 L 560 356 L 112 356 L 112 200" fill="none" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#ar-accent)"></path>
+          <text x="336" y="347" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--accent)">Graph API + token — kanalın izin verdiği kadarı</text>
+        </svg>
+      </div>
+      <figcaption>Tek çekirdek, iki oda. Webhook'a 200 karar verilmeden önce döner: Meta birkaç saniyede yanıt alamazsa aynı teslimatı tekrar yollar, o da aynı mesaja iki cevap demektir. Kesikli kutular yalnızca kendi kanallarında çalışır.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Kanal ne yapabiliyor</h2>
+    <p>Bot, kanaldan yapamayacağı bir şeyi hiç istemiyor. Bu yüzden aynı kural dosyası iki kanalda farklı davranıyor: spam kuralı Instagram'da yorumu gizler, WhatsApp'ta sadece susar.</p>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th scope="col"></th><th scope="col">Instagram</th><th scope="col">WhatsApp</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="said">Ortam</td><td>Herkese açık yorum</td><td>Bire bir sohbet</td></tr>
+          <tr><td class="said">Açık cevap</td><td>✓ yorumun altına</td><td>✓ mesajı alıntılayarak</td></tr>
+          <tr><td class="said">DM</td><td>✓ yorum başına bir kez, 7 gün</td><td>— cevabın kendisi zaten özel</td></tr>
+          <tr><td class="said">Gizleme</td><td>✓</td><td>— sohbette gizlenecek bir şey yok</td></tr>
+          <tr><td class="said">Zaman sınırı</td><td>yok</td><td><strong>24 saat</strong></td></tr>
+          <tr><td class="said">Webhook alanı</td><td><code>comments</code></td><td><code>messages</code></td></tr>
+          <tr><td class="said">Yol</td><td><code>/webhook/instagram</code></td><td><code>/webhook/whatsapp</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Anahtarlar</h2>
+    <p>Hepsi <code>.env</code> dosyasına girer. Bir kanal, kendi değerleri girildiği anda açılır — yalnızca WhatsApp da çalıştırabilirsin.</p>
+    <div class="keys">
+      <div class="key">
+        <p class="kanal">Instagram</p>
+        <code>IG_ACCESS_TOKEN · IG_USER_ID</code>
+        <p>Botun kimin adına yazdığı ve hangi hesap olduğu. Hesap kimliği ayrıca botun kendi yorumlarını atlaması için kullanılır.</p>
+        <p class="src">Token uzun ömürlüye çevrilir; sızarsa hesabına yorum yazılabilir. Hesap kimliği gizli değil.</p>
+      </div>
+      <div class="key">
+        <p class="kanal">WhatsApp</p>
+        <code>WA_ACCESS_TOKEN · WA_PHONE_NUMBER_ID</code>
+        <p>Cloud API token'ı ve gönderen numaranın kimliği — numaranın kendisi değil, panelin verdiği kimlik.</p>
+        <p class="src">Kalıcı token için sistem kullanıcısı oluşturmak gerekir; geçici token 24 saatte biter.</p>
+      </div>
+      <div class="key">
+        <p class="kanal">Her kanal için ayrı</p>
+        <code>IG_VERIFY_TOKEN · WA_VERIFY_TOKEN</code>
+        <p>Webhook'u kurarken Meta'ya "bu adres benim" dedirtir. Bir kez kullanılır.</p>
+        <p class="src">Sen uydurursun, panele de aynısını yazarsın. İki kanal için farklı olabilir.</p>
+      </div>
+      <div class="key">
+        <p class="kanal">Her kanal için ayrı</p>
+        <code>IG_APP_SECRET · WA_APP_SECRET</code>
+        <p>Gelen her teslimatın imzasını doğrular. Boşsa URL'yi bulan herkes bota mesaj yazdırabilir.</p>
+        <p class="src">Uygulama panelinde "App secret". Tek uygulama kullanıyorsan ikisi aynı olur.</p>
+      </div>
+      <div class="key">
+        <p class="kanal">Ortak</p>
+        <code>BOT_RULES_FILE · BOT_DRY_RUN · BOT_PERSONA</code>
+        <p>Kural dosyası, prova modu ve model brifingi. İki kanal da aynı kuralları ve aynı brifingi kullanır.</p>
+        <p class="src">Brifing yalnızca <code>ANTHROPIC_API_KEY</code> ile birlikte anlamlı; ikisi de boşsa bot sadece kurallarla çalışır.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Altı adım</h2>
+    <ol class="steps">
+      <li>
+        <span class="stepno">01</span>
+        <div class="stepbody">
+          <h3>Hesapları hazırla</h3>
+          <p>Instagram hesabı <strong>professional</strong> olmalı (işletme ya da içerik üreticisi); ayarlardan tek dokunuşla dönüşür, kullanıcı adın ve gönderilerin değişmez.</p>
+          <p>WhatsApp için ayrı bir <strong>WhatsApp Business hesabı</strong> ve ona bağlı bir telefon numarası gerekiyor. Numara, kişisel WhatsApp'ında kayıtlı olmayan bir numara olmalı — test için panelin verdiği deneme numarası da yeter.</p>
+        </div>
+      </li>
+      <li>
+        <span class="stepno">02</span>
+        <div class="stepbody">
+          <h3>Meta uygulamasını aç</h3>
+          <p>developers.facebook.com üzerinde bir uygulama oluştur; kullanacağın ürünleri ekle — <strong>Instagram</strong>, <strong>WhatsApp</strong> ya da ikisi. Aynı uygulamada durabilirler; ayrı uygulamalar da olur, bot her kanalın imzasını kendi secret'ıyla doğruluyor.</p>
+        </div>
+      </li>
+      <li>
+        <span class="stepno">03</span>
+        <div class="stepbody">
+          <h3>İzinleri iste</h3>
+          <ul>
+            <li><strong>Instagram</strong> — yorum yönetimi (cevap ve gizleme), DM göndereceksen bir de mesaj izni.</li>
+            <li><strong>WhatsApp</strong> — mesaj gönderme izni ve numaranın uygulamaya bağlanması.</li>
+          </ul>
+          <p>Panelde gördüğün izin adları buradakinden farklı olabilir; Meta bunları zaman zaman yeniden adlandırıyor, ekran doğrudur.</p>
+        </div>
+      </li>
+      <li>
+        <span class="stepno">04</span>
+        <div class="stepbody">
+          <h3>Token'ları al, <code>.env</code>'i doldur</h3>
+          <p>Instagram tarafında kısa ömürlü token'ı <strong>60 günlük</strong> uzun ömürlüye çevir. WhatsApp tarafında panelin verdiği geçici token 24 saatte biter; kalıcısı için bir sistem kullanıcısı üzerinden token üret.</p>
+          <pre><span class="c"># reply-bot/.env — yalnızca kullanacağın kanalı doldur</span>
+IG_ACCESS_TOKEN=EAAG…
+IG_USER_ID=17841…
+IG_VERIFY_TOKEN=kendi-uydurdugun-dize
+IG_APP_SECRET=…
+
+WA_ACCESS_TOKEN=EAAG…
+WA_PHONE_NUMBER_ID=1555…
+WA_VERIFY_TOKEN=kendi-uydurdugun-dize
+WA_APP_SECRET=…</pre>
+        </div>
+      </li>
+      <li>
+        <span class="stepno">05</span>
+        <div class="stepbody">
+          <h3>Sunucuyu herkese açık bir adrese koy, iki webhook'u da abone et</h3>
+          <p>Meta sana <strong>HTTPS</strong> üzerinden POST edecek, yani localhost yetmez. Denemek için tünel aç, kalıcı kullanım için bir sunucuya kur.</p>
+          <pre>npm run dev            <span class="c"># /webhook/instagram ve /webhook/whatsapp</span>
+ngrok http 3000        <span class="c"># https://xxxx.ngrok.app</span></pre>
+          <p>Panelde her ürün için ayrı abonelik giriyorsun:</p>
+          <ul>
+            <li><strong>Instagram</strong> → <code>comments</code> alanı, Callback URL <code>…/webhook/instagram</code>, Verify token <code>IG_VERIFY_TOKEN</code>.</li>
+            <li><strong>WhatsApp</strong> → <code>messages</code> alanı, Callback URL <code>…/webhook/whatsapp</code>, Verify token <code>WA_VERIFY_TOKEN</code>.</li>
+          </ul>
+          <p>Meta her iki adrese bir GET atar, bot doğrulamayı kendi yanıtlar. Panelde yeşil görünmesi o kanalın kurulduğu anlamına gelir.</p>
+        </div>
+      </li>
+      <li>
+        <span class="stepno">06</span>
+        <div class="stepbody">
+          <h3>Önce prova, sonra canlı</h3>
+          <p>İlk gün hiçbir şey göndermeden izle. Bot ne cevaplayacağını satır satır loglar, Meta'ya tek bir istek gitmez.</p>
+          <pre>BOT_DRY_RUN=1 npm run dev    <span class="c"># karar ver, logla, gönderme</span></pre>
+          <p>Loglardaki kararları beğendiğinde <code>BOT_DRY_RUN</code> satırını sil ve yeniden başlat. Bot o andan sonra gerçekten yazar.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Bağlandığında ne yapacak</h2>
+    <p>Aşağıdakiler uydurma değil — iki kanalı birden çalıştırıp imzalı webhook'lar gönderdiğimde sunucunun verdiği gerçek kararlar.</p>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th scope="col">Kanal</th><th scope="col">Gelen</th><th scope="col">Karar</th><th scope="col">Ne olur</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="ch">Instagram</td>
+            <td class="said">bunu ne ile yaptın?<span class="mono">teknoloji-tr</span></td>
+            <td><span class="chip answer">cevap</span></td>
+            <td>“Vanilla JavaScript + Firestore — framework yok, build step yok.”</td>
+          </tr>
+          <tr>
+            <td class="ch">Instagram</td>
+            <td class="said">merhaba<span class="mono">kural eşleşmiyor</span></td>
+            <td><span class="chip quiet">sessiz</span></td>
+            <td>Selamlaşma kuralı yalnızca WhatsApp'a tanımlı.</td>
+          </tr>
+          <tr>
+            <td class="ch">Instagram</td>
+            <td class="said">bedava takipçi kazan<span class="mono">spam</span></td>
+            <td><span class="chip hide">gizle</span></td>
+            <td>Yorum gizlenir, cevap yazılmaz.</td>
+          </tr>
+          <tr>
+            <td class="ch">WhatsApp</td>
+            <td class="said">merhaba<span class="mono">selam-tr</span></td>
+            <td><span class="chip answer">cevap</span></td>
+            <td>“Merhaba Ali! Nasıl yardımcı olabilirim? 🙂”</td>
+          </tr>
+          <tr>
+            <td class="ch">WhatsApp</td>
+            <td class="said">casino linki<span class="mono">spam</span></td>
+            <td><span class="chip quiet">sessiz</span></td>
+            <td>Aynı kural; sohbette gizlenecek bir şey olmadığı için susar.</td>
+          </tr>
+          <tr>
+            <td class="ch">WhatsApp</td>
+            <td class="said">30 saat önce yazılmış mesaj<span class="mono">pencere</span></td>
+            <td><span class="chip quiet">atlanır</span></td>
+            <td>Serbest metin artık iletilmez; denemek yerine sebebi loglanır.</td>
+          </tr>
+          <tr>
+            <td class="ch">WhatsApp</td>
+            <td class="said">teslimat bildirimi<span class="mono">statuses</span></td>
+            <td><span class="chip quiet">görünmez</span></td>
+            <td>Ayrıştırmada elenir; log satırı bile üretmez.</td>
+          </tr>
+          <tr>
+            <td class="ch">Her ikisi</td>
+            <td class="said">bu fotoğrafı nerede çektin?<span class="mono">kural eşleşmiyor</span></td>
+            <td><span class="chip model">model</span></td>
+            <td>Claude brifingden cevaplar; emin değilse hiç yazmaz.</td>
+          </tr>
+          <tr>
+            <td class="ch">Her ikisi</td>
+            <td class="said">❤️🔥<span class="mono">kelime yok</span></td>
+            <td><span class="chip quiet">sessiz</span></td>
+            <td>Model çağrısı bile yapılmaz.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Cevapları değiştirmek için sunucuya dokunmana gerek yok: <code>rules.json</code> dosyasını düzenle, <code>npm run try -- "bir mesaj"</code> ya da <code>npm run try -- --whatsapp "bir mesaj"</code> ile dene, sunucuyu yeniden başlat. Bir kuralı tek kanala bağlamak için <code>"channels": ["whatsapp"]</code> yeter.</p>
+  </section>
+
+  <section>
+    <h2>WhatsApp'ın iki kendine has kuralı</h2>
+    <p><strong>24 saat penceresi.</strong> Serbest metinle ancak kişinin son mesajından sonraki 24 saat içinde yazabilirsin; dışında yalnızca Meta'nın önceden onayladığı şablonlar gider. Bot geç gelen bir teslimatı göndermeyi denemek yerine atlar ve sebebini loglar. Şablon desteği yok — onay süreci gerektirdiği için bilerek dışarıda bırakıldı.</p>
+    <p><strong>Teslimat bildirimleri.</strong> Botun gönderdiği her mesaj, kısa süre sonra <code>statuses</code> olarak sana geri gelir. Ayrıştırma bunları eler; biri gelen mesaj sanılsaydı bot kendi bildirimlerine sonsuza kadar cevap yazardı.</p>
+  </section>
+
+  <section>
+    <h2>Ters giderse</h2>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th scope="col">Gördüğün</th><th scope="col">Anlamı</th><th scope="col">Yapılacak</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="said">Logda <span class="mono">webhook signature rejected</span></td>
+            <td>O kanalın gövde imzası tutmuyor.</td>
+            <td>Hangi kanal olduğu log satırının başında yazar; o kanalın <code>APP_SECRET</code>'ı paneldekiyle birebir aynı mı bak.</td>
+          </tr>
+          <tr>
+            <td class="said">401 · hata kodu 190</td>
+            <td>Token süresi doldu ya da izin geri alındı.</td>
+            <td>Yeni token al. Bot bunu tanır ve loglar, ama kendi kendine yenilemez. WhatsApp'ta geçici token 24 saatte biter.</td>
+          </tr>
+          <tr>
+            <td class="said">Logda <span class="mono">24 saat penceresi kapandı</span></td>
+            <td>Mesaj çok eski; serbest metin iletilmez.</td>
+            <td>Beklenen davranış. Denemek için <code>WA_WINDOW_HOURS</code> düşürülebilir.</td>
+          </tr>
+          <tr>
+            <td class="said">Hiç mesaj gelmiyor</td>
+            <td>Abonelik eksik ya da adres dışarıdan görünmüyor.</td>
+            <td>Doğru alanı (<code>comments</code> / <code>messages</code>) ve doğru yolu abone ettiğini, tünelin hâlâ açık olduğunu doğrula.</td>
+          </tr>
+          <tr>
+            <td class="said">Aynı mesaja iki cevap</td>
+            <td>Birden fazla kopya çalışıyor.</td>
+            <td>Yinelenen mesaj hafızası süreç başına tutulur; tek kopya çalıştır.</td>
+          </tr>
+          <tr>
+            <td class="said">Logda <span class="mono">gone before the reply landed</span></td>
+            <td>Yorum, cevap yazılmadan silinmiş.</td>
+            <td>Bir şey yapma. Normal karşılanır ve geçilir.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Baştan bilmen iyi olan sınırlar</h2>
+    <ul class="notes">
+      <li>Uzun ömürlü Instagram token'ı 60 gün yaşar; WhatsApp'ta kalıcı token için sistem kullanıcısı gerekir. Bot süresi dolduğunu tanır ve loglar, ama yenilemeyi sen yaparsın.</li>
+      <li>WhatsApp'ta 24 saat dışına düşen mesaja cevap verilmez; şablon mesaj desteği yok.</li>
+      <li>DM (<code>privateReply</code>) Instagram'a özel: yorum başına bir kez ve yorumdan sonraki yedi gün içinde.</li>
+      <li>Yalnızca webhook'un getirdiği yeni mesajlar işlenir; geçmiş taranmaz.</li>
+      <li>Fotoğraf, ses, sticker ve konum mesajları atlanır — metin olmayan şeye kural da model de bir şey söyleyemez.</li>
+      <li>Rate limit'e takılan bir cevap yeniden denenmez; loglanır ve geçilir.</li>
+      <li>Model katmanı isteğe bağlı. <code>ANTHROPIC_API_KEY</code> ve <code>BOT_PERSONA</code> boşsa bot yalnızca kurallarla çalışır ve gerisine susar.</li>
+    </ul>
+  </section>
+
+  <div class="caveat">
+    <p><strong>Bu sayfada doğrulayamadığım tek şey Meta tarafı.</strong> Botun kendi davranışı gerçek bir sunucuya imzalı webhook'lar gönderilerek denendi — yukarıdaki karar tablosu o çalışmanın çıktısı. Ama Meta'nın uçlarına bu ortamdan erişim kapalı, dolayısıyla token akışını senin adına kuramadım. Meta izin adlarını ve panel akışını zaman zaman değiştiriyor: ekranda gördüğün adlandırma buradakinden farklıysa, ekran doğrudur.</p>
+  </div>
+
+  <footer>
+    <span>reply-bot</span>
+    <span>Instagram + WhatsApp</span>
+    <span>kural dosyası: 27 kural · dört dil</span>
+    <span>prova için <code>BOT_DRY_RUN=1</code></span>
+  </footer>
+
+</div>
+
+</body>
+</html>
