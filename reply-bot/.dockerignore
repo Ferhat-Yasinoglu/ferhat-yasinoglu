@@ -1,7 +1,8 @@
-# Never bake credentials into an image: .env is the one file that must not
-# travel with the build.
+# Never bake credentials into an image. Two files must not travel with the
+# build: the .env you run locally, and whatever the web panel has saved.
 .env
 .env.local
+data/
 
 node_modules
 dist

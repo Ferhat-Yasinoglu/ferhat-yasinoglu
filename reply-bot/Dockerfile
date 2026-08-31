@@ -18,6 +18,12 @@ COPY --from=build /app/dist ./dist
 COPY rules.json* ./
 COPY rules.example.json ./
 
+# Where the web panel writes what you type into it. In production this path is
+# a mounted volume; the directory is created here so a run without one still
+# starts (and loses its settings on restart, which fly.toml explains).
+RUN mkdir -p /data && chown node:node /data
+ENV BOT_DATA_DIR=/data
+
 USER node
 EXPOSE 3000
 ENV HOST=0.0.0.0

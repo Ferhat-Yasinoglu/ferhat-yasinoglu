@@ -30,6 +30,12 @@ export type BotOptions = {
   log?: (message: string, detail?: unknown) => void;
   /** Injectable clock, so window expiry is testable. */
   now?: () => Date;
+  /**
+   * Called once per handled message, after the send was attempted. The panel's
+   * activity list is built from this rather than from parsing `log` output.
+   * Throwing here must not cost a reply, so it is called defensively.
+   */
+  onHandled?: (handled: Handled) => void;
 };
 
 export type Handled = { message: Incoming; action: Action; sent: boolean; error?: Error };
@@ -42,6 +48,7 @@ export class Bot {
   private readonly memory: number;
   private readonly log: (message: string, detail?: unknown) => void;
   private readonly now: () => Date;
+  private readonly onHandled?: (handled: Handled) => void;
   /** Insertion-ordered, so pruning the oldest is just taking the first key. */
   private readonly seen = new Set<string>();
 
@@ -53,6 +60,7 @@ export class Bot {
     this.memory = options.memory ?? 5000;
     this.log = options.log ?? (() => {});
     this.now = options.now ?? (() => new Date());
+    if (options.onHandled) this.onHandled = options.onHandled;
   }
 
   /** What the bot would do with this message on this channel, and why. */
@@ -117,6 +125,20 @@ export class Bot {
 
   /** Decide and carry it out. Repeat deliveries of a message are dropped. */
   async handle(message: Incoming, channel: Channel): Promise<Handled> {
+    const handled = await this.perform(message, channel);
+    // A retry that we drop is not activity; reporting it would fill the panel
+    // with duplicates of things it already shows.
+    if (handled.action.reason !== "already handled") {
+      try {
+        this.onHandled?.(handled);
+      } catch (error) {
+        this.log("onHandled listener threw", error);
+      }
+    }
+    return handled;
+  }
+
+  private async perform(message: Incoming, channel: Channel): Promise<Handled> {
     const key = `${message.channel}:${message.id}`;
     if (this.seen.has(key)) {
       return { message, action: { kind: "skip", reason: "already handled" }, sent: false };

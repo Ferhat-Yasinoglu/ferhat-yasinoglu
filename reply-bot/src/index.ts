@@ -9,17 +9,26 @@
  *
  * `--try` sends nothing and needs no credentials, which makes it the way to
  * write rules: change the file, run it, see the reply. `--doctor` only reads.
+ *
+ * Settings come from the environment, with anything the web panel has saved
+ * laid over the top — so every entry point here sees the same configuration the
+ * running server does, whether it was typed into a `.env` or into a browser.
  */
 
+import type { Router } from "express";
 import { claudeReplier } from "./ai.js";
 import { Bot } from "./bot.js";
 import { instagramChannel } from "./channels/instagram.js";
 import type { Channel, ChannelName } from "./channels/types.js";
 import { whatsappChannel } from "./channels/whatsapp.js";
-import { loadConfig, loadRules, missingForServe, type Config } from "./config.js";
+import { loadConfig, loadRules, type Config } from "./config.js";
 import { runDoctor, webhookLines, worstStatus, type Status } from "./doctor.js";
+import { Auth } from "./panel/auth.js";
+import { panelRouter } from "./panel/routes.js";
 import type { Rule } from "./rules.js";
+import { Runtime } from "./runtime.js";
 import { createApp } from "./server.js";
+import { SettingsStore } from "./store.js";
 
 const log = (message: string, detail?: unknown) => {
   const stamp = new Date().toISOString();
@@ -27,40 +36,10 @@ const log = (message: string, detail?: unknown) => {
   else console.log(`${stamp} ${message}`, detail);
 };
 
-function buildChannels(config: Config): Channel[] {
-  const channels: Channel[] = [];
-
-  if (config.instagram) {
-    channels.push(
-      instagramChannel({
-        accessToken: config.instagram.accessToken,
-        igUserId: config.instagram.igUserId,
-        verifyToken: config.instagram.verifyToken,
-        appSecret: config.instagram.appSecret,
-        path: config.instagram.path,
-        baseUrl: config.instagram.graphUrl,
-      }),
-    );
-  }
-  if (config.whatsapp) {
-    channels.push(
-      whatsappChannel({
-        accessToken: config.whatsapp.accessToken,
-        phoneNumberId: config.whatsapp.phoneNumberId,
-        verifyToken: config.whatsapp.verifyToken,
-        appSecret: config.whatsapp.appSecret,
-        path: config.whatsapp.path,
-        baseUrl: config.whatsapp.graphUrl,
-        windowHours: config.whatsapp.windowHours,
-      }),
-    );
-  }
-  return channels;
-}
-
 const MARK: Record<Status, string> = { ok: "✓", warn: "!", fail: "✗" };
+const PANEL_PATH = "/panel";
 
-async function doctor(config: Config, argv: string[]): Promise<number> {
+async function doctor(config: Config, argv: string[], store: SettingsStore): Promise<number> {
   // Rules are reported as a check rather than thrown, so one run shows
   // everything that is wrong instead of stopping at the first thing.
   let rules: Rule[] | undefined;
@@ -83,6 +62,8 @@ async function doctor(config: Config, argv: string[]): Promise<number> {
     ...(publicUrl ? { publicUrl } : {}),
   });
 
+  checks.push(...panelChecks(config, store));
+
   console.log();
   for (const check of checks) {
     console.log(`  ${MARK[check.status]} ${check.name.padEnd(18)} ${check.detail}`);
@@ -102,25 +83,57 @@ async function doctor(config: Config, argv: string[]): Promise<number> {
   return worst === "fail" ? 1 : 0;
 }
 
+/** The panel's own preflight — it holds tokens, so its lock is worth checking. */
+function panelChecks(config: Config, store: SettingsStore): { name: string; status: Status; detail: string }[] {
+  const checks: { name: string; status: Status; detail: string }[] = [];
+  const password = process.env.PANEL_PASSWORD ?? "";
+
+  if (!password) {
+    checks.push({ name: "panel", status: "warn", detail: "kapalı: PANEL_PASSWORD yok, panel hiç açılmıyor" });
+  } else if (password.length < 12) {
+    checks.push({
+      name: "panel",
+      status: "fail",
+      detail: `şifre ${password.length} karakter — en az 12 olmalı, panel token'ları tutuyor`,
+    });
+  } else {
+    checks.push({ name: "panel", status: "ok", detail: `açık, ${PANEL_PATH} altında` });
+  }
+
+  if (store.error) {
+    checks.push({ name: "panel kaydı", status: "fail", detail: store.error });
+  } else if (password) {
+    const saved = store.state().filter((field) => field.source === "panel").length;
+    checks.push({
+      name: "panel kaydı",
+      status: "ok",
+      detail: `${store.file}: panelden ${saved} değer`,
+    });
+  }
+
+  // A channel deliberately parked under the panel prefix would be shadowed by
+  // it, and the delivery would 404 with nothing in the log to explain why.
+  for (const channel of [config.instagram, config.whatsapp]) {
+    if (channel && (channel.path === PANEL_PATH || channel.path.startsWith(`${PANEL_PATH}/`))) {
+      checks.push({
+        name: "webhook yolu",
+        status: "fail",
+        detail: `${channel.path} panelin altında kalıyor — teslimatlar panele düşer`,
+      });
+    }
+  }
+  return checks;
+}
+
 async function main(argv: string[]): Promise<number> {
-  const config = loadConfig();
+  const store = new SettingsStore();
+  const config = loadConfig(store.environment());
 
-  if (argv.includes("--doctor")) return doctor(config, argv);
-
-  const rules = loadRules(config.rulesFile);
-
-  const replier =
-    config.anthropicApiKey && config.persona
-      ? claudeReplier({
-          persona: config.persona,
-          apiKey: config.anthropicApiKey,
-          model: config.model,
-          maxChars: config.maxChars,
-        })
-      : undefined;
+  if (argv.includes("--doctor")) return doctor(config, argv, store);
 
   const tryIndex = argv.indexOf("--try");
   if (tryIndex !== -1) {
+    const rules = loadRules(config.rulesFile);
     const rest = argv.slice(tryIndex + 1);
     const channelName: ChannelName = rest.includes("--whatsapp") ? "whatsapp" : "instagram";
     const text = rest.filter((word) => word !== "--whatsapp" && word !== "--instagram").join(" ").trim();
@@ -136,7 +149,16 @@ async function main(argv: string[]): Promise<number> {
         ? whatsappChannel({ accessToken: "", phoneNumberId: "try", verifyToken: "", appSecret: "" })
         : instagramChannel({ accessToken: "", igUserId: "try", verifyToken: "", appSecret: "" });
 
-    const bot = new Bot({ rules, replier, maxChars: config.maxChars, dryRun: true });
+    const replier =
+      config.anthropicApiKey && config.persona
+        ? claudeReplier({
+            persona: config.persona,
+            apiKey: config.anthropicApiKey,
+            model: config.model,
+            maxChars: config.maxChars,
+          })
+        : undefined;
+    const bot = new Bot({ rules, ...(replier ? { replier } : {}), maxChars: config.maxChars, dryRun: true });
     const action = await bot.decide(
       {
         channel: channelName,
@@ -160,31 +182,57 @@ async function main(argv: string[]): Promise<number> {
     return 0;
   }
 
-  const missing = missingForServe(config);
-  if (missing.length) {
-    console.error(`Eksik ortam değişkeni: ${missing.join(", ")}. Bakınız .env.example.`);
-    return 2;
+  const runtime = new Runtime({ store, log });
+  const snapshot = runtime.current;
+
+  if (snapshot.missing.length) {
+    // With the panel on, a bare machine is a legitimate starting point: you
+    // deploy it empty and fill it in from the browser. Without one, there is
+    // nothing this process can do but stop.
+    if (!process.env.PANEL_PASSWORD) {
+      console.error(`Eksik ortam değişkeni: ${snapshot.missing.join(", ")}. Bakınız .env.example.`);
+      return 2;
+    }
+    log("no channel is ready yet — open the panel and fill it in", { missing: snapshot.missing });
   }
 
-  const channels = buildChannels(config);
-  const bot = new Bot({
-    rules,
-    replier,
-    dryRun: config.dryRun,
-    maxChars: config.maxChars,
+  const password = process.env.PANEL_PASSWORD ?? "";
+  let panel: Router | undefined;
+  if (password.length >= 12) {
+    const auth = new Auth({ password });
+    panel = panelRouter({
+      runtime,
+      store,
+      auth,
+      fetcher: fetch,
+      ...(process.env.PANEL_PUBLIC_URL ? { publicUrl: process.env.PANEL_PUBLIC_URL } : {}),
+      log,
+    });
+  } else if (password) {
+    console.error("PANEL_PASSWORD en az 12 karakter olmalı; panel açılmadı.");
+  }
+
+  const app = createApp({
+    source: runtime,
     log,
+    ...(panel ? { panel, panelPath: PANEL_PATH } : {}),
   });
 
-  const app = createApp({ bot, channels, log });
+  // Behind Fly's edge every request arrives from the same proxy address, which
+  // would make the panel's per-address lockout global. Opt in only when a proxy
+  // you trust is setting X-Forwarded-For, because that header is otherwise the
+  // easiest thing in the world to forge.
+  if (process.env.PANEL_TRUST_PROXY === "1") app.set("trust proxy", true);
 
   app.listen(config.port, config.host, () => {
     log(`listening on http://${config.host}:${config.port}`, {
-      channels: channels.map((channel) => channel.path),
-      rules: rules.length,
-      model: replier ? config.model : "off (rules only)",
+      channels: runtime.paths(),
+      rules: snapshot.rules.length,
+      model: snapshot.modelOn ? config.model : "off (rules only)",
       dryRun: config.dryRun,
+      panel: panel ? PANEL_PATH : "off",
     });
-    for (const channel of channels) {
+    for (const channel of snapshot.channels) {
       if (!channel.appSecret) {
         log(`${channel.name}: app secret boş — URL'yi bulan herkes botu çalıştırabilir`);
       }

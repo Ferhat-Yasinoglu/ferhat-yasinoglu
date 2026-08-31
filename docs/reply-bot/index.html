@@ -352,7 +352,7 @@
     <h1>reply-bot'u Bağlamak</h1>
     <p class="lede">Kod hazır ve testleri geçiyor; eksik olan tek şey onu senin hesaplarına bağlayan değerler ve iki webhook aboneliği. Bu sayfa o yolun tamamı — Instagram yorumları ve WhatsApp mesajları için.</p>
     <dl class="status">
-      <div><dt>Kod</dt><dd><code>main</code> üzerinde, 108 test</dd></div>
+      <div><dt>Kod</dt><dd><code>main</code> üzerinde, 165 test</dd></div>
       <div><dt>Kurallar</dt><dd>27 kural, dört dil</dd></div>
       <div><dt>Kanallar</dt><dd>Instagram + WhatsApp</dd></div>
       <div><dt>Bağlantı</dt><dd>henüz kurulmadı</dd></div>
@@ -361,48 +361,48 @@
 
   <section>
     <h2>Sırayla buradan</h2>
-    <p>Altı sekme, bu sırayla. Her biri bir öncekinin çıktısını istiyor, o yüzden atlamadan git.</p>
+    <p>Altı sekme, bu sırayla. Her biri bir öncekinin çıktısını istiyor, o yüzden atlamadan git. GitHub'a yalnızca iki değer giriyorsun; kalan her şeyi botun kendi web panelinden dolduracaksın.</p>
     <ol class="steps links">
       <li>
         <span class="stepno">01</span>
-        <div class="stepbody">
-          <h3><a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/pull/16">PR #16'yı merge et</a></h3>
-          <p>Dağıtım workflow'u bununla <code>main</code>'e giriyor. Merge edilmeden aşağıdaki Actions bağlantısı boş çıkar.</p>
-        </div>
-      </li>
-      <li>
-        <span class="stepno">02</span>
-        <div class="stepbody">
-          <h3><a href="https://developers.facebook.com/apps/">Meta uygulaman</a></h3>
-          <p>Uygulamayı oluştur, Instagram ve/veya WhatsApp ürününü ekle, izinleri iste. Buradan alacakların: access token, hesap kimliği (Instagram) ya da telefon numarası kimliği (WhatsApp), bir de App secret.</p>
-        </div>
-      </li>
-      <li>
-        <span class="stepno">03</span>
         <div class="stepbody">
           <h3><a href="https://fly.io/app/sign-up">Fly hesabı</a> → <a href="https://fly.io/user/personal_access_tokens">dağıtım token'ı</a></h3>
           <p>Hesap açıldıktan sonra token üret. Kart isteyebilir; bu boyuttaki bir makine ücretsiz sınırın içinde kalıyor.</p>
         </div>
       </li>
       <li>
+        <span class="stepno">02</span>
+        <div class="stepbody">
+          <h3><a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/settings/secrets/actions">İki gizli değer gir</a></h3>
+          <p><code>FLY_API_TOKEN</code> — 01'de aldığın. Bir de <code>PANEL_PASSWORD</code>: kendin uyduruyorsun, en az on iki karakter, panele bununla gireceksin. Tarayıcıdan giriliyor, hiçbir dosyaya yazılmıyor.</p>
+        </div>
+      </li>
+      <li>
+        <span class="stepno">03</span>
+        <div class="stepbody">
+          <h3><a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/actions/workflows/deploy-reply-bot.yml">Dağıtımı çalıştır</a></h3>
+          <p>“Run workflow” — prova kutusu işaretli kalsın. Makine boş açılır, henüz hiçbir kanalı yok. Çalışma özetinde adresin ve panelin adresi yazılı olacak.</p>
+        </div>
+      </li>
+      <li>
         <span class="stepno">04</span>
         <div class="stepbody">
-          <h3><a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/settings/secrets/actions">GitHub gizli değerleri</a></h3>
-          <p>02 ve 03'te aldıklarını buraya gir: <code>FLY_API_TOKEN</code>, sonra kullanacağın kanalın <code>IG_*</code> ya da <code>WA_*</code> değerleri. Tarayıcıdan giriliyor, hiçbir dosyaya yazılmıyor.</p>
+          <h3><a href="https://developers.facebook.com/apps/">Meta uygulaman</a></h3>
+          <p>Uygulamayı oluştur, Instagram ve/veya WhatsApp ürününü ekle, izinleri iste. Buradan alacakların: access token, hesap kimliği (Instagram) ya da telefon numarası kimliği (WhatsApp), bir de App secret.</p>
         </div>
       </li>
       <li>
         <span class="stepno">05</span>
         <div class="stepbody">
-          <h3><a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/actions/workflows/deploy-reply-bot.yml">Dağıtımı çalıştır</a></h3>
-          <p>“Run workflow” — prova kutusu işaretli kalsın. Bittiğinde çalışma özetinde adresin ve Meta paneline yapıştırılacak iki satır yazılı olacak.</p>
+          <h3>Panele gir, 04'ü doldur</h3>
+          <p>03'ün verdiği adresin sonuna <code>/panel</code> ekle, şifrenle gir. Meta'dan aldıklarını formdaki kutulara yapıştır, kaydet — sunucu durmadan devreye girer. Aynı sayfada eksik ne varsa listelenir ve Meta paneline yapıştırılacak satır yazılı gelir.</p>
         </div>
       </li>
       <li>
         <span class="stepno">06</span>
         <div class="stepbody">
           <h3>Webhook aboneliği</h3>
-          <p>05'in verdiği iki satırı Meta panelinde, uygulamanın Webhooks bölümüne gir: Instagram için <code>comments</code>, WhatsApp için <code>messages</code>. Panelde yeşil görünmesi o kanalın kurulduğu anlamına gelir.</p>
+          <p>05'teki satırı Meta panelinde, uygulamanın Webhooks bölümüne gir: Instagram için <code>comments</code>, WhatsApp için <code>messages</code>. Panelde yeşil görünmesi o kanalın kurulduğu anlamına gelir.</p>
         </div>
       </li>
     </ol>
@@ -510,7 +510,7 @@
 
   <section>
     <h2>Anahtarlar</h2>
-    <p>Hepsi <code>.env</code> dosyasına girer. Bir kanal, kendi değerleri girildiği anda açılır — yalnızca WhatsApp da çalıştırabilirsin.</p>
+    <p>Hepsi ya web panelinin form kutularına ya da <code>.env</code> dosyasına girer — hangisi kolayına geliyorsa. Bir kanal, kendi değerleri girildiği anda açılır; yalnızca WhatsApp da çalıştırabilirsin.</p>
     <div class="keys">
       <div class="key">
         <p class="kanal">Instagram</p>
@@ -546,6 +546,21 @@
   </section>
 
   <section>
+    <h2>Web paneli</h2>
+    <p>Adresin sonuna <code>/panel</code>. Terminale hiç girmeden botu kurabildiğin, sonra da açık tutup ne yaptığına baktığın yer.</p>
+    <ul class="notes">
+      <li><strong>Durum</strong> — hangi kanal açık, ne eksik, anahtarlar hâlâ yaşıyor mu. Aynı zamanda Meta paneline yapıştıracağın satırı yazar.</li>
+      <li><strong>Ayarlar</strong> — yukarıdaki anahtarların hepsi form kutusu olarak. Kaydettiğin anda devreye girer; sunucuyu durdurup açman gerekmez.</li>
+      <li><strong>Bir mesaj dene</strong> — yazdığın cümleyi bottan geçirir ve ne cevap vereceğini gösterir. Hiçbir şey gönderilmez, kural yazarken en çok işe yarayan kutu bu.</li>
+      <li><strong>Kurallar</strong> — kural dosyasını doğrudan düzenlersin. Bozuk bir dosya kaydedilmez: önce ayrıştırılır, hata varsa dosyaya hiç dokunulmaz.</li>
+      <li><strong>Son mesajlar</strong> — kim ne yazdı, bot ne karar verdi, hangi kural yüzünden, gönderildi mi. Prova modunda ilk günü buradan izlersin.</li>
+    </ul>
+    <p class="fine"><strong>Şifre koymazsan panel hiç açılmaz</strong> — adresi bilen de bir şey bulamaz, çünkü ortada bir sayfa yoktur. On iki karakterden kısa şifre kabul edilmiyor: arkasında erişim anahtarların duruyor.</p>
+    <p class="fine">Kayıtlı bir anahtar tarayıcıya hiç gönderilmez; panel yalnızca “dolu” yazar ve son dört karakteri gösterir. Değiştirmek için yenisini yazarsın, kutunun boş görünmesi anahtarın silindiği anlamına gelmez.</p>
+    <p class="fine">Panelden girdiklerin Fly'daki kalıcı diske yazılır. Dağıtım workflow'u o diski senin için oluşturuyor; olmasaydı makine her yeniden başladığında girdiklerin silinirdi.</p>
+  </section>
+
+  <section>
     <h2>Altı adım</h2>
     <ol class="steps">
       <li>
@@ -577,8 +592,9 @@
       <li>
         <span class="stepno">04</span>
         <div class="stepbody">
-          <h3>Token'ları al, <code>.env</code>'i doldur</h3>
+          <h3>Token'ları al, panele ya da <code>.env</code>'e gir</h3>
           <p>Instagram tarafında kısa ömürlü token'ı <strong>60 günlük</strong> uzun ömürlüye çevir. WhatsApp tarafında panelin verdiği geçici token 24 saatte biter; kalıcısı için bir sistem kullanıcısı üzerinden token üret.</p>
+          <p>Bot çalışıyorsa bunları <code>/panel</code> adresindeki kutulara yapıştırıp kaydetmen yeterli. Dosyayla çalışmayı tercih edersen karşılıkları şunlar:</p>
           <pre><span class="c"># reply-bot/.env — yalnızca kullanacağın kanalı doldur</span>
 IG_ACCESS_TOKEN=EAAG…
 IG_USER_ID=17841…

@@ -28,13 +28,14 @@ yazmak yerine susar.
 | Model | Claude (`claude-opus-5`), kural eşleşmeyen mesajlar için — isteğe bağlı |
 | Güvenlik | Kanal başına `X-Hub-Signature-256`, kendi mesajlarını yanıtlamama, tekrar gelen webhook'u yutma |
 | Deneme | `--try` ile terminalde; `BOT_DRY_RUN=1` ile canlıda hiçbir şey göndermeden |
+| Panel | `/panel` — ayarlar, kurallar, son kararlar; şifre koymazsan hiç açılmaz |
 | Bağımlılık | express + Anthropic SDK. Veritabanı yok |
 
 ## Hızlı başlangıç
 
 ```bash
 npm install
-npm test                              # 108 test, ağ gerekmez
+npm test                              # 165 test, ağ gerekmez
 cp rules.example.json rules.json
 npm run try -- "bunu ne ile yaptın?"
 npm run try -- --whatsapp "merhaba"
@@ -177,6 +178,13 @@ Tamamı ve açıklamaları `.env.example` içinde. Kısaca:
 | `BOT_RULES_FILE` | Kural dosyası yolu (varsayılan `rules.json`) |
 | `BOT_DRY_RUN=1` | Karar ver, logla, hiçbir şey gönderme |
 | `ANTHROPIC_API_KEY`, `BOT_PERSONA` | Model katmanı (ikisi de gerekli) |
+| `PANEL_PASSWORD` | `/panel` web panelini açar (en az 12 karakter) |
+| `BOT_DATA_DIR` | Panelin yazdığı yer (varsayılan `data`) |
+
+Yukarıdakilerin çoğu panelden de girilebilir; panelden yazılan değer ortamdaki
+değerin üstüne biner. `PORT`, `HOST`, `BOT_RULES_FILE`, webhook yolları ve
+panelin kendi şifresi bunun dışında — panelin kendi kapısını taşıyabilmesi,
+sizi dışarıda bırakabilmesi demek olurdu.
 
 ## Nasıl çalışıyor
 
@@ -227,6 +235,53 @@ Token'ların gerçekten yaşadığını Meta'ya tek bir okuma isteğiyle sorar; 
 `--url https://…` ekleyin. Bir şey `✗` ise çıkış kodu 1 olur, yani dağıtım
 betiğine de koyabilirsiniz.
 
+## Web paneli
+
+`PANEL_PASSWORD` verildiğinde `/panel` açılır: doctor'ın yazdığı kontroller,
+ayarlar form olarak, kural dosyası düzenleyici olarak, tek mesajı bottan
+geçiren bir kutu ve son kararların listesi. Terminale girmeden kurmak
+isteyenler için — sunucuyu hiç durdurmadan çalışır.
+
+```bash
+PANEL_PASSWORD=en-az-on-iki-karakter npm run dev
+# http://localhost:3000/panel
+```
+
+Şifre yoksa panel **hiç mount edilmez**; adresi bilen de bir şey bulamaz. On
+iki karakterden kısa şifre kabul edilmiyor, çünkü arkasında erişim
+anahtarlarınız duruyor.
+
+Panelden girilen değerler `BOT_DATA_DIR/settings.json` dosyasına yazılır ve
+ortam değişkenlerinin **üstüne** biner. Her alanın nereden geldiği (`panel` mi
+`ortam` mı) yanında yazar; paneldeki değeri silmek ortamdakine geri döner. Bu
+sıralamanın tersi — ortamın kazanması — paneli bozuk gösterirdi: anahtarı
+yazarsınız, kaydedersiniz, hiçbir şey değişmez.
+
+Kayıtlı bir anahtar tarayıcıya **hiç gönderilmez**. Panel yalnızca "dolu" ve
+son dört karakteri gösterir; iki anahtarı ayırt etmeye yeter, birini kullanmaya
+yetmez.
+
+Kaydedilen ayar geçerli bir bot üretmiyorsa değişiklik geri alınır ve çalışan
+bot yerinde kalır. Aynısı kurallar için de geçerli: dosyaya yazılmadan önce
+ayrıştırılır — botun yükleyemediği bir kural dosyası, bütün kanalları aynı anda
+düşüren tek şeydir.
+
+| Değişken | Ne işe yarar |
+| --- | --- |
+| `PANEL_PASSWORD` | Paneli açar. En az 12 karakter. Yoksa panel yok |
+| `BOT_DATA_DIR` | Panelin yazdığı yer (varsayılan `data`). Fly'da kalıcı disk olmalı |
+| `PANEL_TRUST_PROXY` | `1` ise `X-Forwarded-For` okunur. Yalnızca güvendiğiniz bir proxy arkasında |
+| `PANEL_PUBLIC_URL` | Paneldeki "Meta'ya yapıştır" kutusunda tam adresi yazar |
+
+Oturum, açılışta üretilen bir sırla imzalanan çerezde durur: sunucu yeniden
+başlayınca herkes çıkmış olur, "çıkış" düğmesi de çerezi gerçekten iptal eder.
+Şifre yanlış girildikçe adres başına bekleme süresi büyür.
+
+`PANEL_TRUST_PROXY` açık değilken bütün istekler proxy'nin adresinden gelmiş
+görünür, yani bir kişinin yanlış denemeleri sizi de kilitler; açıkken başlık
+sahte de olabilir. Fly arkasında açık olması doğrusu, ortada proxy yokken kapalı
+olması.
+
 ## Yayına alma
 
 ```bash
@@ -257,6 +312,7 @@ konur:
 
 ```bash
 fly launch --copy-config --no-deploy
+fly volumes create botdata --size 1 --region fra
 fly secrets set IG_ACCESS_TOKEN=… IG_USER_ID=… IG_VERIFY_TOKEN=… IG_APP_SECRET=…
 fly deploy
 ```
@@ -264,6 +320,16 @@ fly deploy
 Fly'ın verdiği adres Meta paneline girecek olan adrestir; sonuna
 `/webhook/instagram` ve `/webhook/whatsapp` eklenir. Makine uyumaya
 bırakılmadı: her teslimatta soğuk açılış beklemek webhook'u yavaşlatır.
+
+Kalıcı disk paneli anlamlı kılan şey: `fly.toml` onu `/data`'ya bağlıyor ve
+panelden girilen ayarlar oraya yazılıyor. Makinenin kendi diski her yeniden
+başlatmada — dağıtımda, bakımda, çökmede — sıfırlanır. Diski oluşturmadan
+dağıtırsan Fly `fly.toml`'daki bağlamayı çözemez ve dağıtım başlamadan durur.
+
+Sadece `PANEL_PASSWORD` verip dağıtabilirsin: makine boş açılır, kanal
+bilgilerini `/panel` adresinden tarayıcıdan doldurursun. `fly secrets` ile
+girilen değerler de çalışmaya devam eder; hiç değiştirmeyeceğin şeyler için
+orası daha iyi bir yer.
 
 ### GitHub Actions'tan dağıtım
 
@@ -280,6 +346,11 @@ yazılmadan (**Settings → Secrets and variables → Actions**):
 | `IG_ACCESS_TOKEN`, `IG_USER_ID`, `IG_VERIFY_TOKEN`, `IG_APP_SECRET` | Instagram kanalı |
 | `WA_ACCESS_TOKEN`, `WA_PHONE_NUMBER_ID`, `WA_VERIFY_TOKEN`, `WA_APP_SECRET` | WhatsApp kanalı |
 | `ANTHROPIC_API_KEY`, `BOT_PERSONA` | Model katmanı (isteğe bağlı) |
+| `PANEL_PASSWORD` | Web paneli (isteğe bağlı, en az 12 karakter) |
+
+`PANEL_PASSWORD` verirsen kanal değerlerini hiç girmeden de dağıtabilirsin:
+`FLY_API_TOKEN` ve panel şifresi yeter, gerisi tarayıcıdan. Workflow kalıcı
+diski de yoksa oluşturur.
 
 Verilmeyen değer Fly'a hiç gönderilmez; o kanal kapalı kalır. Workflow önce
 testleri koşar — kırıksa dağıtmaz — sonra imajı kurar, gizli değerleri
@@ -304,5 +375,8 @@ workflow'u çalıştırırken başka bir ad ver (`reply-bot-farhad` gibi).
 - Rate limit'e takılan bir cevap yeniden denenmez; loglanır ve geçilir.
 - Fotoğraf, ses, sticker ve konum mesajları atlanır — metin olmayan şeye kural
   da model de bir şey söyleyemez.
+- Paneldeki "son mesajlar" listesi hafızada durur ve yeniden başlatınca
+  sıfırlanır; kalıcı kayıt tutulmuyor.
+- Panelde tek şifre var, kullanıcı hesabı yok — bir kişinin botu için tasarlandı.
 
 MIT.
