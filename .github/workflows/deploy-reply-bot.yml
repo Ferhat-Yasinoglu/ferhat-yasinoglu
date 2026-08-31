@@ -7,7 +7,14 @@
 # Gizli değerler tarayıcıdan giriliyor (Settings → Secrets and variables →
 # Actions), yani hiçbir token bir sohbete ya da depoya yazılmıyor:
 #
-#   FLY_API_TOKEN       zorunlu — `fly tokens create deploy` çıktısı
+#   FLY_API_TOKEN       zorunlu — organizasyon kapsamlı token (`fly tokens create org`
+#                       ya da Fly panelindeki org/personal token sayfası).
+#                       Uygulamaya özel "deploy token" burada YETMEZ: bu iş akışı
+#                       gerekirse uygulamayı ve diski kendisi oluşturuyor, deploy
+#                       token'ı ise yalnızca var olan tek bir uygulamaya dağıtabilir.
+#                       Değeri kopyalarken baştaki "FlyV1 " kısmını da al —
+#                       token'ın içinde boşluk vardır ve eksik kopyalanınca
+#                       "You must be authenticated" hatası verir.
 #   IG_ACCESS_TOKEN     Instagram kanalı için
 #   IG_USER_ID
 #   IG_VERIFY_TOKEN
@@ -75,7 +82,8 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
           if [ -z "$FLY_API_TOKEN" ]; then
-            echo "::error::FLY_API_TOKEN yok. Fly'da 'fly tokens create deploy' ile üret,"
+            echo "::error::FLY_API_TOKEN yok. Fly'da organizasyon kapsamlı bir token üret"
+            echo "::error::('fly tokens create org' ya da paneldeki org token sayfası),"
             echo "::error::sonra Settings → Secrets and variables → Actions altına ekle."
             exit 1
           fi
@@ -94,10 +102,32 @@ jobs:
         run: |
           if flyctl status --app "$APP" >/dev/null 2>&1; then
             echo "$APP zaten var."
-          else
-            echo "$APP oluşturuluyor…"
-            flyctl apps create "$APP" --org personal
+            exit 0
           fi
+
+          echo "$APP oluşturuluyor…"
+          # Çıktı yakalanıyor: flyctl bu adımda yetki sorununu ham bir GraphQL
+          # hatası olarak yazıyor ve "organizations query failed" satırından
+          # sebebi çıkarmak kolay değil. Yakalayıp tercümesini bırakıyoruz.
+          if ! output=$(flyctl apps create "$APP" --org personal 2>&1); then
+            echo "$output"
+            case "$output" in
+              *"must be authenticated"*|*"Unauthorized"*|*"not authorized"*)
+                echo "::error::Fly token'ı reddetti. İki bilinen sebep:"
+                echo "::error::1) Token uygulamaya özel bir 'deploy token'. Bu iş akışı uygulamayı"
+                echo "::error::   ve diski kendisi oluşturuyor, bunun için organizasyon kapsamlı"
+                echo "::error::   bir token gerekiyor ('fly tokens create org')."
+                echo "::error::2) Token eksik kopyalanmış. Fly token'ları 'FlyV1 ' ile başlar ve"
+                echo "::error::   içinde boşluk vardır; baştaki kısım atlanınca da bu hata çıkar."
+                ;;
+              *"already been taken"*|*"not available"*|*"taken"*)
+                echo "::error::'$APP' adı Fly'da kullanılıyor. Ad küresel olarak benzersiz olmalı;"
+                echo "::error::iş akışını başka bir adla çalıştır (ör. $APP-2)."
+                ;;
+            esac
+            exit 1
+          fi
+          echo "$output"
 
       # fly.toml bu diski bağlıyor; yoksa dağıtım başlamadan durur. Panelden
       # girilen ayarlar burada yaşıyor, makinenin kendi diskinde değil.

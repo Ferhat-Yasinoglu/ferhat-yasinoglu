@@ -350,7 +350,7 @@ yazılmadan (**Settings → Secrets and variables → Actions**):
 
 | Gizli değer | Ne için |
 | --- | --- |
-| `FLY_API_TOKEN` | Zorunlu. `fly tokens create deploy` çıktısı |
+| `FLY_API_TOKEN` | Zorunlu. **Organizasyon kapsamlı** token — `fly tokens create org` |
 | `IG_ACCESS_TOKEN`, `IG_USER_ID`, `IG_VERIFY_TOKEN`, `IG_APP_SECRET` | Instagram kanalı |
 | `WA_ACCESS_TOKEN`, `WA_PHONE_NUMBER_ID`, `WA_VERIFY_TOKEN`, `WA_APP_SECRET` | WhatsApp kanalı |
 | `ANTHROPIC_API_KEY`, `BOT_PERSONA` | Model katmanı (isteğe bağlı) |
@@ -359,6 +359,13 @@ yazılmadan (**Settings → Secrets and variables → Actions**):
 `PANEL_PASSWORD` verirsen kanal değerlerini hiç girmeden de dağıtabilirsin:
 `FLY_API_TOKEN` ve panel şifresi yeter, gerisi tarayıcıdan. Workflow kalıcı
 diski de yoksa oluşturur.
+
+Token'ın **organizasyon kapsamlı** olması gerekiyor. Uygulamaya özel bir
+"deploy token" yalnızca var olan tek bir uygulamaya dağıtabilir; bu iş akışı ise
+uygulamayı ve diski gerektiğinde kendisi oluşturuyor, o yüzden onunla
+`You must be authenticated to view this` hatası alırsın. Aynı hatanın ikinci
+sebebi eksik kopyalamadır: Fly token'ları `FlyV1 ` ile başlar ve **içinde boşluk
+vardır**, baştaki kısım atlanınca token geçersiz olur.
 
 Verilmeyen değer Fly'a hiç gönderilmez; o kanal kapalı kalır. Workflow önce
 testleri koşar — kırıksa dağıtmaz — sonra imajı kurar, gizli değerleri

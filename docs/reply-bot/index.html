@@ -366,8 +366,10 @@
       <li>
         <span class="stepno">01</span>
         <div class="stepbody">
-          <h3><a href="https://fly.io/app/sign-up">Fly hesabı</a> → <a href="https://fly.io/user/personal_access_tokens">dağıtım token'ı</a></h3>
+          <h3><a href="https://fly.io/app/sign-up">Fly hesabı</a> → <a href="https://fly.io/user/personal_access_tokens">token</a></h3>
           <p>Hesap açıldıktan sonra token üret. Kart isteyebilir; bu boyuttaki bir makine ücretsiz sınırın içinde kalıyor.</p>
+          <p>Token <strong>organizasyon kapsamlı</strong> olmalı (<code>fly tokens create org</code>). Uygulamaya özel bir “deploy token” yalnızca var olan bir uygulamaya dağıtabilir; buradaki iş akışı ise uygulamayı ve diski gerektiğinde kendisi oluşturuyor.</p>
+          <p>Kopyalarken baştaki <code>FlyV1</code> kısmını da al — Fly token'larının içinde boşluk vardır, eksik kopyalanınca <code>You must be authenticated</code> hatası verir.</p>
         </div>
       </li>
       <li>
