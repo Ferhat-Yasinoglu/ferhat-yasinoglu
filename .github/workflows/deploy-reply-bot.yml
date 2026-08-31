@@ -18,8 +18,14 @@
 #   WA_APP_SECRET
 #   ANTHROPIC_API_KEY   model katmanı (isteğe bağlı)
 #   BOT_PERSONA         model katmanı (isteğe bağlı)
+#   PANEL_PASSWORD      web paneli (isteğe bağlı, en az 12 karakter)
 #
 # Verilmeyen gizli değer Fly'a hiç gönderilmez; o kanal kapalı kalır.
+#
+# PANEL_PASSWORD verirsen kanal değerlerini buraya hiç girmeden de dağıtabilirsin:
+# makine boş açılır, geri kalanını /panel adresinden tarayıcıdan doldurursun.
+# O yüzden aşağıda kalıcı disk oluşturuluyor — panelden yazılan ayarlar orada
+# durur; olmazsa makine her yeniden başladığında hepsi silinir.
 name: reply-bot dağıt
 
 on:
@@ -29,6 +35,10 @@ on:
         description: "Fly uygulama adı (küresel olarak benzersiz olmalı)"
         type: string
         default: reply-bot
+      region:
+        description: "Fly bölgesi (kalıcı disk burada oluşturulur)"
+        type: string
+        default: fra
       dry_run:
         description: "Prova: kararları logla, hiçbir şey gönderme"
         type: boolean
@@ -89,6 +99,21 @@ jobs:
             flyctl apps create "$APP" --org personal
           fi
 
+      # fly.toml bu diski bağlıyor; yoksa dağıtım başlamadan durur. Panelden
+      # girilen ayarlar burada yaşıyor, makinenin kendi diskinde değil.
+      - name: Kalıcı disk yoksa oluştur
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          APP: ${{ inputs.app_name }}
+          REGION: ${{ inputs.region }}
+        run: |
+          if flyctl volumes list --app "$APP" 2>/dev/null | grep -q botdata; then
+            echo "botdata zaten var."
+          else
+            echo "botdata oluşturuluyor ($REGION)…"
+            flyctl volumes create botdata --app "$APP" --region "$REGION" --size 1 --yes
+          fi
+
       # Gizli değerler --stage ile konur: her biri tek başına bir dağıtım
       # tetiklemesin, hepsi aşağıdaki tek dağıtımla birlikte yürürlüğe girsin.
       - name: Gizli değerleri gönder
@@ -105,13 +130,19 @@ jobs:
           WA_APP_SECRET: ${{ secrets.WA_APP_SECRET }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           BOT_PERSONA: ${{ secrets.BOT_PERSONA }}
+          PANEL_PASSWORD: ${{ secrets.PANEL_PASSWORD }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
+          if [ -n "$PANEL_PASSWORD" ] && [ ${#PANEL_PASSWORD} -lt 12 ]; then
+            echo "::error::PANEL_PASSWORD en az 12 karakter olmalı; panel token'ları tutuyor."
+            exit 1
+          fi
+
           args=()
           names=()
           for name in IG_ACCESS_TOKEN IG_USER_ID IG_VERIFY_TOKEN IG_APP_SECRET \
                       WA_ACCESS_TOKEN WA_PHONE_NUMBER_ID WA_VERIFY_TOKEN WA_APP_SECRET \
-                      ANTHROPIC_API_KEY BOT_PERSONA; do
+                      ANTHROPIC_API_KEY BOT_PERSONA PANEL_PASSWORD; do
             value="${!name}"
             if [ -n "$value" ]; then
               args+=("$name=$value")
@@ -125,7 +156,10 @@ jobs:
           fi
 
           if [ ${#args[@]} -eq 0 ]; then
-            echo "::warning::Hiçbir kanal gizli değeri verilmemiş; bot açılışta duracak."
+            echo "::warning::Hiçbir gizli değer verilmemiş; bot açılışta duracak."
+          elif [ ${#args[@]} -eq 1 ] && [ "${names[0]}" = "PANEL_PASSWORD" ]; then
+            echo "Yalnızca panel şifresi gönderiliyor — kanallar /panel adresinden doldurulacak."
+            flyctl secrets set --stage --app "$APP" "${args[@]}"
           else
             # Adlar ayrı toplanıyor: args'ı ayrıştırmak, çok satırlı bir değerin
             # (BOT_PERSONA) ikinci satırını isim sanıp loga yazdırırdı.
@@ -147,11 +181,16 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
           APP: ${{ inputs.app_name }}
+          PANEL_PASSWORD: ${{ secrets.PANEL_PASSWORD }}
         run: |
           url="https://$APP.fly.dev"
           echo "### Dağıtıldı" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "Adres: $url" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$PANEL_PASSWORD" ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Panel: $url/panel — gerisini buradan doldurabilirsin." >> "$GITHUB_STEP_SUMMARY"
+          fi
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "Meta paneline:" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"

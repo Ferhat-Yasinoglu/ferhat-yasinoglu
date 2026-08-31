@@ -4,7 +4,7 @@ import { Bot } from "../src/bot.js";
 import { instagramChannel } from "../src/channels/instagram.js";
 import { whatsappChannel } from "../src/channels/whatsapp.js";
 import { parseRules } from "../src/rules.js";
-import { createApp } from "../src/server.js";
+import { createApp, fixedSource } from "../src/server.js";
 import { sign } from "../src/signature.js";
 import { commentWebhook, fakeGraph, messageWebhook } from "./fake-graph.js";
 
@@ -43,7 +43,7 @@ async function start(options: { igSecret?: string } = {}) {
     }),
   ];
 
-  const app = createApp({ bot: new Bot({ rules }), channels });
+  const app = createApp({ source: fixedSource(new Bot({ rules }), channels) });
   const server = app.listen(0);
   servers.push(server);
   await new Promise((resolve) => server.once("listening", resolve));

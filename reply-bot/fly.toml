@@ -3,11 +3,21 @@
 # keeps them out of the repo and out of the image.
 #
 #   fly launch --copy-config --no-deploy
-#   fly secrets set IG_ACCESS_TOKEN=… IG_USER_ID=… IG_VERIFY_TOKEN=… IG_APP_SECRET=…
+#   fly volumes create botdata --size 1 --region fra
+#   fly secrets set PANEL_PASSWORD=…
 #   fly deploy
 #
 # The public URL Fly prints is what goes into the Meta dashboard, with
-# /webhook/instagram and /webhook/whatsapp on the end.
+# /webhook/instagram and /webhook/whatsapp on the end. The panel is at /panel.
+#
+# The volume is what makes the panel worth having: settings typed into a
+# browser are written to /data, and a machine's own filesystem is thrown away
+# on every restart. Without the volume the panel still works, but everything
+# you saved through it is gone the next time Fly moves the machine — which it
+# does for deploys, host maintenance and crashes.
+#
+# `fly secrets set` still works alongside it and is the better home for values
+# you never intend to change from a browser.
 
 app = "reply-bot"
 primary_region = "fra"          # Frankfurt: en yakın bölge
@@ -18,8 +28,19 @@ primary_region = "fra"          # Frankfurt: en yakın bölge
 [env]
   HOST = "0.0.0.0"
   PORT = "3000"
+  # Where the panel writes what you type into it. Must be under the mount below.
+  BOT_DATA_DIR = "/data"
+  # Fly's edge sets X-Forwarded-For, so the panel can tell one visitor from
+  # another and lock out a guesser without locking out everyone.
+  PANEL_TRUST_PROXY = "1"
   # Uncomment for the first day: decide and log, send nothing.
   # BOT_DRY_RUN = "1"
+
+# The panel's settings live here. Create it once, before the first deploy:
+#   fly volumes create botdata --size 1 --region fra
+[[mounts]]
+  source = "botdata"
+  destination = "/data"
 
 [http_service]
   internal_port = 3000
