@@ -88,6 +88,27 @@ jobs:
             exit 1
           fi
 
+          # Token'ın biçimi hakkında rapor. Değerin kendisi asla yazdırılmıyor;
+          # uzunluğu, sabit "FlyV1" öneki ve boşluk içerip içermediği gizli değil
+          # ama "eksik kopyalandı" ile "yanlış tür" arasındaki farkı gösteren tek
+          # ucuz kanıt bunlar — hangisi olduğunu tahmin etmeye çalışmak yerine.
+          length=${#FLY_API_TOKEN}
+          echo "Token uzunluğu: $length karakter"
+
+          case "$FLY_API_TOKEN" in
+            "FlyV1 "*) echo "Önek: FlyV1 var, arkasından boşluk geliyor — biçim beklendiği gibi." ;;
+            "FlyV1"*)  echo "::warning::'FlyV1' ile başlıyor ama arkasında boşluk yok. Fly token'ı" ;
+                       echo "::warning::'FlyV1 fm2_...' şeklindedir; kopyalarken boşluk kaybolmuş olabilir." ;;
+            "fm2_"*)   echo "::warning::'fm2_' ile başlıyor — baştaki 'FlyV1 ' kısmı eksik." ;
+                       echo "::warning::Token'ı sayfadaki kopyala düğmesiyle, tamamını al." ;;
+            *)         echo "::warning::Tanıdık bir Fly öneki ('FlyV1 ' ya da 'fm2_') yok." ;
+                       echo "::warning::Yanlış değer yapıştırılmış olabilir." ;;
+          esac
+
+          if [ "$length" -lt 60 ]; then
+            echo "::warning::Bu bir Fly token'ı için kısa. Değer kırpılmış olabilir."
+          fi
+
       # Kural dosyası gitignore'da (fiyat, link gibi sık düzenlenen şeyler
       # taşıdığı için). İmaja giren kurallar bu depodaki örnek dosya.
       - name: Kuralları hazırla
@@ -100,6 +121,15 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
           APP: ${{ inputs.app_name }}
         run: |
+          # Token'ın kim olduğu ve neyi görebildiği, uygulamaya dokunmadan önce.
+          # İkisi de bilgi amaçlı: başarısız olmaları dağıtımı durdurmuyor, ama
+          # "yetkisiz" hatası geldiğinde sebebi bunlar gösteriyor.
+          echo "--- flyctl auth whoami"
+          flyctl auth whoami 2>&1 | sed 's/^/    /' || true
+          echo "--- flyctl orgs list"
+          flyctl orgs list 2>&1 | sed 's/^/    /' || true
+          echo "---"
+
           if flyctl status --app "$APP" >/dev/null 2>&1; then
             echo "$APP zaten var."
             exit 0
