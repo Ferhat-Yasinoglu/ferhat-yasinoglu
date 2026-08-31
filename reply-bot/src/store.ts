@@ -150,6 +150,26 @@ export class SettingsStore {
   }
 
   /**
+   * Just this store's own overrides — not the environment underneath them.
+   * Taken before a risky save and handed back to `restore` if it goes wrong.
+   */
+  snapshot(): Partial<Record<WritableKey, string>> {
+    return { ...this.stored };
+  }
+
+  /**
+   * Put the store back exactly as a snapshot found it. Reverting through
+   * `save` would not do: `environment()` cannot tell a panel value from an
+   * environment one, so undoing an edit to an environment-backed field would
+   * copy that field's value into the file and quietly pin it there — and the
+   * next change to the Fly secret would appear to do nothing.
+   */
+  restore(snapshot: Partial<Record<WritableKey, string>>): void {
+    this.stored = { ...snapshot };
+    this.io.write(this.file, `${JSON.stringify(this.stored, null, 2)}\n`);
+  }
+
+  /**
    * Apply a patch. A key present with an empty string is *cleared* from the
    * store — which is how you fall back to an environment value — while a key
    * simply absent from the patch is left alone.

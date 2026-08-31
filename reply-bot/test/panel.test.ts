@@ -86,6 +86,66 @@ describe("panel", () => {
     expect(await response.text()).toContain("reply-bot");
   });
 
+  it("redirects /panel to /panel/, which is what the page's relative fetches need", async () => {
+    const { url } = await start();
+
+    const response = await fetch(`${url}/panel`, { redirect: "manual" });
+
+    expect(response.status).toBe(308);
+    expect(response.headers.get("location")).toBe("/panel/");
+  });
+
+  it("keeps the query string across that redirect", async () => {
+    const { url } = await start();
+
+    const response = await fetch(`${url}/panel?x=1`, { redirect: "manual" });
+
+    expect(response.headers.get("location")).toBe("/panel/?x=1");
+  });
+
+  it("tells the browser not to frame, cache or leak the panel", async () => {
+    const { url } = await start();
+    const response = await fetch(`${url}/panel/`);
+    const policy = response.headers.get("content-security-policy") ?? "";
+
+    expect(response.headers.get("x-frame-options")).toBe("DENY");
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(policy).toContain("frame-ancestors 'none'");
+    expect(policy).toContain("default-src 'none'");
+    // No 'unsafe-inline' anywhere: the page's own style and script are named by
+    // nonce instead, so anything else that lands in the page cannot run.
+    expect(policy).not.toContain("unsafe-inline");
+  });
+
+  it("gives each page load its own nonce, matching the tags it serves", async () => {
+    const { url } = await start();
+    const load = async () => {
+      const response = await fetch(`${url}/panel/`);
+      const policy = response.headers.get("content-security-policy") ?? "";
+      const nonce = /script-src 'nonce-([^']+)'/.exec(policy)?.[1];
+      return { nonce, html: await response.text() };
+    };
+
+    const first = await load();
+    const second = await load();
+
+    expect(first.nonce).toBeTruthy();
+    expect(first.nonce).not.toBe(second.nonce);
+    expect(first.html).toContain(`<script nonce="${first.nonce}">`);
+    expect(first.html).toContain(`<style nonce="${first.nonce}">`);
+  });
+
+  it("carries no style attribute, which a nonce cannot cover", async () => {
+    const { url } = await start();
+    const html = await (await fetch(`${url}/panel/`)).text();
+
+    // The markup only; a `style=""` mentioned inside the stylesheet's own
+    // comments is not something the browser ever sees as an attribute.
+    const body = html.slice(html.indexOf("</style>"));
+    expect(body).not.toMatch(/<[^>]+\sstyle=/);
+  });
+
   it("refuses the API without a session", async () => {
     const { url } = await start();
     expect((await fetch(`${url}/panel/api/state`)).status).toBe(401);
@@ -176,6 +236,47 @@ describe("panel", () => {
       `${url}/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=wa-verify&hub.challenge=42`,
     );
     expect(await verify.text()).toBe("42");
+  });
+
+  it("leaves an environment-backed field on the environment after a failed save", async () => {
+    // The revert used to write back whatever `environment()` reported, which
+    // cannot tell a panel value from an environment one — so undoing an edit
+    // to a Fly secret copied it into the file and pinned it there, and the next
+    // change to that secret would silently do nothing.
+    const { url, store, rulesFile } = await start({ IG_USER_ID: "ortamdan-gelen" });
+    const { cookie } = await login(url);
+
+    // A reload that throws: the rules file is gone by the time it runs.
+    rmSync(rulesFile);
+    const response = await fetch(`${url}/panel/api/settings`, {
+      method: "POST",
+      headers: withCookie(cookie, { "content-type": "application/json", [CSRF_HEADER]: "1" }),
+      body: JSON.stringify({ settings: { IG_USER_ID: "panelden-yeni" } }),
+    });
+
+    expect(response.status).toBe(400);
+    const field = store.state().find((one) => one.key === "IG_USER_ID");
+    expect(field).toMatchObject({ source: "ortam", value: "ortamdan-gelen" });
+  });
+
+  it("puts a panel-set field back to its old value after a failed save", async () => {
+    const { url, store, rulesFile } = await start();
+    const { cookie } = await login(url);
+    const save = (settings: Record<string, string>) =>
+      fetch(`${url}/panel/api/settings`, {
+        method: "POST",
+        headers: withCookie(cookie, { "content-type": "application/json", [CSRF_HEADER]: "1" }),
+        body: JSON.stringify({ settings }),
+      });
+
+    await save({ IG_USER_ID: "ilk-deger" });
+    rmSync(rulesFile);
+    await save({ IG_USER_ID: "ikinci-deger" });
+
+    expect(store.state().find((one) => one.key === "IG_USER_ID")).toMatchObject({
+      source: "panel",
+      value: "ilk-deger",
+    });
   });
 
   it("saves rules through the API and puts them straight to work", async () => {

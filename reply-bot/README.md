@@ -35,7 +35,7 @@ yazmak yerine susar.
 
 ```bash
 npm install
-npm test                              # 165 test, ağ gerekmez
+npm test                              # 174 test, ağ gerekmez
 cp rules.example.json rules.json
 npm run try -- "bunu ne ile yaptın?"
 npm run try -- --whatsapp "merhaba"
@@ -276,6 +276,14 @@ düşüren tek şeydir.
 Oturum, açılışta üretilen bir sırla imzalanan çerezde durur: sunucu yeniden
 başlayınca herkes çıkmış olur, "çıkış" düğmesi de çerezi gerçekten iptal eder.
 Şifre yanlış girildikçe adres başına bekleme süresi büyür.
+
+Sayfanın dışarıdan tek bir kaynağı yok — CDN yok, yazı tipi sunucusu yok — o
+yüzden kendi `Content-Security-Policy`'si her şeyi reddedip yalnızca kendi
+`<style>` ve `<script>` etiketlerini istek başına üretilen bir nonce ile
+adlandırıyor. Panelin listelediği mesajları yabancılar yazıyor; bir gün bir
+kaçırma olursa, kaçan şey yine de çalışmaz. `frame-ancestors 'none'` de başka
+bir sitenin paneli çerçeveleyip "Kaydet" tıklamanı ödünç almasını engelliyor.
+Yanıtlar `no-store`, yani ara bir önbellek ayarlarını saklamaz.
 
 `PANEL_TRUST_PROXY` açık değilken bütün istekler proxy'nin adresinden gelmiş
 görünür, yani bir kişinin yanlış denemeleri sizi de kilitler; açıkken başlık

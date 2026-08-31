@@ -73,6 +73,13 @@ td { padding: 0.5rem 0.5rem 0.5rem 0; border-top: 1px solid var(--line-soft); ve
 #login { max-width: 22rem; margin: 6rem auto; }
 .hidden { display: none !important; }
 .muted { color: var(--muted); }
+
+/* These four were style="" attributes. A nonce cannot cover a style attribute,
+   so under the page's own Content-Security-Policy they were simply dropped —
+   which is the policy doing its job, and a good reason for them to live here. */
+#state-note { margin: 1rem 0 0; }
+.inline { display: flex; gap: 0.4rem; align-items: center; font-weight: 600; margin: 0; }
+.auto { width: auto; }
 `;
 
 const SCRIPT = String.raw`
@@ -374,7 +381,13 @@ api("/state")
   .catch(() => showLogin());
 `;
 
-export function page(): string {
+/**
+ * @param nonce Random per request, and repeated in the Content-Security-Policy
+ * header. Only the two tags carrying it may run, so a script smuggled into the
+ * page some other way — through a journal entry, say — is inert even if some
+ * future edit forgets to escape it.
+ */
+export function page(nonce: string): string {
   return `<!doctype html>
 <html lang="tr">
 <head>
@@ -383,7 +396,7 @@ export function page(): string {
 <meta name="robots" content="noindex, nofollow">
 <title>reply-bot paneli</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💬</text></svg>">
-<style>${STYLE}</style>
+<style nonce="${nonce}">${STYLE}</style>
 </head>
 <body>
 
@@ -408,7 +421,7 @@ export function page(): string {
     <section>
       <h2>Durum</h2>
       <ul id="checks" class="checks"></ul>
-      <div id="state-note" class="note hidden" style="margin: 1rem 0 0"></div>
+      <div id="state-note" class="note hidden"></div>
       <div class="bar">
         <button id="recheck" class="ghost" type="button">Anahtarları da sına</button>
         <button id="logout" class="ghost" type="button">Çıkış</button>
@@ -427,8 +440,8 @@ export function page(): string {
         <div id="settings-fields"></div>
         <div class="bar">
           <button type="submit">Kaydet</button>
-          <label style="display:flex;gap:0.4rem;align-items:center;font-weight:600;margin:0">
-            <input id="dry-run" type="checkbox" style="width:auto">
+          <label class="inline">
+            <input id="dry-run" type="checkbox" class="auto">
             Prova modu (hiçbir şey gönderilmez)
           </label>
         </div>
@@ -448,7 +461,7 @@ export function page(): string {
       <form id="try-form">
         <div class="bar">
           <input id="try-text" class="grow" placeholder="fiyat ne kadar?" required>
-          <select id="try-channel" style="width:auto">
+          <select id="try-channel" class="auto">
             <option value="instagram">Instagram</option>
             <option value="whatsapp">WhatsApp</option>
           </select>
@@ -485,7 +498,7 @@ export function page(): string {
   </div>
 </main>
 
-<script>${SCRIPT}</script>
+<script nonce="${nonce}">${SCRIPT}</script>
 </body>
 </html>
 `;

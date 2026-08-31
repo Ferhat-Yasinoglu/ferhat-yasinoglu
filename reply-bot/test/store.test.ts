@@ -128,6 +128,34 @@ describe("SettingsStore", () => {
     expect(by.WA_VERIFY_TOKEN).toBe("yok");
   });
 
+  it("restores a snapshot without absorbing environment values", () => {
+    const { io } = memoryIO();
+    const store = new SettingsStore({ dir: "data", env: { IG_USER_ID: "ortamdan" }, io });
+    const before = store.snapshot();
+
+    store.save({ IG_USER_ID: "panelden", WA_ACCESS_TOKEN: "yeni" });
+    store.restore(before);
+
+    // Both keys are back where they started: one on the environment, one unset.
+    expect(store.state().find((field) => field.key === "IG_USER_ID")).toMatchObject({
+      source: "ortam",
+      value: "ortamdan",
+    });
+    expect(store.state().find((field) => field.key === "WA_ACCESS_TOKEN")).toMatchObject({ set: false });
+  });
+
+  it("keeps a snapshot immune to later saves", () => {
+    const { io } = memoryIO();
+    const store = new SettingsStore({ dir: "data", env: {}, io });
+    store.save({ IG_USER_ID: "ilk" });
+
+    const before = store.snapshot();
+    store.save({ IG_USER_ID: "ikinci" });
+    store.restore(before);
+
+    expect(store.environment().IG_USER_ID).toBe("ilk");
+  });
+
   it("writes valid JSON that a later load reads back", () => {
     const { io, files } = memoryIO();
     new SettingsStore({ dir: "data", env: {}, io }).save({ IG_USER_ID: "abc" });
