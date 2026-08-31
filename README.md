@@ -8,7 +8,6 @@
 
 <br>
 
-[![Website](https://img.shields.io/badge/Website-0f172a?style=for-the-badge&logo=googlechrome&logoColor=9ece6a)](https://ferhat-yasinoglu.github.io/ferhat-yasinoglu/)
 [![GitHub](https://img.shields.io/badge/GitHub-0f172a?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu)
 [![Instagram](https://img.shields.io/badge/Instagram-0f172a?style=for-the-badge&logo=instagram&logoColor=E4405F)](https://instagram.com/farhad___yaqoobi)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0f172a?style=for-the-badge&logo=linkedin&logoColor=0A66C2)](https://linkedin.com/in/ferhat-yasinoglu)
@@ -52,24 +51,6 @@ straight from the browser. Afghani is supported and the invoice prints.
 <sub>**Learned here** Firestore security rules &nbsp;·&nbsp; App Check &nbsp;·&nbsp; why an allowlist has no business in the client</sub>
 
 [![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/NetStore)
-
-<br>
-
-### 💬 reply-bot
-
-<sub>*Answers Instagram comments and WhatsApp messages on its own — keyword rules first, Claude for the rest.*</sub>
-
-Meta's webhook arrives signed; a rules file answers the questions that keep coming
-back — what it's built with, where the source is, where to start learning — and
-anything left over goes to Claude, which stays quiet when it isn't sure. Four
-languages, because the messages arrive in four. One rule engine, two rooms: a
-comment can be hidden, a WhatsApp reply has 24 hours to be sent.
-
-<sub>**Built with** TypeScript &nbsp;·&nbsp; Node.js &nbsp;·&nbsp; Express &nbsp;·&nbsp; Claude API</sub><br>
-<sub>**Learned here** HMAC webhook signatures &nbsp;·&nbsp; Meta Graph API &nbsp;·&nbsp; answering a webhook before doing the work</sub>
-
-[![Setup guide](https://img.shields.io/badge/Open-Setup%20guide-9ece6a?style=flat-square&logo=googlechrome&logoColor=white)](https://ferhat-yasinoglu.github.io/ferhat-yasinoglu/reply-bot/)
-[![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/reply-bot)
 
 <br>
 
