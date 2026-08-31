@@ -8,6 +8,7 @@
 
 <br>
 
+[![Website](https://img.shields.io/badge/Website-0f172a?style=for-the-badge&logo=googlechrome&logoColor=9ece6a)](https://ferhat-yasinoglu.github.io/ferhat-yasinoglu/)
 [![GitHub](https://img.shields.io/badge/GitHub-0f172a?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu)
 [![Instagram](https://img.shields.io/badge/Instagram-0f172a?style=for-the-badge&logo=instagram&logoColor=E4405F)](https://instagram.com/farhad___yaqoobi)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0f172a?style=for-the-badge&logo=linkedin&logoColor=0A66C2)](https://linkedin.com/in/ferhat-yasinoglu)
@@ -67,6 +68,7 @@ comment can be hidden, a WhatsApp reply has 24 hours to be sent.
 <sub>**Built with** TypeScript &nbsp;·&nbsp; Node.js &nbsp;·&nbsp; Express &nbsp;·&nbsp; Claude API</sub><br>
 <sub>**Learned here** HMAC webhook signatures &nbsp;·&nbsp; Meta Graph API &nbsp;·&nbsp; answering a webhook before doing the work</sub>
 
+[![Setup guide](https://img.shields.io/badge/Open-Setup%20guide-9ece6a?style=flat-square&logo=googlechrome&logoColor=white)](https://ferhat-yasinoglu.github.io/ferhat-yasinoglu/reply-bot/)
 [![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/reply-bot)
 
 <br>
