@@ -15,6 +15,7 @@
  * reason. The same holds for rules: they are parsed before the file is touched.
  */
 
+import { randomBytes } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { Router, type Request, type Response } from "express";
 import { Bot } from "../bot.js";
@@ -44,6 +45,18 @@ export function panelRouter(options: PanelOptions): Router {
   const log = options.log ?? (() => {});
   const router = Router();
 
+  // Nothing the panel serves belongs in a cache, a frame, or a referrer. It is
+  // one page and one API, both behind a password, both about credentials.
+  router.use((_req, res, next) => {
+    res.set("Cache-Control", "no-store");
+    res.set("X-Content-Type-Options", "nosniff");
+    res.set("Referrer-Policy", "no-referrer");
+    // frame-ancestors below covers this for current browsers; the old header
+    // costs nothing and covers the ones that ignore it.
+    res.set("X-Frame-Options", "DENY");
+    next();
+  });
+
   const authed = (req: Request): boolean => auth.valid(readCookie(req.header("cookie"), SESSION_COOKIE));
 
   /** Guard for everything that reads or writes real data. */
@@ -61,8 +74,38 @@ export function panelRouter(options: PanelOptions): Router {
     return true;
   };
 
-  router.get("/", (_req, res) => {
-    res.type("html").send(page());
+  router.get("/", (req, res) => {
+    // The page fetches its API with relative URLs, which only resolve under the
+    // panel when the address ends in a slash: at `/panel` the browser resolves
+    // "api/state" against the *parent*, asking for `/api/state` and getting a
+    // 404 for everything — a page that loads and then silently does nothing.
+    // `/panel` is what a person types, so it is redirected rather than fixed
+    // in the client, which keeps one canonical address.
+    if (!req.originalUrl.split("?")[0]?.endsWith("/")) {
+      const [path, query] = req.originalUrl.split("?");
+      res.redirect(308, `${path}/${query ? `?${query}` : ""}`);
+      return;
+    }
+
+    // The page carries no external resource at all — no CDN, no font host, no
+    // image server — so the policy can refuse everything and then name the two
+    // tags that are allowed to run. `frame-ancestors` is the part that stops
+    // another site framing the panel and borrowing a click on "Kaydet".
+    const nonce = randomBytes(16).toString("base64");
+    res.set(
+      "Content-Security-Policy",
+      [
+        "default-src 'none'",
+        `script-src 'nonce-${nonce}'`,
+        `style-src 'nonce-${nonce}'`,
+        "img-src data:",
+        "connect-src 'self'",
+        "base-uri 'none'",
+        "form-action 'none'",
+        "frame-ancestors 'none'",
+      ].join("; "),
+    );
+    res.type("html").send(page(nonce));
   });
 
   router.post("/login", (req, res) => {
@@ -145,7 +188,7 @@ export function panelRouter(options: PanelOptions): Router {
       return;
     }
 
-    const before = store.environment();
+    const before = store.snapshot();
     try {
       store.save(patch as Partial<Record<WritableKey, string>>);
     } catch (error) {
@@ -158,7 +201,7 @@ export function panelRouter(options: PanelOptions): Router {
     } catch (error) {
       // The file now holds settings the bot cannot run with. Put back what was
       // there so the panel and the running bot agree again, then say why.
-      store.save(revertTo(before, patch as Record<string, unknown>));
+      store.restore(before);
       res.status(400).json({ error: `Ayarlar geçersiz, geri alındı: ${(error as Error).message}` });
       return;
     }
@@ -250,13 +293,3 @@ export function panelRouter(options: PanelOptions): Router {
   return router;
 }
 
-/**
- * The keys a failed save touched, restored to what the environment had before
- * it. A key that came from the environment is cleared rather than rewritten, so
- * it falls back exactly as it did.
- */
-function revertTo(before: NodeJS.ProcessEnv, patch: Record<string, unknown>): Record<string, string> {
-  const undo: Record<string, string> = {};
-  for (const key of Object.keys(patch)) undo[key] = before[key] ?? "";
-  return undo;
-}
