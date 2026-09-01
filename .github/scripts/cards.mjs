@@ -159,7 +159,7 @@ function hero({ ad, rol, satirlar, iletisim }) {
 
 // ----------------------------------------------------------- system_info
 
-function systemInfo(alanlar, olcerler) {
+function systemInfo(alanlar, olcerler, diller) {
   const W = 500;
   const H = 320;
   const satir = alanlar
@@ -186,11 +186,45 @@ function systemInfo(alanlar, olcerler) {
     })
     .join("");
 
+  // Olcerlerin altinda gercek veri: depolardaki dil dagilimi. Tek satirlik
+  // yigilmis cubuk, altinda yuzdeler.
+  const dilY = olcY + olcerler.length * 26 + 10;
+  const toplam = diller.reduce((s, d) => s + d.size, 0) || 1;
+  const barW = W - 32;
+  let kaydir = 16;
+  const dilCubuk = diller
+    .map((d) => {
+      const w = (d.size / toplam) * barW;
+      const parca = `<rect x="${kaydir.toFixed(1)}" y="${dilY}" width="${w.toFixed(1)}" height="8" fill="${d.color}" />`;
+      kaydir += w;
+      return parca;
+    })
+    .join("");
+  const dilYazi = diller
+    .slice(0, 4)
+    .map((d, i) => {
+      const x = 16 + (i % 2) * ((W - 32) / 2);
+      const y = dilY + 28 + Math.floor(i / 2) * 20;
+      return `
+    <circle cx="${x + 4}" cy="${y - 4}" r="4" fill="${d.color}" />
+    <text class="anahtar" x="${x + 14}" y="${y}" font-size="11.5">${esc(d.name)}</text>
+    <text class="kucuk" x="${x + (W - 32) / 2 - 14}" y="${y}" text-anchor="end">${(
+        (d.size / toplam) * 100
+      ).toFixed(1)}%</text>`;
+    })
+    .join("");
+
   const okuma = [
     ...alanlar.map(([k, v]) => `${k}: ${v}`),
     ...olcerler.map(([k, y]) => `${k}: %${y}`),
+    "Diller: " + diller.map((d) => `${d.name} %${((d.size / toplam) * 100).toFixed(1)}`).join(", "),
   ].join(", ");
-  return sarmal(W, H, okuma, kutu(W, H, "system_info", satir + olcu));
+  return sarmal(
+    W,
+    H,
+    okuma,
+    kutu(W, H, "system_info", satir + olcu + dilCubuk + dilYazi)
+  );
 }
 
 // ------------------------------------------------------------ git_status
@@ -625,11 +659,8 @@ const cards = {
       ["Focus", "Web Development"],
       ["Languages", "de / tr / en / fa"],
     ],
-    [
-      ["Coffee", 100],
-      ["Code", 100],
-      ["Sleep", 30],
-    ]
+    [["Code", 100]],
+    data.langs
   ),
   "git-status.svg": gitStatus([
     ["[]", "Repositories", short(data.repos)],
