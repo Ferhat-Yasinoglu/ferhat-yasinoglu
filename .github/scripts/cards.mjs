@@ -14,6 +14,11 @@ const OUT = join(ROOT, "assets");
 // simple-icons'tan bir kez cikarilmis marka logolari (24x24 viewBox yollari).
 const ICONS = JSON.parse(await readFile(join(HERE, "icons.json"), "utf8"));
 
+// Avatarin ASCII izgarasi: portrait.py uretiyor, yoksa portre karti atlanir.
+const PORTRE = await readFile(join(OUT, "portrait.json"), "utf8")
+  .then(JSON.parse)
+  .catch(() => null);
+
 const KOYU = {
   bg: "#2472ab",
   bg2: "#1b968e",
@@ -273,6 +278,72 @@ function terminal(satirlar) {
                dur="${dongu.toFixed(2)}s" repeatCount="indefinite" calcMode="discrete" />
     </rect>
   </g>
+</svg>
+`;
+}
+
+// ------------------------------------------------------------------ portre
+
+// Avatarin ASCII hali. Izgarayi portrait.py uretiyor (Node'da JPEG cozucu
+// yok); burasi sadece ciziyor. Yukseklik terminal kartiyla ayni: ikisi
+// README'de yan yana duruyor.
+function portrait(p) {
+  const W = 340;
+  const H = 432;
+  const pane = { x: 16, y: 62, w: 308, h: 308 };
+  const ic = 8;
+  const artW = pane.w - ic * 2;
+  const charW = artW / p.cols;
+  const satirH = charW / 0.6; // monospace hucre orani
+  const solX = pane.x + ic;
+  const ustY = pane.y + ic;
+
+  // Ayni renkteki ardisik hucreleri tek tspan'de topluyoruz: 130x78 hucre
+  // tek tek yazilirsa dosya birkac yuz KB'a cikiyor.
+  const govde = p.chars
+    .map((satir, y) => {
+      const renkler = p.colors[y];
+      let parcalar = "";
+      let bas = 0;
+      for (let x = 1; x <= satir.length; x++) {
+        if (x === satir.length || renkler[x] !== renkler[bas]) {
+          const renk = p.palet[p.alfabe.indexOf(renkler[bas])];
+          parcalar += `<tspan fill="${renk}">${esc(satir.slice(bas, x))}</tspan>`;
+          bas = x;
+        }
+      }
+      return `
+    <text class="px" x="${solX}" y="${(ustY + (y + 1) * satirH).toFixed(2)}"
+          xml:space="preserve">${parcalar}</text>`;
+    })
+    .join("");
+
+  const dots = ["#ff5f57", "#febc2e", "#28c840"]
+    .map((c, i) => `<circle cx="${26 + i * 18}" cy="26" r="5.5" fill="${c}" />`)
+    .join("");
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(p.login)} avatarinin ASCII karakterlerle cizilmis hali">
+  <defs>
+    ${defsBg()}
+    <style>${baseStyle()}
+      .px { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: ${satirH.toFixed(2)}px; white-space: pre; }
+      .baslik { font-size: 12px; fill: ${T.muted}; font-family: 'SFMono-Regular', Consolas, monospace; }
+      .altyazi { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 13px; }
+      /* Karakterler koyu bir panelde duruyor: avatar renkleri cam zeminde
+         okunmuyor, kendi zeminini goturuyor. */
+      .panel { fill: #05070c; fill-opacity: .62; stroke: ${T.line}; stroke-opacity: .18; }
+    </style>
+  </defs>
+  <rect class="card-bg" width="${W}" height="${H}" rx="14" />
+  ${dots}
+  <text class="baslik" x="${W / 2}" y="30" text-anchor="middle">farhad@github ~/portrait</text>
+  <line x1="0" y1="48" x2="${W}" y2="48" stroke="${T.line}" stroke-width="1" />
+  <rect class="panel" x="${pane.x}" y="${pane.y}" width="${pane.w}" height="${pane.h}" rx="8" />
+  <g class="rise">${govde}
+  </g>
+  <text class="altyazi" x="24" y="398" fill="${T.text}">$ ./portrait.sh</text>
+  <text class="altyazi" x="${W - 24}" y="398" text-anchor="end" fill="${T.green}">${esc(p.login)}</text>
 </svg>
 `;
 }
@@ -647,6 +718,8 @@ await mkdir(OUT, { recursive: true });
     ]),
     "languages.svg": languages(data.langs),
     "activity.svg": activity(data.days, stamp),
+    // portrait.json yoksa kart atlanir: portre avatar degisince elle uretiliyor.
+    ...(PORTRE ? { "portrait.svg": portrait(PORTRE) } : {}),
   };
   for (const [file, svg] of Object.entries(cards)) {
     await writeFile(join(OUT, file), svg, "utf8");

@@ -1,9 +1,6 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/header-dark.svg" />
-  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/header.svg" alt="Ferhat Yasinoglu" width="100%" />
-</picture>
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/header.svg" alt="Ferhat Yasinoglu" width="100%" />
 
 
 <h2>Çevrimdışı-öncelikli web uygulamaları (vanilla JavaScript) ve ben orada yokken cevap veren botlar geliştiriyorum.</h2>
@@ -90,10 +87,8 @@ Bir Node scripti GitHub API'den veri çekip SVG'leri yazıyor; workflow her 6 sa
 ## 👋 Hakkımda
 
 <div align="center">
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal-dark.svg" />
-  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" alt="whoami" width="80%" loading="lazy" />
-</picture>
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/portrait.svg" alt="Avatarımın ASCII karakterlerle çizilmiş hali" height="300" loading="lazy" />
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" alt="whoami: Farhad Yaqoobi, NRW'de geliştirici. Stack: JavaScript, TypeScript, Firebase, PWA, Node. Projeler: acik-defter, netstore, botflow-mcp." height="300" loading="lazy" />
 </div>
 
 Merhaba — web geliştiricisi ve bot meraklısıyım. Uygulamalarımın çevrimdışı davranışına, verinin düzgün senkronizasyonuna ve kullanıcı deneyiminin kesintisiz olmasına önem veriyorum. Şu anda React ve sunucu tarafı (Node.js) konularında kendimi geliştiriyorum.
