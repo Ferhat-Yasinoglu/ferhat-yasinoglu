@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="320" viewBox="0 0 500 320" role="img" aria-label="Name: Ferhat Yasinoglu, Role: Full Stack Developer, Status: Building cool stuff, Location: Dusseldorf, Germany, Focus: Web Development, Languages: de / tr / en / fa, Coffee: %100, Code: %100, Sleep: %30">
+  <defs><style>
+    text { font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+    .panel { fill: #0a120b; stroke: #1e3a20; stroke-width: 1; }
+    .etiket { font-size: 12px; fill: #4ade80; }
+    .anahtar { font-size: 12.5px; fill: #6fbf78; }
+    .deger { font-size: 12.5px; fill: #d4f5d6; }
+    .kucuk { font-size: 11px; fill: #3d6b42; }
+    .gir { animation: gir .6s ease-out backwards; }
+    @keyframes gir { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .yanip { animation: yanip 1.1s steps(1) infinite; }
+    @keyframes yanip { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: .01ms !important; animation-delay: 0s !important; }
+    }</style></defs>
+  <rect width="500" height="320" fill="#050a05" />
+  
+  <rect class="panel" x=".5" y=".5" width="499" height="319" rx="3" />
+  <text class="etiket" x="14" y="21">&gt; system_info</text>
+  <line x1="0" y1="28" x2="500" y2="28" stroke="#1e3a20" stroke-width="1" />
+  
+    <text class="anahtar" x="16" y="54">Name        :</text>
+    <text class="deger" x="120" y="54">Ferhat Yasinoglu</text>
+    <text class="anahtar" x="16" y="80">Role        :</text>
+    <text class="deger" x="120" y="80">Full Stack Developer</text>
+    <text class="anahtar" x="16" y="106">Status      :</text>
+    <text class="deger" x="120" y="106">Building cool stuff</text>
+    <text class="anahtar" x="16" y="132">Location    :</text>
+    <text class="deger" x="120" y="132">Dusseldorf, Germany</text>
+    <text class="anahtar" x="16" y="158">Focus       :</text>
+    <text class="deger" x="120" y="158">Web Development</text>
+    <text class="anahtar" x="16" y="184">Languages   :</text>
+    <text class="deger" x="120" y="184">de / tr / en / fa</text>
+    <text class="anahtar" x="16" y="222">Coffee      :</text>
+    <rect x="120" y="213" width="9" height="10" fill="#22c55e" /><rect x="132" y="213" width="9" height="10" fill="#22c55e" /><rect x="144" y="213" width="9" height="10" fill="#22c55e" /><rect x="156" y="213" width="9" height="10" fill="#22c55e" /><rect x="168" y="213" width="9" height="10" fill="#22c55e" /><rect x="180" y="213" width="9" height="10" fill="#22c55e" /><rect x="192" y="213" width="9" height="10" fill="#22c55e" /><rect x="204" y="213" width="9" height="10" fill="#22c55e" /><rect x="216" y="213" width="9" height="10" fill="#22c55e" /><rect x="228" y="213" width="9" height="10" fill="#22c55e" />
+    <text class="deger" x="484" y="222" text-anchor="end">100%</text>
+    <text class="anahtar" x="16" y="248">Code        :</text>
+    <rect x="120" y="239" width="9" height="10" fill="#22c55e" /><rect x="132" y="239" width="9" height="10" fill="#22c55e" /><rect x="144" y="239" width="9" height="10" fill="#22c55e" /><rect x="156" y="239" width="9" height="10" fill="#22c55e" /><rect x="168" y="239" width="9" height="10" fill="#22c55e" /><rect x="180" y="239" width="9" height="10" fill="#22c55e" /><rect x="192" y="239" width="9" height="10" fill="#22c55e" /><rect x="204" y="239" width="9" height="10" fill="#22c55e" /><rect x="216" y="239" width="9" height="10" fill="#22c55e" /><rect x="228" y="239" width="9" height="10" fill="#22c55e" />
+    <text class="deger" x="484" y="248" text-anchor="end">100%</text>
+    <text class="anahtar" x="16" y="274">Sleep       :</text>
+    <rect x="120" y="265" width="9" height="10" fill="#22c55e" /><rect x="132" y="265" width="9" height="10" fill="#22c55e" /><rect x="144" y="265" width="9" height="10" fill="#22c55e" /><rect x="156" y="265" width="9" height="10" fill="#1e3a20" /><rect x="168" y="265" width="9" height="10" fill="#1e3a20" /><rect x="180" y="265" width="9" height="10" fill="#1e3a20" /><rect x="192" y="265" width="9" height="10" fill="#1e3a20" /><rect x="204" y="265" width="9" height="10" fill="#1e3a20" /><rect x="216" y="265" width="9" height="10" fill="#1e3a20" /><rect x="228" y="265" width="9" height="10" fill="#1e3a20" />
+    <text class="deger" x="484" y="274" text-anchor="end">30%</text>
+</svg>
