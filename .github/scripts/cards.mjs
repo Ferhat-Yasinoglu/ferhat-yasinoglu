@@ -611,12 +611,15 @@ async function fetchData(login, token) {
 // Kart uretimi commit atiyor; bot commit'leri "son commit" olarak gosterilirse
 // kart kendi kendini anlatir hale geliyor, o yuzden onlari atliyoruz.
 const BOT = /\[bot\]|github-actions/i;
+// Merge commit'leri de elenir: yazilmis bir is degil, birlestirme kaydi.
+// Kalanlar gercekten elle yazilmis commit'ler oluyor.
+const MERGE = /^Merge (pull request|branch|remote-tracking)/i;
 
 function sonCommitSec(repolar) {
   for (const r of repolar) {
     for (const c of r.defaultBranchRef?.target?.history?.nodes || []) {
       const kim = c.author?.user?.login || c.author?.name || "";
-      if (BOT.test(kim)) continue;
+      if (BOT.test(kim) || MERGE.test(c.messageHeadline)) continue;
       return { repo: r.name, mesaj: c.messageHeadline, kim, tarih: c.committedDate };
     }
   }
