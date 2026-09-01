@@ -159,7 +159,7 @@ function hero({ ad, rol, satirlar, iletisim }) {
 
 // ----------------------------------------------------------- system_info
 
-function systemInfo(alanlar, olcerler, diller) {
+function systemInfo(alanlar, diller) {
   const W = 500;
   const H = 320;
   const satir = alanlar
@@ -170,25 +170,10 @@ function systemInfo(alanlar, olcerler, diller) {
     )
     .join("");
 
-  const olcY = 54 + alanlar.length * 26 + 12;
-  const olcu = olcerler
-    .map(([k, yuzde], i) => {
-      const y = olcY + i * 26;
-      const dolu = Math.round((yuzde / 100) * 10);
-      const kutucuk = Array.from({ length: 10 }, (_, j) => {
-        const renk = j < dolu ? T.cubuk : T.cerceve;
-        return `<rect x="${120 + j * 12}" y="${y - 9}" width="9" height="10" fill="${renk}" />`;
-      }).join("");
-      return `
-    <text class="anahtar" x="16" y="${y}">${esc(k.padEnd(12, " "))}:</text>
-    ${kutucuk}
-    <text class="deger" x="${W - 16}" y="${y}" text-anchor="end">${yuzde}%</text>`;
-    })
-    .join("");
-
-  // Olcerlerin altinda gercek veri: depolardaki dil dagilimi. Tek satirlik
+  // Alanlarin altinda gercek veri: depolardaki dil dagilimi. Tek satirlik
   // yigilmis cubuk, altinda yuzdeler.
-  const dilY = olcY + olcerler.length * 26 + 10;
+  const ayirici = 54 + alanlar.length * 26 + 12;
+  const dilY = ayirici + 30;
   const toplam = diller.reduce((s, d) => s + d.size, 0) || 1;
   const barW = W - 32;
   let kaydir = 16;
@@ -216,14 +201,24 @@ function systemInfo(alanlar, olcerler, diller) {
 
   const okuma = [
     ...alanlar.map(([k, v]) => `${k}: ${v}`),
-    ...olcerler.map(([k, y]) => `${k}: %${y}`),
     "Diller: " + diller.map((d) => `${d.name} %${((d.size / toplam) * 100).toFixed(1)}`).join(", "),
   ].join(", ");
   return sarmal(
     W,
     H,
     okuma,
-    kutu(W, H, "system_info", satir + olcu + dilCubuk + dilYazi)
+    kutu(
+      W,
+      H,
+      "system_info",
+      satir +
+        `
+    <line x1="16" y1="${ayirici}" x2="${W - 16}" y2="${ayirici}"
+          stroke="${T.cerceve}" stroke-width=".8" stroke-dasharray="2 3" />
+    <text class="kucuk" x="16" y="${dilY - 12}">depolardaki dil dagilimi</text>` +
+        dilCubuk +
+        dilYazi
+    )
   );
 }
 
@@ -659,7 +654,6 @@ const cards = {
       ["Focus", "Web Development"],
       ["Languages", "de / tr / en / fa"],
     ],
-    [["Code", 100]],
     data.langs
   ),
   "git-status.svg": gitStatus([
