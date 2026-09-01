@@ -5,6 +5,8 @@
 <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/system-info.svg" alt="system_info: Ferhat Yasinoglu, Full Stack Developer, Düsseldorf" width="49%" />
 <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/git-status.svg" alt="git_status: repo, takipçi, yıldız, commit, pull request ve katkı sayıları" width="49%" />
 
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/last-commit.svg" alt="last_commit: en son elle yazılan commit, deposu ve ne zaman atıldığı" width="100%" />
+
 </div>
 
 ## `> featured_projects`
@@ -24,7 +26,7 @@ Sıfırdan yazıldı — çerçeve yok, derleme adımı yok. Tek arayüzde dört
 düzenin tamamı ters dönüyor ve ağ kapalıyken de okunuyor. Bir kontrol scripti, elle yazılmış
 ortak işaretlemenin sayfalar arasında birbirinden ayrılmasını engelliyor.
 
-`JavaScript (ES6+)` `CSS3` `Service Workers` `Web App Manifest`
+![JavaScript ES6+](https://img.shields.io/badge/JavaScript%20ES6%2B-f7df1e?style=flat-square&labelColor=f7df1e&color=f7df1e) ![CSS3](https://img.shields.io/badge/CSS3-264de4?style=flat-square&labelColor=264de4&color=264de4) ![Service%20Workers](https://img.shields.io/badge/Service%20Workers-1e3a20?style=flat-square&labelColor=1e3a20&color=1e3a20) ![PWA](https://img.shields.io/badge/PWA-5a0fc8?style=flat-square&labelColor=5a0fc8&color=5a0fc8)
 
 [**Canlı**](https://ferhat-yasinoglu.github.io/acik-defter/) · [**Kaynak**](https://github.com/Ferhat-Yasinoglu/acik-defter)
 
@@ -36,7 +38,7 @@ ortak işaretlemenin sayfalar arasında birbirinden ayrılmasını engelliyor.
 üzerinden senkronlanıyor, ağ düştüğünde uygulama çalışmaya devam ediyor ve doğrudan
 tarayıcıdan kuruluyor. Afgani destekleniyor, fatura basılıyor.
 
-`JavaScript` `Firestore` `Service Workers` `Web App Manifest`
+![JavaScript](https://img.shields.io/badge/JavaScript-f7df1e?style=flat-square&labelColor=f7df1e&color=f7df1e) ![Firestore](https://img.shields.io/badge/Firestore-ffa000?style=flat-square&labelColor=ffa000&color=ffa000) ![Service%20Workers](https://img.shields.io/badge/Service%20Workers-1e3a20?style=flat-square&labelColor=1e3a20&color=1e3a20) ![PWA](https://img.shields.io/badge/PWA-5a0fc8?style=flat-square&labelColor=5a0fc8&color=5a0fc8)
 
 [**Kaynak**](https://github.com/Ferhat-Yasinoglu/NetStore)
 
@@ -50,7 +52,7 @@ etiketliyor ve o etiketlerin oluşturduğu segmentlere yayın yapıyor. MCP konu
 akışı bir model sürüyor; Telegram'a long polling ile bağlanıyor, yani herkese açık bir
 adrese gerek yok.
 
-`TypeScript` `Node.js` `MCP` `SQLite` `Telegram Bot API`
+![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?style=flat-square&labelColor=3178c6&color=3178c6) ![Node.js](https://img.shields.io/badge/Node.js-5fa04e?style=flat-square&labelColor=5fa04e&color=5fa04e) ![MCP](https://img.shields.io/badge/MCP-a78bfa?style=flat-square&labelColor=a78bfa&color=a78bfa) ![SQLite](https://img.shields.io/badge/SQLite-003b57?style=flat-square&labelColor=003b57&color=003b57) ![Telegram%20Bot%20API](https://img.shields.io/badge/Telegram%20Bot%20API-229ed9?style=flat-square&labelColor=229ed9&color=229ed9)
 
 [**Kaynak**](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/botflow-mcp)
 
@@ -68,6 +70,7 @@ adrese gerek yok.
 <a href="https://web.dev/explore/progressive-web-apps" title="PWA"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-pwa.svg" width="86" alt="PWA" /></a>
 <a href="https://git-scm.com/" title="Git"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-git.svg" width="86" alt="Git" /></a>
 <a href="https://github.com/" title="GitHub"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-github.svg" width="86" alt="GitHub" /></a>
+<a href="https://code.visualstudio.com/" title="VS Code"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-vscode.svg" width="86" alt="VS Code" /></a>
 <a href="https://www.figma.com/" title="Figma"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-figma.svg" width="86" alt="Figma" /></a>
 
 </div>

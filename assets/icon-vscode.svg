@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="92" height="104" viewBox="0 0 92 104" role="img" aria-label="VS Code">
+  <defs><style>
+    text { font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+    .panel { fill: #0a120b; stroke: #1e3a20; stroke-width: 1; }
+    .etiket { font-size: 12px; fill: #4ade80; }
+    .anahtar { font-size: 12.5px; fill: #6fbf78; }
+    .deger { font-size: 12.5px; fill: #d4f5d6; }
+    .kucuk { font-size: 11px; fill: #3d6b42; }
+    .gir { animation: gir .6s ease-out backwards; }
+    @keyframes gir { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .yanip { animation: yanip 1.1s steps(1) infinite; }
+    @keyframes yanip { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: .01ms !important; animation-delay: 0s !important; }
+    }
+    .kare { fill: #0a120b; stroke: #1e3a20; stroke-width: 1; }
+    .ad { font-size: 11px; fill: #6fbf78; }
+    .suz { animation: suz 4.5s ease-in-out infinite alternate; }
+    @keyframes suz { from { transform: translateY(-1.5px); } to { transform: translateY(1.5px); } }
+  </style></defs>
+  <rect width="92" height="104" fill="#050a05" />
+  <rect class="kare" x=".5" y=".5" width="91" height="82" rx="3" />
+  <!-- Konumlandirma disardaki grupta, animasyon icerdekinde: CSS transform
+       ayni ogedeki transform OZNITELIGINI tumuyle eziyor, ikisi bir arada
+       olursa tarayicida logo olceksiz halde sol uste dusuyor. -->
+  <g transform="translate(27 22) scale(1.5833333333333333)">
+    <g class="suz"><path d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352zm-5.146 14.861L10.826 12l7.178-5.448v10.896z" fill="#007ACC" /></g>
+  </g>
+  <text class="ad" x="46" y="99" text-anchor="middle">VS Code</text>
+</svg>

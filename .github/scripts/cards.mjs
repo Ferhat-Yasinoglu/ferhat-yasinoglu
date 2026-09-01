@@ -115,7 +115,7 @@ function hero({ ad, rol, satirlar, iletisim }) {
     .map(
       (s, i) => `
     <text class="gir" style="animation-delay:${(0.5 + i * 0.12).toFixed(2)}s"
-          x="46" y="${226 + i * 22}" font-size="13.5" fill="${T.anahtar}">// ${esc(s)}</text>`
+          x="58" y="${226 + i * 22}" font-size="13.5" fill="${T.anahtar}">// ${esc(s)}</text>`
     )
     .join("");
 
@@ -123,7 +123,7 @@ function hero({ ad, rol, satirlar, iletisim }) {
     .map(
       (s, i) => `
     <text class="gir" style="animation-delay:${(1.0 + i * 0.1).toFixed(2)}s"
-          x="46" y="${312 + i * 22}" font-size="13" fill="${T.metin}">${esc(s.ikon)}  ${esc(s.metin)}</text>`
+          x="58" y="${312 + i * 22}" font-size="13" fill="${T.metin}">${esc(s.ikon)}  ${esc(s.metin)}</text>`
     )
     .join("");
 
@@ -139,20 +139,22 @@ function hero({ ad, rol, satirlar, iletisim }) {
     "",
     `
     <g clip-path="url(#kirp)">${yagmur}</g>
+    ${Array.from({ length: 16 }, (_, i) => `<text class="kucuk" x="22" y="${64 + i * 21}" font-size="9" opacity=".55">${String(i + 1).padStart(2, "0")}</text>`).join("")}
+    <line x1="38" y1="48" x2="38" y2="${H - 34}" stroke="${T.cerceve}" stroke-width="1" />
     <text class="etiket" x="14" y="21">ferhat@github:~$ cat README.md</text>
     <text class="kucuk" x="${W - 14}" y="21" text-anchor="end">v2.0</text>
-    <text x="44" y="120" font-size="58" font-weight="700" letter-spacing="6"
+    <text x="56" y="120" font-size="58" font-weight="700" letter-spacing="6"
           fill="none" stroke="${T.parlak}" stroke-width="1.2" opacity=".85">${esc(
             ad.split(" ")[0].toUpperCase()
           )}</text>
-    <text x="44" y="186" font-size="58" font-weight="700" letter-spacing="6"
+    <text x="56" y="186" font-size="58" font-weight="700" letter-spacing="6"
           fill="none" stroke="${T.metin}" stroke-width="1" opacity=".7">${esc(
             ad.split(" ").slice(1).join(" ").toUpperCase()
           )}</text>
-    <text class="etiket" x="470" y="106" font-size="15">&gt; ${esc(rol.toUpperCase())}</text>
+    <text class="etiket" x="482" y="106" font-size="15">&gt; ${esc(rol.toUpperCase())}</text>
     ${yorum}
     ${bilgi}
-    <text class="etiket" x="46" y="${H - 18}" font-size="13">ferhat@github:~$ <tspan class="yanip">_</tspan></text>`
+    <text class="etiket" x="58" y="${H - 18}" font-size="13">ferhat@github:~$ <tspan class="yanip">_</tspan></text>`
   )}`
   );
 }
@@ -161,7 +163,7 @@ function hero({ ad, rol, satirlar, iletisim }) {
 
 function systemInfo(alanlar, diller) {
   const W = 500;
-  const H = 320;
+  const H = 350;
   const satir = alanlar
     .map(
       ([k, v], i) => `
@@ -226,7 +228,7 @@ function systemInfo(alanlar, diller) {
 
 function gitStatus(satirlar) {
   const W = 500;
-  const H = 320;
+  const H = 350;
   const govde = satirlar
     .map(
       ([ikon, ad, deger], i) => `
@@ -421,15 +423,42 @@ function quote(metin, kim) {
           letter-spacing="1.5" fill="${T.parlak}" opacity=".92">${esc(s)}</text>`
     )
     .join("");
+  const dugme = ["#3d6b42", "#3d6b42", "#f472b6"]
+    .map((c, i) => `<circle cx="${W - 62 + i * 18}" cy="17" r="5" fill="none" stroke="${c}" stroke-width="1.2" />`)
+    .join("");
   return sarmal(
     W,
     H,
     `${metin.replace(/\n/g, " ")} - ${kim}`,
-    kutu(W, H, "terminal", govde) +
+    kutu(W, H, "terminal", dugme + govde) +
       `
   <text class="anahtar" x="${W - 16}" y="${86 + satirlar.length * 34 + 4}"
         text-anchor="end" font-size="13">- ${esc(kim)}</text>
   <text class="etiket" x="16" y="${H - 16}" font-size="12">ferhat@github:~$ always_building.sh <tspan class="yanip">_</tspan></text>`
+  );
+}
+
+// ----------------------------------------------------------- last_commit
+
+// Bot commit'leri elenmis oldugu icin burada gercekten elle yazilmis son
+// commit duruyor; hic bulunamazsa kart uretilmiyor (main'de kontrol var).
+function lastCommit({ repo, mesaj, kim, tarih }) {
+  const W = 1000;
+  const H = 130;
+  return sarmal(
+    W,
+    H,
+    `Son commit: ${mesaj} - ${repo} deposunda ${kim} tarafindan, ${ncOnce(tarih)}`,
+    kutu(
+      W,
+      H,
+      "last_commit",
+      `
+    <text class="kucuk" x="${W - 14}" y="21" text-anchor="end">${esc(repo)}</text>
+    <text class="deger" x="16" y="62" font-size="14" fill="${T.parlak}">${esc(mesaj)}</text>
+    <text class="anahtar" x="16" y="88">${esc(kim)} &#183; ${esc(ncOnce(tarih))}</text>
+    <text class="kucuk" x="16" y="112">${esc(repo)} deposunda</text>`
+    )
   );
 }
 
@@ -512,6 +541,21 @@ query($login: String!) {
         weeks { contributionDays { date contributionCount } }
       }
     }
+    sonRepolar: repositories(first: 5, ownerAffiliations: OWNER, isFork: false,
+                             orderBy: {field: PUSHED_AT, direction: DESC}) {
+      nodes {
+        name
+        defaultBranchRef {
+          target {
+            ... on Commit {
+              history(first: 15) {
+                nodes { messageHeadline committedDate author { user { login } name } }
+              }
+            }
+          }
+        }
+      }
+    }
     repositories(first: 100, ownerAffiliations: OWNER, isFork: false) {
       totalCount
       nodes {
@@ -551,6 +595,7 @@ async function fetchData(login, token) {
     .map((d) => ({ date: d.date, count: d.contributionCount }));
 
   return {
+    sonCommit: sonCommitSec(u.sonRepolar.nodes),
     name: u.name?.trim() || u.login,
     totalContributions: c.contributionCalendar.totalContributions,
     commits: c.totalCommitContributions + c.restrictedContributionsCount,
@@ -561,6 +606,35 @@ async function fetchData(login, token) {
     langs: [...byLang.values()].sort((a, b) => b.size - a.size).slice(0, 6),
     days,
   };
+}
+
+// Kart uretimi commit atiyor; bot commit'leri "son commit" olarak gosterilirse
+// kart kendi kendini anlatir hale geliyor, o yuzden onlari atliyoruz.
+const BOT = /\[bot\]|github-actions/i;
+
+function sonCommitSec(repolar) {
+  for (const r of repolar) {
+    for (const c of r.defaultBranchRef?.target?.history?.nodes || []) {
+      const kim = c.author?.user?.login || c.author?.name || "";
+      if (BOT.test(kim)) continue;
+      return { repo: r.name, mesaj: c.messageHeadline, kim, tarih: c.committedDate };
+    }
+  }
+  return null;
+}
+
+// "2 saat once" gibi. Kart alti saatte bir uretildigi icin dakika hassasiyeti
+// zaten anlamsiz, en yakin buyuk birim yeterli.
+function ncOnce(tarih) {
+  const fark = (Date.now() - new Date(tarih).getTime()) / 1000;
+  const birim = [
+    [31536000, "yil"], [2592000, "ay"], [604800, "hafta"],
+    [86400, "gun"], [3600, "saat"], [60, "dakika"],
+  ];
+  for (const [sn, ad] of birim) {
+    if (fark >= sn) return `${Math.floor(fark / sn)} ${ad} once`;
+  }
+  return "az once";
 }
 
 function mockData() {
@@ -574,6 +648,12 @@ function mockData() {
     };
   });
   return {
+    sonCommit: {
+      repo: "acik-defter",
+      mesaj: "Notlar sayfasina etiket filtresi ekle",
+      kim: "Ferhat-Yasinoglu",
+      tarih: new Date(Date.now() - 7200e3).toISOString(),
+    },
     name: "Ferhat Yasinoglu",
     totalContributions: 21,
     commits: 18,
@@ -653,12 +733,15 @@ const cards = {
       ["Name", AD],
       ["Role", ROL],
       ["Status", "Building cool stuff"],
+      ["Experience", "2+ yil"],
       ["Location", "Dusseldorf, Germany"],
       ["Focus", "Web Development"],
       ["Languages", "de / tr / en / fa"],
     ],
     data.langs
   ),
+  // Son commit bulunamazsa (butun gecmis bot commit'i) kart uretilmez.
+  ...(data.sonCommit ? { "last-commit.svg": lastCommit(data.sonCommit) } : {}),
   "git-status.svg": gitStatus([
     ["[]", "Repositories", short(data.repos)],
     ["<>", "Followers", short(data.followers)],
