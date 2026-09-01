@@ -20,8 +20,11 @@
   </style></defs>
   <rect width="92" height="104" fill="#050a05" />
   <rect class="kare" x=".5" y=".5" width="91" height="82" rx="3" />
-  <g class="suz" transform="translate(27 22) scale(1.5833333333333333)">
-    <path d="M1.5 0h21l-1.91 21.563L11.977 24l-8.564-2.438L1.5 0zm7.031 9.75l-.232-2.718 10.059.003.23-2.622L5.412 4.41l.698 8.01h9.126l-.326 3.426-2.91.804-2.955-.81-.188-2.11H6.248l.33 4.171L12 19.351l5.379-1.443.744-8.157H8.531z" fill="#E34F26" />
+  <!-- Konumlandirma disardaki grupta, animasyon icerdekinde: CSS transform
+       ayni ogedeki transform OZNITELIGINI tumuyle eziyor, ikisi bir arada
+       olursa tarayicida logo olceksiz halde sol uste dusuyor. -->
+  <g transform="translate(27 22) scale(1.5833333333333333)">
+    <g class="suz"><path d="M1.5 0h21l-1.91 21.563L11.977 24l-8.564-2.438L1.5 0zm7.031 9.75l-.232-2.718 10.059.003.23-2.622L5.412 4.41l.698 8.01h9.126l-.326 3.426-2.91.804-2.955-.81-.188-2.11H6.248l.33 4.171L12 19.351l5.379-1.443.744-8.157H8.531z" fill="#E34F26" /></g>
   </g>
   <text class="ad" x="46" y="99" text-anchor="middle">HTML5</text>
 </svg>

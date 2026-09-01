@@ -460,8 +460,11 @@ function iconTile(ic) {
   </style></defs>
   <rect width="${W}" height="${H}" fill="${T.zemin}" />
   <rect class="kare" x=".5" y=".5" width="${W - 1}" height="${H - 22}" rx="3" />
-  <g class="suz" transform="translate(${(W - 38) / 2} 22) scale(${olcek})">
-    <path d="${ic.path}" fill="${fitColor(ic.hex)}" />
+  <!-- Konumlandirma disardaki grupta, animasyon icerdekinde: CSS transform
+       ayni ogedeki transform OZNITELIGINI tumuyle eziyor, ikisi bir arada
+       olursa tarayicida logo olceksiz halde sol uste dusuyor. -->
+  <g transform="translate(${(W - 38) / 2} 22) scale(${olcek})">
+    <g class="suz"><path d="${ic.path}" fill="${fitColor(ic.hex)}" /></g>
   </g>
   <text class="ad" x="${W / 2}" y="${H - 5}" text-anchor="middle">${esc(ic.ad)}</text>
 </svg>
