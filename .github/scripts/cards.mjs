@@ -595,7 +595,7 @@ async function fetchData(login, token) {
     .map((d) => ({ date: d.date, count: d.contributionCount }));
 
   return {
-    sonCommit: sonCommitSec(u.sonRepolar.nodes),
+    sonCommit: sonCommitSec(u.sonRepolar.nodes, u.login),
     name: u.name?.trim() || u.login,
     totalContributions: c.contributionCalendar.totalContributions,
     commits: c.totalCommitContributions + c.restrictedContributionsCount,
@@ -615,12 +615,16 @@ const BOT = /\[bot\]|github-actions/i;
 // Kalanlar gercekten elle yazilmis commit'ler oluyor.
 const MERGE = /^Merge (pull request|branch|remote-tracking)/i;
 
-function sonCommitSec(repolar) {
+// Kart profilin sahibine ait; "son commit" de onun commit'i olmali. Baskasinin
+// (yardimci bir arac dahil) attigi commit'i onun isi gibi gostermemek icin
+// yazari login uzerinden esliyoruz.
+function sonCommitSec(repolar, sahip) {
   for (const r of repolar) {
     for (const c of r.defaultBranchRef?.target?.history?.nodes || []) {
-      const kim = c.author?.user?.login || c.author?.name || "";
-      if (BOT.test(kim) || MERGE.test(c.messageHeadline)) continue;
-      return { repo: r.name, mesaj: c.messageHeadline, kim, tarih: c.committedDate };
+      const login = c.author?.user?.login || "";
+      if (login.toLowerCase() !== sahip.toLowerCase()) continue;
+      if (BOT.test(login) || MERGE.test(c.messageHeadline)) continue;
+      return { repo: r.name, mesaj: c.messageHeadline, kim: login, tarih: c.committedDate };
     }
   }
   return null;
