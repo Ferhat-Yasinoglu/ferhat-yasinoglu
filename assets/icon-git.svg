@@ -1,30 +1,49 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="92" height="104" viewBox="0 0 92 104" role="img" aria-label="Git">
-  <defs><style>
-    text { font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
-    .panel { fill: #0a120b; stroke: #1e3a20; stroke-width: 1; }
-    .etiket { font-size: 12px; fill: #4ade80; }
-    .anahtar { font-size: 12.5px; fill: #6fbf78; }
-    .deger { font-size: 12.5px; fill: #d4f5d6; }
-    .kucuk { font-size: 11px; fill: #3d6b42; }
-    .gir { animation: gir .6s ease-out backwards; }
-    @keyframes gir { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-    .yanip { animation: yanip 1.1s steps(1) infinite; }
-    @keyframes yanip { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
-    @media (prefers-reduced-motion: reduce) {
-      * { animation-duration: .01ms !important; animation-delay: 0s !important; }
-    }
-    .kare { fill: #0a120b; stroke: #1e3a20; stroke-width: 1; }
-    .ad { font-size: 11px; fill: #6fbf78; }
-    .suz { animation: suz 4.5s ease-in-out infinite alternate; }
-    @keyframes suz { from { transform: translateY(-1.5px); } to { transform: translateY(1.5px); } }
-  </style></defs>
-  <rect width="92" height="104" fill="#050a05" />
-  <rect class="kare" x=".5" y=".5" width="91" height="82" rx="3" />
-  <!-- Konumlandirma disardaki grupta, animasyon icerdekinde: CSS transform
-       ayni ogedeki transform OZNITELIGINI tumuyle eziyor, ikisi bir arada
-       olursa tarayicida logo olceksiz halde sol uste dusuyor. -->
-  <g transform="translate(27 22) scale(1.5833333333333333)">
-    <g class="suz"><path d="M13.09 23.549a1.54 1.54 0 0 1-2.18 0L.451 13.089a1.54 1.54 0 0 1 0-2.179l7.191-7.19 2.733 2.733a1.85 1.85 0 0 0 .964 2.326v6.66a1.849 1.849 0 1 0 1.54 0V8.957l2.508 2.508a1.85 1.85 0 1 0 1.09-1.09l-2.634-2.634a1.85 1.85 0 0 0-2.378-2.377L8.73 2.63 10.91.451a1.54 1.54 0 0 1 2.179 0l10.459 10.46a1.54 1.54 0 0 1 0 2.179z" fill="#F03C2E" /></g>
+<svg xmlns="http://www.w3.org/2000/svg" width="92" height="108" viewBox="0 0 92 108" role="img" aria-label="Git">
+  <defs>
+    
+    <linearGradient id="tbg" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".18" />
+      <stop offset="0.16" stop-color="#2472ab" stop-opacity="1" />
+      <stop offset="1" stop-color="#1b968e" stop-opacity="1" />
+    </linearGradient>
+    <filter id="h" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="9" />
+    </filter>
+    <style>
+      .kutu { fill: url(#tbg); stroke: #eaf6fb; stroke-opacity: .3; stroke-width: 1; }
+      .etk { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; font-size: 13px; font-weight: 600; fill: #f2f9ff; }
+      /* Hareket bilincli sekilde hafif: sayfada baska seyler de oynuyor,
+         ikonlar dikkati calmadan yasiyor olsun. */
+      .bob { animation: bob 5s ease-in-out infinite alternate; }
+      @keyframes bob { from { transform: translateY(-1.5px); } to { transform: translateY(1.5px); } }
+      .nabiz { animation: nabiz 4.5s ease-in-out infinite; }
+      @keyframes nabiz { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+      .sallan { animation: sallan 5s ease-in-out infinite; }
+      @keyframes sallan { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+      .don { animation: don 22s linear infinite; }
+      @keyframes don { to { transform: rotate(360deg); } }
+      .alev { animation: alev 3s ease-in-out infinite; }
+      @keyframes alev {
+        0%,100% { transform: scale(1) rotate(-1.5deg); }
+        50% { transform: scale(1.05) rotate(1.5deg); }
+      }
+      .isik { animation: isik 4.5s ease-in-out infinite; }
+      @keyframes isik { 0%,100% { opacity: .05; } 50% { opacity: .14; } }
+      @media (prefers-reduced-motion: reduce) {
+        * { animation-duration: .01ms !important; }
+      }
+    </style>
+  </defs>
+  <rect class="kutu" x="3" y="3" width="86" height="102" rx="18" />
+  <g transform="translate(46 40)">
+    <circle class="isik" r="24" fill="#F03C2E" filter="url(#h)" opacity=".1" />
+    <g class="bob">
+      <g class="don">
+        <g transform="translate(-20 -20) scale(1.6667)">
+          <path d="M13.09 23.549a1.54 1.54 0 0 1-2.18 0L.451 13.089a1.54 1.54 0 0 1 0-2.179l7.191-7.19 2.733 2.733a1.85 1.85 0 0 0 .964 2.326v6.66a1.849 1.849 0 1 0 1.54 0V8.957l2.508 2.508a1.85 1.85 0 1 0 1.09-1.09l-2.634-2.634a1.85 1.85 0 0 0-2.378-2.377L8.73 2.63 10.91.451a1.54 1.54 0 0 1 2.179 0l10.459 10.46a1.54 1.54 0 0 1 0 2.179z" fill="#F03C2E" />
+        </g>
+      </g>
+    </g>
   </g>
-  <text class="ad" x="46" y="99" text-anchor="middle">Git</text>
+  <text class="etk" x="46" y="90" text-anchor="middle">Git</text>
 </svg>

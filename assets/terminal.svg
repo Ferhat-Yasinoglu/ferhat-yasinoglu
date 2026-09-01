@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="570" height="461" viewBox="0 0 570 461" role="img" aria-label="whoami · Farhad Yaqoobi - developer, NRW · cat stack.txt · JavaScript - TypeScript - Firebase - PWA - Node · ls projects/ · acik-defter/   netstore/ · botflow-mcp/   instagram-comment-bot/ · cat learning.md · Firestore rules - App Check - React · locale -a · de_DE   tr_TR   en_US   fa_AF · echo $MOTTO · Build it to understand it">
+  <defs>
+    
+    <linearGradient id="bg" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".18" />
+      <stop offset="0.16" stop-color="#2472ab" stop-opacity="1" />
+      <stop offset="1" stop-color="#1b968e" stop-opacity="1" />
+    </linearGradient>
+    <style>
+    text { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; }
+    .card-bg { fill: url(#bg); stroke: #eaf6fb; stroke-opacity: .32; stroke-width: 1.2; }
+    /* Her animasyon "backwards" ile kurulur: animasyon hic calismazsa
+       ogenin dogal hali gecerli olur, yani icerik yine de gorunur. */
+    .rise { animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: .01ms !important; animation-delay: 0s !important; }
+    }
+      .tr { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 17px; }
+      .baslik { font-size: 12px; fill: #cbe4ee; font-family: 'SFMono-Regular', Consolas, monospace; }
+      .imlec { animation: blink 1.05s steps(1) infinite; }
+      @keyframes blink { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
+    </style>
+  </defs>
+  <rect class="card-bg" width="570" height="461" rx="14" />
+  <circle cx="26" cy="26" r="5.5" fill="#ff5f57" /><circle cx="44" cy="26" r="5.5" fill="#febc2e" /><circle cx="62" cy="26" r="5.5" fill="#28c840" />
+  <text class="baslik" x="285" y="30" text-anchor="middle">farhad@github ~</text>
+  <line x1="0" y1="48" x2="570" y2="48" stroke="#eaf6fb" stroke-width="1" />
+  
+    <clipPath id="k0"><rect x="0" y="46" width="0" height="22">
+      <animate attributeName="width" values="24;24;111.6;111.6;24"
+               keyTimes="0;0.034530386740331494;0.05732044198895029;0.9965469613259668;1"
+               dur="14.48s" repeatCount="indefinite" />
+    </rect></clipPath>
+    <g clip-path="url(#k0)">
+      <text class="tr" x="24" y="62" fill="#f2f9ff">$ whoami</text>
+    </g>
+    <g opacity="0">
+      <animate attributeName="opacity" values="0;0;1;1;0"
+               keyTimes="0;0.08839779005524863;0.10566298342541437;0.9965469613259668;1"
+               dur="14.48s" repeatCount="indefinite" calcMode="linear" />
+      <text class="tr" x="24" y="91" fill="#a9d3ff">  Farhad Yaqoobi - developer, NRW</text>
+    </g>
+    <clipPath id="k2"><rect x="0" y="104" width="0" height="22">
+      <animate attributeName="width" values="24;24;183.0;183.0;24"
+               keyTimes="0;0.11947513812154698;0.168853591160221;0.9965469613259668;1"
+               dur="14.48s" repeatCount="indefinite" />
+    </rect></clipPath>
+    <g clip-path="url(#k2)">
+      <text class="tr" x="24" y="120" fill="#f2f9ff">$ cat stack.txt</text>
+    </g>
+    <g opacity="0">
+      <animate attributeName="opacity" values="0;0;1;1;0"
+               keyTimes="0;0.19993093922651936;0.2171961325966851;0.9965469613259668;1"
+               dur="14.48s" repeatCount="indefinite" calcMode="linear" />
+      <text class="tr" x="24" y="149" fill="#c5efa2">  JavaScript - TypeScript - Firebase - PWA - Node</text>
+    </g>
+    <clipPath id="k4"><rect x="0" y="162" width="0" height="22">
+      <animate attributeName="width" values="24;24;172.8;172.8;24"
+               keyTimes="0;0.23100828729281772;0.2765883977900553;0.9965469613259668;1"
+               dur="14.48s" repeatCount="indefinite" />
+    </rect></clipPath>
+    <g clip-path="url(#k4)">
+      <text class="tr" x="24" y="178" fill="#f2f9ff">$ ls projects/</text>
+    </g>
+    <g opacity="0">
+      <animate attributeName="opacity" values="0;0;1;1;0"
+               keyTimes="0;0.30766574585635365;0.3249309392265194;0.9965469613259668;1"
+               dur="14.48s" repeatCount="indefinite" calcMode="linear" />
+      <text class="tr" x="24" y="207" fill="#e3c9ff">  acik-defter/   netstore/</text>
+    </g>
+    <g opacity="0">
+      <animate attributeName="opacity" values="0;0;1;1;0"
+               keyTimes="0;0.338743093922652;0.35600828729281775;0.9965469613259668;1"
+               dur="14.48s" repeatCount="indefinite" calcMode="linear" />
+      <text class="tr" x="24" y="236" fill="#e3c9ff">  botflow-mcp/   instagram-comment-bot/</text>
+    </g>
+    <clipPath id="k7"><rect x="0" y="249" width="0" height="22">
+      <animate attributeName="width" values="24;24;203.4;203.4;24"
+               keyTimes="0;0.36982044198895037;0.42679558011049734;0.9965469613259668;1"
+               dur="14.48s" repeatCount="indefinite" />
+    </rect></clipPath>
+    <g clip-path="url(#k7)">
+      <text class="tr" x="24" y="265" fill="#f2f9ff">$ cat learning.md</text>
+    </g>
+    <g opacity="0">
+      <animate attributeName="opacity" values="0;0;1;1;0"
+               keyTimes="0;0.4578729281767957;0.47513812154696144;0.9965469613259668;1"
+               dur="14.48s" repeatCount="indefinite" calcMode="linear" />
+      <text class="tr" x="24" y="294" fill="#a3f0ff">  Firestore rules - App Check - React</text>
+    </g>
+    <clipPath id="k9"><rect x="0" y="307" width="0" height="22">
+      <animate attributeName="width" values="24;24;142.2;142.2;24"
+               keyTimes="0;0.48895027624309406;0.5231353591160223;0.9965469613259668;1"
+               dur="14.48s" repeatCount="indefinite" />
+    </rect></clipPath>
+    <g clip-path="url(#k9)">
+      <text class="tr" x="24" y="323" fill="#f2f9ff">$ locale -a</text>
+    </g>
+    <g opacity="0">
+      <animate attributeName="opacity" values="0;0;1;1;0"
+               keyTimes="0;0.5542127071823205;0.5714779005524863;0.9965469613259668;1"
+               dur="14.48s" repeatCount="indefinite" calcMode="linear" />
+      <text class="tr" x="24" y="352" fill="#ffbecb">  de_DE   tr_TR   en_US   fa_AF</text>
+    </g>
+    <clipPath id="k11"><rect x="0" y="365" width="0" height="22">
+      <animate attributeName="width" values="24;24;162.6;162.6;24"
+               keyTimes="0;0.5852900552486188;0.6270718232044199;0.9965469613259668;1"
+               dur="14.48s" repeatCount="indefinite" />
+    </rect></clipPath>
+    <g clip-path="url(#k11)">
+      <text class="tr" x="24" y="381" fill="#f2f9ff">$ echo $MOTTO</text>
+    </g>
+    <g opacity="0">
+      <animate attributeName="opacity" values="0;0;1;1;0"
+               keyTimes="0;0.6581491712707183;0.675414364640884;0.9965469613259668;1"
+               dur="14.48s" repeatCount="indefinite" calcMode="linear" />
+      <text class="tr" x="24" y="410" fill="#ffe19a">  Build it to understand it</text>
+    </g>
+  <g class="imlec">
+    <rect x="24" y="72" width="9" height="2.5" fill="#c5efa2">
+      <animate attributeName="x" values="24;105.6;360.6;177.0;523.8;166.8;289.2;421.8;197.4;401.4;136.2;340.2;156.6;299.4;299.4" keyTimes="0;0.0573;0.1057;0.1689;0.2172;0.2766;0.3249;0.3560;0.4268;0.4751;0.5231;0.5715;0.6271;0.6754;1"
+               dur="14.48s" repeatCount="indefinite" calcMode="discrete" />
+      <animate attributeName="y" values="72;72;101;130;159;188;217;246;275;304;333;362;391;420;420" keyTimes="0;0.0573;0.1057;0.1689;0.2172;0.2766;0.3249;0.3560;0.4268;0.4751;0.5231;0.5715;0.6271;0.6754;1"
+               dur="14.48s" repeatCount="indefinite" calcMode="discrete" />
+    </rect>
+  </g>
+</svg>
