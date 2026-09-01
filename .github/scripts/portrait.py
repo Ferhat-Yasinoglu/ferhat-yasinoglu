@@ -13,6 +13,10 @@ Avatarini degistirdiginde tek komut:
 Cikti bicimi: her hucre icin bir rampa karakteri (parlaklik) ve bir palet
 indeksi (renk). Renkler 64 renge indirgenip satir basina tek dizgede
 tutuluyor; boylece dosya ~20 KB'da kaliyor.
+
+NOT: v2 terminal tasariminda portre kartinin yeri yok, o yuzden cards.mjs
+suan portrait.json'i okumuyor -- veri ve bu script duruyor ki avatar gercek
+bir portre/logo olunca kart geri eklenebilsin.
 """
 
 import json
