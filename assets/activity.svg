@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="500" height="280" viewBox="0 0 500 280" role="img" aria-label="Toplam 137 katki, guncel seri 10 gun, en uzun seri 10 gun">
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="280" viewBox="0 0 500 280" role="img" aria-label="Toplam 138 katki, guncel seri 10 gun, en uzun seri 10 gun">
   <defs><style>
     text { font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
     .panel { fill: #0a120b; stroke: #1e3a20; stroke-width: 1; }
@@ -27,7 +27,7 @@
                dur="1.4s" fill="freeze" calcMode="spline" keySplines=".2 .7 .3 1" />
     </circle>
     <text x="116" y="148" text-anchor="middle" font-size="21" font-weight="700"
-          fill="#22ff88">137</text>
+          fill="#22ff88">138</text>
     <text x="116" y="166" text-anchor="middle" class="kucuk">Toplam katki</text>
     <text x="116" y="230" text-anchor="middle" class="kucuk">gunlerin %4'inde aktif</text>
     
