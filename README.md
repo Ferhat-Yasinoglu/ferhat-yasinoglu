@@ -1,118 +1,165 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/hero.svg" alt="Ferhat Yasinoglu — Full Stack Developer. Düşünür, tasarlar ve kodlarım. Kullanıcı deneyimini önemseyen, çevrimdışı çalışan web uygulamaları geliştiriyorum." width="100%" />
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/header.svg" alt="Farhad Yaqoobi" width="100%" />
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/system-info.svg" alt="system_info: Ferhat Yasinoglu, Full Stack Developer, Düsseldorf" width="49%" />
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/git-status.svg" alt="git_status: repo, takipçi, yıldız, commit, pull request ve katkı sayıları" width="49%" />
+**I build offline-first web apps with vanilla JavaScript — and bots that answer when I'm not there.**
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/last-commit.svg" alt="last_commit: en son elle yazılan commit, deposu ve ne zaman atıldığı" width="100%" />
+<sub>Deutsch &nbsp;·&nbsp; Türkçe &nbsp;·&nbsp; English &nbsp;·&nbsp; فارسی &nbsp;&nbsp;|&nbsp;&nbsp; NRW, Germany</sub>
+
+<br>
+
+[![GitHub](https://img.shields.io/badge/GitHub-0f172a?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu)
+[![Instagram](https://img.shields.io/badge/Instagram-0f172a?style=for-the-badge&logo=instagram&logoColor=E4405F)](https://instagram.com/farhad___yaqoobi)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0f172a?style=for-the-badge&logo=linkedin&logoColor=0A66C2)](https://linkedin.com/in/ferhat-yasinoglu)
+[![Email](https://img.shields.io/badge/Email-0f172a?style=for-the-badge&logo=gmail&logoColor=EA4335)](mailto:farhadyaqoobi.kunduz@gmail.com)
 
 </div>
 
-## `> featured_projects`
+---
 
-### `01 —` Açık Defter &nbsp;`PWA`
+## 🛠️ What I've built
 
-*BT öğrencisinin açık defteri — kişisel sitem ve öğrenme günlüğüm.*
+### 📓 Açık Defter
+
+<sub>*An IT student's open notebook — my personal site and learning journal.*</sub>
 
 <a href="https://ferhat-yasinoglu.github.io/acik-defter/">
-  <picture>
-    <source type="image/webp" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/acik-defter.webp" />
-    <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/acik-defter.jpg" width="100%" alt="Açık Defter ana sayfası" loading="lazy" />
-  </picture>
+  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/acik-defter.jpg" width="100%" alt="Açık Defter homepage" />
 </a>
 
-Sıfırdan yazıldı — çerçeve yok, derleme adımı yok. Tek arayüzde dört dil, Farsçaya geçince
-düzenin tamamı ters dönüyor ve ağ kapalıyken de okunuyor. Bir kontrol scripti, elle yazılmış
-ortak işaretlemenin sayfalar arasında birbirinden ayrılmasını engelliyor.
+Written from scratch — no framework, no build step. Four languages in one interface,
+the whole layout flips when you switch to Persian, and it reads with the network off.
+A check script keeps the hand-written chrome from drifting apart across pages.
 
-![JavaScript ES6+](https://img.shields.io/badge/JavaScript%20ES6%2B-f7df1e?style=flat-square&labelColor=f7df1e&color=f7df1e) ![CSS3](https://img.shields.io/badge/CSS3-264de4?style=flat-square&labelColor=264de4&color=264de4) ![Service%20Workers](https://img.shields.io/badge/Service%20Workers-1e3a20?style=flat-square&labelColor=1e3a20&color=1e3a20) ![PWA](https://img.shields.io/badge/PWA-5a0fc8?style=flat-square&labelColor=5a0fc8&color=5a0fc8)
+<sub>**Built with** JavaScript (ES6+) &nbsp;·&nbsp; CSS3 &nbsp;·&nbsp; Service Workers &nbsp;·&nbsp; Web App Manifest</sub><br>
+<sub>**Learned here** RTL through logical CSS properties &nbsp;·&nbsp; cache strategies &nbsp;·&nbsp; applying preferences before the page paints</sub>
 
-[**Canlı**](https://ferhat-yasinoglu.github.io/acik-defter/) · [**Kaynak**](https://github.com/Ferhat-Yasinoglu/acik-defter)
+[![Live](https://img.shields.io/badge/Open-Live%20site-9ece6a?style=flat-square&logo=googlechrome&logoColor=white)](https://ferhat-yasinoglu.github.io/acik-defter/)
+[![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/acik-defter)
 
-### `02 —` NetStore &nbsp;`FIRESTORE`
+<br>
 
-*Çevrimdışı çalışmayı sürdüren satış ve stok paneli.*
+### 🛒 NetStore
 
-İki kişinin Google hesaplarıyla paylaştığı bir satış ve stok panosu. Kayıtlar Firestore
-üzerinden senkronlanıyor, ağ düştüğünde uygulama çalışmaya devam ediyor ve doğrudan
-tarayıcıdan kuruluyor. Afgani destekleniyor, fatura basılıyor.
+<sub>*A shop dashboard that keeps working offline.*</sub>
 
-![JavaScript](https://img.shields.io/badge/JavaScript-f7df1e?style=flat-square&labelColor=f7df1e&color=f7df1e) ![Firestore](https://img.shields.io/badge/Firestore-ffa000?style=flat-square&labelColor=ffa000&color=ffa000) ![Service%20Workers](https://img.shields.io/badge/Service%20Workers-1e3a20?style=flat-square&labelColor=1e3a20&color=1e3a20) ![PWA](https://img.shields.io/badge/PWA-5a0fc8?style=flat-square&labelColor=5a0fc8&color=5a0fc8)
+A sales and stock dashboard two people share through their Google accounts. Records
+sync through Firestore, the app keeps working when the network drops, and it installs
+straight from the browser. Afghani is supported and the invoice prints.
 
-[**Kaynak**](https://github.com/Ferhat-Yasinoglu/NetStore)
+<sub>**Built with** JavaScript &nbsp;·&nbsp; Firestore &nbsp;·&nbsp; Service Workers &nbsp;·&nbsp; Web App Manifest</sub><br>
+<sub>**Learned here** Firestore security rules &nbsp;·&nbsp; App Check &nbsp;·&nbsp; why an allowlist has no business in the client</sub>
 
-### `03 —` botflow-mcp &nbsp;`MCP`
+[![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/NetStore)
 
-*Panoya tıklayarak değil, modelle konuşarak kurulan Telegram chatbot funnel'ları.*
+<br>
 
-Bir bot bağlıyorsun, akışı düz adımlarla anlatıyorsun ve sunucu konuşmayı yürütüyor:
-soruları soruyor, cevapları saklıyor, buton basışlarına göre dallanıyor, insanları
-etiketliyor ve o etiketlerin oluşturduğu segmentlere yayın yapıyor. MCP konuştuğu için
-akışı bir model sürüyor; Telegram'a long polling ile bağlanıyor, yani herkese açık bir
-adrese gerek yok.
+### 💬 reply-bot
 
-![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?style=flat-square&labelColor=3178c6&color=3178c6) ![Node.js](https://img.shields.io/badge/Node.js-5fa04e?style=flat-square&labelColor=5fa04e&color=5fa04e) ![MCP](https://img.shields.io/badge/MCP-a78bfa?style=flat-square&labelColor=a78bfa&color=a78bfa) ![SQLite](https://img.shields.io/badge/SQLite-003b57?style=flat-square&labelColor=003b57&color=003b57) ![Telegram%20Bot%20API](https://img.shields.io/badge/Telegram%20Bot%20API-229ed9?style=flat-square&labelColor=229ed9&color=229ed9)
+<sub>*Answers Instagram comments and WhatsApp messages on its own — keyword rules first, Claude for the rest.*</sub>
 
-[**Kaynak**](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/botflow-mcp)
+Meta's webhook arrives signed; a rules file answers the questions that keep coming
+back — what it's built with, where the source is, where to start learning — and
+anything left over goes to Claude, which stays quiet when it isn't sure. Four
+languages, because the messages arrive in four. One rule engine, two rooms: a
+comment can be hidden, a WhatsApp reply has 24 hours to be sent.
 
-## `> tech_stack`
+<sub>**Built with** TypeScript &nbsp;·&nbsp; Node.js &nbsp;·&nbsp; Express &nbsp;·&nbsp; Claude API</sub><br>
+<sub>**Learned here** HMAC webhook signatures &nbsp;·&nbsp; Meta Graph API &nbsp;·&nbsp; answering a webhook before doing the work</sub>
+
+[![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/reply-bot)
+
+<br>
+
+### 🤖 botflow-mcp
+
+<sub>*Telegram chatbot funnels, built by talking to a model instead of clicking a dashboard.*</sub>
+
+Connect a bot, describe a flow in plain steps, and the server runs the conversation —
+asking questions, keeping the answers, branching on button presses, tagging people and
+broadcasting to the segments those tags create. It speaks MCP, so a model drives the
+whole thing; Telegram is reached by long polling, so no public URL is needed.
+
+<sub>**Built with** TypeScript &nbsp;·&nbsp; Node.js &nbsp;·&nbsp; MCP &nbsp;·&nbsp; SQLite &nbsp;·&nbsp; Telegram Bot API</sub><br>
+<sub>**Learned here** the Model Context Protocol &nbsp;·&nbsp; resumable background jobs &nbsp;·&nbsp; migrating a schema in place</sub>
+
+[![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/botflow-mcp)
+
+<br>
+
+### ✨ This profile
+
+<sub>*Every card on this page is generated in this repository.*</sub>
+
+The header above, the terminal below, the language chart, the contribution graph — none of them
+come from a third-party service. A Node script queries the GitHub API and writes animated SVGs
+into this repo; a workflow reruns it every six hours.
+
+[![Code](https://img.shields.io/badge/Read-cards.mjs-bf91f3?style=flat-square&logo=javascript&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/blob/main/.github/scripts/cards.mjs)
+
+---
+
+## 👋 About me
 
 <div align="center">
 
-<a href="https://developer.mozilla.org/tr/docs/Web/HTML" title="HTML5"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-html5.svg" width="86" alt="HTML5" /></a>
-<a href="https://developer.mozilla.org/tr/docs/Web/CSS" title="CSS"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-css.svg" width="86" alt="CSS" /></a>
-<a href="https://sass-lang.com/" title="Sass"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-sass.svg" width="86" alt="Sass" /></a>
-<a href="https://developer.mozilla.org/tr/docs/Web/JavaScript" title="JavaScript"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-javascript.svg" width="86" alt="JavaScript" /></a>
-<a href="https://www.typescriptlang.org/" title="TypeScript"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-typescript.svg" width="86" alt="TypeScript" /></a>
-<a href="https://nodejs.org/" title="Node.js"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-node.svg" width="86" alt="Node.js" /></a>
-<a href="https://firebase.google.com/" title="Firebase"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-firebase.svg" width="86" alt="Firebase" /></a>
-<a href="https://web.dev/explore/progressive-web-apps" title="PWA"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-pwa.svg" width="86" alt="PWA" /></a>
-<a href="https://git-scm.com/" title="Git"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-git.svg" width="86" alt="Git" /></a>
-<a href="https://github.com/" title="GitHub"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-github.svg" width="86" alt="GitHub" /></a>
-<a href="https://code.visualstudio.com/" title="VS Code"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-vscode.svg" width="86" alt="VS Code" /></a>
-<a href="https://www.figma.com/" title="Figma"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-figma.svg" width="86" alt="Figma" /></a>
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" alt="whoami: Farhad Yaqoobi, developer in NRW. Stack: JavaScript, TypeScript, Firebase, PWA, Node." />
 
 </div>
 
-## `> github_activity`
+---
+
+## 💻 Tech
 
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/graph.svg" alt="Son bir yılın katkı grafiği" width="100%" />
+<a href="https://developer.mozilla.org/tr/docs/Web/JavaScript" title="JavaScript"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-javascript.svg" width="80" alt="JavaScript" /></a>
+<a href="https://developer.mozilla.org/tr/docs/Web/HTML" title="HTML5"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-html5.svg" width="80" alt="HTML5" /></a>
+<a href="https://developer.mozilla.org/tr/docs/Web/CSS" title="CSS"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-css.svg" width="80" alt="CSS" /></a>
+<a href="https://firebase.google.com/" title="Firebase"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-firebase.svg" width="80" alt="Firebase" /></a>
+<a href="https://web.dev/explore/progressive-web-apps" title="PWA"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-pwa.svg" width="80" alt="PWA" /></a>
+<a href="https://git-scm.com/" title="Git"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-git.svg" width="80" alt="Git" /></a>
+<a href="https://github.com/" title="GitHub"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-github.svg" width="80" alt="GitHub" /></a>
+<a href="https://www.kernel.org/" title="Linux"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-linux.svg" width="80" alt="Linux" /></a>
+<a href="https://www.figma.com/" title="Figma"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-figma.svg" width="80" alt="Figma" /></a>
+<a href="https://www.markdownguide.org/" title="Markdown"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-markdown.svg" width="80" alt="Markdown" /></a>
+<a href="https://www.json.org/json-tr.html" title="JSON"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-json.svg" width="80" alt="JSON" /></a>
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/activity.svg" alt="github_activity: toplam katkı, güncel seri, en uzun seri, en çok kullanılan dil" width="49%" />
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/learning.svg" alt="currently_learning: React, Node.js, Firebase, Backend" width="49%" />
+</div>
+
+<div align="center"><sub>Currently learning <b>React</b> and backend fundamentals with <b>Node.js</b>.</sub></div>
+
+---
+
+## 📊 Activity
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/languages.svg" alt="Most used languages" />
+
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/activity.svg" alt="Contribution graph, last 90 days" width="100%" />
 
 <picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/output/github-snake-dark.svg" />
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/output/github-snake.svg" />
-  <img alt="katkı grafiğini yiyen yılan" src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/output/github-snake-dark.svg" width="100%" />
+  <img alt="snake eating the contribution graph" src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/output/github-snake.svg" width="100%" />
 </picture>
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/quote.svg" alt="Build it to understand it — Ferhat Yasinoglu" width="100%" />
-
 </div>
 
-## `> find_me_on`
+---
 
 <div align="center">
 
-[![GitHub](https://img.shields.io/badge/GitHub-0a120b?style=flat-square&logo=github&logoColor=4ade80)](https://github.com/Ferhat-Yasinoglu)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0a120b?style=flat-square&logo=linkedin&logoColor=4ade80)](https://linkedin.com/in/ferhat-yasinoglu)
-[![Instagram](https://img.shields.io/badge/Instagram-0a120b?style=flat-square&logo=instagram&logoColor=4ade80)](https://instagram.com/farhad___yaqoobi)
-[![E-posta](https://img.shields.io/badge/E--posta-0a120b?style=flat-square&logo=gmail&logoColor=4ade80)](mailto:farhadyaqoobi.kunduz@gmail.com)
-[![Portfolyo](https://img.shields.io/badge/Portfolyo-0a120b?style=flat-square&logo=googlechrome&logoColor=4ade80)](https://ferhat-yasinoglu.github.io)
-[![Lisans](https://img.shields.io/github/license/Ferhat-Yasinoglu/ferhat-yasinoglu?style=flat-square&color=22c55e&labelColor=0a120b)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/blob/main/LICENSE)
+### Say hello
+
+<sub>Always up for a conversation about web development, Firebase, or whatever you're building.</sub>
+
+[![Email](https://img.shields.io/badge/Email-f7768e?style=flat-square&logo=gmail&logoColor=white)](mailto:farhadyaqoobi.kunduz@gmail.com)
+[![Instagram](https://img.shields.io/badge/Instagram-bf91f3?style=flat-square&logo=instagram&logoColor=white)](https://instagram.com/farhad___yaqoobi)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-70a5fd?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/ferhat-yasinoglu)
+<img src="https://komarev.com/ghpvc/?username=Ferhat-Yasinoglu&label=Profile%20views&color=bf91f3&style=flat-square" alt="profile views" />
 
 </div>
-
-<div align="center">
-
-<sub>Bu sayfadaki kartların hepsi bu depoda üretiliyor: bir Node scripti GitHub API'sini
-sorgulayıp <code>assets/</code> altına animasyonlu SVG yazıyor, bir workflow altı saatte bir
-tekrar çalıştırıyor. Rakamlar elle yazılmadı; ne varsa o.
-[<b>cards.mjs</b>](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/blob/main/.github/scripts/cards.mjs)</sub>
 
 <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/footer.svg" width="100%" alt="" />
-
-</div>
