@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="130" viewBox="0 0 1000 130" role="img" aria-label="Son commit: Merge pull request #33 from Ferhat-Yasinoglu/claude/github-profile-re… - ferhat-yasinoglu deposunda Ferhat-Yasinoglu tarafindan, 5 dakika once">
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="130" viewBox="0 0 1000 130" role="img" aria-label="Son commit: last_commit: merge commit&apos;lerini de ele - ferhat-yasinoglu deposunda claude tarafindan, az once">
   <defs><style>
     text { font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
     .panel { fill: #0a120b; stroke: #1e3a20; stroke-width: 1; }
@@ -20,7 +20,7 @@
   <line x1="0" y1="28" x2="1000" y2="28" stroke="#1e3a20" stroke-width="1" />
   
     <text class="kucuk" x="986" y="21" text-anchor="end">ferhat-yasinoglu</text>
-    <text class="deger" x="16" y="62" font-size="14" fill="#22ff88">Merge pull request #33 from Ferhat-Yasinoglu/claude/github-profile-re…</text>
-    <text class="anahtar" x="16" y="88">Ferhat-Yasinoglu &#183; 5 dakika once</text>
+    <text class="deger" x="16" y="62" font-size="14" fill="#22ff88">last_commit: merge commit&apos;lerini de ele</text>
+    <text class="anahtar" x="16" y="88">claude &#183; az once</text>
     <text class="kucuk" x="16" y="112">ferhat-yasinoglu deposunda</text>
 </svg>
