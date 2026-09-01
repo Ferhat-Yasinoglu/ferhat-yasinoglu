@@ -54,23 +54,6 @@ straight from the browser. Afghani is supported and the invoice prints.
 
 <br>
 
-### 💬 reply-bot
-
-<sub>*Answers Instagram comments and WhatsApp messages on its own — keyword rules first, Claude for the rest.*</sub>
-
-Meta's webhook arrives signed; a rules file answers the questions that keep coming
-back — what it's built with, where the source is, where to start learning — and
-anything left over goes to Claude, which stays quiet when it isn't sure. Four
-languages, because the messages arrive in four. One rule engine, two rooms: a
-comment can be hidden, a WhatsApp reply has 24 hours to be sent.
-
-<sub>**Built with** TypeScript &nbsp;·&nbsp; Node.js &nbsp;·&nbsp; Express &nbsp;·&nbsp; Claude API</sub><br>
-<sub>**Learned here** HMAC webhook signatures &nbsp;·&nbsp; Meta Graph API &nbsp;·&nbsp; answering a webhook before doing the work</sub>
-
-[![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/reply-bot)
-
-<br>
-
 ### 🤖 botflow-mcp
 
 <sub>*Telegram chatbot funnels, built by talking to a model instead of clicking a dashboard.*</sub>
