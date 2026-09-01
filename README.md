@@ -10,7 +10,7 @@
 
 [![GitHub](https://img.shields.io/badge/GitHub-0f172a?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu)
 [![Instagram](https://img.shields.io/badge/Instagram-0f172a?style=for-the-badge&logo=instagram&logoColor=E4405F)](https://instagram.com/farhad___yaqoobi)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0f172a?style=for-the-badge&logo=linkedin&logoColor=0A66C2)](https://linkedin.com/in/ferhat-yasinoglu)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0f172a?style=for-the-badge&logo=linkedin&logoColor=0A66C2)](https://linkedin.com/in/farhad-yaqoobi)
 [![Email](https://img.shields.io/badge/Email-0f172a?style=for-the-badge&logo=gmail&logoColor=EA4335)](mailto:farhadyaqoobi.kunduz@gmail.com)
 
 </div>
@@ -140,7 +140,7 @@ into this repo; a workflow reruns it every six hours.
 
 [![Email](https://img.shields.io/badge/Email-f7768e?style=flat-square&logo=gmail&logoColor=white)](mailto:farhadyaqoobi.kunduz@gmail.com)
 [![Instagram](https://img.shields.io/badge/Instagram-bf91f3?style=flat-square&logo=instagram&logoColor=white)](https://instagram.com/farhad___yaqoobi)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-70a5fd?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/ferhat-yasinoglu)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-70a5fd?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/farhad-yaqoobi)
 <img src="https://komarev.com/ghpvc/?username=Ferhat-Yasinoglu&label=Profile%20views&color=bf91f3&style=flat-square" alt="profile views" />
 
 </div>
