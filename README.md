@@ -8,7 +8,6 @@
 
 <br>
 
-[![GitHub](https://img.shields.io/badge/GitHub-0f172a?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu)
 [![Instagram](https://img.shields.io/badge/Instagram-0f172a?style=for-the-badge&logo=instagram&logoColor=E4405F)](https://instagram.com/farhad___yaqoobi)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0f172a?style=for-the-badge&logo=linkedin&logoColor=0A66C2)](https://linkedin.com/in/ferhat-yasinoglu)
 [![Email](https://img.shields.io/badge/Email-0f172a?style=for-the-badge&logo=gmail&logoColor=EA4335)](mailto:farhadyaqoobi.kunduz@gmail.com)
@@ -29,7 +28,7 @@
 
 Written from scratch — no framework, no build step. Four languages in one interface,
 the whole layout flips when you switch to Persian, and it reads with the network off.
-A check script keeps the hand-written chrome from drifting apart across pages.
+A check script keeps the hand-written shared markup from drifting apart across pages.
 
 <sub>**Built with** JavaScript (ES6+) &nbsp;·&nbsp; CSS3 &nbsp;·&nbsp; Service Workers &nbsp;·&nbsp; Web App Manifest</sub><br>
 <sub>**Learned here** RTL through logical CSS properties &nbsp;·&nbsp; cache strategies &nbsp;·&nbsp; applying preferences before the page paints</sub>
@@ -75,7 +74,7 @@ whole thing; Telegram is reached by long polling, so no public URL is needed.
 <sub>*Every card on this page is generated in this repository.*</sub>
 
 The header above, the terminal below, the language chart, the contribution graph — none of them
-come from a third-party service. A Node script queries the GitHub API and writes animated SVGs
+are fetched from a card service. A Node script queries the GitHub API and writes animated SVGs
 into this repo; a workflow reruns it every six hours.
 
 [![Code](https://img.shields.io/badge/Read-cards.mjs-bf91f3?style=flat-square&logo=javascript&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/blob/main/.github/scripts/cards.mjs)
@@ -86,7 +85,7 @@ into this repo; a workflow reruns it every six hours.
 
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" alt="whoami: Farhad Yaqoobi, developer in NRW. Stack: JavaScript, TypeScript, Firebase, PWA, Node." />
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" alt="whoami: Farhad Yaqoobi, developer in NRW. Stack: JavaScript, TypeScript, Firebase, PWA, Node. Projects: acik-defter, netstore, botflow-mcp. Learning: Firestore rules, App Check, React. Locales: de_DE, tr_TR, en_US, fa_AF." />
 
 </div>
 
