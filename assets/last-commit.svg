@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="130" viewBox="0 0 1000 130" role="img" aria-label="Son commit: Merge pull request #33 from Ferhat-Yasinoglu/claude/github-profile-re… - ferhat-yasinoglu deposunda Ferhat-Yasinoglu tarafindan, 5 dakika once">
+  <defs><style>
+    text { font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+    .panel { fill: #0a120b; stroke: #1e3a20; stroke-width: 1; }
+    .etiket { font-size: 12px; fill: #4ade80; }
+    .anahtar { font-size: 12.5px; fill: #6fbf78; }
+    .deger { font-size: 12.5px; fill: #d4f5d6; }
+    .kucuk { font-size: 11px; fill: #3d6b42; }
+    .gir { animation: gir .6s ease-out backwards; }
+    @keyframes gir { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .yanip { animation: yanip 1.1s steps(1) infinite; }
+    @keyframes yanip { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: .01ms !important; animation-delay: 0s !important; }
+    }</style></defs>
+  <rect width="1000" height="130" fill="#050a05" />
+  
+  <rect class="panel" x=".5" y=".5" width="999" height="129" rx="3" />
+  <text class="etiket" x="14" y="21">&gt; last_commit</text>
+  <line x1="0" y1="28" x2="1000" y2="28" stroke="#1e3a20" stroke-width="1" />
+  
+    <text class="kucuk" x="986" y="21" text-anchor="end">ferhat-yasinoglu</text>
+    <text class="deger" x="16" y="62" font-size="14" fill="#22ff88">Merge pull request #33 from Ferhat-Yasinoglu/claude/github-profile-re…</text>
+    <text class="anahtar" x="16" y="88">Ferhat-Yasinoglu &#183; 5 dakika once</text>
+    <text class="kucuk" x="16" y="112">ferhat-yasinoglu deposunda</text>
+</svg>
