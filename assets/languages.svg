@@ -32,13 +32,13 @@
           stroke-dasharray="14 8" />
   <text class="title" x="46" y="39">🎨 Most used languages</text>
   <g clip-path="url(#barclip)">
-    <rect x="28.0" y="70" width="158.5" height="12"
+    <rect x="28.0" y="70" width="157.8" height="12"
           fill="#e34c26" class="seg" style="animation-delay:0.15s" />
-    <rect x="186.5" y="70" width="145.8" height="12"
+    <rect x="185.8" y="70" width="147.6" height="12"
           fill="#f1e05a" class="seg" style="animation-delay:0.26s" />
-    <rect x="332.3" y="70" width="78.1" height="12"
+    <rect x="333.4" y="70" width="77.4" height="12"
           fill="#3178c6" class="seg" style="animation-delay:0.37s" />
-    <rect x="410.4" y="70" width="40.7" height="12"
+    <rect x="410.8" y="70" width="40.3" height="12"
           fill="#663399" class="seg" style="animation-delay:0.48s" />
     <rect x="451.1" y="70" width="2.0" height="12"
           fill="#012456" class="seg" style="animation-delay:0.59s" />
@@ -48,27 +48,27 @@
     <g class="rise" style="animation-delay:0.35s">
       <circle cx="35" cy="114" r="5" fill="#e34c26" />
       <text class="lg" x="48" y="118">HTML</text>
-      <text class="pc" x="230" y="118" text-anchor="end">37.4%</text>
+      <text class="pc" x="230" y="118" text-anchor="end">37.2%</text>
     </g>
     <g class="rise" style="animation-delay:0.43s">
       <circle cx="261" cy="114" r="5" fill="#f1e05a" />
       <text class="lg" x="274" y="118">JavaScript</text>
-      <text class="pc" x="456" y="118" text-anchor="end">34.4%</text>
+      <text class="pc" x="456" y="118" text-anchor="end">34.8%</text>
     </g>
     <g class="rise" style="animation-delay:0.51s">
       <circle cx="35" cy="140" r="5" fill="#3178c6" />
       <text class="lg" x="48" y="144">TypeScript</text>
-      <text class="pc" x="230" y="144" text-anchor="end">18.4%</text>
+      <text class="pc" x="230" y="144" text-anchor="end">18.2%</text>
     </g>
     <g class="rise" style="animation-delay:0.59s">
       <circle cx="261" cy="140" r="5" fill="#663399" />
       <text class="lg" x="274" y="144">CSS</text>
-      <text class="pc" x="456" y="144" text-anchor="end">9.6%</text>
+      <text class="pc" x="456" y="144" text-anchor="end">9.5%</text>
     </g>
     <g class="rise" style="animation-delay:0.67s">
       <circle cx="35" cy="166" r="5" fill="#012456" />
       <text class="lg" x="48" y="170">PowerShell</text>
-      <text class="pc" x="230" y="170" text-anchor="end">0.2%</text>
+      <text class="pc" x="230" y="170" text-anchor="end">0.1%</text>
     </g>
     <g class="rise" style="animation-delay:0.75s">
       <circle cx="261" cy="166" r="5" fill="#384d54" />
