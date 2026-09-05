@@ -32,38 +32,38 @@
           stroke-dasharray="14 8" />
   <text class="title" x="46" y="39">🎨 Most used languages</text>
   <g clip-path="url(#barclip)">
-    <rect x="28.0" y="70" width="159.8" height="12"
+    <rect x="28.0" y="70" width="156.4" height="12"
           fill="#e34c26" class="seg" style="animation-delay:0.15s" />
-    <rect x="187.8" y="70" width="140.1" height="12"
+    <rect x="184.4" y="70" width="147.0" height="12"
           fill="#f1e05a" class="seg" style="animation-delay:0.26s" />
-    <rect x="327.9" y="70" width="82.7" height="12"
+    <rect x="331.4" y="70" width="80.5" height="12"
           fill="#3178c6" class="seg" style="animation-delay:0.37s" />
-    <rect x="410.6" y="70" width="40.4" height="12"
+    <rect x="411.9" y="70" width="39.2" height="12"
           fill="#663399" class="seg" style="animation-delay:0.48s" />
-    <rect x="451.0" y="70" width="2.0" height="12"
+    <rect x="451.1" y="70" width="2.0" height="12"
           fill="#012456" class="seg" style="animation-delay:0.59s" />
-    <rect x="453.0" y="70" width="2.0" height="12"
+    <rect x="453.1" y="70" width="2.0" height="12"
           fill="#384d54" class="seg" style="animation-delay:0.70s" /></g>
   
     <g class="rise" style="animation-delay:0.35s">
       <circle cx="35" cy="114" r="5" fill="#e34c26" />
       <text class="lg" x="48" y="118">HTML</text>
-      <text class="pc" x="230" y="118" text-anchor="end">37.7%</text>
+      <text class="pc" x="230" y="118" text-anchor="end">36.9%</text>
     </g>
     <g class="rise" style="animation-delay:0.43s">
       <circle cx="261" cy="114" r="5" fill="#f1e05a" />
       <text class="lg" x="274" y="118">JavaScript</text>
-      <text class="pc" x="456" y="118" text-anchor="end">33.0%</text>
+      <text class="pc" x="456" y="118" text-anchor="end">34.7%</text>
     </g>
     <g class="rise" style="animation-delay:0.51s">
       <circle cx="35" cy="140" r="5" fill="#3178c6" />
       <text class="lg" x="48" y="144">TypeScript</text>
-      <text class="pc" x="230" y="144" text-anchor="end">19.5%</text>
+      <text class="pc" x="230" y="144" text-anchor="end">19.0%</text>
     </g>
     <g class="rise" style="animation-delay:0.59s">
       <circle cx="261" cy="140" r="5" fill="#663399" />
       <text class="lg" x="274" y="144">CSS</text>
-      <text class="pc" x="456" y="144" text-anchor="end">9.5%</text>
+      <text class="pc" x="456" y="144" text-anchor="end">9.2%</text>
     </g>
     <g class="rise" style="animation-delay:0.67s">
       <circle cx="35" cy="166" r="5" fill="#012456" />
