@@ -9,6 +9,7 @@ on:
       - main
     paths:
       - ".github/scripts/cards.mjs"
+      - ".github/scripts/fy-logo.svg"
       - ".github/workflows/cards.yml"
 
 jobs:

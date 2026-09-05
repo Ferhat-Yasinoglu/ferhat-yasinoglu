@@ -14,6 +14,11 @@ const OUT = join(ROOT, "assets");
 // simple-icons'tan bir kez cikarilmis marka logolari (24x24 viewBox yollari).
 const ICONS = JSON.parse(await readFile(join(HERE, "icons.json"), "utf8"));
 
+// FY ajans logosu (fy-ajans deposundaki tools/build-logo.mjs uretir; buraya kopyalanir).
+// Baslik kartinin sagindaki koyu rozette ic ice <svg> olarak gomulur: kendi animasyonlari
+// (gezen isik, ag dugumleri, goz) ve reduced-motion kurali dosyanin icinde gelir.
+const FY_LOGO = await readFile(join(HERE, "fy-logo.svg"), "utf8");
+
 const KOYU = {
   bg: "#2472ab",
   bg2: "#1b968e",
@@ -65,6 +70,20 @@ const defsBg = (id = "bg") => `
 
 // ---------------------------------------------------------------- baslik
 
+// Koyu rozet + FY logosu. Logo dosyasinin kok <svg> etiketi soyulur, viewBox'i korunarak
+// ic ice svg olarak yerlestirilir; id'leri "m" onekli oldugundan kartin id'leriyle cakismaz.
+function fyBadge({ x, y, w, h, delay }) {
+  const vb = /viewBox="([^"]+)"/.exec(FY_LOGO)[1];
+  const inner = FY_LOGO.replace(/^[\s\S]*?<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
+  const pad = 14;
+  return `
+    <g class="rise" style="animation-delay:${delay}s">
+      <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" fill="#0b0904" stroke="#d4af37" stroke-opacity=".5" stroke-width="1.2" />
+      <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" fill="url(#fyhaze)" />
+      <svg x="${x + pad}" y="${y + pad}" width="${w - 2 * pad}" height="${h - 2 * pad}" viewBox="${vb}" preserveAspectRatio="xMidYMid meet">${inner}</svg>
+    </g>`;
+}
+
 function header({ name, tagline }) {
   const W = 1000;
   const H = 250;
@@ -99,6 +118,10 @@ function header({ name, tagline }) {
       </stop>
     </linearGradient>
     <clipPath id="round"><rect width="${W}" height="${H}" rx="16" /></clipPath>
+    <radialGradient id="fyhaze" cx=".5" cy=".45" r=".6">
+      <stop offset="0" stop-color="#d4af37" stop-opacity=".16" />
+      <stop offset="1" stop-color="#d4af37" stop-opacity="0" />
+    </radialGradient>
     <style>${baseStyle()}
       .name { font-size: 60px; font-weight: 800; fill: url(#ink); letter-spacing: -1px; }
       .tag { font-size: 22px; fill: ${T.muted}; letter-spacing: .2px; }
@@ -116,6 +139,7 @@ function header({ name, tagline }) {
     <g class="rise" style="animation-delay:.25s">
       <text class="tag" x="56" y="186">${esc(tagline)}</text>
     </g>
+    ${fyBadge({ x: 722, y: 40, w: 238, h: 170, delay: 0.45 })}
   </g>
 </svg>
 `;
