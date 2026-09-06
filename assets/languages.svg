@@ -1,20 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="480" height="190" viewBox="0 0 480 190" role="img" aria-label="Most used languages">
   <defs>
     
-    <linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
-      <stop offset="0" stop-color="#2a1e07" stop-opacity="1" />
-      <stop offset="0.42" stop-color="#0b0904" stop-opacity="1" />
-      <stop offset="1" stop-color="#050403" stop-opacity="1" />
-    </linearGradient>
-    <linearGradient id="bg-kenar" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#fbe9a6" stop-opacity=".65" />
-      <stop offset=".5" stop-color="#d4af37" stop-opacity=".45" />
-      <stop offset="1" stop-color="#8c6a14" stop-opacity=".5" />
+    <linearGradient id="bg" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".18" />
+      <stop offset="0.16" stop-color="#2472ab" stop-opacity="1" />
+      <stop offset="1" stop-color="#1b968e" stop-opacity="1" />
     </linearGradient>
     <clipPath id="barclip"><rect x="28" y="70" width="424" height="12" rx="6" /></clipPath>
     <style>
     text { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; }
-    .card-bg { fill: url(#bg); stroke: url(#bg-kenar); stroke-width: 1.4; }
+    .card-bg { fill: url(#bg); stroke: #eaf6fb; stroke-opacity: .32; stroke-width: 1.2; }
     /* Her animasyon "backwards" ile kurulur: animasyon hic calismazsa
        ogenin dogal hali gecerli olur, yani icerik yine de gorunur. */
     .rise { animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
@@ -23,9 +18,9 @@
     @media (prefers-reduced-motion: reduce) {
       * { animation-duration: .01ms !important; animation-delay: 0s !important; }
     }
-      .title { font-size: 16px; font-weight: 700; fill: #fff8e6; }
-      .lg { font-size: 13px; fill: #fff8e6; }
-      .pc { font-size: 13px; fill: #c9ab5e; font-variant-numeric: tabular-nums; }
+      .title { font-size: 16px; font-weight: 700; fill: #f2f9ff; }
+      .lg { font-size: 13px; fill: #f2f9ff; }
+      .pc { font-size: 13px; fill: #cbe4ee; font-variant-numeric: tabular-nums; }
       .seg { transform-box: fill-box; transform-origin: left center; animation: wipe .9s cubic-bezier(.2,.7,.3,1) backwards; }
       @keyframes wipe { from { transform: scaleX(0); } to { transform: scaleX(1); } }
       .spin { animation: spin 6s linear infinite; transform-origin: 30px 34px; }
@@ -33,50 +28,50 @@
     </style>
   </defs>
   <rect class="card-bg" width="480" height="190" rx="14" />
-  <circle class="spin" cx="30" cy="34" r="4.5" fill="none" stroke="#d4af37" stroke-width="2"
+  <circle class="spin" cx="30" cy="34" r="4.5" fill="none" stroke="#e3c9ff" stroke-width="2"
           stroke-dasharray="14 8" />
-  <text class="title" x="46" y="39">Most used languages</text>
+  <text class="title" x="46" y="39">🎨 Most used languages</text>
   <g clip-path="url(#barclip)">
-    <rect x="28.0" y="70" width="159.7" height="12"
-          fill="#fff3c4" class="seg" style="animation-delay:0.15s" />
-    <rect x="187.7" y="70" width="149.7" height="12"
-          fill="#ffe27a" class="seg" style="animation-delay:0.26s" />
-    <rect x="337.5" y="70" width="73.4" height="12"
-          fill="#f5d76e" class="seg" style="animation-delay:0.37s" />
-    <rect x="410.9" y="70" width="40.3" height="12"
-          fill="#d4af37" class="seg" style="animation-delay:0.48s" />
+    <rect x="28.0" y="70" width="159.9" height="12"
+          fill="#e34c26" class="seg" style="animation-delay:0.15s" />
+    <rect x="187.9" y="70" width="149.4" height="12"
+          fill="#f1e05a" class="seg" style="animation-delay:0.26s" />
+    <rect x="337.3" y="70" width="73.5" height="12"
+          fill="#3178c6" class="seg" style="animation-delay:0.37s" />
+    <rect x="410.8" y="70" width="40.3" height="12"
+          fill="#663399" class="seg" style="animation-delay:0.48s" />
     <rect x="451.1" y="70" width="2.0" height="12"
-          fill="#a8801a" class="seg" style="animation-delay:0.59s" />
+          fill="#012456" class="seg" style="animation-delay:0.59s" />
     <rect x="453.1" y="70" width="2.0" height="12"
-          fill="#6b4e0e" class="seg" style="animation-delay:0.70s" /></g>
+          fill="#384d54" class="seg" style="animation-delay:0.70s" /></g>
   
     <g class="rise" style="animation-delay:0.35s">
-      <circle cx="35" cy="114" r="5" fill="#fff3c4" />
+      <circle cx="35" cy="114" r="5" fill="#e34c26" />
       <text class="lg" x="48" y="118">HTML</text>
       <text class="pc" x="230" y="118" text-anchor="end">37.7%</text>
     </g>
     <g class="rise" style="animation-delay:0.43s">
-      <circle cx="261" cy="114" r="5" fill="#ffe27a" />
+      <circle cx="261" cy="114" r="5" fill="#f1e05a" />
       <text class="lg" x="274" y="118">JavaScript</text>
-      <text class="pc" x="456" y="118" text-anchor="end">35.3%</text>
+      <text class="pc" x="456" y="118" text-anchor="end">35.2%</text>
     </g>
     <g class="rise" style="animation-delay:0.51s">
-      <circle cx="35" cy="140" r="5" fill="#f5d76e" />
+      <circle cx="35" cy="140" r="5" fill="#3178c6" />
       <text class="lg" x="48" y="144">TypeScript</text>
       <text class="pc" x="230" y="144" text-anchor="end">17.3%</text>
     </g>
     <g class="rise" style="animation-delay:0.59s">
-      <circle cx="261" cy="140" r="5" fill="#d4af37" />
+      <circle cx="261" cy="140" r="5" fill="#663399" />
       <text class="lg" x="274" y="144">CSS</text>
       <text class="pc" x="456" y="144" text-anchor="end">9.5%</text>
     </g>
     <g class="rise" style="animation-delay:0.67s">
-      <circle cx="35" cy="166" r="5" fill="#a8801a" />
+      <circle cx="35" cy="166" r="5" fill="#012456" />
       <text class="lg" x="48" y="170">PowerShell</text>
       <text class="pc" x="230" y="170" text-anchor="end">0.1%</text>
     </g>
     <g class="rise" style="animation-delay:0.75s">
-      <circle cx="261" cy="166" r="5" fill="#6b4e0e" />
+      <circle cx="261" cy="166" r="5" fill="#384d54" />
       <text class="lg" x="274" y="170">Dockerfile</text>
       <text class="pc" x="456" y="170" text-anchor="end">0.1%</text>
     </g>
