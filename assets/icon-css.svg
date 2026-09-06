@@ -1,27 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="92" height="108" viewBox="0 0 92 108" role="img" aria-label="CSS">
   <defs>
     
-    <linearGradient id="tbg" x1="0" y1="0" x2="0.4" y2="1">
-      <stop offset="0" stop-color="#2a1e07" stop-opacity="1" />
-      <stop offset="0.42" stop-color="#0b0904" stop-opacity="1" />
-      <stop offset="1" stop-color="#050403" stop-opacity="1" />
+    <linearGradient id="tbg" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".18" />
+      <stop offset="0.16" stop-color="#2472ab" stop-opacity="1" />
+      <stop offset="1" stop-color="#1b968e" stop-opacity="1" />
     </linearGradient>
-    <linearGradient id="tbg-kenar" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#fbe9a6" stop-opacity=".65" />
-      <stop offset=".5" stop-color="#d4af37" stop-opacity=".45" />
-      <stop offset="1" stop-color="#8c6a14" stop-opacity=".5" />
-    </linearGradient>
-    
-    <linearGradient id="ig" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff6d6" />
-      <stop offset=".38" stop-color="#f5d76e" />
-      <stop offset=".62" stop-color="#d4af37" />
-      <stop offset="1" stop-color="#9a7415" />
-    </linearGradient>
-    <radialGradient id="ih"><stop offset="0" stop-color="#ffe27a" stop-opacity=".55" /><stop offset="1" stop-color="#ffe27a" stop-opacity="0" /></radialGradient>
+    <filter id="h" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="9" />
+    </filter>
     <style>
-      .kutu { fill: url(#tbg); stroke: url(#tbg-kenar); stroke-width: 1.2; }
-      .etk { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; font-size: 13px; font-weight: 600; fill: #c9ab5e; }
+      .kutu { fill: url(#tbg); stroke: #eaf6fb; stroke-opacity: .3; stroke-width: 1; }
+      .etk { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; font-size: 13px; font-weight: 600; fill: #f2f9ff; }
       /* Hareket bilincli sekilde hafif: sayfada baska seyler de oynuyor,
          ikonlar dikkati calmadan yasiyor olsun. */
       .bob { animation: bob 5s ease-in-out infinite alternate; }
@@ -38,7 +28,7 @@
         50% { transform: scale(1.05) rotate(1.5deg); }
       }
       .isik { animation: isik 4.5s ease-in-out infinite; }
-      @keyframes isik { 0%,100% { opacity: .35; } 50% { opacity: .8; } }
+      @keyframes isik { 0%,100% { opacity: .05; } 50% { opacity: .14; } }
       @media (prefers-reduced-motion: reduce) {
         * { animation-duration: .01ms !important; }
       }
@@ -46,11 +36,11 @@
   </defs>
   <rect class="kutu" x="3" y="3" width="86" height="102" rx="18" />
   <g transform="translate(46 40)">
-    <circle class="isik" r="30" fill="url(#ih)" />
+    <circle class="isik" r="24" fill="#eae2f1" filter="url(#h)" opacity=".1" />
     <g class="bob">
       <g class="nabiz">
         <g transform="translate(-20 -20) scale(1.6667)">
-          <path d="M0 0v20.16A3.84 3.84 0 0 0 3.84 24h16.32A3.84 3.84 0 0 0 24 20.16V3.84A3.84 3.84 0 0 0 20.16 0Zm14.256 13.08c1.56 0 2.28 1.08 2.304 2.64h-1.608c.024-.288-.048-.6-.144-.84-.096-.192-.288-.264-.552-.264-.456 0-.696.264-.696.84-.024.576.288.888.768 1.08.72.288 1.608.744 1.92 1.296q.432.648.432 1.656c0 1.608-.912 2.592-2.496 2.592-1.656 0-2.4-1.032-2.424-2.688h1.68c0 .792.264 1.176.792 1.176.264 0 .456-.072.552-.24.192-.312.24-1.176-.048-1.512-.312-.408-.912-.6-1.32-.816q-.828-.396-1.224-.936c-.24-.36-.36-.888-.36-1.536 0-1.44.936-2.472 2.424-2.448m5.4 0c1.584 0 2.304 1.08 2.328 2.64h-1.608c0-.288-.048-.6-.168-.84-.096-.192-.264-.264-.528-.264-.48 0-.72.264-.72.84s.288.888.792 1.08c.696.288 1.608.744 1.92 1.296.264.432.408.984.408 1.656.024 1.608-.888 2.592-2.472 2.592-1.68 0-2.424-1.056-2.448-2.688h1.68c0 .744.264 1.176.792 1.176.264 0 .456-.072.552-.24.216-.312.264-1.176-.048-1.512-.288-.408-.888-.6-1.32-.816-.552-.264-.96-.576-1.2-.936s-.36-.888-.36-1.536c-.024-1.44.912-2.472 2.4-2.448m-11.031.018c.711-.006 1.419.198 1.839.63.432.432.672 1.128.648 1.992H9.336c.024-.456-.096-.792-.432-.96-.312-.144-.768-.048-.888.24-.12.264-.192.576-.168.864v3.504c0 .744.264 1.128.768 1.128a.65.65 0 0 0 .552-.264c.168-.24.192-.552.168-.84h1.776c.096 1.632-.984 2.712-2.568 2.688-1.536 0-2.496-.864-2.472-2.472v-4.032c0-.816.24-1.44.696-1.848.432-.408 1.146-.624 1.857-.63" fill="url(#ig)" />
+          <path d="M0 0v20.16A3.84 3.84 0 0 0 3.84 24h16.32A3.84 3.84 0 0 0 24 20.16V3.84A3.84 3.84 0 0 0 20.16 0Zm14.256 13.08c1.56 0 2.28 1.08 2.304 2.64h-1.608c.024-.288-.048-.6-.144-.84-.096-.192-.288-.264-.552-.264-.456 0-.696.264-.696.84-.024.576.288.888.768 1.08.72.288 1.608.744 1.92 1.296q.432.648.432 1.656c0 1.608-.912 2.592-2.496 2.592-1.656 0-2.4-1.032-2.424-2.688h1.68c0 .792.264 1.176.792 1.176.264 0 .456-.072.552-.24.192-.312.24-1.176-.048-1.512-.312-.408-.912-.6-1.32-.816q-.828-.396-1.224-.936c-.24-.36-.36-.888-.36-1.536 0-1.44.936-2.472 2.424-2.448m5.4 0c1.584 0 2.304 1.08 2.328 2.64h-1.608c0-.288-.048-.6-.168-.84-.096-.192-.264-.264-.528-.264-.48 0-.72.264-.72.84s.288.888.792 1.08c.696.288 1.608.744 1.92 1.296.264.432.408.984.408 1.656.024 1.608-.888 2.592-2.472 2.592-1.68 0-2.424-1.056-2.448-2.688h1.68c0 .744.264 1.176.792 1.176.264 0 .456-.072.552-.24.216-.312.264-1.176-.048-1.512-.288-.408-.888-.6-1.32-.816-.552-.264-.96-.576-1.2-.936s-.36-.888-.36-1.536c-.024-1.44.912-2.472 2.4-2.448m-11.031.018c.711-.006 1.419.198 1.839.63.432.432.672 1.128.648 1.992H9.336c.024-.456-.096-.792-.432-.96-.312-.144-.768-.048-.888.24-.12.264-.192.576-.168.864v3.504c0 .744.264 1.128.768 1.128a.65.65 0 0 0 .552-.264c.168-.24.192-.552.168-.84h1.776c.096 1.632-.984 2.712-2.568 2.688-1.536 0-2.496-.864-2.472-2.472v-4.032c0-.816.24-1.44.696-1.848.432-.408 1.146-.624 1.857-.63" fill="#eae2f1" />
         </g>
       </g>
     </g>

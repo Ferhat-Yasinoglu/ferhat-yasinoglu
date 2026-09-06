@@ -1,27 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="92" height="108" viewBox="0 0 92 108" role="img" aria-label="Figma">
   <defs>
     
-    <linearGradient id="tbg" x1="0" y1="0" x2="0.4" y2="1">
-      <stop offset="0" stop-color="#2a1e07" stop-opacity="1" />
-      <stop offset="0.42" stop-color="#0b0904" stop-opacity="1" />
-      <stop offset="1" stop-color="#050403" stop-opacity="1" />
+    <linearGradient id="tbg" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".18" />
+      <stop offset="0.16" stop-color="#2472ab" stop-opacity="1" />
+      <stop offset="1" stop-color="#1b968e" stop-opacity="1" />
     </linearGradient>
-    <linearGradient id="tbg-kenar" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#fbe9a6" stop-opacity=".65" />
-      <stop offset=".5" stop-color="#d4af37" stop-opacity=".45" />
-      <stop offset="1" stop-color="#8c6a14" stop-opacity=".5" />
-    </linearGradient>
-    
-    <linearGradient id="ig" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff6d6" />
-      <stop offset=".38" stop-color="#f5d76e" />
-      <stop offset=".62" stop-color="#d4af37" />
-      <stop offset="1" stop-color="#9a7415" />
-    </linearGradient>
-    <radialGradient id="ih"><stop offset="0" stop-color="#ffe27a" stop-opacity=".55" /><stop offset="1" stop-color="#ffe27a" stop-opacity="0" /></radialGradient>
+    <filter id="h" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="9" />
+    </filter>
     <style>
-      .kutu { fill: url(#tbg); stroke: url(#tbg-kenar); stroke-width: 1.2; }
-      .etk { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; font-size: 13px; font-weight: 600; fill: #c9ab5e; }
+      .kutu { fill: url(#tbg); stroke: #eaf6fb; stroke-opacity: .3; stroke-width: 1; }
+      .etk { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; font-size: 13px; font-weight: 600; fill: #f2f9ff; }
       /* Hareket bilincli sekilde hafif: sayfada baska seyler de oynuyor,
          ikonlar dikkati calmadan yasiyor olsun. */
       .bob { animation: bob 5s ease-in-out infinite alternate; }
@@ -38,7 +28,7 @@
         50% { transform: scale(1.05) rotate(1.5deg); }
       }
       .isik { animation: isik 4.5s ease-in-out infinite; }
-      @keyframes isik { 0%,100% { opacity: .35; } 50% { opacity: .8; } }
+      @keyframes isik { 0%,100% { opacity: .05; } 50% { opacity: .14; } }
       @media (prefers-reduced-motion: reduce) {
         * { animation-duration: .01ms !important; }
       }
@@ -46,11 +36,11 @@
   </defs>
   <rect class="kutu" x="3" y="3" width="86" height="102" rx="18" />
   <g transform="translate(46 40)">
-    <circle class="isik" r="30" fill="url(#ih)" />
+    <circle class="isik" r="24" fill="#F24E1E" filter="url(#h)" opacity=".1" />
     <g class="bob">
       <g class="sallan">
         <g transform="translate(-20 -20) scale(1.6667)">
-          <path d="M15.852 8.981h-4.588V0h4.588c2.476 0 4.49 2.014 4.49 4.49s-2.014 4.491-4.49 4.491zM12.735 7.51h3.117c1.665 0 3.019-1.355 3.019-3.019s-1.355-3.019-3.019-3.019h-3.117V7.51zm0 1.471H8.148c-2.476 0-4.49-2.014-4.49-4.49S5.672 0 8.148 0h4.588v8.981zm-4.587-7.51c-1.665 0-3.019 1.355-3.019 3.019s1.354 3.02 3.019 3.02h3.117V1.471H8.148zm4.587 15.019H8.148c-2.476 0-4.49-2.014-4.49-4.49s2.014-4.49 4.49-4.49h4.588v8.98zM8.148 8.981c-1.665 0-3.019 1.355-3.019 3.019s1.355 3.019 3.019 3.019h3.117V8.981H8.148zM8.172 24c-2.489 0-4.515-2.014-4.515-4.49s2.014-4.49 4.49-4.49h4.588v4.441c0 2.503-2.047 4.539-4.563 4.539zm-.024-7.51a3.023 3.023 0 0 0-3.019 3.019c0 1.665 1.365 3.019 3.044 3.019 1.705 0 3.093-1.376 3.093-3.068v-2.97H8.148zm7.704 0h-.098c-2.476 0-4.49-2.014-4.49-4.49s2.014-4.49 4.49-4.49h.098c2.476 0 4.49 2.014 4.49 4.49s-2.014 4.49-4.49 4.49zm-.097-7.509c-1.665 0-3.019 1.355-3.019 3.019s1.355 3.019 3.019 3.019h.098c1.665 0 3.019-1.355 3.019-3.019s-1.355-3.019-3.019-3.019h-.098z" fill="url(#ig)" />
+          <path d="M15.852 8.981h-4.588V0h4.588c2.476 0 4.49 2.014 4.49 4.49s-2.014 4.491-4.49 4.491zM12.735 7.51h3.117c1.665 0 3.019-1.355 3.019-3.019s-1.355-3.019-3.019-3.019h-3.117V7.51zm0 1.471H8.148c-2.476 0-4.49-2.014-4.49-4.49S5.672 0 8.148 0h4.588v8.981zm-4.587-7.51c-1.665 0-3.019 1.355-3.019 3.019s1.354 3.02 3.019 3.02h3.117V1.471H8.148zm4.587 15.019H8.148c-2.476 0-4.49-2.014-4.49-4.49s2.014-4.49 4.49-4.49h4.588v8.98zM8.148 8.981c-1.665 0-3.019 1.355-3.019 3.019s1.355 3.019 3.019 3.019h3.117V8.981H8.148zM8.172 24c-2.489 0-4.515-2.014-4.515-4.49s2.014-4.49 4.49-4.49h4.588v4.441c0 2.503-2.047 4.539-4.563 4.539zm-.024-7.51a3.023 3.023 0 0 0-3.019 3.019c0 1.665 1.365 3.019 3.044 3.019 1.705 0 3.093-1.376 3.093-3.068v-2.97H8.148zm7.704 0h-.098c-2.476 0-4.49-2.014-4.49-4.49s2.014-4.49 4.49-4.49h.098c2.476 0 4.49 2.014 4.49 4.49s-2.014 4.49-4.49 4.49zm-.097-7.509c-1.665 0-3.019 1.355-3.019 3.019s1.355 3.019 3.019 3.019h.098c1.665 0 3.019-1.355 3.019-3.019s-1.355-3.019-3.019-3.019h-.098z" fill="#F24E1E" />
         </g>
       </g>
     </g>

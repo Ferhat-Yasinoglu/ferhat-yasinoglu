@@ -8,16 +8,16 @@
 
 <br>
 
-[![GitHub](https://img.shields.io/badge/GitHub-0b0904?style=for-the-badge&logo=github&logoColor=f5d76e)](https://github.com/Ferhat-Yasinoglu)
-[![Instagram](https://img.shields.io/badge/Instagram-0b0904?style=for-the-badge&logo=instagram&logoColor=f5d76e)](https://instagram.com/farhad___yaqoobi)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0b0904?style=for-the-badge&logo=linkedin&logoColor=f5d76e)](https://linkedin.com/in/ferhat-yasinoglu)
-[![Email](https://img.shields.io/badge/Email-0b0904?style=for-the-badge&logo=gmail&logoColor=f5d76e)](mailto:farhadyaqoobi.kunduz@gmail.com)
+[![GitHub](https://img.shields.io/badge/GitHub-0f172a?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu)
+[![Instagram](https://img.shields.io/badge/Instagram-0f172a?style=for-the-badge&logo=instagram&logoColor=E4405F)](https://instagram.com/farhad___yaqoobi)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0f172a?style=for-the-badge&logo=linkedin&logoColor=0A66C2)](https://linkedin.com/in/ferhat-yasinoglu)
+[![Email](https://img.shields.io/badge/Email-0f172a?style=for-the-badge&logo=gmail&logoColor=EA4335)](mailto:farhadyaqoobi.kunduz@gmail.com)
 
 </div>
 
 ---
 
-## ✦ What I've built
+## 🛠️ What I've built
 
 ### ✦ FY Ajans
 
@@ -36,12 +36,12 @@ German, English and Persian, and the whole layout flips for Persian.
 <sub>**Built with** JavaScript (ES5) &nbsp;·&nbsp; CSS3 &nbsp;·&nbsp; generated SVG &nbsp;·&nbsp; Node.js &nbsp;·&nbsp; GitHub Pages</sub><br>
 <sub>**Learned here** drawing artwork with code instead of by hand &nbsp;·&nbsp; paying for animation only while it is on screen &nbsp;·&nbsp; a Content Security Policy that leaves no room for inline scripts</sub>
 
-[![Live](https://img.shields.io/badge/Open-Live%20site-8c6a14?style=flat-square&logo=googlechrome&logoColor=white)](https://ferhat-yasinoglu.github.io/fy-ajans/)
-[![Code](https://img.shields.io/badge/Read-Source-6b4e0e?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/fy-ajans)
+[![Live](https://img.shields.io/badge/Open-Live%20site-9ece6a?style=flat-square&logo=googlechrome&logoColor=white)](https://ferhat-yasinoglu.github.io/fy-ajans/)
+[![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/fy-ajans)
 
 <br>
 
-### ✦ Açık Defter
+### 📓 Açık Defter
 
 <sub>*An IT student's open notebook — my personal site and learning journal.*</sub>
 
@@ -56,12 +56,12 @@ A check script keeps the hand-written chrome from drifting apart across pages.
 <sub>**Built with** JavaScript (ES6+) &nbsp;·&nbsp; CSS3 &nbsp;·&nbsp; Service Workers &nbsp;·&nbsp; Web App Manifest</sub><br>
 <sub>**Learned here** RTL through logical CSS properties &nbsp;·&nbsp; cache strategies &nbsp;·&nbsp; applying preferences before the page paints</sub>
 
-[![Live](https://img.shields.io/badge/Open-Live%20site-8c6a14?style=flat-square&logo=googlechrome&logoColor=white)](https://ferhat-yasinoglu.github.io/acik-defter/)
-[![Code](https://img.shields.io/badge/Read-Source-6b4e0e?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/acik-defter)
+[![Live](https://img.shields.io/badge/Open-Live%20site-9ece6a?style=flat-square&logo=googlechrome&logoColor=white)](https://ferhat-yasinoglu.github.io/acik-defter/)
+[![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/acik-defter)
 
 <br>
 
-### ✦ NetStore
+### 🛒 NetStore
 
 <sub>*A shop dashboard that keeps working offline.*</sub>
 
@@ -72,11 +72,11 @@ straight from the browser. Afghani is supported and the invoice prints.
 <sub>**Built with** JavaScript &nbsp;·&nbsp; Firestore &nbsp;·&nbsp; Service Workers &nbsp;·&nbsp; Web App Manifest</sub><br>
 <sub>**Learned here** Firestore security rules &nbsp;·&nbsp; App Check &nbsp;·&nbsp; why an allowlist has no business in the client</sub>
 
-[![Code](https://img.shields.io/badge/Read-Source-6b4e0e?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/NetStore)
+[![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/NetStore)
 
 <br>
 
-### ✦ botflow-mcp
+### 🤖 botflow-mcp
 
 <sub>*Telegram chatbot funnels, built by talking to a model instead of clicking a dashboard.*</sub>
 
@@ -88,11 +88,11 @@ whole thing; Telegram is reached by long polling, so no public URL is needed.
 <sub>**Built with** TypeScript &nbsp;·&nbsp; Node.js &nbsp;·&nbsp; MCP &nbsp;·&nbsp; SQLite &nbsp;·&nbsp; Telegram Bot API</sub><br>
 <sub>**Learned here** the Model Context Protocol &nbsp;·&nbsp; resumable background jobs &nbsp;·&nbsp; migrating a schema in place</sub>
 
-[![Code](https://img.shields.io/badge/Read-Source-6b4e0e?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/botflow-mcp)
+[![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/botflow-mcp)
 
 <br>
 
-### ✦ This profile
+### ✨ This profile
 
 <sub>*Every card on this page is generated in this repository.*</sub>
 
@@ -100,11 +100,11 @@ The header above, the terminal below, the language chart, the contribution graph
 come from a third-party service. A Node script queries the GitHub API and writes animated SVGs
 into this repo; a workflow reruns it every six hours.
 
-[![Code](https://img.shields.io/badge/Read-cards.mjs-a8801a?style=flat-square&logo=javascript&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/blob/main/.github/scripts/cards.mjs)
+[![Code](https://img.shields.io/badge/Read-cards.mjs-bf91f3?style=flat-square&logo=javascript&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/blob/main/.github/scripts/cards.mjs)
 
 ---
 
-## ✦ About me
+## 👋 About me
 
 <div align="center">
 
@@ -114,7 +114,7 @@ into this repo; a workflow reruns it every six hours.
 
 ---
 
-## ✦ Tech
+## 💻 Tech
 
 <div align="center">
 
@@ -136,7 +136,7 @@ into this repo; a workflow reruns it every six hours.
 
 ---
 
-## ✦ Activity
+## 📊 Activity
 
 <div align="center">
 
@@ -160,10 +160,10 @@ into this repo; a workflow reruns it every six hours.
 
 <sub>Always up for a conversation about web development, Firebase, or whatever you're building.</sub>
 
-[![Email](https://img.shields.io/badge/Email-8c6a14?style=flat-square&logo=gmail&logoColor=white)](mailto:farhadyaqoobi.kunduz@gmail.com)
-[![Instagram](https://img.shields.io/badge/Instagram-a8801a?style=flat-square&logo=instagram&logoColor=white)](https://instagram.com/farhad___yaqoobi)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-6b4e0e?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/ferhat-yasinoglu)
-<img src="https://komarev.com/ghpvc/?username=Ferhat-Yasinoglu&label=Profile%20views&color=8c6a14&style=flat-square" alt="profile views" />
+[![Email](https://img.shields.io/badge/Email-f7768e?style=flat-square&logo=gmail&logoColor=white)](mailto:farhadyaqoobi.kunduz@gmail.com)
+[![Instagram](https://img.shields.io/badge/Instagram-bf91f3?style=flat-square&logo=instagram&logoColor=white)](https://instagram.com/farhad___yaqoobi)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-70a5fd?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/ferhat-yasinoglu)
+<img src="https://komarev.com/ghpvc/?username=Ferhat-Yasinoglu&label=Profile%20views&color=bf91f3&style=flat-square" alt="profile views" />
 
 </div>
 

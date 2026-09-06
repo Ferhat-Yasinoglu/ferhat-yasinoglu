@@ -21,8 +21,8 @@ jobs:
         with:
           github_user_name: ${{ github.repository_owner }}
           outputs: |
-            dist/github-snake.svg?color_snake=%23f5d76e&color_dots=%23171003,%234a3708,%238c6a14,%23d4af37,%23ffe27a
-            dist/github-snake-dark.svg?color_snake=%23f5d76e&color_dots=%23120d05,%234a3708,%238c6a14,%23d4af37,%23ffe27a
+            dist/github-snake.svg
+            dist/github-snake-dark.svg?palette=github-dark
 
       - name: output dalina yayinla
         uses: crazy-max/ghaction-github-pages@v4
