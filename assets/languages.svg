@@ -37,33 +37,47 @@
           stroke-dasharray="14 8" />
   <text class="title" x="46" y="39">Most used languages</text>
   <g clip-path="url(#barclip)">
-    <rect x="28.0" y="70" width="262.9" height="12"
+    <rect x="28.0" y="70" width="159.7" height="12"
           fill="#fff3c4" class="seg" style="animation-delay:0.15s" />
-    <rect x="290.9" y="70" width="101.8" height="12"
+    <rect x="187.7" y="70" width="149.7" height="12"
           fill="#ffe27a" class="seg" style="animation-delay:0.26s" />
-    <rect x="392.6" y="70" width="50.9" height="12"
+    <rect x="337.5" y="70" width="73.4" height="12"
           fill="#f5d76e" class="seg" style="animation-delay:0.37s" />
-    <rect x="443.5" y="70" width="8.5" height="12"
-          fill="#d4af37" class="seg" style="animation-delay:0.48s" /></g>
+    <rect x="410.9" y="70" width="40.3" height="12"
+          fill="#d4af37" class="seg" style="animation-delay:0.48s" />
+    <rect x="451.1" y="70" width="2.0" height="12"
+          fill="#a8801a" class="seg" style="animation-delay:0.59s" />
+    <rect x="453.1" y="70" width="2.0" height="12"
+          fill="#6b4e0e" class="seg" style="animation-delay:0.70s" /></g>
   
     <g class="rise" style="animation-delay:0.35s">
       <circle cx="35" cy="114" r="5" fill="#fff3c4" />
-      <text class="lg" x="48" y="118">JavaScript</text>
-      <text class="pc" x="230" y="118" text-anchor="end">62.0%</text>
+      <text class="lg" x="48" y="118">HTML</text>
+      <text class="pc" x="230" y="118" text-anchor="end">37.7%</text>
     </g>
     <g class="rise" style="animation-delay:0.43s">
       <circle cx="261" cy="114" r="5" fill="#ffe27a" />
-      <text class="lg" x="274" y="118">HTML</text>
-      <text class="pc" x="456" y="118" text-anchor="end">24.0%</text>
+      <text class="lg" x="274" y="118">JavaScript</text>
+      <text class="pc" x="456" y="118" text-anchor="end">35.3%</text>
     </g>
     <g class="rise" style="animation-delay:0.51s">
       <circle cx="35" cy="140" r="5" fill="#f5d76e" />
-      <text class="lg" x="48" y="144">CSS</text>
-      <text class="pc" x="230" y="144" text-anchor="end">12.0%</text>
+      <text class="lg" x="48" y="144">TypeScript</text>
+      <text class="pc" x="230" y="144" text-anchor="end">17.3%</text>
     </g>
     <g class="rise" style="animation-delay:0.59s">
       <circle cx="261" cy="140" r="5" fill="#d4af37" />
-      <text class="lg" x="274" y="144">Shell</text>
-      <text class="pc" x="456" y="144" text-anchor="end">2.0%</text>
+      <text class="lg" x="274" y="144">CSS</text>
+      <text class="pc" x="456" y="144" text-anchor="end">9.5%</text>
+    </g>
+    <g class="rise" style="animation-delay:0.67s">
+      <circle cx="35" cy="166" r="5" fill="#a8801a" />
+      <text class="lg" x="48" y="170">PowerShell</text>
+      <text class="pc" x="230" y="170" text-anchor="end">0.1%</text>
+    </g>
+    <g class="rise" style="animation-delay:0.75s">
+      <circle cx="261" cy="166" r="5" fill="#6b4e0e" />
+      <text class="lg" x="274" y="170">Dockerfile</text>
+      <text class="pc" x="456" y="170" text-anchor="end">0.1%</text>
     </g>
 </svg>
