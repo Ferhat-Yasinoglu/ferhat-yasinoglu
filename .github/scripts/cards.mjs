@@ -19,24 +19,26 @@ const ICONS = JSON.parse(await readFile(join(HERE, "icons.json"), "utf8"));
 // (gezen isik, ag dugumleri, goz) ve reduced-motion kurali dosyanin icinde gelir.
 const FY_LOGO = await readFile(join(HERE, "fy-logo.svg"), "utf8");
 
-const KOYU = {
-  bg: "#2472ab",
-  bg2: "#1b968e",
-  line: "#eaf6fb",
-  text: "#f2f9ff",
-  muted: "#cbe4ee",
-  blue: "#a9d3ff",
-  purple: "#e3c9ff",
-  green: "#c5efa2",
-  pink: "#ffbecb",
-  yellow: "#ffe19a",
-  cyan: "#a3f0ff",
+// FY marka paleti: fy-ajans sitesindeki altın-siyah dilin aynısı.
+// Kartların hepsi tek bir koyu zemin ve altın rampası üzerine kurulu.
+const ALTIN = {
+  bg: "#0b0904",     // kart zemini (üst)
+  bg2: "#050403",    // kart zemini (alt)
+  line: "#d4af37",   // altın kılcal çerçeve
+  text: "#fff8e6",   // ana yazı
+  muted: "#c9ab5e",  // ikincil yazı
+  gold: "#d4af37",   // gövde altını
+  light: "#f5d76e",  // açık altın
+  pale: "#fff3c4",   // en açık altın (vurgu)
+  deep: "#8c6a14",   // koyu altın
+  hot: "#ffe27a",    // sıcak vurgu
 };
 
+// Altın rampası: birbirinden ayrılması gereken diziler (dil çubuğu) burayı kullanır.
+const RAMPA = ["#fff3c4", "#ffe27a", "#f5d76e", "#d4af37", "#a8801a", "#6b4e0e"];
 
 // Kart uretilirken gecerli olan palet. Her tema turunde degistirilir.
-let T = KOYU;
-let SAYFA_KOYU = true; // ikon tiles saydam: sayfa temasina gore renk uyarlama
+let T = ALTIN;
 
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) =>
@@ -51,7 +53,7 @@ const FONT = "'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif";
 // Her kartin basinda duran ortak stil: kademeli giris + yumusak hareket.
 const baseStyle = () => `
     text { font-family: ${FONT}; }
-    .card-bg { fill: url(#bg); stroke: ${T.line}; stroke-opacity: .32; stroke-width: 1.2; }
+    .card-bg { fill: url(#bg); stroke: url(#bg-kenar); stroke-width: 1.4; }
     /* Her animasyon "backwards" ile kurulur: animasyon hic calismazsa
        ogenin dogal hali gecerli olur, yani icerik yine de gorunur. */
     .rise { animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
@@ -62,10 +64,36 @@ const baseStyle = () => `
     }`;
 
 const defsBg = (id = "bg") => `
-    <linearGradient id="${id}" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity=".18" />
-      <stop offset="0.16" stop-color="${T.bg}" stop-opacity="1" />
+    <linearGradient id="${id}" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#2a1e07" stop-opacity="1" />
+      <stop offset="0.42" stop-color="${T.bg}" stop-opacity="1" />
       <stop offset="1" stop-color="${T.bg2}" stop-opacity="1" />
+    </linearGradient>
+    <linearGradient id="${id}-kenar" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbe9a6" stop-opacity=".65" />
+      <stop offset=".5" stop-color="#d4af37" stop-opacity=".45" />
+      <stop offset="1" stop-color="#8c6a14" stop-opacity=".5" />
+    </linearGradient>`;
+
+// Altın "kaplama" gradyanı: yazılar ve logolar bununla doldurulur.
+const defsGold = (id = "kaplama") => `
+    <linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff6d6" />
+      <stop offset=".38" stop-color="#f5d76e" />
+      <stop offset=".62" stop-color="#d4af37" />
+      <stop offset="1" stop-color="#9a7415" />
+    </linearGradient>`;
+
+// Işıltının yatay geçtiği başlık altını (sheen).
+const defsSheen = (id = "parla") => `
+    <linearGradient id="${id}" x1="0" y1="0" x2="1" y2="0" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#c9a233" />
+      <stop offset=".35" stop-color="#f5d76e" />
+      <stop offset=".5" stop-color="#fff8e0" />
+      <stop offset=".65" stop-color="#f5d76e" />
+      <stop offset="1" stop-color="#c9a233" />
+      <animateTransform attributeName="gradientTransform" type="translate"
+        values="-1 0; 1 0; -1 0" dur="9s" repeatCount="indefinite" />
     </linearGradient>`;
 
 // ---------------------------------------------------------------- baslik
@@ -87,55 +115,68 @@ function fyBadge({ x, y, w, h, delay }) {
 function header({ name, tagline }) {
   const W = 1000;
   const H = 250;
-  // Arka planda suzulen isik lekeleri: sonsuz donen, yavas hareket.
+  // Arka planda süzülen altın ışık lekeleri.
   const orbs = [
-    { cx: 160, cy: 60, r: 130, c: T.blue, dur: 19, dx: 60, dy: 24 },
-    { cx: 820, cy: 150, r: 150, c: T.purple, dur: 23, dx: -70, dy: -30 },
-    { cx: 520, cy: 30, r: 110, c: T.cyan, dur: 27, dx: 40, dy: 40 },
+    { cx: 170, cy: 55, r: 135, c: "#d4af37", dur: 19, dx: 60, dy: 24, op: ".20" },
+    { cx: 640, cy: 200, r: 150, c: "#8c6a14", dur: 23, dx: -70, dy: -30, op: ".24" },
+    { cx: 430, cy: 20, r: 115, c: "#f5d76e", dur: 27, dx: 40, dy: 40, op: ".14" },
   ]
     .map(
-      (o, i) => `
-      <circle cx="${o.cx}" cy="${o.cy}" r="${o.r}" fill="${o.c}" opacity=".16" filter="url(#soft)">
+      (o) => `
+      <circle cx="${o.cx}" cy="${o.cy}" r="${o.r}" fill="${o.c}" opacity="${o.op}" filter="url(#soft)">
         <animateTransform attributeName="transform" type="translate"
           values="0 0; ${o.dx} ${o.dy}; 0 0" dur="${o.dur}s" repeatCount="indefinite" />
-        <animate attributeName="opacity" values=".10;.22;.10" dur="${o.dur / 2}s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values=".08;${o.op};.08" dur="${o.dur / 2}s" repeatCount="indefinite" />
       </circle>`
     )
     .join("");
 
+  // Siteyle aynı dil: çok silik altın ızgara.
+  let izgara = "";
+  for (let x = 50; x < W; x += 50) izgara += `<path d="M${x} 0V${H}"/>`;
+  for (let y = 50; y < H; y += 50) izgara += `<path d="M0 ${y}H${W}"/>`;
+
+  // Kıvılcımlar: rozetin çevresinde değil, sol boşlukta yanıp söner.
+  let kivilcim = "";
+  const nokta = [[92, 62], [268, 44], [148, 214], [352, 226], [60, 160], [452, 74], [566, 210], [640, 52]];
+  nokta.forEach(([x, y], i) => {
+    kivilcim += `<circle cx="${x}" cy="${y}" r="${(1 + (i % 3) * 0.6).toFixed(1)}" fill="#fff3c4" opacity=".7">
+      <animate attributeName="opacity" values=".15;.85;.15" dur="${(2.4 + (i % 4) * 0.7).toFixed(1)}s"
+               begin="-${(i * 0.6).toFixed(1)}s" repeatCount="indefinite" /></circle>`;
+  });
+
+  // Slogan, rozetin soluna sığmalı: 56'dan başlayıp 700'de bitiyor.
+  // Yaklaşık genişlik karakter başına .5em; sığmazsa punto küçülür.
+  const tagBoyut = Math.min(22, Math.floor(644 / (tagline.length * 0.5)));
+
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(name)}">
   <defs>
     ${defsBg()}
+    ${defsSheen()}
     <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="45" />
     </filter>
-    <linearGradient id="ink" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#eafff9">
-        <animate attributeName="stop-color" values="#eafff9;#ffffff;#d9ecff;#eafff9" dur="9s" repeatCount="indefinite" />
-      </stop>
-      <stop offset="100%" stop-color="#d9ecff">
-        <animate attributeName="stop-color" values="#d9ecff;#eafff9;#ffffff;#d9ecff" dur="9s" repeatCount="indefinite" />
-      </stop>
-    </linearGradient>
     <clipPath id="round"><rect width="${W}" height="${H}" rx="16" /></clipPath>
     <radialGradient id="fyhaze" cx=".5" cy=".45" r=".6">
-      <stop offset="0" stop-color="#d4af37" stop-opacity=".16" />
+      <stop offset="0" stop-color="#d4af37" stop-opacity=".18" />
       <stop offset="1" stop-color="#d4af37" stop-opacity="0" />
     </radialGradient>
     <style>${baseStyle()}
-      .name { font-size: 60px; font-weight: 800; fill: url(#ink); letter-spacing: -1px; }
-      .tag { font-size: 22px; fill: ${T.muted}; letter-spacing: .2px; }
+      .name { font-size: 60px; font-weight: 800; fill: url(#parla); letter-spacing: -1px; }
+      .tag { font-size: ${tagBoyut}px; fill: ${T.muted}; letter-spacing: .2px; }
       .bar { animation: grow 1.1s .35s cubic-bezier(.2,.7,.3,1) backwards; }
       @keyframes grow { from { width: 0; } }
     </style>
   </defs>
   <g clip-path="url(#round)">
     <rect class="card-bg" width="${W}" height="${H}" rx="16" />
+    <g fill="none" stroke="${T.gold}" stroke-width="1" opacity=".055">${izgara}</g>
     ${orbs}
+    ${kivilcim}
     <g class="rise" style="animation-delay:.05s">
       <text class="name" x="56" y="118">${esc(name)}</text>
     </g>
-    <rect class="bar" x="58" y="142" width="150" height="5" rx="2.5" fill="url(#ink)" />
+    <rect class="bar" x="58" y="142" width="150" height="5" rx="2.5" fill="url(#parla)" />
     <g class="rise" style="animation-delay:.25s">
       <text class="tag" x="56" y="186">${esc(tagline)}</text>
     </g>
@@ -164,9 +205,9 @@ function footer() {
   };
 
   const katman = [
-    { genlik: 14, taban: 62, faz: 0, renk: "#2472ab", op: 0.5, sure: 14 },
-    { genlik: 18, taban: 78, faz: 2.1, renk: "#1f83a0", op: 0.55, sure: 20 },
-    { genlik: 11, taban: 96, faz: 4.2, renk: "#1b968e", op: 0.65, sure: 27 },
+    { genlik: 14, taban: 62, faz: 0, renk: "#2a1e07", op: 0.9, sure: 14 },
+    { genlik: 18, taban: 78, faz: 2.1, renk: "#4a3708", op: 0.85, sure: 20 },
+    { genlik: 11, taban: 96, faz: 4.2, renk: "#6b4e0e", op: 0.9, sure: 27 },
   ]
     .map(
       (k, i) => `
@@ -181,14 +222,15 @@ function footer() {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="">
   <defs>
     <linearGradient id="ust" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#2472ab" />
-      <stop offset="100%" stop-color="#1b968e" />
+      <stop offset="0%" stop-color="#8c6a14" />
+      <stop offset="50%" stop-color="#d4af37" />
+      <stop offset="100%" stop-color="#8c6a14" />
     </linearGradient>
     <clipPath id="kutu"><rect width="${W}" height="${H}" /></clipPath>
   </defs>
   <g clip-path="url(#kutu)">
     ${katman}
-    <path d="${dalga(16, 110, 1.1)}" fill="url(#ust)" opacity=".85">
+    <path d="${dalga(16, 110, 1.1)}" fill="url(#ust)" opacity=".55">
       <animateTransform attributeName="transform" type="translate"
         values="0 0; -${periyot} 0" dur="11s" repeatCount="indefinite" />
     </path>
@@ -269,7 +311,7 @@ function terminal(satirlar) {
     ...durak.map((d) => d.y),
     durak.at(-1).y,
   ].map((y) => y + 10).join(";");
-  const dots = ["#ff5f57", "#febc2e", "#28c840"]
+  const dots = ["#6b4e0e", "#c99a20", "#ffe27a"]
     .map((c, i) => `<circle cx="${26 + i * 18}" cy="26" r="5.5" fill="${c}" />`)
     .join("");
 
@@ -287,10 +329,10 @@ function terminal(satirlar) {
   <rect class="card-bg" width="${W}" height="${H}" rx="14" />
   ${dots}
   <text class="baslik" x="${W / 2}" y="30" text-anchor="middle">farhad@github ~</text>
-  <line x1="0" y1="48" x2="${W}" y2="48" stroke="${T.line}" stroke-width="1" />
+  <line x1="0" y1="48" x2="${W}" y2="48" stroke="${T.gold}" stroke-opacity=".35" stroke-width="1" />
   ${govde}
   <g class="imlec">
-    <rect x="24" y="${durak[0].y + 10}" width="9" height="2.5" fill="${T.green}">
+    <rect x="24" y="${durak[0].y + 10}" width="9" height="2.5" fill="${T.hot}">
       <animate attributeName="x" values="${imlecX}" keyTimes="${imlecKey}"
                dur="${dongu.toFixed(2)}s" repeatCount="indefinite" calcMode="discrete" />
       <animate attributeName="y" values="${imlecY}" keyTimes="${imlecKey}"
@@ -302,24 +344,6 @@ function terminal(satirlar) {
 }
 
 // ------------------------------------------------------------------ araclar
-// Marka renkleri zemine gore okunmayabiliyor (GitHub siyah, JavaScript sari).
-// Cok koyu olani acik, cok acik olani koyu tarafa cekiyoruz.
-function fitColor(hex, zeminKoyu = SAYFA_KOYU) {
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
-  const lin = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-  const lum = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
-  const mix = (hedef, oran) => {
-    const h = [1, 3, 5].map((i) => parseInt(hedef.slice(i, i + 2), 16));
-    const s = [r, g, b].map((c) => c * 255);
-    return (
-      "#" +
-      s.map((c, i) => Math.round(c + (h[i] - c) * oran).toString(16).padStart(2, "0")).join("")
-    );
-  };
-  if (zeminKoyu && lum < 0.16) return mix("#ffffff", 0.86);
-  if (!zeminKoyu && lum > 0.62) return mix("#000000", 0.3);
-  return hex;
-}
 
 // Her logoya kendi hareketi: hepsi ayni ritimde sallanirsa cansiz duruyor.
 const KARAKTER = {
@@ -345,20 +369,16 @@ function iconTile(ic) {
   const H = 108;
   const scale = 40 / 24;
   const kar = KARAKTER[ic.ad] || "nabiz";
-  // Ikon artik cam karo (koyu teal) uzerinde: sayfa temasindan bagimsiz,
-  // koyu zemine gore renklendir. Cok koyu logolar acik, gerisi oldugu gibi.
-  const renk = fitColor(ic.hex, true);
   const pad = 3;
   const cx = W / 2;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(ic.ad)}">
   <defs>
     ${defsBg("tbg")}
-    <filter id="h" x="-100%" y="-100%" width="300%" height="300%">
-      <feGaussianBlur stdDeviation="9" />
-    </filter>
+    ${defsGold("ig")}
+    <radialGradient id="ih"><stop offset="0" stop-color="#ffe27a" stop-opacity=".55" /><stop offset="1" stop-color="#ffe27a" stop-opacity="0" /></radialGradient>
     <style>
-      .kutu { fill: url(#tbg); stroke: ${T.line}; stroke-opacity: .3; stroke-width: 1; }
-      .etk { font-family: ${FONT}; font-size: 13px; font-weight: 600; fill: ${T.text}; }
+      .kutu { fill: url(#tbg); stroke: url(#tbg-kenar); stroke-width: 1.2; }
+      .etk { font-family: ${FONT}; font-size: 13px; font-weight: 600; fill: ${T.muted}; }
       /* Hareket bilincli sekilde hafif: sayfada baska seyler de oynuyor,
          ikonlar dikkati calmadan yasiyor olsun. */
       .bob { animation: bob 5s ease-in-out infinite alternate; }
@@ -375,7 +395,7 @@ function iconTile(ic) {
         50% { transform: scale(1.05) rotate(1.5deg); }
       }
       .isik { animation: isik 4.5s ease-in-out infinite; }
-      @keyframes isik { 0%,100% { opacity: .05; } 50% { opacity: .14; } }
+      @keyframes isik { 0%,100% { opacity: .35; } 50% { opacity: .8; } }
       @media (prefers-reduced-motion: reduce) {
         * { animation-duration: .01ms !important; }
       }
@@ -383,11 +403,11 @@ function iconTile(ic) {
   </defs>
   <rect class="kutu" x="${pad}" y="${pad}" width="${W - 2 * pad}" height="${H - 2 * pad}" rx="18" />
   <g transform="translate(${cx} 40)">
-    <circle class="isik" r="24" fill="${renk}" filter="url(#h)" opacity=".1" />
+    <circle class="isik" r="30" fill="url(#ih)" />
     <g class="bob">
       <g class="${kar}">
         <g transform="translate(-20 -20) scale(${scale.toFixed(4)})">
-          <path d="${ic.path}" fill="${renk}" />
+          <path d="${ic.path}" fill="url(#ig)" />
         </g>
       </g>
     </g>
@@ -410,9 +430,10 @@ function languages(langs) {
   const segs = langs
     .map((l, i) => {
       const w = Math.max(2, (l.size / total) * barW);
+      // Dil renkleri altın rampasına eşleniyor: kart tek renkte kalsın ama diller ayırt edilsin.
       const seg = `
     <rect x="${cursor.toFixed(1)}" y="70" width="${w.toFixed(1)}" height="12"
-          fill="${l.color}" class="seg" style="animation-delay:${(0.15 + i * 0.11).toFixed(2)}s" />`;
+          fill="${RAMPA[i % RAMPA.length]}" class="seg" style="animation-delay:${(0.15 + i * 0.11).toFixed(2)}s" />`;
       cursor += w;
       return seg;
     })
@@ -427,7 +448,7 @@ function languages(langs) {
       const pct = ((l.size / total) * 100).toFixed(1);
       return `
     <g class="rise" style="animation-delay:${(0.35 + i * 0.08).toFixed(2)}s">
-      <circle cx="${x + 5}" cy="${y - 4}" r="5" fill="${l.color}" />
+      <circle cx="${x + 5}" cy="${y - 4}" r="5" fill="${RAMPA[i % RAMPA.length]}" />
       <text class="lg" x="${x + 18}" y="${y}">${esc(l.name)}</text>
       <text class="pc" x="${x + 200}" y="${y}" text-anchor="end">${pct}%</text>
     </g>`;
@@ -449,9 +470,9 @@ function languages(langs) {
     </style>
   </defs>
   <rect class="card-bg" width="${W}" height="${H}" rx="14" />
-  <circle class="spin" cx="30" cy="34" r="4.5" fill="none" stroke="${T.purple}" stroke-width="2"
+  <circle class="spin" cx="30" cy="34" r="4.5" fill="none" stroke="${T.gold}" stroke-width="2"
           stroke-dasharray="14 8" />
-  <text class="title" x="46" y="39">🎨 Most used languages</text>
+  <text class="title" x="46" y="39">Most used languages</text>
   <g clip-path="url(#barclip)">${segs}</g>
   ${legend}
 </svg>
@@ -501,12 +522,13 @@ function activity(days, updatedAt) {
   <defs>
     ${defsBg()}
     <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${T.purple}" stop-opacity=".45" />
-      <stop offset="100%" stop-color="${T.purple}" stop-opacity="0" />
+      <stop offset="0%" stop-color="${T.gold}" stop-opacity=".45" />
+      <stop offset="100%" stop-color="${T.gold}" stop-opacity="0" />
     </linearGradient>
     <linearGradient id="stroke" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="${T.blue}" />
-      <stop offset="100%" stop-color="${T.purple}" />
+      <stop offset="0%" stop-color="${T.deep}" />
+      <stop offset="45%" stop-color="${T.light}" />
+      <stop offset="100%" stop-color="${T.pale}" />
     </linearGradient>
     <style>${baseStyle()}
       .title { font-size: 21px; font-weight: 700; fill: ${T.text}; }
@@ -525,15 +547,15 @@ function activity(days, updatedAt) {
     </style>
   </defs>
   <rect class="card-bg" width="${W}" height="${H}" rx="14" />
-  <text class="title" x="30" y="39">📈 Last 90 days</text>
+  <text class="title" x="30" y="39">Last 90 days</text>
   <text class="meta" x="${W - 30}" y="39" text-anchor="end">${sum} contributions · busiest day ${busiest.count}</text>
   <path class="fill" d="${area}" fill="url(#area)" />
   <path class="line" d="${path}" />
   <g class="tip">
-    <circle class="ping" cx="${xy[xy.length - 1][0].toFixed(1)}" cy="${xy[xy.length - 1][1].toFixed(1)}" r="4" fill="${T.purple}" />
+    <circle class="ping" cx="${xy[xy.length - 1][0].toFixed(1)}" cy="${xy[xy.length - 1][1].toFixed(1)}" r="4" fill="${T.hot}" />
     <circle cx="${xy[xy.length - 1][0].toFixed(1)}" cy="${xy[xy.length - 1][1].toFixed(1)}" r="4" fill="${T.text}" />
   </g>
-  <text class="stamp" x="30" y="${H - 12}">🔄 ${esc(updatedAt)} · refreshed every 6 hours</text>
+  <text class="stamp" x="30" y="${H - 12}">${esc(updatedAt)} · refreshed every 6 hours</text>
 </svg>
 `;
 }
@@ -631,7 +653,7 @@ function mockData() {
 
 // GitHub profilindeki ad alani sustu harfler icerebiliyor; basligi sabit tutuyoruz.
 const DISPLAY_NAME = "Farhad Yaqoobi";
-const TAGLINE = "Offline-first web apps · vanilla JavaScript · TypeScript bots";
+const TAGLINE = "Four-language AI sites · offline-first apps · bots that answer";
 
 const useMock = process.argv.includes("--mock");
 const login = process.env.GH_LOGIN || "Ferhat-Yasinoglu";
@@ -649,25 +671,24 @@ await mkdir(OUT, { recursive: true });
 
 // Cam kartlar her iki GitHub temasinda ayni gorundugu icin tek surum uretilir.
 {
-  T = KOYU;
-  SAYFA_KOYU = true;
+  T = ALTIN;
   const cards = {
     "header.svg": header({ name: DISPLAY_NAME, tagline: TAGLINE }),
     ...Object.fromEntries(ICONS.map((ic) => [`icon-${ic.slug}.svg`, iconTile(ic)])),
     "footer.svg": footer(),
     "terminal.svg": terminal([
       { tip: "komut", metin: "whoami" },
-      { tip: "cikti", metin: "Farhad Yaqoobi - developer, NRW", renk: T.blue },
+      { tip: "cikti", metin: "Farhad Yaqoobi - developer, NRW", renk: T.pale },
       { tip: "komut", metin: "cat stack.txt" },
-      { tip: "cikti", metin: "JavaScript - TypeScript - Firebase - PWA - Node", renk: T.green },
+      { tip: "cikti", metin: "JavaScript - TypeScript - Node - Firebase - PWA", renk: T.light },
       { tip: "komut", metin: "ls projects/" },
-      { tip: "cikti", metin: "acik-defter/   netstore/   botflow-mcp/", renk: T.purple },
-      { tip: "komut", metin: "cat learning.md" },
-      { tip: "cikti", metin: "Firestore rules - App Check - React", renk: T.cyan },
+      { tip: "cikti", metin: "fy-ajans/  acik-defter/  netstore/  botflow-mcp/", renk: T.hot },
+      { tip: "komut", metin: "cat craft.md" },
+      { tip: "cikti", metin: "SVG drawn by code - no framework - no build step", renk: T.light },
       { tip: "komut", metin: "locale -a" },
-      { tip: "cikti", metin: "de_DE   tr_TR   en_US   fa_AF", renk: T.pink },
+      { tip: "cikti", metin: "de_DE   tr_TR   en_US   fa_AF", renk: T.gold },
       { tip: "komut", metin: "echo $MOTTO" },
-      { tip: "cikti", metin: "Build it to understand it", renk: T.yellow },
+      { tip: "cikti", metin: "Build it to understand it", renk: T.pale },
     ]),
     "languages.svg": languages(data.langs),
     "activity.svg": activity(data.days, stamp),
