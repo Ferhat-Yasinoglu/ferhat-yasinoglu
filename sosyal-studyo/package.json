@@ -1,0 +1,20 @@
+{
+  "name": "sosyal-studyo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Sosyal medya otomasyon stüdyosu: akışlar, kişiler, toplu mesaj, içerik araçları. Çerçevesiz PWA + Cloudflare Worker.",
+  "scripts": {
+    "sun": "node tools/sun.mjs app 8787",
+    "test": "vitest run",
+    "test:izle": "vitest",
+    "kontrol": "node tools/kontrol.mjs",
+    "worker:dev": "wrangler dev --config worker/wrangler.toml",
+    "worker:deploy": "wrangler deploy --config worker/wrangler.toml"
+  },
+  "engines": { "node": ">=22" },
+  "devDependencies": {
+    "fake-indexeddb": "^6.0.0",
+    "vitest": "^5.0.0"
+  }
+}

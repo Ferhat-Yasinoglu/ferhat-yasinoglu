@@ -1,0 +1,311 @@
+[
+  {
+    "name": "spam",
+    "pattern": "(bedava takipci|takipci kazan|geri takip|sub4sub|f4f|follow ?for ?follow|check my (page|profile|bio)|dm for promo|casino|bahis|kripto|crypto|forex|bit\\.ly|t\\.me/|wa\\.me/)",
+    "hide": true
+  },
+  {
+    "name": "sadece-etiket",
+    "pattern": "^\\s*(@[\\w.]+[\\s,]*)+$",
+    "ignore": true,
+    "channels": [
+      "instagram"
+    ]
+  },
+  {
+    "name": "is-tr",
+    "keywords": [
+      "iş teklifi",
+      "site yapar mısın",
+      "sayfa yapar mısın",
+      "birlikte çalış",
+      "proje teklifi",
+      "projem için",
+      "fiyat",
+      "ücret",
+      "kaça yaparsın"
+    ],
+    "reply": "Merhaba {{username}}! Detayları DM'den konuşalım 🙂"
+  },
+  {
+    "name": "is-de",
+    "keywords": [
+      "auftrag",
+      "projektanfrage",
+      "beauftragen",
+      "website bauen",
+      "seite bauen",
+      "zusammenarbeit",
+      "was kostet",
+      "wie viel kostet",
+      "preis"
+    ],
+    "reply": "Hi {{username}}! Schreib mir gern eine DM, dann klären wir die Details 🙂"
+  },
+  {
+    "name": "is-en",
+    "keywords": [
+      "hire you",
+      "freelance",
+      "commission",
+      "build me",
+      "work together",
+      "how much do you charge",
+      "quote",
+      "available for work"
+    ],
+    "reply": "Hey {{username}}! Send me a DM and we'll go through the details 🙂"
+  },
+  {
+    "name": "is-fa",
+    "keywords": [
+      "سفارش",
+      "همکاری",
+      "قیمت",
+      "پروژه دارم"
+    ],
+    "reply": "سلام {{username}}! برای جزئیات لطفاً دایرکت بده 🙂"
+  },
+  {
+    "name": "kaynak-tr",
+    "keywords": [
+      "kaynak kod",
+      "kodu nerede",
+      "kodlar nerede",
+      "kodu paylaş",
+      "açık kaynak mı"
+    ],
+    "reply": "Kodun tamamı GitHub'da: github.com/Ferhat-Yasinoglu/acik-defter 🙂"
+  },
+  {
+    "name": "kaynak-de",
+    "keywords": [
+      "quellcode",
+      "wo ist der code",
+      "gibt es den code",
+      "quelloffen"
+    ],
+    "reply": "Der komplette Code liegt auf GitHub: github.com/Ferhat-Yasinoglu/acik-defter 🙂"
+  },
+  {
+    "name": "kaynak-en",
+    "keywords": [
+      "source code",
+      "where is the code",
+      "is it open source",
+      "share the code"
+    ],
+    "reply": "All the code is on GitHub: github.com/Ferhat-Yasinoglu/acik-defter 🙂"
+  },
+  {
+    "name": "kaynak-fa",
+    "keywords": [
+      "سورس",
+      "کدش کجاست",
+      "کدش رو"
+    ],
+    "reply": "سورس کدش روی گیت‌هاب هست: github.com/Ferhat-Yasinoglu/acik-defter 🙂"
+  },
+  {
+    "name": "kaynak-link",
+    "keywords": [
+      "github",
+      "repo"
+    ],
+    "reply": "github.com/Ferhat-Yasinoglu 🙂"
+  },
+  {
+    "name": "teknoloji-tr",
+    "keywords": [
+      "ne ile yaptın",
+      "neyle yaptın",
+      "hangi teknoloji",
+      "hangi dil",
+      "ne kullandın",
+      "framework ne"
+    ],
+    "reply": "Vanilla JavaScript + Firestore — framework yok, build step yok."
+  },
+  {
+    "name": "teknoloji-de",
+    "keywords": [
+      "womit",
+      "welche technologie",
+      "welches framework",
+      "gebaut mit",
+      "tech stack"
+    ],
+    "reply": "Vanilla JavaScript + Firestore — kein Framework, kein Build-Step."
+  },
+  {
+    "name": "teknoloji-en",
+    "keywords": [
+      "what did you use",
+      "what is it built with",
+      "which framework",
+      "what stack",
+      "tech stack"
+    ],
+    "reply": "Vanilla JavaScript + Firestore — no framework, no build step."
+  },
+  {
+    "name": "teknoloji-fa",
+    "keywords": [
+      "با چی نوشتی",
+      "چه تکنولوژی",
+      "فریم‌ورک",
+      "فریمورک"
+    ],
+    "reply": "جاوااسکریپت خالص + Firestore — بدون فریم‌ورک و بدون build step."
+  },
+  {
+    "name": "ogrenme-tr",
+    "keywords": [
+      "nereden başla",
+      "nasıl öğren",
+      "kaynak öner",
+      "yeni başlayan",
+      "tavsiye verir misin"
+    ],
+    "reply": "HTML, CSS ve saf JavaScript ile başla — notlarımı burada tutuyorum: ferhat-yasinoglu.github.io/acik-defter/"
+  },
+  {
+    "name": "ogrenme-de",
+    "keywords": [
+      "wie fange ich",
+      "womit fange ich",
+      "wie lerne ich",
+      "tipps für anfänger",
+      "womit anfangen"
+    ],
+    "reply": "Fang mit HTML, CSS und purem JavaScript an — meine Notizen: ferhat-yasinoglu.github.io/acik-defter/"
+  },
+  {
+    "name": "ogrenme-en",
+    "keywords": [
+      "how do i start",
+      "how should i start",
+      "where do i start",
+      "how did you learn",
+      "how to learn",
+      "any resources",
+      "tips for beginners"
+    ],
+    "reply": "Start with HTML, CSS and plain JavaScript — my notes live here: ferhat-yasinoglu.github.io/acik-defter/"
+  },
+  {
+    "name": "ogrenme-fa",
+    "keywords": [
+      "از کجا شروع کنم",
+      "چطور یاد بگیرم",
+      "منبع معرفی"
+    ],
+    "reply": "با HTML و CSS و جاوااسکریپت خالص شروع کن — یادداشت‌هایم اینجاست: ferhat-yasinoglu.github.io/acik-defter/"
+  },
+  {
+    "name": "selam-tr",
+    "keywords": [
+      "merhaba",
+      "selam",
+      "iyi günler",
+      "kolay gelsin"
+    ],
+    "reply": "Merhaba {{username}}! Nasıl yardımcı olabilirim? 🙂",
+    "channels": [
+      "whatsapp"
+    ]
+  },
+  {
+    "name": "selam-de",
+    "keywords": [
+      "hallo",
+      "guten tag",
+      "servus"
+    ],
+    "reply": "Hallo {{username}}! Wie kann ich helfen? 🙂",
+    "channels": [
+      "whatsapp"
+    ]
+  },
+  {
+    "name": "selam-en",
+    "keywords": [
+      "hello",
+      "hi there",
+      "good morning"
+    ],
+    "reply": "Hi {{username}}! How can I help? 🙂",
+    "channels": [
+      "whatsapp"
+    ]
+  },
+  {
+    "name": "selam-fa",
+    "keywords": [
+      "سلام",
+      "درود"
+    ],
+    "reply": "سلام {{username}}! چطور می‌توانم کمک کنم؟ 🙂",
+    "channels": [
+      "whatsapp"
+    ]
+  },
+  {
+    "name": "ovgu-tr",
+    "keywords": [
+      "eline sağlık",
+      "emeğine sağlık",
+      "harika",
+      "çok güzel",
+      "tebrikler",
+      "süper olmuş",
+      "bayıldım"
+    ],
+    "reply": [
+      "Çok teşekkürler {{username}} 🤍",
+      "Ne güzel dediniz, teşekkürler 🤍"
+    ]
+  },
+  {
+    "name": "ovgu-de",
+    "keywords": [
+      "sehr schön",
+      "richtig stark",
+      "sehr gut gemacht",
+      "klasse arbeit",
+      "gefällt mir"
+    ],
+    "reply": [
+      "Danke dir, {{username}} 🤍",
+      "Vielen Dank 🤍"
+    ]
+  },
+  {
+    "name": "ovgu-en",
+    "keywords": [
+      "great work",
+      "nice work",
+      "awesome project",
+      "love this",
+      "looks clean",
+      "well done"
+    ],
+    "reply": [
+      "Thank you, {{username}} 🤍",
+      "Appreciate it 🤍"
+    ]
+  },
+  {
+    "name": "ovgu-fa",
+    "keywords": [
+      "عالیه",
+      "خیلی خوبه",
+      "دمت گرم",
+      "قشنگه"
+    ],
+    "reply": [
+      "ممنون {{username}} 🤍",
+      "خیلی ممنون 🤍"
+    ]
+  }
+]

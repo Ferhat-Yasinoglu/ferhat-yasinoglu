@@ -1,0 +1,66 @@
+# Sosyal Stüdyo: PR ve push'ta test; main'e girince GitHub Pages'e yayın.
+# Tek elle adım: Settings → Pages → Build and deployment → Source: "GitHub Actions".
+# Bu seçilmeden `yayinla` işi configure-pages adımında "Not Found" ile düşer; seçince "Re-run" yeter.
+name: Sosyal Studyo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sosyal-studyo/**"
+      - ".github/workflows/sosyal-studyo.yml"
+  pull_request:
+    paths:
+      - "sosyal-studyo/**"
+      - ".github/workflows/sosyal-studyo.yml"
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: sosyal-studyo
+
+jobs:
+  dogrula:
+    name: Testler
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: sosyal-studyo/package-lock.json
+      - run: npm ci
+      - run: npm run kontrol
+      - run: npm test
+
+  yayinla:
+    name: GitHub Pages
+    needs: dogrula
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.dagitim.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/configure-pages@v6
+      # Site kökü: küçük bir yönlendirme sayfası + sosyal-studyo/ altında uygulama.
+      # Sürüm damgası kısa SHA ile yazılır; service worker eski önbelleği buna göre siler.
+      - name: Siteyi hazirla
+        run: |
+          mkdir -p site/sosyal-studyo
+          cp -r app/. site/sosyal-studyo/
+          cp tools/site-index.html site/index.html
+          sed -i "s/__SURUM__/${GITHUB_SHA::7}/g" site/sosyal-studyo/sw.js site/sosyal-studyo/js/uygulama.js
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: sosyal-studyo/site
+      - id: dagitim
+        uses: actions/deploy-pages@v5
