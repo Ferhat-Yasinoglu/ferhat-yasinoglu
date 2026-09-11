@@ -1,0 +1,53 @@
+# Sosyal Stüdyo Worker teşhisi (elle tetiklenir): Worker sağlığı, doktor listesi, koleksiyon sayıları,
+# son günlük kararları ve Telegram webhook durumu. Mesaj metni ya da kişi bilgisi yazmaz, gizli değer yazmaz.
+name: Sosyal Studyo Doktor
+
+on:
+  workflow_dispatch:
+
+jobs:
+  doktor:
+    name: Teshis
+    runs-on: ubuntu-latest
+    if: ${{ vars.WORKER_DAGITIMI_ACIK == '1' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: Worker adresi
+        id: adres
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          alt="$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).result?.subdomain||''))")"
+          [ -n "$alt" ] || { echo "::error::workers.dev alt alan adi bulunamadi"; exit 1; }
+          echo "url=https://sosyal-studyo.$alt.workers.dev" >> "$GITHUB_OUTPUT"
+      - name: Teshis
+        env:
+          URL: ${{ steps.adres.outputs.url }}
+          YONETICI_ANAHTARI: ${{ secrets.YONETICI_ANAHTARI }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          api() { curl -sS -H "Authorization: Bearer $YONETICI_ANAHTARI" -H "X-SS-Sema: 1" "$URL$1"; }
+          echo "== /health"; curl -sS "$URL/health"; echo
+          echo "== /api/durum"; api /api/durum | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);if(!r.ok){console.log(r);return}for(const d of r.veri.doktor)console.log(`${d.durum.padEnd(5)} ${d.ad}: ${d.detay}`);console.log("kota:",JSON.stringify(r.veri.kota),"prova:",r.veri.prova,"surum:",r.veri.surum)})'
+          for kol in hesaplar akislar tetikleyiciler kisiler sohbetler mesajlar gunluk kosular; do
+            api "/api/k/$kol?limit=1000" | KOL=$kol node -e '
+              let s=""; process.stdin.on("data",d=>s+=d).on("end",()=>{
+                const r=JSON.parse(s); if(!r.ok){console.log(process.env.KOL, "HATA", r.mesaj); return}
+                const canli=r.veri.kayitlar.filter(k=>!k.silindi);
+                let ek="";
+                if(process.env.KOL==="hesaplar") ek=canli.map(h=>`${h.kanal}:${h.durum}`).join(", ");
+                if(process.env.KOL==="akislar") ek=canli.map(a=>`${a.kanal||"?"}/${a.durum||"?"}`).join(", ");
+                if(process.env.KOL==="tetikleyiciler") ek=canli.map(t=>t.tip).join(", ");
+                if(process.env.KOL==="gunluk") ek=canli.slice(-5).map(g=>`${(g.zaman||"").slice(11,19)} ${g.kanal} ${g.olay_tipi} → ${g.karar?.tur||g.karar?.karar||JSON.stringify(g.karar||{}).slice(0,60)}`).join(" | ");
+                if(process.env.KOL==="mesajlar") ek=canli.slice(-5).map(m=>`${(m.zaman||m.olusturuldu||"").slice(11,19)} ${m.yon}`).join(", ");
+                console.log(`${process.env.KOL}: ${canli.length}${ek?"  ["+ek+"]":""}`);
+              })'
+          done
+          if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
+            echo "== Telegram getWebhookInfo"
+            curl -sS "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getWebhookInfo" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s).result||{};console.log("url:",r.url,"| bekleyen:",r.pending_update_count,"| son hata:",r.last_error_date?new Date(r.last_error_date*1000).toISOString()+" "+r.last_error_message:"yok","| izinli:",JSON.stringify(r.allowed_updates||[]))})'
+          fi
