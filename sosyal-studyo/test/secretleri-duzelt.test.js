@@ -52,4 +52,22 @@ describe('secretleri-duzelt', () => {
     expect(cikti).toEqual([{ ad: 'C', deger: 'GIZLI-DEGER-9f3a' }]);
     expect(satirlar.join('\n')).not.toContain('GIZLI-DEGER');
   });
+
+  it('açıklama metni yapıştırılmışsa sablon der', async () => {
+    for (const m of ['1. adımdaki token', '2. adimdaki bot token', 'buraya yapıştır', '<token>']) {
+      expect((await duzelt({ ad: 'T', deger: m, dogrula: async () => true })).durum).toBe('sablon');
+    }
+  });
+
+  it('biçime uymayan değer bicim der, uyan aday sağlayıcıya sorulur', async () => {
+    const hex32 = /^[0-9a-f]{32}$/;
+    expect((await duzelt({ ad: 'H', deger: 'abc', dogrula: async () => true, bicim: hex32 })).durum).toBe('bicim');
+    const sonuc = await duzelt({ ad: 'H', deger: '0123456789abcdef0123456789abcdef', dogrula: async () => true, bicim: hex32 });
+    expect(sonuc.durum).toBe('ok');
+    const tg = /^\d{8,12}:[A-Za-z0-9_-]{30,}$/;
+    const bozuk = '123456789:AAHıxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    const s2 = await duzelt({ ad: 'TG', deger: bozuk, dogrula: async (v) => v.includes(':AAHI'), bicim: tg });
+    expect(s2.durum).toBe('duzeltildi');
+    expect(s2.deger).toBe(bozuk.replace('ı', 'I'));
+  });
 });
