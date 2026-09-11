@@ -7,9 +7,52 @@ D1'de 100.000 satır yazma (≈ 15–20 bin gelen mesaj/gün).
 Neden Worker: ilk sürüm sürekli açık bir sunucu istiyordu, o yüzden silindi. Worker
 uyur, mesaj gelince uyanır; makine yok, fatura yok. Anahtarlar tarayıcıya hiç inmez.
 
-## Kurulum (bir kez, ~15 dakika)
+## Kurulum: GitHub Actions ile (önerilen, yalnız tarayıcı)
 
-Gerekenler: ücretsiz Cloudflare hesabı, bilgisayarda Node.js 22+.
+Cloudflare tarafındaki her şeyi `.github/workflows/sosyal-studyo-worker.yml` yapar: D1
+veritabanını oluşturur, göçleri uygular, Worker'ı dağıtır, secret'ları GitHub'dan Cloudflare'e
+taşır, Telegram token'ı varsa webhook'u kurar, sağlık kontrolü yapıp adresi iş özetine yazar.
+Senin yapacağın üç şey var; hepsi tarayıcıda, hepsi bir kez.
+
+**1. Cloudflare (ücretsiz hesap)**
+
+- https://dash.cloudflare.com/sign-up → hesap aç (kart istemez).
+- Sol menüden **Workers & Pages** sayfasını bir kez aç; alt alan adı (`xxx.workers.dev`) seçmeni
+  isterse seç. Sağ tarafta **Account ID** yazar, kopyala.
+- https://dash.cloudflare.com/profile/api-tokens → **Create Token** → **Edit Cloudflare Workers**
+  şablonu → **Use template**. Permissions'a iki satır ekle: **Account · D1 · Edit** ve
+  **Account · Workers AI · Edit**. Continue → Create Token → token'ı kopyala (bir daha gösterilmez).
+
+**2. Telegram (isteğe bağlı, 2 dakika)**
+
+- Telegram'da **@BotFather** → `/newbot` → ad ve kullanıcı adı ver → verdiği token'ı kopyala.
+
+**3. GitHub → depo → Settings → Secrets and variables → Actions**
+
+| Sekme | Ad | Değer |
+|---|---|---|
+| Secrets | `CLOUDFLARE_API_TOKEN` | 1. adımdaki token |
+| Secrets | `CLOUDFLARE_ACCOUNT_ID` | 1. adımdaki Account ID |
+| Secrets | `YONETICI_ANAHTARI` | en az 32 karakterlik rastgele şifre; aynısını uygulamaya gireceksin |
+| Secrets | `TELEGRAM_BOT_TOKEN` | 2. adımdaki token (yoksa boş bırak) |
+| Variables | `WORKER_DAGITIMI_ACIK` | `1` |
+
+Sonra **Actions → Sosyal Studyo Worker → Run workflow**. 1–2 dakika içinde iş özetinde
+Worker adresi görünür: `https://sosyal-studyo.<altalan>.workers.dev`. Uygulamada
+**Ayarlar → Worker**'a bu adresi ve `YONETICI_ANAHTARI` değerini gir, "Bağlan / doğrula".
+Doktor listesi D1, PROVA, Telegram, Meta, AI ve cron durumunu gösterir.
+
+Telegram token'ı verdiysen webhook kendiliğinden kurulmuştur: botuna `/start` ya da `fiyat`
+yaz; Sohbetler'de görünür, karar günlüğe düşer ama PROVA'da mesaj gitmez.
+
+Diğer secret'lar da aynı yere eklenir, sonraki dağıtımda Cloudflare'e taşınır:
+`META_APP_SECRET`, `META_VERIFY_TOKEN`, `IG_ACCESS_TOKEN`, `IG_USER_ID`, `WA_ACCESS_TOKEN`,
+`WA_PHONE_NUMBER_ID`, `ANTHROPIC_API_KEY`. `TELEGRAM_WEBHOOK_SECRET` ayrıca gerekmez; yönetici
+anahtarından türetilir. `worker/**` altına her push yeniden dağıtır; secret'lar korunur.
+
+## Kurulum: bilgisayardan (alternatif)
+
+Gerekenler: ücretsiz Cloudflare hesabı, Node.js 22+. Depo kökünde `npm ci` sonrası:
 
 ```bash
 cd sosyal-studyo/worker
@@ -17,36 +60,23 @@ npx wrangler login                              # tarayıcıda Cloudflare'e giri
 npx wrangler d1 create sosyal-studyo            # çıkan database_id'yi wrangler.toml'daki D1_ID_BURAYA yerine yaz
 npx wrangler d1 migrations apply sosyal-studyo --remote
 npx wrangler secret put YONETICI_ANAHTARI       # ≥32 rastgele karakter: openssl rand -hex 32
+npx wrangler secret put TELEGRAM_BOT_TOKEN      # @BotFather /newbot çıktısı
+npx wrangler secret put TELEGRAM_WEBHOOK_SECRET # kendin uydur: openssl rand -hex 16
 npx wrangler deploy
 ```
 
-Son komut bir adres verir: `https://sosyal-studyo.<hesap>.workers.dev`. Uygulamada
-**Ayarlar → Worker**'a bu adresi ve yönetici anahtarını gir, "Bağlan / doğrula". Doktor listesi
-D1, PROVA, Telegram, Meta, AI ve cron durumunu gösterir.
+Sonra uygulamada **Ayarlar → Kanallar → Telegram → Kurulum → "Webhook'u kur"**.
 
 `ALLOWED_ORIGINS` (wrangler.toml) uygulamanın adresini içermeli; yerel geliştirmede
 `worker/.dev.vars` dosyasına `ALLOWED_ORIGINS=http://localhost:8787` yaz (gitignore'da).
 
-## Telegram (5 dakika)
-
-```bash
-npx wrangler secret put TELEGRAM_BOT_TOKEN        # @BotFather /newbot çıktısı
-npx wrangler secret put TELEGRAM_WEBHOOK_SECRET   # kendin uydur: openssl rand -hex 16
-```
-
-Uygulamada **Ayarlar → Kanallar → Telegram → Kurulum → "Webhook'u kur"**. Worker `setWebhook`
-çağırır, hesabı PROVA olarak kaydeder. Botuna `/start` ya da `fiyat` yaz; Sohbetler'de görünür,
-karar günlüğe düşer ama PROVA'da mesaj gitmez.
-
 ## Instagram / WhatsApp (Meta)
 
-```bash
-npx wrangler secret put META_APP_SECRET
-npx wrangler secret put META_VERIFY_TOKEN         # kendin uydur; Meta paneline aynısını yaz
-npx wrangler secret put IG_ACCESS_TOKEN           # 60 günlük uzun ömürlü token
-npx wrangler secret put WA_ACCESS_TOKEN           # kalıcısı için sistem kullanıcısı
-npx wrangler secret put WA_PHONE_NUMBER_ID
-```
+Meta tarafı Telegram gibi anında değil: bir Meta geliştirici uygulaması, işletme hesabı ve
+mesajlaşma izinleri için Meta onayı gerekir (günler sürebilir). Gerekli secret'lar:
+`META_APP_SECRET`, `META_VERIFY_TOKEN` (kendin uydur; Meta paneline aynısını yaz),
+`IG_ACCESS_TOKEN` (60 günlük uzun ömürlü token), `IG_USER_ID`, `WA_ACCESS_TOKEN` (kalıcısı
+için sistem kullanıcısı), `WA_PHONE_NUMBER_ID`.
 
 Meta panelinde webhook adresi `https://<worker>/meta/webhook`, alanlar `messages` + `comments`.
 Adım adım rehber uygulamada **Ayarlar → Kurulum → Instagram**. Yorum webhook'u onaysız
@@ -57,7 +87,8 @@ gönderilerin yorumlarını çeker.
 
 Worker `PROVA = "1"` ile gelir: hesap "canli" olsa bile hiçbir dış gönderim yapılmaz. İki adım:
 
-1. `wrangler.toml` → `PROVA = "0"` → `npx wrangler deploy`
+1. GitHub → Variables → `SS_PROVA` = `0` → Actions'tan workflow'u yeniden çalıştır
+   (bilgisayardan kuruyorsan `wrangler.toml` → `PROVA = "0"` → `npx wrangler deploy`)
 2. Uygulamada Ayarlar → Kanallar → "Canlıya al" (CANLI yazarak onay)
 
 İkisi birden olmadan mesaj gitmez. Geri almak için ikisinden biri yeter.
@@ -93,6 +124,7 @@ uyuşmazsa 409. 5 yanlış anahtar → 15 dakika 429.
 - Aynı olay iki kez gelirse (Meta 36 saat yeniden dener) `gelen_kutusu` tekilleştirir.
 - Origin kimlik değildir; frenler anahtar, oran sınırı ve Cloudflare/Anthropic harcama tavanlarıdır.
 - Kendi mesajlarına (echo) ve WhatsApp teslimat bildirimlerine (statuses) cevap yazılmaz.
+- Secret'lar yalnızca GitHub Secrets ve Cloudflare'de durur; toml'a, koda, yedeğe, tarayıcıya girmez.
 
 ## Testler
 
@@ -100,10 +132,3 @@ uyuşmazsa 409. 5 yanlış anahtar → 15 dakika 429.
 npm test                # kök: uygulama + worker testleri (worker D1'i node:sqlite ile taklit eder)
 npx wrangler dev        # yerel Worker (D1 yerel kopya, .dev.vars)
 ```
-
-## Dağıtım (GitHub Actions, isteğe bağlı)
-
-`.github/workflows/sosyal-studyo-worker.yml` main'e `worker/**` push'unda göçleri uygular ve
-dağıtır. GitHub'a iki secret: `CLOUDFLARE_API_TOKEN` (profilden "Edit Cloudflare Workers"
-şablonu + D1 Edit) ve `CLOUDFLARE_ACCOUNT_ID`. Worker'ın kendi secret'ları GitHub'a konmaz;
-yerelde `wrangler secret put` ile girilir, deploy onları silmez.
