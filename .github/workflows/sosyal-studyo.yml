@@ -1,6 +1,6 @@
 # Sosyal Stüdyo: PR ve push'ta test; main'e girince GitHub Pages'e yayın.
-# Tek elle adım: Settings → Pages → Build and deployment → Source: "GitHub Actions".
-# Bu seçilmeden `yayinla` işi configure-pages adımında "Not Found" ile düşer; seçince "Re-run" yeter.
+# configure-pages `enablement: true` ile Pages'i kendisi açmayı dener. Buna izin verilmezse tek elle adım:
+# Settings → Pages → Build and deployment → Source: "GitHub Actions"; sonra bu workflow'da "Re-run" yeter.
 name: Sosyal Studyo
 
 on:
@@ -51,6 +51,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/configure-pages@v6
+        with:
+          enablement: true
       # Site kökü: küçük bir yönlendirme sayfası + sosyal-studyo/ altında uygulama.
       # Sürüm damgası kısa SHA ile yazılır; service worker eski önbelleği buna göre siler.
       - name: Siteyi hazirla
