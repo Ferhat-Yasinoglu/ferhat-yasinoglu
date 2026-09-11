@@ -11,6 +11,16 @@ describe('/health ve fail-closed', () => {
     const h = await worker.fetch(istek('/health'), env, ctx); expect(h.status).toBe(503); expect((await h.json()).eksik.join()).toMatch(/YONETICI/);
     expect((await worker.fetch(istek('/api/durum'), env, ctx)).status).toBe(503);
   });
+  it('CORS ön kontrolü: /health ve /api için OPTIONS 204 ve X-SS-Sema başlığına izin', async () => {
+    const env = ortam();
+    const on = (yol) => new Request('https://w.test' + yol, { method: 'OPTIONS', headers: { Origin: 'https://ferhat-yasinoglu.github.io', 'Access-Control-Request-Method': 'GET', 'Access-Control-Request-Headers': 'x-ss-sema,authorization' } });
+    for (const yol of ['/health', '/api/durum']) {
+      const r = await worker.fetch(on(yol), env, ctx);
+      expect(r.status).toBe(204);
+      expect(r.headers.get('Access-Control-Allow-Headers')).toMatch(/X-SS-Sema/);
+      expect(r.headers.get('Access-Control-Allow-Origin')).toBeTruthy();
+    }
+  });
   it('tam yapılandırmada health 200', async () => { const r = await worker.fetch(istek('/health'), ortam(), ctx); expect(r.status).toBe(200); expect((await r.json()).sema).toBe(1); });
 });
 

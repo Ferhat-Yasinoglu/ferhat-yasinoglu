@@ -49,7 +49,7 @@ export default {
         if (!/^https:\/\//.test(url)) { ctx.hata(t('worker.https', 'Adres https ile başlamalı')); return; }
         sonuc.replaceChildren(el('p', { class: 'kart__alt' }, '…'));
         try {
-          const r = await fetch(url + '/health', { headers: { 'X-SS-Sema': '1' } }); const j = await r.json();
+          const r = await fetch(url + '/health'); const j = await r.json();
           const anahtarDeger = anahtar.value.trim() || (await depo.gizli('yonetici')) || '';
           const d = await fetch(url + '/api/durum', { headers: { Authorization: 'Bearer ' + anahtarDeger, 'X-SS-Sema': '1' } });
           if (d.status === 401) throw new Error(t('worker.401', 'Yönetici anahtarı yanlış (401).'));
