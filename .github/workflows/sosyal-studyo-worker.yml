@@ -127,8 +127,10 @@ jobs:
         env:
           URL: ${{ steps.dagit.outputs.url }}
         run: |
-          saglik="$(curl -fsS "$URL/health" || echo '{"ok":false}')"
-          echo "$saglik"
+          kod="$(curl -sS -o saglik.json -w '%{http_code}' "$URL/health" || echo 000)"
+          saglik="$(cat saglik.json 2>/dev/null | head -c 2000)"; rm -f saglik.json
+          echo "HTTP $kod"; echo "$saglik"
+          [ "$kod" = 200 ] || echo "::warning::/health $kod dondu: $saglik"
           {
             echo "## Sosyal Stüdyo Worker"
             echo

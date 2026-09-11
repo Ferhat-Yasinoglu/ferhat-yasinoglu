@@ -17,42 +17,13 @@ import { saglayici } from './ai.js';
 import { SEMA_SURUMU } from '../../app/js/paylasilan/sema/surum.js';
 
 export default {
+  // Her istek tek bir try/catch içinden geçer: yakalanmayan hata Cloudflare'in genel 1101 sayfası yerine
+  // JSON (hata: 'sunucu', mesaj, yol) döner ve console.error ile günlüğe düşer. Gizli değer içermez.
   async fetch(istek, env, ctx) {
-    const url = new URL(istek.url);
-    const eksik = yapilandirmaEksikleri(env);
-    if (url.pathname === '/health') return json({ ok: eksik.length === 0, surum: env.SURUM || 'dev', sema: SEMA_SURUMU, prova: String(env.PROVA || '1') === '1', saglayici: saglayici(env), eksik }, eksik.length ? 503 : 200, { 'Access-Control-Allow-Origin': '*' });
-    if (url.pathname.startsWith('/api/')) {
-      if (eksik.length) return hata('yapilandirma', eksik.join('; '), 503, corsBasliklari(env, istek.headers.get('Origin') || ''));
-      return apiIsle(env, new Veritabani(env.DB), istek, url, { ctx });
+    try { return await isle(istek, env, ctx); } catch (e) {
+      console.error('fetch', e);
+      return json({ ok: false, hata: 'sunucu', mesaj: String((e && e.message) || e), yol: new URL(istek.url).pathname }, 500, { 'Access-Control-Allow-Origin': '*' });
     }
-    if (eksik.length && !url.pathname.startsWith('/meta/webhook')) return json({ ok: false, hata: 'yapilandirma' }, 503);
-
-    if (url.pathname === '/meta/webhook' && istek.method === 'GET') {
-      if (env.META_VERIFY_TOKEN && url.searchParams.get('hub.mode') === 'subscribe' && url.searchParams.get('hub.verify_token') === env.META_VERIFY_TOKEN) return new Response(url.searchParams.get('hub.challenge') || '', { status: 200 });
-      return new Response('reddedildi', { status: 403 });
-    }
-    if (url.pathname === '/meta/webhook' && istek.method === 'POST') {
-      const ham = await istek.text();
-      if (eksik.length || !(await metaImzaGecerli(env, ham, istek.headers.get('X-Hub-Signature-256')))) return new Response('imza', { status: 401 });
-      let govde; try { govde = JSON.parse(ham); } catch { return new Response('json', { status: 400 }); }
-      const db = new Veritabani(env.DB);
-      const hesaplar = await db.listele('hesaplar');
-      const olaylar = meta.olaylaraCevir(govde, hesaplar);
-      // Meta 200'ü hızlı ister; iş waitUntil'da sürer. Başarısız olay gelen kutusunda 'pending' kalır, cron yeniden dener.
-      ctx.waitUntil((async () => { for (const o of olaylar) { try { await olayIsle(env, db, o, { hesaplar }); } catch (e) { console.error('meta olay', e); } } })());
-      return new Response('ok', { status: 200 });
-    }
-    if (url.pathname === '/tg/webhook' && istek.method === 'POST') {
-      if (!telegramGizliGecerli(env, istek)) return new Response('gizli', { status: 401 });
-      let update; try { update = await istek.json(); } catch { return new Response('json', { status: 400 }); }
-      const db = new Veritabani(env.DB);
-      const hesaplar = await db.listele('hesaplar');
-      const hesap = hesaplar.find((h) => h.kanal === 'telegram');
-      const olay = tg.olayaCevir(update, hesap?.id);
-      if (olay) ctx.waitUntil(olayIsle(env, db, olay, { hesaplar }).catch((e) => console.error('tg olay', e)));
-      return new Response('ok', { status: 200 });
-    }
-    return json({ ok: false, hata: 'yol' }, 404);
   },
 
   async scheduled(olay, env, ctx) {
@@ -70,3 +41,41 @@ export default {
     await db.metaKaydet('son_cron', simdi() + ' ' + JSON.stringify(ozet));
   },
 };
+
+async function isle(istek, env, ctx) {
+  const url = new URL(istek.url);
+  const eksik = yapilandirmaEksikleri(env);
+  if (url.pathname === '/health') return json({ ok: eksik.length === 0, surum: env.SURUM || 'dev', sema: SEMA_SURUMU, prova: String(env.PROVA || '1') === '1', saglayici: saglayici(env), eksik }, eksik.length ? 503 : 200, { 'Access-Control-Allow-Origin': '*' });
+  if (url.pathname.startsWith('/api/')) {
+    if (eksik.length) return hata('yapilandirma', eksik.join('; '), 503, corsBasliklari(env, istek.headers.get('Origin') || ''));
+    return apiIsle(env, new Veritabani(env.DB), istek, url, { ctx });
+  }
+  if (eksik.length && !url.pathname.startsWith('/meta/webhook')) return json({ ok: false, hata: 'yapilandirma' }, 503);
+
+  if (url.pathname === '/meta/webhook' && istek.method === 'GET') {
+    if (env.META_VERIFY_TOKEN && url.searchParams.get('hub.mode') === 'subscribe' && url.searchParams.get('hub.verify_token') === env.META_VERIFY_TOKEN) return new Response(url.searchParams.get('hub.challenge') || '', { status: 200 });
+    return new Response('reddedildi', { status: 403 });
+  }
+  if (url.pathname === '/meta/webhook' && istek.method === 'POST') {
+    const ham = await istek.text();
+    if (eksik.length || !(await metaImzaGecerli(env, ham, istek.headers.get('X-Hub-Signature-256')))) return new Response('imza', { status: 401 });
+    let govde; try { govde = JSON.parse(ham); } catch { return new Response('json', { status: 400 }); }
+    const db = new Veritabani(env.DB);
+    const hesaplar = await db.listele('hesaplar');
+    const olaylar = meta.olaylaraCevir(govde, hesaplar);
+    // Meta 200'ü hızlı ister; iş waitUntil'da sürer. Başarısız olay gelen kutusunda 'pending' kalır, cron yeniden dener.
+    ctx.waitUntil((async () => { for (const o of olaylar) { try { await olayIsle(env, db, o, { hesaplar }); } catch (e) { console.error('meta olay', e); } } })());
+    return new Response('ok', { status: 200 });
+  }
+  if (url.pathname === '/tg/webhook' && istek.method === 'POST') {
+    if (!telegramGizliGecerli(env, istek)) return new Response('gizli', { status: 401 });
+    let update; try { update = await istek.json(); } catch { return new Response('json', { status: 400 }); }
+    const db = new Veritabani(env.DB);
+    const hesaplar = await db.listele('hesaplar');
+    const hesap = hesaplar.find((h) => h.kanal === 'telegram');
+    const olay = tg.olayaCevir(update, hesap?.id);
+    if (olay) ctx.waitUntil(olayIsle(env, db, olay, { hesaplar }).catch((e) => console.error('tg olay', e)));
+    return new Response('ok', { status: 200 });
+  }
+  return json({ ok: false, hata: 'yol' }, 404);
+}
