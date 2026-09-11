@@ -4,12 +4,20 @@
 // Yerel deneme icin: node cards.mjs --mock
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
-const OUT = join(ROOT, "assets");
+
+// Varsayilan hedef depodaki assets/. CI'da ornek veriyle deneme yaparken
+// --out ile gecici bir klasore yazilir, boylece gercek kartlar bozulmaz.
+const outFlag = process.argv.indexOf("--out");
+const outArg = outFlag > -1 ? process.argv[outFlag + 1] : null;
+if (outFlag > -1 && (!outArg || outArg.startsWith("--"))) {
+  throw new Error("--out bir klasor yolu bekliyor");
+}
+const OUT = outArg ? resolve(outArg) : join(ROOT, "assets");
 
 // simple-icons'tan bir kez cikarilmis marka logolari (24x24 viewBox yollari).
 const ICONS = JSON.parse(await readFile(join(HERE, "icons.json"), "utf8"));
@@ -302,23 +310,46 @@ function terminal(satirlar) {
 }
 
 // ------------------------------------------------------------------ araclar
+
+const kanallar = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+
+// Algilanan parlaklik (WCAG bagil luminans): bir rengin zemine gore
+// okunup okunmadigina karar verirken kullaniliyor.
+function luminans(hex) {
+  const lin = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  const [r, g, b] = kanallar(hex).map((c) => lin(c / 255));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+const karistir = (hex, hedef, oran) => {
+  const h = kanallar(hedef);
+  return (
+    "#" +
+    kanallar(hex)
+      .map((c, i) => Math.round(c + (h[i] - c) * oran).toString(16).padStart(2, "0"))
+      .join("")
+  );
+};
+
 // Marka renkleri zemine gore okunmayabiliyor (GitHub siyah, JavaScript sari).
 // Cok koyu olani acik, cok acik olani koyu tarafa cekiyoruz.
 function fitColor(hex, zeminKoyu = SAYFA_KOYU) {
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
-  const lin = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-  const lum = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
-  const mix = (hedef, oran) => {
-    const h = [1, 3, 5].map((i) => parseInt(hedef.slice(i, i + 2), 16));
-    const s = [r, g, b].map((c) => c * 255);
-    return (
-      "#" +
-      s.map((c, i) => Math.round(c + (h[i] - c) * oran).toString(16).padStart(2, "0")).join("")
-    );
-  };
-  if (zeminKoyu && lum < 0.16) return mix("#ffffff", 0.86);
-  if (!zeminKoyu && lum > 0.62) return mix("#000000", 0.3);
+  const lum = luminans(hex);
+  if (zeminKoyu && lum < 0.16) return karistir(hex, "#ffffff", 0.86);
+  if (!zeminKoyu && lum > 0.62) return karistir(hex, "#000000", 0.3);
   return hex;
+}
+
+// Dil renkleri tek bir cubukta yan yana duruyor; hepsini beyaza cekmek
+// hepsini birbirine benzetirdi. Bu yuzden yalnizca koyulari, koyulari
+// oraninda aciyoruz: CSS'in moru cam zeminde okunur hale geliyor ama mor
+// kaliyor. Renk hic gelmediyse kartin kisik tonuna dusuyoruz.
+function dilRengi(c) {
+  const hex = /^#[0-9a-fA-F]{6}$/.test(c || "") ? c : T.muted;
+  const esik = 0.22;
+  const lum = luminans(hex);
+  if (lum >= esik) return hex;
+  return karistir(hex, "#ffffff", Math.min(0.72, ((esik - lum) / esik) * 0.8));
 }
 
 // Her logoya kendi hareketi: hepsi ayni ritimde sallanirsa cansiz duruyor.
@@ -412,7 +443,7 @@ function languages(langs) {
       const w = Math.max(2, (l.size / total) * barW);
       const seg = `
     <rect x="${cursor.toFixed(1)}" y="70" width="${w.toFixed(1)}" height="12"
-          fill="${l.color}" class="seg" style="animation-delay:${(0.15 + i * 0.11).toFixed(2)}s" />`;
+          fill="${dilRengi(l.color)}" class="seg" style="animation-delay:${(0.15 + i * 0.11).toFixed(2)}s" />`;
       cursor += w;
       return seg;
     })
@@ -427,7 +458,7 @@ function languages(langs) {
       const pct = ((l.size / total) * 100).toFixed(1);
       return `
     <g class="rise" style="animation-delay:${(0.35 + i * 0.08).toFixed(2)}s">
-      <circle cx="${x + 5}" cy="${y - 4}" r="5" fill="${l.color}" />
+      <circle cx="${x + 5}" cy="${y - 4}" r="5" fill="${dilRengi(l.color)}" />
       <text class="lg" x="${x + 18}" y="${y}">${esc(l.name)}</text>
       <text class="pc" x="${x + 200}" y="${y}" text-anchor="end">${pct}%</text>
     </g>`;
@@ -458,6 +489,70 @@ function languages(langs) {
 `;
 }
 
+// ------------------------------------------------------------- sayilar
+
+// Depo, katki ve yildiz sayilari zaten cekiliyordu ama hicbir kartta
+// gorunmuyordu. Alti rakam, ucer ucer iki sira. Genislik ve yukseklik
+// languages.svg ile ayni: README'de yan yana konunca ayni boyda duruyorlar.
+function stats(d) {
+  const W = 480;
+  const H = 190;
+  const kutuW = 136;
+  const kutuH = 52;
+  const bosluk = 12;
+  const solKenar = (W - (3 * kutuW + 2 * bosluk)) / 2;
+
+  // "1y" olanlar GitHub'in son bir yillik katki penceresinden geliyor;
+  // digerleri hesabin o anki toplami.
+  const hucreler = [
+    { deger: d.totalContributions, etiket: "contributions · 1y", renk: T.green },
+    { deger: d.commits, etiket: "commits · 1y", renk: T.blue },
+    { deger: d.prs, etiket: "pull requests · 1y", renk: T.purple },
+    { deger: d.repos, etiket: "public repos", renk: T.cyan },
+    { deger: d.stars, etiket: "stars earned", renk: T.yellow },
+    { deger: d.followers, etiket: "followers", renk: T.pink },
+  ];
+
+  const kutular = hucreler
+    .map((h, i) => {
+      const x = solKenar + (i % 3) * (kutuW + bosluk);
+      const y = 64 + Math.floor(i / 3) * (kutuH + 10);
+      const gecikme = (0.12 + i * 0.07).toFixed(2);
+      return `
+    <g class="rise" style="animation-delay:${gecikme}s">
+      <rect x="${x}" y="${y}" width="${kutuW}" height="${kutuH}" rx="12" fill="${h.renk}" fill-opacity=".09" />
+      <rect class="cizgi" x="${x}" y="${y + 12}" width="3" height="${kutuH - 24}" rx="1.5" fill="${h.renk}"
+            style="animation-delay:${gecikme}s" />
+      <text class="num" x="${x + 16}" y="${y + 28}" fill="${h.renk}">${short(h.deger)}</text>
+      <text class="etk" x="${x + 16}" y="${y + 44}">${esc(h.etiket)}</text>
+    </g>`;
+    })
+    .join("");
+
+  const ozet = hucreler.map((h) => `${h.deger} ${h.etiket.replace(" · 1y", "")}`).join(", ");
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="By the numbers: ${esc(ozet)}">
+  <defs>
+    ${defsBg()}
+    <style>${baseStyle()}
+      .title { font-size: 16px; font-weight: 700; fill: ${T.text}; }
+      .num { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
+      .etk { font-size: 11px; fill: ${T.muted}; letter-spacing: .3px; }
+      .cizgi { transform-box: fill-box; transform-origin: bottom;
+               animation: cikar .6s cubic-bezier(.2,.7,.3,1) backwards; }
+      @keyframes cikar { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+      .puls { animation: puls 3.2s ease-in-out infinite; }
+      @keyframes puls { 0%,100% { r: 4; opacity: .55; } 50% { r: 6.5; opacity: 1; } }
+    </style>
+  </defs>
+  <rect class="card-bg" width="${W}" height="${H}" rx="14" />
+  <circle class="puls" cx="30" cy="34" r="4" fill="none" stroke="${T.green}" stroke-width="2" />
+  <text class="title" x="46" y="39">🧮 By the numbers</text>
+  ${kutular}
+</svg>
+`;
+}
+
 // --------------------------------------------------------------- hareket
 
 function activity(days, updatedAt) {
@@ -467,7 +562,11 @@ function activity(days, updatedAt) {
   const padR = 24;
   const top = 58;
   const bottom = H - 34;
-  const son90 = days.slice(-90);
+  // Yeni bir hesapta ya da API bos donerse dizi bos kalabiliyor; kart o
+  // durumda cizim yaparken patlamasin diye duz bir cizgiye duserek uretiliyor.
+  const son90 = days.length
+    ? days.slice(-90)
+    : Array.from({ length: 90 }, () => ({ date: "", count: 0 }));
 
   // Gunleri ikiserli kovalara topluyoruz: egri ayni kaliyor ama yol verisi
   // ucte birine iniyor. Buyuk "d" niteligi tarayicida gec cizilmeye yol aciyor.
@@ -533,7 +632,7 @@ function activity(days, updatedAt) {
     <circle class="ping" cx="${xy[xy.length - 1][0].toFixed(1)}" cy="${xy[xy.length - 1][1].toFixed(1)}" r="4" fill="${T.purple}" />
     <circle cx="${xy[xy.length - 1][0].toFixed(1)}" cy="${xy[xy.length - 1][1].toFixed(1)}" r="4" fill="${T.text}" />
   </g>
-  <text class="stamp" x="30" y="${H - 12}">🔄 ${esc(updatedAt)} · refreshed every 6 hours</text>
+  <text class="stamp" x="30" y="${H - 12}">🔄 updated <tspan class="tarih">${esc(updatedAt)}</tspan> · checked every 6 hours</text>
 </svg>
 `;
 }
@@ -565,13 +664,40 @@ const QUERY = `query($login: String!) {
   }
 }`;
 
+const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// GitHub API ara sira 5xx ya da 429 donuyor. Alti saatte bir calisan bir is
+// icin tek denemede pes etmenin anlami yok: gecici hatalarda artan araliklarla
+// yeniden deniyor, kalici olanlarda (401, 404) hemen biraktiriyoruz.
+async function apiFetch(url, init, deneme = 4) {
+  for (let i = 1; ; i++) {
+    let res = null;
+    let hata = null;
+    try {
+      res = await fetch(url, init);
+    } catch (e) {
+      hata = e;
+    }
+    if (res?.ok) return res;
+
+    const gecici = !res || res.status === 429 || res.status >= 500;
+    if (!gecici || i === deneme) {
+      throw hata ?? new Error(`GitHub API ${res.status}: ${await res.text()}`);
+    }
+    const ms = 2 ** i * 1000;
+    console.warn(
+      `GitHub API ${res ? res.status : hata.message}; ${ms / 1000}s sonra yeniden (${i}/${deneme - 1})`
+    );
+    await bekle(ms);
+  }
+}
+
 async function fetchData(login, token) {
-  const res = await fetch("https://api.github.com/graphql", {
+  const res = await apiFetch("https://api.github.com/graphql", {
     method: "POST",
     headers: { Authorization: `bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ query: QUERY, variables: { login } }),
   });
-  if (!res.ok) throw new Error(`GitHub API ${res.status}: ${await res.text()}`);
   const json = await res.json();
   if (json.errors) throw new Error(JSON.stringify(json.errors));
 
@@ -645,6 +771,22 @@ const stamp = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/Berlin",
 }).format(new Date());
 
+// Kartlar her calismada bastan uretiliyor ama icerikleri cogu zaman ayni
+// kaliyor; yalnizca zaman damgasi yuzunden commit atmak depo gecmisini ve
+// kartin kendi gosterdigi katki grafigini sisiriyordu. Bu yuzden dosyaya
+// ancak tarih disinda bir sey degistiyse dokunuyoruz. Karsilastirmadan
+// yalnizca tarihin kendisi cikariliyor: damganin metni ya da yerlesimi
+// degisirse kart yine de yenilensin.
+const tarihsiz = (svg) => svg.replace(/<tspan class="tarih">[^<]*<\/tspan>/, "");
+
+async function yazDegistiyse(file, svg) {
+  const yol = join(OUT, file);
+  const onceki = await readFile(yol, "utf8").catch(() => null);
+  if (onceki !== null && tarihsiz(onceki) === tarihsiz(svg)) return false;
+  await writeFile(yol, svg, "utf8");
+  return true;
+}
+
 await mkdir(OUT, { recursive: true });
 
 // Cam kartlar her iki GitHub temasinda ayni gorundugu icin tek surum uretilir.
@@ -670,10 +812,16 @@ await mkdir(OUT, { recursive: true });
       { tip: "cikti", metin: "Build it to understand it", renk: T.yellow },
     ]),
     "languages.svg": languages(data.langs),
+    "stats.svg": stats(data),
     "activity.svg": activity(data.days, stamp),
   };
+
+  let degisen = 0;
   for (const [file, svg] of Object.entries(cards)) {
-    await writeFile(join(OUT, file), svg, "utf8");
-    console.log(`yazildi: assets/${file} (${svg.length} bayt)`);
+    if (await yazDegistiyse(file, svg)) {
+      degisen++;
+      console.log(`yazildi: ${file} (${svg.length} bayt)`);
+    }
   }
+  console.log(`${degisen}/${Object.keys(cards).length} kart guncellendi`);
 }

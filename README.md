@@ -74,9 +74,10 @@ whole thing; Telegram is reached by long polling, so no public URL is needed.
 
 <sub>*Every card on this page is generated in this repository.*</sub>
 
-The header above, the terminal below, the language chart, the contribution graph — none of them
-come from a third-party service. A Node script queries the GitHub API and writes animated SVGs
-into this repo; a workflow reruns it every six hours.
+The header above, the terminal below, the language chart, the numbers, the contribution graph —
+none of them come from a third-party service. A Node script queries the GitHub API and writes
+animated SVGs into this repo; a workflow reruns it every six hours and commits only the cards
+whose content actually changed.
 
 [![Code](https://img.shields.io/badge/Read-cards.mjs-bf91f3?style=flat-square&logo=javascript&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/blob/main/.github/scripts/cards.mjs)
 
@@ -118,7 +119,8 @@ into this repo; a workflow reruns it every six hours.
 
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/languages.svg" alt="Most used languages" />
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/languages.svg" alt="Most used languages" width="48%" />
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/stats.svg" alt="By the numbers: contributions, commits, pull requests, repositories, stars and followers" width="48%" />
 
 <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/activity.svg" alt="Contribution graph, last 90 days" width="100%" />
 
