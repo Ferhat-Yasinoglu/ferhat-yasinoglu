@@ -43,9 +43,11 @@ export function adaylar(deger) {
 
 const sorunMetni = (s) => s.map((x) => `${x.konum + 1}. karakter '${x.karakter}' (U+${x.karakter.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')})`).join(', ');
 
-// dogrula(aday) → true/false; bicim: beklenen biçim (RegExp, isteğe bağlı).
-// Dönüş: { durum: 'bos'|'sablon'|'ok'|'duzeltildi'|'duzeltilemez'|'bicim'|'gecersiz', deger, sorun }
-export async function duzelt({ ad, deger, dogrula, bicim }) {
+// dogrula(aday) → true/false; bicim: beklenen biçim (RegExp, isteğe bağlı); ayikla: fazladan metnin
+// içinden değeri çekmek için global RegExp (isteğe bağlı). Biçime uyan aday yoksa önce ayıklanan parçalar,
+// sonra değerin kendisi sağlayıcıya sorulur: uzunluk varsayımımız yanlışsa bile doğru değer geçer.
+// Dönüş: { durum: 'bos'|'sablon'|'ok'|'duzeltildi'|'ayiklandi'|'duzeltilemez'|'bicim'|'gecersiz', deger, sorun }
+export async function duzelt({ ad, deger, dogrula, bicim, ayikla }) {
   const temiz = temizle(deger);
   if (!temiz) return { ad, durum: 'bos', deger: '' };
   if (SABLON_METNI.test(temiz)) return { ad, durum: 'sablon', deger: '' };
@@ -53,10 +55,15 @@ export async function duzelt({ ad, deger, dogrula, bicim }) {
   const liste = adaylar(temiz);
   if (!liste.length) return { ad, durum: 'duzeltilemez', deger: '', sorun: sorunMetni(s) };
   const uygun = bicim ? liste.filter((a) => bicim.test(a)) : liste;
-  if (!uygun.length) return { ad, durum: 'bicim', deger: '', sorun: sorunMetni(s), uzunluk: temiz.length };
-  for (const aday of uygun) {
-    if (await dogrula(aday)) return { ad, durum: s.length ? 'duzeltildi' : 'ok', deger: aday, sorun: s.length ? sorunMetni(s) : '' };
+  const ayiklanan = uygun.length || !ayikla ? [] : [...new Set(liste.flatMap((a) => a.match(ayikla) || []))];
+  const denenecek = uygun.length ? uygun : [...ayiklanan, ...liste];
+  for (const aday of denenecek) {
+    if (await dogrula(aday)) {
+      const durum = s.length ? 'duzeltildi' : aday !== temiz ? 'ayiklandi' : 'ok';
+      return { ad, durum, deger: aday, sorun: s.length ? sorunMetni(s) : '' };
+    }
   }
+  if (!uygun.length) return { ad, durum: 'bicim', deger: '', sorun: sorunMetni(s), uzunluk: temiz.length };
   return { ad, durum: 'gecersiz', deger: '', sorun: sorunMetni(s) };
 }
 
@@ -71,18 +78,20 @@ async function tgDogrula(token) {
   return !!j.ok;
 }
 
+const hex32 = /^[0-9a-fA-F]{32}$/;
+const yonetici = /^[\x21-\x7E]{32,}$/;
 export const GIRDILER = [
-  { ad: 'CLOUDFLARE_API_TOKEN', zorunlu: true, dogrula: cfDogrula, bicim: /^[A-Za-z0-9_-]{40}$/, beklenen: '40 karakter; yalnız İngilizce harf, rakam, _ ve -', ipucu: 'Cloudflare → My Profile → API Tokens → Create Token → "Edit Cloudflare Workers" şablonu + D1 Edit + Workers AI Edit → çıkan token\'ı kopyala' },
-  { ad: 'CLOUDFLARE_ACCOUNT_ID', zorunlu: true, dogrula: async () => true, bicim: /^[0-9a-fA-F]{32}$/, beklenen: '32 karakter; yalnız 0-9 ve a-f', ipucu: 'Cloudflare → Workers & Pages sayfasının sağındaki Account ID' },
-  { ad: 'YONETICI_ANAHTARI', zorunlu: true, dogrula: async () => true, bicim: /^[\x21-\x7E]{32,}$/, beklenen: 'en az 32 karakter; İngilizce harf ve rakam', ipucu: 'kendin uydur ya da verilen anahtarı kullan; aynısını uygulamada Ayarlar → Worker\'a gireceksin' },
-  { ad: 'TELEGRAM_BOT_TOKEN', zorunlu: false, dogrula: tgDogrula, bicim: /^\d{8,12}:[A-Za-z0-9_-]{30,}$/, beklenen: '123456789:AAH... biçiminde, iki nokta üst üste içerir', ipucu: 'Telegram → @BotFather → /newbot (ya da /mybots → API Token)' },
+  { ad: 'CLOUDFLARE_API_TOKEN', zorunlu: true, dogrula: cfDogrula, bicim: /^[A-Za-z0-9_-]{40}$/, ayikla: /[A-Za-z0-9_-]{40,}/g, beklenen: '40 karakter; yalnız İngilizce harf, rakam, _ ve -', ipucu: 'Cloudflare → My Profile → API Tokens → Create Token → "Edit Cloudflare Workers" şablonu + D1 Edit + Workers AI Edit → çıkan token\'ı kopyala' },
+  { ad: 'CLOUDFLARE_ACCOUNT_ID', zorunlu: true, dogrula: async (v) => hex32.test(v), bicim: hex32, ayikla: /[0-9a-fA-F]{32}/g, beklenen: '32 karakter; yalnız 0-9 ve a-f', ipucu: 'Cloudflare → Workers & Pages sayfasının sağındaki Account ID' },
+  { ad: 'YONETICI_ANAHTARI', zorunlu: true, dogrula: async (v) => yonetici.test(v), bicim: yonetici, beklenen: 'en az 32 karakter; İngilizce harf ve rakam', ipucu: 'kendin uydur ya da verilen anahtarı kullan; aynısını uygulamada Ayarlar → Worker\'a gireceksin' },
+  { ad: 'TELEGRAM_BOT_TOKEN', zorunlu: false, dogrula: tgDogrula, bicim: /^\d{8,12}:[A-Za-z0-9_-]{30,}$/, ayikla: /\d{8,12}:[A-Za-z0-9_-]{30,}/g, beklenen: '123456789:AAH... biçiminde, iki nokta üst üste içerir', ipucu: 'Telegram → @BotFather → /newbot (ya da /mybots → API Token)' },
 ];
 
 export async function calistir({ env = process.env, girdiler = GIRDILER, yaz = console.log } = {}) {
   let hata = 0;
   const cikti = [];
   for (const g of girdiler) {
-    const sonuc = await duzelt({ ad: g.ad, deger: env['HAM_' + g.ad], dogrula: g.dogrula, bicim: g.bicim });
+    const sonuc = await duzelt({ ad: g.ad, deger: env['HAM_' + g.ad], dogrula: g.dogrula, bicim: g.bicim, ayikla: g.ayikla });
     switch (sonuc.durum) {
       case 'bos':
         if (g.zorunlu) { yaz(`::error::${g.ad} secret'i yok. Nereden: ${g.ipucu}`); hata++; } else yaz(`${g.ad}: verilmemiş, atlandı`);
@@ -97,6 +106,8 @@ export async function calistir({ env = process.env, girdiler = GIRDILER, yaz = c
         yaz(`::error::${g.ad} biçimi doğru ama sağlayıcı kabul etmedi${sonuc.sorun ? ` (bozuk karakterler: ${sonuc.sorun})` : ''}: süresi dolmuş, silinmiş ya da izinleri eksik olabilir. Nereden: ${g.ipucu}`); hata++; continue;
       case 'duzeltildi':
         yaz(`${g.ad}: Türkçe karakter düzeltildi ve doğrulandı (${sonuc.sorun}). GitHub'daki değeri de düzeltmen iyi olur ama şart değil.`); break;
+      case 'ayiklandi':
+        yaz(`${g.ad}: değerin yanında fazladan metin vardı; asıl değer ayıklandı ve doğrulandı. GitHub'da yalnız değeri bırakman iyi olur ama şart değil.`); break;
       default:
         yaz(`${g.ad}: ok`);
     }
