@@ -61,7 +61,7 @@ describe('secretleri-duzelt', () => {
 
   it('biçime uymayan değer bicim der, uyan aday sağlayıcıya sorulur', async () => {
     const hex32 = /^[0-9a-f]{32}$/;
-    expect((await duzelt({ ad: 'H', deger: 'abc', dogrula: async () => true, bicim: hex32 })).durum).toBe('bicim');
+    expect((await duzelt({ ad: 'H', deger: 'abc', dogrula: async (v) => hex32.test(v), bicim: hex32 })).durum).toBe('bicim');
     const sonuc = await duzelt({ ad: 'H', deger: '0123456789abcdef0123456789abcdef', dogrula: async () => true, bicim: hex32 });
     expect(sonuc.durum).toBe('ok');
     const tg = /^\d{8,12}:[A-Za-z0-9_-]{30,}$/;
@@ -69,5 +69,20 @@ describe('secretleri-duzelt', () => {
     const s2 = await duzelt({ ad: 'TG', deger: bozuk, dogrula: async (v) => v.includes(':AAHI'), bicim: tg });
     expect(s2.durum).toBe('duzeltildi');
     expect(s2.deger).toBe(bozuk.replace('ı', 'I'));
+  });
+
+  it('fazladan metin varsa değeri ayıklar; biçim uymasa bile sağlayıcı kabul ederse geçer', async () => {
+    const tokenBicim = /^[A-Za-z0-9_-]{40}$/; const tokenAyikla = /[A-Za-z0-9_-]{40,}/g;
+    const token = 'A'.repeat(20) + 'b'.repeat(20);
+    const s1 = await duzelt({ ad: 'CF', deger: `Bearer ${token}`, dogrula: async (v) => v === token, bicim: tokenBicim, ayikla: tokenAyikla });
+    expect(s1.durum).toBe('ayiklandi'); expect(s1.deger).toBe(token);
+    const uzun = 'x'.repeat(53);
+    const s2 = await duzelt({ ad: 'CF', deger: uzun, dogrula: async (v) => v === uzun, bicim: tokenBicim, ayikla: tokenAyikla });
+    expect(s2.durum).toBe('ok'); expect(s2.deger).toBe(uzun);
+    const s3 = await duzelt({ ad: 'CF', deger: uzun, dogrula: async () => false, bicim: tokenBicim, ayikla: tokenAyikla });
+    expect(s3.durum).toBe('bicim'); expect(s3.uzunluk).toBe(53);
+    const hex = '0123456789abcdef0123456789abcdef';
+    const s4 = await duzelt({ ad: 'ID', deger: `Account ID: ${hex}`, dogrula: async (v) => /^[0-9a-f]{32}$/.test(v), bicim: /^[0-9a-f]{32}$/, ayikla: /[0-9a-f]{32}/g });
+    expect(s4.durum).toBe('ayiklandi'); expect(s4.deger).toBe(hex);
   });
 });
