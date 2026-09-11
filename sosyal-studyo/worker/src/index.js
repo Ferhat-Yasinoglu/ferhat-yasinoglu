@@ -16,6 +16,9 @@ import * as meta from './meta.js';
 import { saglayici } from './ai.js';
 import { SEMA_SURUMU } from '../../app/js/paylasilan/sema/surum.js';
 
+// /health herkese açık: her kaynaktan, özel başlıklarla da (X-SS-Sema) çağrılabilir.
+const HEALTH_CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-SS-Sema', 'Access-Control-Max-Age': '86400' };
+
 export default {
   // Her istek tek bir try/catch içinden geçer: yakalanmayan hata Cloudflare'in genel 1101 sayfası yerine
   // JSON (hata: 'sunucu', mesaj, yol) döner ve console.error ile günlüğe düşer. Gizli değer içermez.
@@ -45,7 +48,9 @@ export default {
 async function isle(istek, env, ctx) {
   const url = new URL(istek.url);
   const eksik = yapilandirmaEksikleri(env);
-  if (url.pathname === '/health') return json({ ok: eksik.length === 0, surum: env.SURUM || 'dev', sema: SEMA_SURUMU, prova: String(env.PROVA || '1') === '1', saglayici: saglayici(env), eksik }, eksik.length ? 503 : 200, { 'Access-Control-Allow-Origin': '*' });
+  // CORS ön kontrolü (OPTIONS) her yol için burada cevaplanır; yoksa tarayıcı özel başlıklı isteği hiç göndermez.
+  if (istek.method === 'OPTIONS') return new Response(null, { status: 204, headers: url.pathname === '/health' ? HEALTH_CORS : corsBasliklari(env, istek.headers.get('Origin') || '') });
+  if (url.pathname === '/health') return json({ ok: eksik.length === 0, surum: env.SURUM || 'dev', sema: SEMA_SURUMU, prova: String(env.PROVA || '1') === '1', saglayici: saglayici(env), eksik }, eksik.length ? 503 : 200, HEALTH_CORS);
   if (url.pathname.startsWith('/api/')) {
     if (eksik.length) return hata('yapilandirma', eksik.join('; '), 503, corsBasliklari(env, istek.headers.get('Origin') || ''));
     return apiIsle(env, new Veritabani(env.DB), istek, url, { ctx });
