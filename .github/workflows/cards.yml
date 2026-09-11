@@ -8,12 +8,37 @@ on:
     branches:
       - main
     paths:
-      - ".github/scripts/cards.mjs"
-      - ".github/scripts/fy-logo.svg"
+      - ".github/scripts/**"
+      - ".github/workflows/cards.yml"
+  pull_request:
+    paths:
+      - ".github/scripts/**"
       - ".github/workflows/cards.yml"
 
 jobs:
+  # Uretici ornek veriyle calistirilir: kartlar string birlestirilerek
+  # uretildigi icin bozuk bir SVG ancak calistirinca ortaya cikiyor.
+  dogrula:
+    name: Uretici
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Ornek veriyle kartlari uret
+        run: node .github/scripts/cards.mjs --mock --out "$RUNNER_TEMP/kartlar"
+
+      - name: Uretilen SVG'leri dogrula
+        run: python3 .github/scripts/check-cards.py "$RUNNER_TEMP/kartlar"
+
   cards:
+    name: Kartlar
+    needs: dogrula
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -31,6 +56,9 @@ jobs:
           GH_LOGIN: ${{ github.repository_owner }}
         run: node .github/scripts/cards.mjs
 
+      # Uretici yalnizca icerigi degisen karti yeniden yaziyor; bu adim da
+      # ancak oyle bir kart varsa commit atiyor. Alti saatte bir, sirf zaman
+      # damgasi degisti diye commit atilmasin diye.
       - name: Degisiklik varsa commit'le
         run: |
           git config user.name "github-actions[bot]"
@@ -39,6 +67,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "kartlarda degisiklik yok"
           else
-            git commit -m "Kartlari yenile [skip ci]"
+            degisen=$(git diff --staged --name-only | xargs -n1 basename | paste -sd', ')
+            git commit -m "Kartlari yenile: $degisen [skip ci]"
             git push
           fi
