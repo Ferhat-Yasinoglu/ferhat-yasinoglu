@@ -67,7 +67,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "kartlarda degisiklik yok"
           else
-            degisen=$(git diff --staged --name-only | xargs -n1 basename | paste -sd', ')
+            degisen=$(git diff --staged --name-only | xargs -n1 basename | paste -sd, | sed 's/,/, /g')
             git commit -m "Kartlari yenile: $degisen [skip ci]"
             git push
           fi
