@@ -14,7 +14,7 @@ export const UYGULAMA_SURUMU = '__SURUM__';
 globalThis.UYGULAMA_SURUMU = UYGULAMA_SURUMU;
 
 const MENU = [
-  { grup: 'Otomasyon', ogeler: [
+  { grup: 'Otomasyon', anahtar: 'otomasyon', ogeler: [
     { yol: '/ozet', ad: 'Özet', anahtar: 'nav.ozet', simge: '🏠', alt: true },
     { yol: '/akislar', ad: 'Akışlar', anahtar: 'nav.akislar', simge: '⚡', alt: true },
     { yol: '/sohbetler', ad: 'Sohbetler', anahtar: 'nav.sohbetler', simge: '💬', alt: true },
@@ -22,18 +22,18 @@ const MENU = [
     { yol: '/buyume', ad: 'Büyüme Araçları', anahtar: 'nav.buyume', simge: '🌱' },
     { yol: '/ajan', ad: 'AI Ajan', anahtar: 'nav.ajan', simge: '✨' },
   ] },
-  { grup: 'Kişiler', ogeler: [
+  { grup: 'Kişiler', anahtar: 'kisiler', ogeler: [
     { yol: '/kisiler', ad: 'Kişiler & Puanlar', anahtar: 'nav.kisiler', simge: '👥', alt: true },
     { yol: '/analitik', ad: 'Analitik', anahtar: 'nav.analitik', simge: '📈' },
   ] },
-  { grup: 'İçerik', ogeler: [
+  { grup: 'İçerik', anahtar: 'icerik', ogeler: [
     { yol: '/fikirler', ad: 'Fikirler & Senaryo', anahtar: 'nav.fikirler', simge: '💡' },
     { yol: '/kancalar', ad: 'Kanca Kütüphanesi', anahtar: 'nav.kancalar', simge: '🪝' },
     { yol: '/karusel', ad: 'Karusel', anahtar: 'nav.karusel', simge: '🎠' },
     { yol: '/video', ad: 'Video Analizi', anahtar: 'nav.video', simge: '🎬' },
     { yol: '/galeri', ad: 'Galeri', anahtar: 'nav.galeri', simge: '🖼️' },
   ] },
-  { grup: 'Sistem', ogeler: [
+  { grup: 'Sistem', anahtar: 'sistem', ogeler: [
     { yol: '/ayarlar', ad: 'Ayarlar & Kurulum', anahtar: 'nav.ayarlar', simge: '⚙️' },
   ] },
 ];
@@ -73,7 +73,7 @@ const ROTALAR = [
 function menuCiz(kok, alt) {
   temizle(kok);
   for (const g of MENU) {
-    kok.appendChild(el('div', { class: 'menu__grup' }, g.grup));
+    kok.appendChild(el('div', { class: 'menu__grup' }, t('menu.grup.' + g.anahtar, g.grup)));
     for (const o of g.ogeler) kok.appendChild(el('a', { href: '#' + o.yol, dataset: { yol: o.yol } }, el('span', { class: 'ikon', 'aria-hidden': 'true' }, o.simge), t(o.anahtar, o.ad)));
   }
   temizle(alt);
@@ -102,13 +102,27 @@ async function bantlariYenile(ctx) {
   const meta = await ctx.depo.meta();
   if (!ctx.depo.kalici) kap.appendChild(el('div', { class: 'bant bant--kirmizi' }, '⚠️ ', t('bant.kalici_degil', 'Tarayıcı depolaması açılamadı: veriler bu sekme kapanınca silinir. Yedek indir.')));
   if ((ayar.mod || 'yerel') === 'yerel') kap.appendChild(el('div', { class: 'bant bant--mavi' }, '🔵 ', t('bant.yerel', 'Yerel mod: veriler yalnız bu cihazda. Kanalları ve AI\'ı açmak için Worker\'ı bağla.'), btn(t('bant.worker_bagla', 'Worker\'ı bağla'), { class: 'btn btn--kucuk', onclick: () => ctx.git('/ayarlar/worker') })));
-  if (!navigator.onLine) kap.appendChild(el('div', { class: 'bant bant--gri' }, '📴 ', t('bant.cevrimdisi', 'Çevrimdışısın; değişiklikler bu cihazda kaydediliyor.')));
+  const kuyruk = ctx.depo.gidenSayisi ? await ctx.depo.gidenSayisi() : 0;
+  if (!navigator.onLine || kuyruk) kap.appendChild(el('div', { class: 'bant bant--gri' }, '📴 ', navigator.onLine ? t('bant.kuyruk', 'Worker\'a gönderilmeyi bekleyen {n} değişiklik.', { n: kuyruk }) : t('bant.cevrimdisi', 'Çevrimdışısın; değişiklikler bu cihazda kaydediliyor.'), kuyruk && navigator.onLine ? btn(t('bant.simdi_gonder', 'Şimdi gönder'), { class: 'btn btn--kucuk', onclick: () => ctx.depo.gidenKutusunuBosalt().then(() => bantlariYenile(ctx)) }) : null));
+  if (ctx.depo.mod === 'bagli' && ctx.depo.cevrimici === false) kap.appendChild(el('div', { class: 'bant bant--kirmizi' }, '⚠️ ', t('bant.worker_yok', 'Worker\'a ulaşılamıyor; önbellekten gösteriliyor.')));
   const h = hatirlatmaGerekli(meta, ayar);
   if (h.gerekli) kap.appendChild(el('div', { class: 'bant bant--sari' }, '💾 ', t('bant.yedek', 'Yedek eski: {sebep}.', { sebep: h.sebep }), btn(t('bant.yedek_indir', 'Yedeği indir'), { class: 'btn btn--kucuk', onclick: async () => { const { indir } = await import('./depo/yedek.js'); await indir(await ctx.depo.disaAktar()); basari(t('yedek.indirildi', 'Yedek indirildi')); bantlariYenile(ctx); } })));
 }
 
+async function depoyuAc() {
+  // Bağlı mod: ayarlar yerel IndexedDB'de; Worker adresi varsa UzakDepo aynı veritabanını açar.
+  const yerel = await yerelDepoAc();
+  const a = await yerel.ayarlar();
+  if (a.mod === 'bagli' && a.worker?.adres && yerel.db) {
+    yerel.db.close();
+    try { const { UzakDepo } = await import('./depo/uzak.js'); return await new UzakDepo(a.worker.adres).ac(); }
+    catch (e) { console.warn('bağlı mod açılamadı, yerel moda düşüldü', e); return yerelDepoAc(); }
+  }
+  return yerel;
+}
+
 async function baslat() {
-  const depo = await yerelDepoAc();
+  const depo = await depoyuAc();
   if (depo.kaliciYap) depo.kaliciYap();
   const ayar = await depo.ayarlar();
   await dilYukle(ayar.dil || localStorage.getItem('ss-lang') || 'tr');
