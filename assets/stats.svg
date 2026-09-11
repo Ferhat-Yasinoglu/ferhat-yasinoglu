@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="190" viewBox="0 0 480 190" role="img" aria-label="By the numbers: 261 contributions, 152 commits, 103 pull requests, 4 public repos, 3 stars earned, 1 followers">
+  <defs>
+    
+    <linearGradient id="bg" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".18" />
+      <stop offset="0.16" stop-color="#2472ab" stop-opacity="1" />
+      <stop offset="1" stop-color="#1b968e" stop-opacity="1" />
+    </linearGradient>
+    <style>
+    text { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; }
+    .card-bg { fill: url(#bg); stroke: #eaf6fb; stroke-opacity: .32; stroke-width: 1.2; }
+    /* Her animasyon "backwards" ile kurulur: animasyon hic calismazsa
+       ogenin dogal hali gecerli olur, yani icerik yine de gorunur. */
+    .rise { animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: .01ms !important; animation-delay: 0s !important; }
+    }
+      .title { font-size: 16px; font-weight: 700; fill: #f2f9ff; }
+      .num { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
+      .etk { font-size: 11px; fill: #cbe4ee; letter-spacing: .3px; }
+      .cizgi { transform-box: fill-box; transform-origin: bottom;
+               animation: cikar .6s cubic-bezier(.2,.7,.3,1) backwards; }
+      @keyframes cikar { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+      .puls { animation: puls 3.2s ease-in-out infinite; }
+      @keyframes puls { 0%,100% { r: 4; opacity: .55; } 50% { r: 6.5; opacity: 1; } }
+    </style>
+  </defs>
+  <rect class="card-bg" width="480" height="190" rx="14" />
+  <circle class="puls" cx="30" cy="34" r="4" fill="none" stroke="#c5efa2" stroke-width="2" />
+  <text class="title" x="46" y="39">🧮 By the numbers</text>
+  
+    <g class="rise" style="animation-delay:0.12s">
+      <rect x="24" y="64" width="136" height="52" rx="12" fill="#c5efa2" fill-opacity=".09" />
+      <rect class="cizgi" x="24" y="76" width="3" height="28" rx="1.5" fill="#c5efa2"
+            style="animation-delay:0.12s" />
+      <text class="num" x="40" y="92" fill="#c5efa2">261</text>
+      <text class="etk" x="40" y="108">contributions · 1y</text>
+    </g>
+    <g class="rise" style="animation-delay:0.19s">
+      <rect x="172" y="64" width="136" height="52" rx="12" fill="#a9d3ff" fill-opacity=".09" />
+      <rect class="cizgi" x="172" y="76" width="3" height="28" rx="1.5" fill="#a9d3ff"
+            style="animation-delay:0.19s" />
+      <text class="num" x="188" y="92" fill="#a9d3ff">152</text>
+      <text class="etk" x="188" y="108">commits · 1y</text>
+    </g>
+    <g class="rise" style="animation-delay:0.26s">
+      <rect x="320" y="64" width="136" height="52" rx="12" fill="#e3c9ff" fill-opacity=".09" />
+      <rect class="cizgi" x="320" y="76" width="3" height="28" rx="1.5" fill="#e3c9ff"
+            style="animation-delay:0.26s" />
+      <text class="num" x="336" y="92" fill="#e3c9ff">103</text>
+      <text class="etk" x="336" y="108">pull requests · 1y</text>
+    </g>
+    <g class="rise" style="animation-delay:0.33s">
+      <rect x="24" y="126" width="136" height="52" rx="12" fill="#a3f0ff" fill-opacity=".09" />
+      <rect class="cizgi" x="24" y="138" width="3" height="28" rx="1.5" fill="#a3f0ff"
+            style="animation-delay:0.33s" />
+      <text class="num" x="40" y="154" fill="#a3f0ff">4</text>
+      <text class="etk" x="40" y="170">public repos</text>
+    </g>
+    <g class="rise" style="animation-delay:0.40s">
+      <rect x="172" y="126" width="136" height="52" rx="12" fill="#ffe19a" fill-opacity=".09" />
+      <rect class="cizgi" x="172" y="138" width="3" height="28" rx="1.5" fill="#ffe19a"
+            style="animation-delay:0.40s" />
+      <text class="num" x="188" y="154" fill="#ffe19a">3</text>
+      <text class="etk" x="188" y="170">stars earned</text>
+    </g>
+    <g class="rise" style="animation-delay:0.47s">
+      <rect x="320" y="126" width="136" height="52" rx="12" fill="#ffbecb" fill-opacity=".09" />
+      <rect class="cizgi" x="320" y="138" width="3" height="28" rx="1.5" fill="#ffbecb"
+            style="animation-delay:0.47s" />
+      <text class="num" x="336" y="154" fill="#ffbecb">1</text>
+      <text class="etk" x="336" y="170">followers</text>
+    </g>
+</svg>
