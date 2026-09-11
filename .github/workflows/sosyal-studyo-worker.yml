@@ -1,6 +1,7 @@
 # Sosyal Stüdyo Worker dağıtımı — Cloudflare tarafındaki her şeyi bu iş yapar:
-# D1 veritabanını bulur/oluşturur, göçleri uygular, Worker'ı dağıtır, secret'ları GitHub'dan
-# Cloudflare'e taşır, Telegram token'ı varsa webhook'u kurar, sağlık kontrolü yapıp adresi özete yazar.
+# secret'ları temizler/doğrular (Türkçe klavye bozmalarını düzeltir), D1 veritabanını bulur/oluşturur,
+# göçleri uygular, Worker'ı dağıtır, secret'ları GitHub'dan Cloudflare'e taşır, Telegram token'ı varsa
+# webhook'u kurar, sağlık kontrolü yapıp adresi özete yazar.
 #
 # GitHub → Settings → Secrets and variables → Actions:
 #   Secrets (zorunlu): CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, YONETICI_ANAHTARI (≥32 karakter)
@@ -15,6 +16,7 @@ on:
     paths:
       - "sosyal-studyo/worker/**"
       - "sosyal-studyo/app/js/paylasilan/**"
+      - "sosyal-studyo/tools/secretleri-duzelt.mjs"
       - ".github/workflows/sosyal-studyo-worker.yml"
   workflow_dispatch:
 
@@ -32,8 +34,6 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ vars.WORKER_DAGITIMI_ACIK == '1' }}
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       WRANGLER_SEND_METRICS: "false"
       TOML: worker/wrangler.toml
     steps:
@@ -46,19 +46,19 @@ jobs:
       - run: npm ci
       - run: npx vitest run worker/test
 
-      - name: Secret'lari denetle
+      # Temizlenmiş/düzeltilmiş değerler CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, YONETICI_ANAHTARI,
+      # TELEGRAM_BOT_TOKEN adlarıyla $GITHUB_ENV üzerinden sonraki adımlara geçer (maskeli).
+      - name: Secret'lari denetle ve duzelt
         env:
-          YONETICI_ANAHTARI: ${{ secrets.YONETICI_ANAHTARI }}
-        run: |
-          eksik=0
-          [ -n "$CLOUDFLARE_API_TOKEN" ]  || { echo "::error::CLOUDFLARE_API_TOKEN secret'i yok"; eksik=1; }
-          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID secret'i yok"; eksik=1; }
-          [ "${#YONETICI_ANAHTARI}" -ge 32 ] || { echo "::error::YONETICI_ANAHTARI secret'i yok ya da 32 karakterden kisa"; eksik=1; }
-          [ "$eksik" = 0 ] || exit 1
-          npx wrangler whoami
+          HAM_CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          HAM_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          HAM_YONETICI_ANAHTARI: ${{ secrets.YONETICI_ANAHTARI }}
+          HAM_TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: node tools/secretleri-duzelt.mjs
 
       - name: D1 veritabani (yoksa olustur)
         run: |
+          npx wrangler whoami
           bul() { npx wrangler d1 list --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const l=JSON.parse(s);const v=l.find(x=>x.name==='sosyal-studyo');process.stdout.write(v?v.uuid:'')})"; }
           id="$(bul)"
           if [ -z "$id" ]; then
@@ -90,8 +90,6 @@ jobs:
 
       - name: Secret'lari Cloudflare'e yaz
         env:
-          YONETICI_ANAHTARI: ${{ secrets.YONETICI_ANAHTARI }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           META_APP_SECRET: ${{ secrets.META_APP_SECRET }}
           META_VERIFY_TOKEN: ${{ secrets.META_VERIFY_TOKEN }}
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
@@ -106,7 +104,7 @@ jobs:
           fi
           node -e '
             const adlar = ["YONETICI_ANAHTARI","TELEGRAM_BOT_TOKEN","TELEGRAM_WEBHOOK_SECRET","META_APP_SECRET","META_VERIFY_TOKEN","IG_ACCESS_TOKEN","IG_USER_ID","WA_ACCESS_TOKEN","WA_PHONE_NUMBER_ID","ANTHROPIC_API_KEY"];
-            const s = {}; for (const a of adlar) if (process.env[a]) s[a] = process.env[a];
+            const s = {}; for (const a of adlar) if (process.env[a]) s[a] = process.env[a].trim();
             require("fs").writeFileSync("gizli.json", JSON.stringify(s));
             console.log("yazilacak secretlar:", Object.keys(s).join(", "));
           '
@@ -117,8 +115,6 @@ jobs:
         if: ${{ steps.dagit.outputs.url != '' }}
         env:
           URL: ${{ steps.dagit.outputs.url }}
-          YONETICI_ANAHTARI: ${{ secrets.YONETICI_ANAHTARI }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
           if [ -z "$TELEGRAM_BOT_TOKEN" ]; then echo "TELEGRAM_BOT_TOKEN yok, webhook atlandi"; exit 0; fi
           sleep 5
