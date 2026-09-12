@@ -1,0 +1,49 @@
+# Sosyal Stüdyo — elle tetiklenen yönetim işlemleri (Worker'ın yönetici API'si üzerinden).
+#   akis_yayinla : taslak akışları doğrulayıp yayına alır (doğrulama hatası varsa söyler, zorlamaz)
+#   canliya_al   : hesapları canlı yapar (dağıtımdaki PROVA ayrı bir fren, workflow_dispatch ile 0 yapılır)
+#   provaya_al   : hesapları provaya döndürür (dış gönderim anında durur)
+#   durum        : değişiklik yapmadan mevcut durumu yazar
+name: Sosyal Studyo Yonet
+
+on:
+  workflow_dispatch:
+    inputs:
+      islem:
+        description: "Yapılacak işlem"
+        type: choice
+        default: durum
+        options: [durum, akis_yayinla, canliya_al, provaya_al]
+      akis_id:
+        description: "akis_yayinla için akış id'si (boş = tüm taslaklar)"
+        type: string
+        default: ""
+
+jobs:
+  yonet:
+    name: Yonet
+    runs-on: ubuntu-latest
+    if: ${{ vars.WORKER_DAGITIMI_ACIK == '1' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: Secret'lari temizle
+        env:
+          HAM_CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          HAM_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          HAM_YONETICI_ANAHTARI: ${{ secrets.YONETICI_ANAHTARI }}
+          HAM_TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: node sosyal-studyo/tools/secretleri-duzelt.mjs
+      - name: Worker adresi
+        id: adres
+        run: |
+          alt="$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).result?.subdomain||''))")"
+          [ -n "$alt" ] || { echo "::error::workers.dev alt alan adi bulunamadi"; exit 1; }
+          echo "url=https://sosyal-studyo.$alt.workers.dev" >> "$GITHUB_OUTPUT"
+      - name: Islem
+        env:
+          URL: ${{ steps.adres.outputs.url }}
+          ISLEM: ${{ inputs.islem }}
+          AKIS_ID: ${{ inputs.akis_id }}
+        run: node sosyal-studyo/tools/yonet.mjs
