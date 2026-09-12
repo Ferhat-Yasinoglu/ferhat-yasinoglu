@@ -101,10 +101,20 @@ export async function olayIsle(env, db, olay, { fetchFn = fetch, hesaplar } = {}
           return { karar: 'kural', kural: c.kural, tur: c.tur };
         }
         const brif = (await db.listele('ai_brifingler')).find((b) => b.aktif);
-        if (brif && (olay.tip === 'dm' || (olay.tip === 'story_reply' && brif.storylereCevap)) && kelimeVar(olay.text) && !(kisi.ai_sustur_bitis && kisi.ai_sustur_bitis > simdi())) {
-          const devir = (brif.devirKelimeleri || []).some((d) => olay.text.toLowerCase().includes(d.toLowerCase()));
+        // "/start" de ağa girer: Start'a basmak her yeni kişinin ilk hareketidir ve
+        // karşılama akışı yoksa sessizlik alıyordu. Çıplak "/start"ta soru yoktur,
+        // o yüzden modele metni değil ne yapacağını veririz; dil kullanıcının
+        // Telegram dilinden gelir (metinde ipucu yok).
+        const ilkTemas = olay.tip === 'start';
+        const ciplakStart = ilkTemas && !kelimeVar(String(olay.text || '').replace(/^\/start(?:@\w+)?/i, ''));
+        const aiUygun = olay.tip === 'dm' || ilkTemas || (olay.tip === 'story_reply' && brif?.storylereCevap);
+        if (brif && aiUygun && (ciplakStart || kelimeVar(olay.text)) && !(kisi.ai_sustur_bitis && kisi.ai_sustur_bitis > simdi())) {
+          const devir = (brif.devirKelimeleri || []).some((d) => String(olay.text || '').toLowerCase().includes(d.toLowerCase()));
           const gecmis = await db.listele('mesajlar', { k1: (await db.listele('sohbetler', { k1: kisi.id, limit: 1 }))[0]?.id, limit: 8 });
-          const cevap = devir ? null : await ajanCevap(env, db, { brifing: brif, mesaj: olay.text, gecmis, kanal: olay.kanal }, fetchFn);
+          const istem = ciplakStart
+            ? 'Kullanıcı botu yeni başlattı ve henüz bir şey sormadı. Onu kısaca karşıla, ne yapabileceğini bir cümleyle söyle ve ne aradığını sor.'
+            : olay.text;
+          const cevap = devir ? null : await ajanCevap(env, db, { brifing: brif, mesaj: istem, gecmis, kanal: olay.kanal, dil: olay.dil }, fetchFn);
           if (cevap) {
             const gonderim = await eylemleriGonder(env, db, { hesap, kisi, olay, eylemler: [{ tip: 'mesaj', text: cevap }], fetchFn });
             await gunlukYaz(db, olay, kisi, { tur: 'ai', brifing: brif.id }, { eylemler: gonderim, prova: gonderim[0]?.prova ?? 1, gonderildi: gonderim[0]?.gonderildi || 0 });
