@@ -453,6 +453,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: rgb(var(--vurgu)); w
 .grafik__cubuk--etkin { fill: rgb(var(--vurgu)); }
 .grafik__eksen { stroke: rgb(var(--cizgi) / .16); stroke-width: 1; }
 .grafik__yazi { fill: rgb(var(--metin-3)); font-size: 10px; font-weight: 600; }
+/* Seri anahtarı: renk asla tek taşıyıcı değil, yanında adı yazar. */
+.grafik-anahtar { display: inline-flex; align-items: center; gap: 7px; font-size: var(--f-xs); font-weight: 650; color: rgb(var(--metin-2)); }
+.grafik-anahtar i { width: 10px; height: 3px; border-radius: 2px; flex: none; }
 
 /* ================= Simge ================= */
 .simge { flex: none; vertical-align: middle; }

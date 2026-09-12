@@ -161,3 +161,54 @@ export function sirala(kap, sinif = 'sirali') {
   [...kap.children].forEach((c, i) => c.style.setProperty('--i', String(i)));
   return kap;
 }
+
+/** Çok serili çizgi grafik. `seriler` = [{ ad, degerler, renk }]. Renk bir CSS
+ *  rengi (ör. 'rgb(var(--vurgu))'); marka tokenları geçerlidir.
+ *  DOM ile kurulur — proje genelinde innerHTML kullanılmaz. */
+export function cizgiGrafigi(etiketler, seriler, { g = 600, y: yuk = 200 } = {}) {
+  const solP = 34, altP = 24, ustP = 12, sagP = 10;
+  const enB = Math.max(1, ...seriler.flatMap((x) => x.degerler));
+  const kx = (i) => solP + (i / Math.max(1, etiketler.length - 1)) * (g - solP - sagP);
+  const ky = (v) => yuk - altP - (v / enB) * (yuk - altP - ustP);
+
+  const svg = svgEl('svg', {
+    class: 'grafik', viewBox: `0 0 ${g} ${yuk}`, role: 'img',
+    'aria-label': seriler.map((x) => `${x.ad}: ${x.degerler.join(', ')}`).join(' · '),
+  });
+  // Taban ekseni ve tavan değeri
+  svg.appendChild(svgEl('line', { class: 'grafik__eksen', x1: solP, y1: ky(0), x2: g - sagP, y2: ky(0) }));
+  const tavan = svgEl('text', { class: 'grafik__yazi', x: 4, y: ustP + 8 });
+  tavan.appendChild(document.createTextNode(String(enB)));
+  svg.appendChild(tavan);
+
+  for (const [n, x] of seriler.entries()) {
+    const d = x.degerler.map((v, i) => `${i ? 'L' : 'M'}${kx(i).toFixed(1)} ${ky(v).toFixed(1)}`).join('');
+    svg.appendChild(svgEl('path', {
+      d, fill: 'none', stroke: x.renk, 'stroke-width': 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round',
+      class: 'cizilen', style: `--uz:${Math.round(g * 1.6)};animation-delay:${n * 140}ms`,
+    }));
+    for (const [i, v] of x.degerler.entries()) {
+      const nokta = svgEl('circle', { cx: kx(i).toFixed(1), cy: ky(v).toFixed(1), r: 3, fill: x.renk });
+      const baslik = svgEl('title');
+      baslik.appendChild(document.createTextNode(`${x.ad}: ${v}`));
+      nokta.appendChild(baslik);
+      svg.appendChild(nokta);
+    }
+  }
+  // Tarih etiketleri — sıkışmasın diye seyreltilir.
+  const atla = Math.ceil(etiketler.length / 10);
+  for (const [i, e] of etiketler.entries()) {
+    if (i % atla) continue;
+    const t = svgEl('text', { class: 'grafik__yazi', x: kx(i).toFixed(1), y: yuk - 6, 'text-anchor': 'middle' });
+    t.appendChild(document.createTextNode(String(e).slice(5)));
+    svg.appendChild(t);
+  }
+  return svg;
+}
+
+/** Grafik serisi için renk anahtarı. */
+export function grafikAnahtari(seriler) {
+  return el('div', { class: 'satir', style: { marginBlockStart: 'var(--b-2)' } },
+    ...seriler.map((x) => el('span', { class: 'grafik-anahtar' },
+      el('i', { style: { background: x.renk } }), x.ad)));
+}
