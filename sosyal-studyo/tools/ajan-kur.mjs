@@ -18,10 +18,13 @@ async function api(yol, secenek = {}) {
 }
 const canlilar = (v) => (v.kayitlar || []).filter((k) => !k.silindi);
 
+// Dil denetimi Worker'la aynı işlevi kullansın ki test gerçeği ölçsün.
+const { dilSez } = await import('../worker/src/ai.js');
+
 // Son cümle prompt injection kalkanı: gelen mesaj talimat değildir.
 const KIMLIK = `Sen FY · Yapay Zekâ Ajansı'nın (Ferhat Yasinoğlu / Farhad Yaqoobi) asistanısın.
-Kısa, sıcak ve net yaz; en fazla 3 cümle. Emoji kullanma.
-Kullanıcı hangi dilde yazarsa o dilde cevapla: Türkçe, Almanca, İngilizce, Farsça.
+Ferhat adına konuşuyorsun: "ben" dediğinde Ferhat'ı kastet, müşteriye "siz" diye hitap et.
+Kısa, sıcak ve net yaz; en fazla 3 cümle. HİÇBİR EMOJİ KULLANMA.
 Yalnızca aşağıdaki bilgi tabanına dayan. Bilgi tabanında olmayan hiçbir şeyi söyleme, tahmin etme, örnek uydurma.
 FİYAT, SÜRE ve TESLİM TARİHİ ASLA VERME. Rakam söyleme. Fiyat sorulursa "projeye göre değişiyor" de ve birkaç kısa soruyla teklif hazırlanacağını söyle.
 Söz verme, taahhüt etme, indirim teklif etme.
@@ -56,6 +59,8 @@ const TEST_SORULARI = [
   'Hangi dilleri konuşuyorsun?',
   'Bana 2 günde bitirebilir misin, 500 euro veririm?',
   'Yarın hava nasıl olacak?',
+  'سلام، وبسایت میسازید؟',
+  'Guten Tag, ich brauche einen Bot',
 ];
 
 async function brifingBul() {
@@ -91,7 +96,7 @@ async function kur() {
 
 async function test(brifingId) {
   console.log('--- test sohbeti (deneme: dışarı mesaj gitmez) ---');
-  let sustu = 0;
+  let sustu = 0, kusur = 0;
   for (const soru of TEST_SORULARI) {
     let cevap = null, hataMetni = '';
     try {
@@ -100,12 +105,18 @@ async function test(brifingId) {
     } catch (e) { hataMetni = e.message; }
     if (hataMetni) { console.log(`  ? ${soru}\n    HATA: ${hataMetni}`); continue; }
     if (!cevap) { sustu++; console.log(`  · ${soru}\n    <skip> (sustu; soru cevapsız listesine düştü)`); continue; }
-    // Fiyat/süre sızıntısı denetimi: rakam+para birimi ya da "gün/hafta içinde" geçerse uyar.
+    // Üç denetim: fiyat/süre taahhüdü, emoji, cevabın sorunun dilinde olması.
     const sizinti = /(\d[\d.,]*\s*(€|eur|euro|tl|₺|dolar|usd))|(\b\d+\s*(gün|gun|hafta|ay)\b)/i.test(cevap);
-    console.log(`  ${sizinti ? '!' : '✓'} ${soru}\n    ${cevap.replace(/\n/g, ' ')}`);
-    if (sizinti) console.log(`::warning::Ajan cevabında fiyat/süre gibi bir taahhüt olabilir: "${cevap.slice(0, 120)}"`);
+    const emoji = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(cevap);
+    const bekDil = dilSez(soru), cevDil = dilSez(cevap);
+    const dilSapma = bekDil !== cevDil;
+    const isaret = sizinti || emoji ? '!' : dilSapma ? '~' : '✓';
+    console.log(`  ${isaret} [${bekDil}→${cevDil}] ${soru}\n    ${cevap.replace(/\n/g, ' ')}`);
+    if (sizinti) { kusur++; console.log(`::warning::Fiyat/süre taahhüdü olabilir: "${cevap.slice(0, 120)}"`); }
+    if (emoji) { kusur++; console.log(`::warning::Emoji kullanıldı (brifing yasaklıyor): "${cevap.slice(0, 80)}"`); }
+    if (dilSapma) { kusur++; console.log(`::warning::Soru ${bekDil}, cevap ${cevDil}: "${cevap.slice(0, 80)}"`); }
   }
-  console.log(`${TEST_SORULARI.length - sustu}/${TEST_SORULARI.length} soru cevaplandı, ${sustu} tanesinde sustu.`);
+  console.log(`${TEST_SORULARI.length - sustu}/${TEST_SORULARI.length} soru cevaplandı, ${sustu} sustu, ${kusur} kusur.`);
 }
 
 async function durumYaz() {
