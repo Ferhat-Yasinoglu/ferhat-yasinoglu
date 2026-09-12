@@ -55,6 +55,27 @@ export async function ozellikCalistir(env, db, ozellik, girdi, fetchFn = fetch) 
   throw new Error('üretim bozuk geldi, yeniden denendi (2/2): ' + son.message);
 }
 
+/** Mesajın dilini sezer: fa | de | tr | en. Küçük modellere "aynı dilde cevapla"
+ *  demek yetmiyor; saptanan dil sistem istemine somut bir satır olarak yazılır.
+ *  Puanlama eşleşen kelime SAYISIYLA yapılır: tek ortak kelime (ör. "bot")
+ *  iki dili beraberliğe düşürmesin. Ortak alıntı kelimeler listelerde yok. */
+const DE_KELIME = /\b(und|oder|nicht|kostet|kosten|preis|wie|was|warum|ich|wir|sie|ist|sind|eine|einen|eines|kann|können|kannst|bitte|danke|hallo|guten|tag|für|mit|auch|brauche|brauchen|machen|erstellen|haben|hast|mein|meine|ihre|nach|schon|gern)\b/g;
+const TR_KELIME = /\b(ve|ile|için|bir|bu|şu|ne|nasıl|neden|merhaba|selam|fiyat|kaç|mı|mi|mu|mü|yapar|yapıyor|yapabilir|misin|musun|mısın|var|yok|lütfen|teşekkür|teşekkürler|olur|değil|çok|istiyorum|görebilir|kadar)\b/g;
+const DE_HARF = /[äöüß]/;
+const TR_HARF = /[çğışÇĞİŞ]/;   // ö/ü ortak: Almanca ile karışmasın diye dışarıda
+
+export function dilSez(metin = '') {
+  const m = String(metin).toLowerCase();
+  if (/[\u0600-\u06FF]/.test(m)) return 'fa';                 // Arap alfabesi → Farsça
+  const de = (m.match(DE_KELIME) || []).length + (DE_HARF.test(m) ? 1 : 0);
+  const tr = (m.match(TR_KELIME) || []).length + (TR_HARF.test(m) ? 1 : 0);
+  if (de > tr) return 'de';
+  if (tr > de) return 'tr';
+  return tr ? 'tr' : 'en';                                     // beraberlikte: kanıt varsa ana dil
+}
+
+const DIL_ADI = { tr: 'Türkçe', de: 'Almanca (Deutsch)', en: 'İngilizce (English)', fa: 'Farsça (فارسی)' };
+
 /** Ajan cevabı: brifing + bilgi tabanı; emin değilse null. */
 export async function ajanCevap(env, db, { brifing, mesaj, gecmis = [], kanal }, fetchFn = fetch) {
   if (!brifing) return null;
@@ -62,7 +83,8 @@ export async function ajanCevap(env, db, { brifing, mesaj, gecmis = [], kanal },
   const gunKredi = await db.sayac('ajan:' + brifing.id);
   if (brifing.gunlukKredi && gunKredi >= brifing.gunlukKredi) return null;
   const bilgi = (brifing.bilgi_tabani || []).filter((b) => b.aktif !== 0).map((b) => `## ${b.baslik}\n${b.metin}`).join('\n\n').slice(0, 32000);
-  const sistem = `${brifing.kimlik}\n\nEn fazla ${brifing.maxKarakter || 400} karakter. Yasak konular: ${(brifing.yasaklar || []).join(', ') || 'yok'}.\nKanal: ${kanal || 'dm'}.\n\nBİLGİ TABANI (yalnız buna dayan):\n${bilgi || '(boş)'}\n\nEmin değilsen ya da bilgi tabanında cevap yoksa tam olarak <skip> yaz.`;
+  const dil = dilSez(mesaj);
+  const sistem = `${brifing.kimlik}\n\nCEVAP DİLİ: ${DIL_ADI[dil]}. Cevabın tamamı bu dilde olmalı; başka dile geçme.\nEn fazla ${brifing.maxKarakter || 400} karakter. Emoji kullanma.\nYasak konular: ${(brifing.yasaklar || []).join(', ') || 'yok'}.\nKanal: ${kanal || 'dm'}.\n\nBİLGİ TABANI (yalnız buna dayan):\n${bilgi || '(boş)'}\n\nEmin değilsen ya da bilgi tabanında cevap yoksa tam olarak <skip> yaz.`;
   const mesajlar = [...gecmis.slice(-6).map((m) => ({ role: m.yon === 'gelen' ? 'user' : 'assistant', content: m.metin })), { role: 'user', content: String(mesaj).slice(0, 2000) }];
   const r = await modelCagir(env, { sistem, mesajlar, maxToken: 400, fetchFn });
   await db.sayacArtir('ai'); await db.sayacArtir('ajan:' + brifing.id);
