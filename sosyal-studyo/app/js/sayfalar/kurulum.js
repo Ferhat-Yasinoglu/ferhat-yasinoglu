@@ -1,5 +1,6 @@
 // Kanal kurulum rehberi: adım listesi, kopyala düğmeleri, onay kutuları; Telegram için "Webhook kur".
-import { el, btn, kart, rozet, temizle, girdi, alan, sayfaBas } from '../cekirdek/dom.js';
+import { el, btn, kart, rozet, temizle, girdi, alan, sayfaBas, btnS } from '../cekirdek/dom.js';
+import { simge } from '../cekirdek/simge.js';
 import { KANALLAR } from '../paylasilan/kanallar.js';
 
 const REHBER = {
@@ -53,12 +54,12 @@ export default {
       if (s.kod) govde.appendChild(el('div', { class: 'kopyala' }, s.kod, btn('⧉', { class: 'btn btn--kucuk', onclick: () => navigator.clipboard?.writeText(s.kod).then(() => ctx.basari(t('genel.kopyalandi', 'Kopyalandı'))) })));
       if (s.kopya) govde.appendChild(el('div', { class: 'kopyala' }, s.kopya, btn('⧉', { class: 'btn btn--kucuk', onclick: () => navigator.clipboard?.writeText(s.kopya).then(() => ctx.basari(t('genel.kopyalandi', 'Kopyalandı'))) })));
       if (s.link) govde.appendChild(el('a', { href: s.link, target: '_blank', rel: 'noopener' }, s.link));
-      if (s.eylem === 'tg-kur') govde.appendChild(btn('🔗 ' + t('kurulum.webhook_kur', 'Webhook\'u kur'), { class: 'btn btn--kucuk btn--birincil', disabled: !worker, onclick: async () => { try { const r = await fetch(worker + '/api/kanal/telegram/kur', { method: 'POST', headers: { Authorization: 'Bearer ' + ((await depo.gizli('yonetici')) || ''), 'X-SS-Sema': '1' } }); const j = await r.json(); if (!j.ok) throw new Error(j.mesaj || r.status); await depo.kaydet('hesaplar', { ...(hesap || {}), kanal: 'telegram', ad: j.veri?.bot?.username ? '@' + j.veri.bot.username : 'Telegram botu', dis_id: j.veri?.bot?.username || '', durum: 'prova' }); ctx.basari(t('kurulum.webhook_ok', 'Webhook kuruldu: {u}', { u: j.veri?.webhook?.url || '' })); cb.checked = true; cb.onchange({ target: cb }); } catch (e) { ctx.hata(String(e.message || e)); } } }));
-      if (s.eylem === 'ig-baglan') govde.appendChild(btn('📸 ' + t('kurulum.ig_baglan', 'Instagram\'a bağlan'), { class: 'btn btn--kucuk btn--birincil', disabled: !worker, onclick: () => { location.href = `${worker}/api/kanal/instagram/baglan?donus=${encodeURIComponent(location.href)}`; } }));
+      if (s.eylem === 'tg-kur') govde.appendChild(btnS('zincir', t('kurulum.webhook_kur', 'Webhook\'u kur'), { class: 'btn btn--kucuk btn--birincil', disabled: !worker, onclick: async () => { try { const r = await fetch(worker + '/api/kanal/telegram/kur', { method: 'POST', headers: { Authorization: 'Bearer ' + ((await depo.gizli('yonetici')) || ''), 'X-SS-Sema': '1' } }); const j = await r.json(); if (!j.ok) throw new Error(j.mesaj || r.status); await depo.kaydet('hesaplar', { ...(hesap || {}), kanal: 'telegram', ad: j.veri?.bot?.username ? '@' + j.veri.bot.username : 'Telegram botu', dis_id: j.veri?.bot?.username || '', durum: 'prova' }); ctx.basari(t('kurulum.webhook_ok', 'Webhook kuruldu: {u}', { u: j.veri?.webhook?.url || '' })); cb.checked = true; cb.onchange({ target: cb }); } catch (e) { ctx.hata(String(e.message || e)); } } }));
+      if (s.eylem === 'ig-baglan') govde.appendChild(btnS('instagram', t('kurulum.ig_baglan', 'Instagram\'a bağlan'), { class: 'btn btn--kucuk btn--birincil', disabled: !worker, onclick: () => { location.href = `${worker}/api/kanal/instagram/baglan?donus=${encodeURIComponent(location.href)}`; } }));
       liste.appendChild(el('label', {}, cb, govde));
     });
-    kok.append(sayfaBas(`${b.simge} ${b.ad} ${t('kurulum.baslik', 'kurulumu')}`, { geri: () => git('/ayarlar/kanallar'), eylemler: [rozet(b.etiket.ad, b.etiket.renk)] }),
-      el('p', { class: 'kart__alt' }, b.ozet), !worker && kanal !== 'tiktok' ? el('div', { class: 'bant bant--sari' }, '⚠️ ' + t('kurulum.worker_yok', 'Önce Worker\'ı bağla; kanal kurulumu Worker üzerinden yapılır.'), btn('Worker', { class: 'btn btn--kucuk', onclick: () => git('/ayarlar/worker') })) : null,
+    kok.append(sayfaBas(`${b.ad} ${t('kurulum.baslik', 'kurulumu')}`, { ustEtiket: t('nav.ayarlar', 'Kurulum'), geri: () => git('/ayarlar/kanallar'), eylemler: [rozet(b.etiket.ad, b.etiket.renk)] }),
+      el('p', { class: 'kart__alt' }, b.ozet), !worker && kanal !== 'tiktok' ? el('div', { class: 'bant bant--sari' }, simge('uyari'), '' + t('kurulum.worker_yok', 'Önce Worker\'ı bağla; kanal kurulumu Worker üzerinden yapılır.'), btn('Worker', { class: 'btn btn--kucuk', onclick: () => git('/ayarlar/worker') })) : null,
       liste,
       kanal !== 'tiktok' && !hesap ? btn(t('kurulum.hesap_kaydet', 'Bu kanalı PROVA olarak ekle (yerel)'), { class: 'btn', style: { marginTop: '12px' }, onclick: async () => { await depo.kaydet('hesaplar', { kanal, ad: b.ad, dis_id: '', durum: 'prova' }); ctx.basari(t('kurulum.eklendi', 'Hesap prova olarak eklendi')); git('/ayarlar/kanallar'); } }) : null);
   },

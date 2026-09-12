@@ -2,6 +2,7 @@
 // geniş ekranda sağda kişi bilgisi. Telefonda tek panel: liste ↔ sohbet.
 // Yerel modda simülatör koşuları da sohbet gibi görünür (yalnız okunur).
 import { el, btn, temizle, girdi, rozet, goreliZaman, metinAlani, ekle } from '../cekirdek/dom.js';
+import { simge } from '../cekirdek/simge.js';
 import { bos } from '../cekirdek/durum.js';
 import { pencereKalan } from '../paylasilan/kanallar.js';
 
@@ -45,7 +46,7 @@ export default {
       const q = arama.value.trim().toLowerCase();
       const satirlar = (await satirlariGetir()).filter(({ kisi }) => !q || `${kisi.ad} ${kisi.kullanici_adi || ''}`.toLowerCase().includes(q));
       if (!satirlar.length) {
-        listeGovde.appendChild(bos({ simge: '💬', baslik: sekme === 'sanal' ? t('sohbet.sanal_bos', 'Simülatör sohbeti yok') : t('sohbet.bos', 'Henüz sohbet yok'), aciklama: sekme === 'sanal' ? t('sohbet.sanal_aciklama', 'Bir akışın Test sekmesinde konuş; koşular burada görünür.') : t('sohbet.bos_aciklama', 'Gerçek sohbetler bağlı modda görünür — botuna /start yaz.'), eylem: { metin: t('nav.akislar', 'Akışlar'), cb: () => git('/akislar') } }));
+        listeGovde.appendChild(bos({ simge: 'sohbet', baslik: sekme === 'sanal' ? t('sohbet.sanal_bos', 'Simülatör sohbeti yok') : t('sohbet.bos', 'Henüz sohbet yok'), aciklama: sekme === 'sanal' ? t('sohbet.sanal_aciklama', 'Bir akışın Test sekmesinde konuş; koşular burada görünür.') : t('sohbet.bos_aciklama', 'Gerçek sohbetler bağlı modda görünür — botuna /start yaz.'), eylem: { metin: t('nav.akislar', 'Akışlar'), cb: () => git('/akislar') } }));
         return;
       }
       for (const { s, kisi } of satirlar) {
@@ -63,7 +64,7 @@ export default {
     // --- Panel ---
     async function panelCiz() {
       temizle(panel); temizle(bilgi);
-      if (!seciliId) { panel.appendChild(bos({ simge: '💬', baslik: t('sohbet.sec', 'Bir sohbet seç'), aciklama: t('sohbet.sec_aciklama', 'Soldaki listeden bir konuşma aç. Yeni mesajlar burada anında görünür.') })); return; }
+      if (!seciliId) { panel.appendChild(bos({ simge: 'sohbet', baslik: t('sohbet.sec', 'Bir sohbet seç'), aciklama: t('sohbet.sec_aciklama', 'Soldaki listeden bir konuşma aç. Yeni mesajlar burada anında görünür.') })); return; }
       const sanal = seciliId.startsWith('sanal:');
       const sohbet = sanal ? null : await depo.al('sohbetler', seciliId);
       const kisi = sohbet ? await depo.al('kisiler', sohbet.kisi_id) : null;
@@ -72,11 +73,11 @@ export default {
       const ad = kisi ? kisi.ad : t('sohbet.sanal', 'Simülatör');
 
       panel.appendChild(el('div', { class: 'sohbet__bas' },
-        btn('←', { class: 'btn btn--ikon btn--sade', 'aria-label': t('geri', 'Geri'), onclick: () => git('/sohbetler') }),
+        btn(simge('sol'), { class: 'btn btn--ikon btn--sade', 'aria-label': t('geri', 'Geri'), onclick: () => git('/sohbetler') }),
         el('div', { class: 'avatar avatar--kucuk' }, ad.slice(0, 1).toUpperCase()),
         el('div', { style: { flex: '1', minWidth: '0' } }, el('div', { style: { fontWeight: '650' } }, ad), el('div', { class: 'kart__alt' }, sanal ? t('sohbet.sanal_aciklama_kisa', 'Test koşusu') : kisi ? [kisi.kanal, kisi.kullanici_adi ? '@' + kisi.kullanici_adi : ''].filter(Boolean).join(' · ') : '')),
-        kisi ? btn('👤', { class: 'btn btn--ikon btn--sade', 'aria-label': t('sohbet.kisi_kart', 'Kişi kartı'), title: t('sohbet.kisi_kart', 'Kişi kartı'), onclick: () => git(`/kisi/${kisi.id}`) }) : null,
-        sanal ? btn('⚡', { class: 'btn btn--ikon btn--sade', 'aria-label': t('sohbet.akisa_git', 'Akışa git'), title: t('sohbet.akisa_git', 'Akışa git'), onclick: () => git(`/akis/${seciliId.slice(6)}/test`) }) : null));
+        kisi ? btn(simge('kisiler'), { class: 'btn btn--ikon btn--sade', 'aria-label': t('sohbet.kisi_kart', 'Kişi kartı'), title: t('sohbet.kisi_kart', 'Kişi kartı'), onclick: () => git(`/kisi/${kisi.id}`) }) : null,
+        sanal ? btn(simge('akis'), { class: 'btn btn--ikon btn--sade', 'aria-label': t('sohbet.akisa_git', 'Akışa git'), title: t('sohbet.akisa_git', 'Akışa git'), onclick: () => git(`/akis/${seciliId.slice(6)}/test`) }) : null));
 
       // Akış: mesajlar + günlük kararları zamana göre birleşir, gün ayraçları eklenir.
       const akis = el('div', { class: 'sohbet__akis' });
@@ -88,7 +89,7 @@ export default {
         if (o.tur === 'mesaj') {
           const prova = /^\[prova\]\s*/.test(o.m.metin || '');
           const metin = (o.m.metin || '').replace(/^\[prova\]\s*/, '').replace(/^⚠️\s*/, '');
-          akis.appendChild(el('div', { class: `balon balon--${o.m.yon === 'gelen' ? 'gelen' : 'giden'}` }, metin, prova ? el('span', { class: 'balon__zaman' }, '🧪 prova') : null, el('span', { class: 'balon__zaman' }, saat(o.z))));
+          akis.appendChild(el('div', { class: `balon balon--${o.m.yon === 'gelen' ? 'gelen' : 'giden'}` }, metin, prova ? el('span', { class: 'balon__zaman' }, simge('prova'), 'prova') : null, el('span', { class: 'balon__zaman' }, saat(o.z))));
         } else {
           const g = o.g; const karar = g.karar?.tur || '';
           akis.appendChild(el('div', { class: 'balon balon--sistem' }, `${saat(g.zaman)} · ${olayAdi(g.olay_tipi, t)} → ${kararAdi(karar, t)}${g.prova ? ' · prova' : ''}`));
@@ -106,7 +107,7 @@ export default {
         try { await depo.komut('mesaj_gonder', { kisi_id: kisi.id, metin }); kutu.value = ''; kutu.style.height = 'auto'; ctx.basari(t('sohbet.gonderildi', 'Gönderildi')); setTimeout(panelCiz, 500); } catch (err) { ctx.hata(err.message); }
       };
       kutu.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); gonder(); } });
-      panel.appendChild(el('div', { class: 'sohbet__yaz' }, kutu, btn('➤', { class: 'btn btn--birincil btn--ikon', 'aria-label': t('sohbet.gonder', 'Gönder'), disabled: sanal || !depo.komut || !kisi, onclick: gonder })));
+      panel.appendChild(el('div', { class: 'sohbet__yaz' }, kutu, btn(simge('sag'), { class: 'btn btn--birincil btn--ikon', 'aria-label': t('sohbet.gonder', 'Gönder'), disabled: sanal || !depo.komut || !kisi, onclick: gonder })));
 
       // Sağ panel: kişi bilgisi
       if (kisi) {
@@ -129,7 +130,7 @@ export default {
 };
 
 function kanalRozeti(kanal, sanal) {
-  if (sanal) return rozet('🧪', 'gri');
+  if (sanal) return rozet(t('sohbet.sanal', 'Prova'), 'gri');
   const r = { telegram: ['Telegram', 'mavi'], instagram: ['Instagram', 'mor'], whatsapp: ['WhatsApp', 'yesil'], tiktok: ['TikTok', 'gri'] }[kanal] || [kanal || '—', 'gri'];
   return rozet(r[0], r[1]);
 }

@@ -4,26 +4,27 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https:; media-src 'self' blob:; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
-<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0c0f17" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#0b0a08">
 <meta name="description" content="Sosyal Stüdyo — sosyal medya otomasyon stüdyosu: akışlar, kişiler, toplu mesaj, içerik araçları. Çerçevesiz PWA.">
 <title>Sosyal Stüdyo</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./img/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="./img/apple-touch-icon.png">
 <link rel="stylesheet" href="./css/tokenlar.css">
+<link rel="stylesheet" href="./css/desen.css">
+<link rel="stylesheet" href="./css/hareket.css">
 <link rel="stylesheet" href="./css/bilesenler.css">
 <link rel="stylesheet" href="./css/uygulama.css">
 <script src="./js/cekirdek/tema.js"></script>
 </head>
 <body>
 <header class="ust">
-  <a class="ust__logo" href="#/ozet"><img src="./img/fy-isaret.png" alt="" width="30" height="22"><span data-i18n="uygulama.ad">Sosyal Stüdyo</span></a>
+  <a class="ust__logo" href="#/ozet"><span class="marka"><img class="marka--koyu" src="./img/fy-isaret.png" alt="" width="34" height="25"><img class="marka--acik" src="./img/fy-isaret-acik.png" alt="" width="34" height="25"></span><span class="ust__ad"><b data-i18n="uygulama.ad">Sosyal Stüdyo</b><span data-i18n="uygulama.ajans">Yapay Zekâ Ajansı</span></span></a>
   <div class="ust__ara" id="ust-ara"></div>
   <div class="ust__sag" id="ust-sag"></div>
 </header>
 <div class="govde">
-  <aside class="kenar" aria-label="Menü"><nav class="menu" id="kenar-menu"></nav></aside>
+  <aside class="kenar" aria-label="Menü"><nav class="menu" id="kenar-menu"></nav><div class="kenar__marka"><span class="marka"><img class="marka--koyu" src="./img/fy-isaret.png" alt="" width="30" height="22"><img class="marka--acik" src="./img/fy-isaret-acik.png" alt="" width="30" height="22"></span><span class="kenar__marka-yazi" data-i18n="uygulama.imza">FY · Yapay Zekâ Ajansı</span></div></aside>
   <main class="icerik" id="icerik">
     <div class="bantlar" id="bantlar"></div>
     <div id="sayfa">

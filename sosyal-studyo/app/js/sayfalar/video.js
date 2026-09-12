@@ -1,6 +1,7 @@
 // Video Analizi: transkript yapıştır (her zaman) ya da telefondan video seç (ses + kareler → Worker).
 // Başkasının videosu URL ile indirilmez (ToS). Yerel modda elle notlarla çalışır.
-import { el, btn, kart, rozet, temizle, girdi, alan, metinAlani, goreliZaman, sayfaBas } from '../cekirdek/dom.js';
+import { el, btn, kart, rozet, temizle, girdi, alan, metinAlani, goreliZaman, sayfaBas, btnS } from '../cekirdek/dom.js';
+import { simge } from '../cekirdek/simge.js';
 import { aiIstemci } from '../ai-istemci.js';
 
 export default {
@@ -14,10 +15,10 @@ export default {
       if (!v) { kok.appendChild(el('p', { class: 'durum-hata' }, 'Analiz yok')); return; }
       const s = v.sonuc || {};
       kok.append(sayfaBas(v.baslik || t('video.analiz', 'Analiz'), { geri: () => git('/video') }),
-        kart(el('h2', { class: 'kart__baslik' }, '🪝 ' + t('video.kanca', 'Kanca (ilk 3 sn)')), el('p', {}, s.kanca || '—')),
+        kart(el('h2', { class: 'kart__baslik' }, simge('kanca'), '' + t('video.kanca', 'Kanca (ilk 3 sn)')), el('p', {}, s.kanca || '—')),
         kart(el('h2', { class: 'kart__baslik' }, t('video.yapi', 'Yapı')), ...(s.yapi || []).map((y) => el('div', { class: 'kart__alt' }, `${y.sn}s · ${y.bolum}: ${y.not || ''}`))),
         kart(el('h2', { class: 'kart__baslik' }, 'CTA'), el('p', {}, s.cta || '—'), el('p', { class: 'kart__alt' }, `${t('video.tempo', 'Tempo')}: ${s.tempo || '—'} · ${t('video.puan', 'kaydırma durdurma tahmini')}: ${s.puan ?? '—'}/10`)),
-        kart(el('h2', { class: 'kart__baslik' }, t('video.alternatif', 'Alternatif kancalar')), ...(s.alternatifKancalar || []).map((k) => el('div', { class: 'satir satir--arasi' }, el('span', {}, k), btn('🪝', { class: 'btn btn--kucuk btn--ikon', onclick: async () => { await depo.kaydet('kancalar', { metin: k, dil: 'tr', format: 'reels', nis: [], kaynak: 'video' }); ctx.basari(t('genel.eklendi', 'Eklendi')); } })))),
+        kart(el('h2', { class: 'kart__baslik' }, t('video.alternatif', 'Alternatif kancalar')), ...(s.alternatifKancalar || []).map((k) => el('div', { class: 'satir satir--arasi' }, el('span', {}, k), btn(simge('kanca'), { class: 'btn btn--kucuk btn--ikon', onclick: async () => { await depo.kaydet('kancalar', { metin: k, dil: 'tr', format: 'reels', nis: [], kaynak: 'video' }); ctx.basari(t('genel.eklendi', 'Eklendi')); } })))),
         kart(el('h2', { class: 'kart__baslik' }, t('video.iyilestirme', 'İyileştirmeler')), ...(s.iyilestirmeler || []).map((i) => el('div', { class: 'kart__alt' }, '• ' + i))),
         el('details', { class: 'katlanir' }, el('summary', {}, t('video.transkript', 'Transkript')), el('div', { class: 'kod' }, v.transkript || '—')));
       return;
@@ -25,11 +26,11 @@ export default {
     const baslik = girdi({ placeholder: t('video.baslik', 'Video başlığı / notu') });
     const transkript = metinAlani({ rows: 8, placeholder: t('video.transkript_yapistir', 'Transkript ya da altyazıyı yapıştır…') });
     const dosya = el('input', { type: 'file', accept: 'video/*', hidden: true });
-    const dosyaBtn = el('label', { class: 'btn' }, '📱 ' + t('video.sec', 'Telefondan video seç'), dosya);
+    const dosyaBtn = el('label', { class: 'btn' }, simge('telefon'), '' + t('video.sec', 'Telefondan video seç'), dosya);
     const dosyaNot = el('span', { class: 'kart__alt' });
     dosya.onchange = () => { const f = dosya.files[0]; dosyaNot.textContent = f ? `${f.name} · ${(f.size / 1048576).toFixed(1)} MB` + (mevcut ? '' : ' · ' + t('video.worker_gerek', 'transkript için Worker gerekir')) : ''; };
     const liste = el('div', { class: 'izgara' });
-    async function ciz() { temizle(liste); for (const v of await depo.listele('video_analizleri', { sirala: 'guncellendi', azalan: true })) liste.appendChild(kart(el('h2', { class: 'kart__baslik' }, v.baslik || '—'), el('p', { class: 'kart__alt' }, (v.sonuc?.kanca || v.transkript || '').slice(0, 120)), el('div', { class: 'satir' }, rozet(v.elle ? t('video.elle', 'elle') : 'AI', v.elle ? 'gri' : 'altin'), el('span', { class: 'kart__alt' }, goreliZaman(v.guncellendi, t))), el('div', { class: 'satir' }, btn(t('akis.ac', 'Aç'), { class: 'btn btn--kucuk btn--birincil', onclick: () => git(`/video/${v.id}`) }), btn('✕', { class: 'btn btn--kucuk btn--ikon', onclick: async () => { await depo.sil('video_analizleri', v.id); ciz(); } })))); }
+    async function ciz() { temizle(liste); for (const v of await depo.listele('video_analizleri', { sirala: 'guncellendi', azalan: true })) liste.appendChild(kart(el('h2', { class: 'kart__baslik' }, v.baslik || '—'), el('p', { class: 'kart__alt' }, (v.sonuc?.kanca || v.transkript || '').slice(0, 120)), el('div', { class: 'satir' }, rozet(v.elle ? t('video.elle', 'elle') : 'AI', v.elle ? 'gri' : 'altin'), el('span', { class: 'kart__alt' }, goreliZaman(v.guncellendi, t))), el('div', { class: 'satir' }, btn(t('akis.ac', 'Aç'), { class: 'btn btn--kucuk btn--birincil', onclick: () => git(`/video/${v.id}`) }), btn(simge('kapat'), { class: 'btn btn--kucuk btn--ikon', onclick: async () => { await depo.sil('video_analizleri', v.id); ciz(); } })))); }
     async function analizEt(elle) {
       const metin = transkript.value.trim(); if (!metin && !dosya.files[0]) { ctx.hata(t('video.girdi_yok', 'Transkript yapıştır ya da video seç.')); return; }
       let sonuc, kullanilanTranskript = metin;
@@ -47,7 +48,7 @@ export default {
       git(`/video/${v.id}`);
     }
     kok.append(sayfaBas(t('nav.video', 'Video Analizi'), { alt: t('video.alt', 'Kendi videonun kancasını, yapısını ve çağrısını çıkarır.') }), el('p', { class: 'kart__alt' }, t('video.aciklama', 'Bir videonun kancasını, yapısını ve CTA\'sını çıkarır; alternatif kancalar önerir. Başkasının videosu URL ile indirilmez — kendi videonu seç ya da transkript yapıştır.')),
-      kart(alan(t('video.baslik_etiket', 'Başlık'), baslik), alan(t('video.transkript', 'Transkript'), transkript), el('div', { class: 'satir' }, dosyaBtn, dosyaNot), el('div', { class: 'satir' }, btn('✨ ' + t('video.ai', 'AI ile analiz et'), { class: 'btn btn--birincil', disabled: !mevcut, onclick: () => analizEt(false) }), btn('✍️ ' + t('video.elle_analiz', 'Elle bölümle'), { onclick: () => analizEt(true) }), !mevcut ? el('span', { class: 'kart__alt' }, t('ai.yerel_kisa', 'AI üretimi için Worker gerekir; elle yazmak her zaman açık.')) : null)),
+      kart(alan(t('video.baslik_etiket', 'Başlık'), baslik), alan(t('video.transkript', 'Transkript'), transkript), el('div', { class: 'satir' }, dosyaBtn, dosyaNot), el('div', { class: 'satir' }, btnS('parilti', t('video.ai', 'AI ile analiz et'), { class: 'btn btn--birincil', disabled: !mevcut, onclick: () => analizEt(false) }), btnS('kalem', t('video.elle_analiz', 'Elle bölümle'), { onclick: () => analizEt(true) }), !mevcut ? el('span', { class: 'kart__alt' }, t('ai.yerel_kisa', 'AI üretimi için Worker gerekir; elle yazmak her zaman açık.')) : null)),
       el('h2', {}, t('video.gecmis', 'Analizler')), liste);
     ciz();
   },

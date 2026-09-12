@@ -1,5 +1,6 @@
 // Modal ve onay kutusu: odak tuzağı, Escape, yazarak onay ("CANLI", "SİL").
 import { el, btn } from './dom.js';
+import { simge } from './simge.js';
 
 export function modal({ baslik, govde, dugmeler = [], kapatilabilir = true, genis = false }) {
   return new Promise((cozul) => {
@@ -9,7 +10,7 @@ export function modal({ baslik, govde, dugmeler = [], kapatilabilir = true, geni
       if (e.key === 'Tab') { const odak = [...kutu.querySelectorAll('button, input, select, textarea, a[href]')].filter((x) => !x.disabled); if (!odak.length) return; const i = odak.indexOf(document.activeElement); if (e.shiftKey && i <= 0) { e.preventDefault(); odak.at(-1).focus(); } else if (!e.shiftKey && i === odak.length - 1) { e.preventDefault(); odak[0].focus(); } }
     };
     const kutu = el('div', { class: `modal${genis ? ' modal--genis' : ''}`, role: 'dialog', 'aria-modal': 'true', 'aria-label': baslik },
-      el('header', { class: 'modal__baslik' }, el('h2', {}, baslik), kapatilabilir ? btn('✕', { class: 'btn btn--ikon', 'aria-label': 'Kapat', onclick: () => kapat(null) }) : null),
+      el('header', { class: 'modal__baslik satir satir--arasi' }, el('h2', { style: { margin: 0, fontSize: 'inherit' } }, baslik), kapatilabilir ? btn(simge('kapat'), { class: 'btn btn--ikon btn--sade', 'aria-label': 'Kapat', onclick: () => kapat(null) }) : null),
       el('div', { class: 'modal__govde' }, govde),
       dugmeler.length ? el('footer', { class: 'modal__ayak' }, ...dugmeler.map((d) => btn(d.metin, { class: `btn ${d.sinif || ''}`, disabled: d.pasif, onclick: async () => { const r = d.cb ? await d.cb() : d.deger; if (r !== false) kapat(r ?? d.deger ?? true); } }))) : null);
     const ortu = el('div', { class: 'ortu', onclick: (e) => { if (e.target === ortu && kapatilabilir) kapat(null); } }, kutu);
