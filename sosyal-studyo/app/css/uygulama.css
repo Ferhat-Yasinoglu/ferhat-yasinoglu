@@ -1,0 +1,49 @@
+/* Uygulama iskeleti: üst çubuk, kenar menüsü (≥1024), alt sekme çubuğu (mobil). */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; font-family: var(--yazi); font-size: 16px; line-height: 1.5; background: rgb(var(--bg)); color: rgb(var(--metin)); min-height: 100vh; }
+h1, h2, h3 { line-height: 1.2; letter-spacing: -.01em; }
+h1 { font-size: 1.5rem; margin: 0 0 var(--b-4); }
+h2 { font-size: 1.15rem; margin: var(--b-4) 0 var(--b-2); }
+p { margin: 0 0 var(--b-3); }
+a { color: rgb(var(--mavi)); }
+:focus-visible { outline: 2px solid rgb(var(--altin)); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+.ust { position: sticky; inset-block-start: 0; z-index: 30; height: var(--ust-cubuk); display: flex; align-items: center; gap: var(--b-3); padding-inline: var(--b-4); background: rgb(var(--yuzey) / .92); backdrop-filter: blur(10px); border-block-end: 1px solid rgb(var(--cizgi) / .08); }
+.ust__logo { display: flex; align-items: center; gap: var(--b-2); font-weight: 800; text-decoration: none; color: inherit; letter-spacing: -.01em; }
+.ust__logo img { width: 28px; height: 28px; }
+.ust__sag { margin-inline-start: auto; display: flex; gap: var(--b-2); align-items: center; }
+.ust__mod { font-size: .75rem; }
+
+.govde { display: grid; grid-template-columns: 1fr; min-height: calc(100vh - var(--ust-cubuk)); }
+.kenar { display: none; }
+.icerik { padding: var(--b-4); padding-block-end: calc(var(--alt-cubuk) + var(--b-6)); max-width: 1080px; width: 100%; margin-inline: auto; }
+.bantlar { display: flex; flex-direction: column; gap: var(--b-2); margin-block-end: var(--b-4); }
+.bantlar:empty { display: none; }
+
+.alt { position: fixed; inset-inline: 0; inset-block-end: 0; height: var(--alt-cubuk); display: flex; background: rgb(var(--yuzey) / .95); backdrop-filter: blur(10px); border-block-start: 1px solid rgb(var(--cizgi) / .08); z-index: 30; padding-block-end: env(safe-area-inset-bottom); }
+.alt a, .alt button { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: .68rem; font-weight: 600; color: rgb(var(--metin-2)); text-decoration: none; background: none; border: 0; font-family: inherit; cursor: pointer; }
+.alt .ikon { font-size: 1.25rem; }
+.alt [aria-current="page"] { color: rgb(var(--altin)); }
+
+.menu { display: flex; flex-direction: column; gap: 2px; }
+.menu__grup { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: rgb(var(--metin-3)); padding: var(--b-3) var(--b-3) var(--b-1); font-weight: 700; }
+.menu a { display: flex; align-items: center; gap: var(--b-2); padding: var(--b-2) var(--b-3); border-radius: var(--r-kucuk); color: rgb(var(--metin-2)); text-decoration: none; font-weight: 500; }
+.menu a:hover { background: rgb(var(--yuzey-2)); color: rgb(var(--metin)); }
+.menu a[aria-current="page"] { background: rgb(var(--altin) / .12); color: rgb(var(--altin)); }
+
+.daha-sayfa { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--b-2); }
+.daha-sayfa a { display: flex; flex-direction: column; gap: 4px; padding: var(--b-3); border-radius: var(--r-kucuk); background: rgb(var(--yuzey-2)); color: inherit; text-decoration: none; font-weight: 600; font-size: .9rem; }
+
+@media (min-width: 1024px) {
+  .govde { grid-template-columns: var(--kenar) 1fr; }
+  .kenar { display: block; position: sticky; inset-block-start: var(--ust-cubuk); height: calc(100vh - var(--ust-cubuk)); overflow: auto; padding: var(--b-3); border-inline-end: 1px solid rgb(var(--cizgi) / .08); }
+  .alt { display: none; }
+  .icerik { padding: var(--b-5) var(--b-6); padding-block-end: var(--b-8); }
+}
+html:not(.js) .js-gerekli { display: block; padding: var(--b-5); }
+html.js .js-gerekli { display: none; }
+[dir="rtl"] .balon--gelen { border-end-end-radius: 16px; border-end-start-radius: 4px; }
+[dir="rtl"] .balon--giden { border-end-start-radius: 16px; border-end-end-radius: 4px; }

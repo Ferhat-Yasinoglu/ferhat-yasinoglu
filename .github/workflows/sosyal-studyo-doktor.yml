@@ -1,0 +1,68 @@
+# Sosyal Stüdyo Worker teşhisi (elle tetiklenir): Worker sağlığı, doktor listesi, koleksiyon sayıları,
+# son günlük kararları ve Telegram webhook durumu. Mesaj metni ya da kişi bilgisi yazmaz, gizli değer yazmaz.
+name: Sosyal Studyo Doktor
+
+on:
+  workflow_dispatch:
+
+jobs:
+  doktor:
+    name: Teshis
+    runs-on: ubuntu-latest
+    if: ${{ vars.WORKER_DAGITIMI_ACIK == '1' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      # Dağıtım token'ları secretleri-duzelt.mjs'den geçiriyor; teşhis de aynı değeri kullanmalı,
+      # yoksa ham secret başka bir bota işaret edip yanıltıcı sonuç verir.
+      - name: Secret'lari temizle
+        env:
+          HAM_CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          HAM_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          HAM_YONETICI_ANAHTARI: ${{ secrets.YONETICI_ANAHTARI }}
+          HAM_TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: node sosyal-studyo/tools/secretleri-duzelt.mjs
+      - name: Worker adresi
+        id: adres
+        run: |
+          alt="$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).result?.subdomain||''))")"
+          [ -n "$alt" ] || { echo "::error::workers.dev alt alan adi bulunamadi"; exit 1; }
+          echo "url=https://sosyal-studyo.$alt.workers.dev" >> "$GITHUB_OUTPUT"
+      - name: Teshis
+        env:
+          URL: ${{ steps.adres.outputs.url }}
+        run: |
+          api() { curl -sS -H "Authorization: Bearer $YONETICI_ANAHTARI" -H "X-SS-Sema: 1" "$URL$1"; }
+          echo "== /health"; curl -sS "$URL/health"; echo
+          echo "== /api/durum"; api /api/durum | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);if(!r.ok){console.log(r);return}for(const d of r.veri.doktor)console.log(`${d.durum.padEnd(5)} ${d.ad}: ${d.detay}`);console.log("kota:",JSON.stringify(r.veri.kota),"prova:",r.veri.prova,"surum:",r.veri.surum)})'
+          echo "== Akislar ve tetikleyiciler (akis tetiklenmesi icin akis 'yayinda' olmali)"
+          AKIS="$(api '/api/k/akislar?limit=200')" TET="$(api '/api/k/tetikleyiciler?limit=200')" node -e '
+            const oku=(s)=>{const r=JSON.parse(s); return r.ok? r.veri.kayitlar.filter(k=>!k.silindi) : []};
+            const akislar=oku(process.env.AKIS), tetler=oku(process.env.TET);
+            for(const a of akislar) console.log(`  akis ${a.id}  durum=${a.durum||"?"}  kanal=${a.kanal||"hepsi"}  adim=${(a.adimlar||[]).length}  ad="${(a.ad||"").slice(0,30)}"`);
+            for(const t of tetler){ const a=akislar.find(x=>x.id===t.akis_id);
+              console.log(`  tetik ${t.id}  tip=${t.tip}  aktif=${t.aktif?1:0}  akis=${t.akis_id} → ${a?(a.durum==="yayinda"?"YAYINDA (calisir)":"taslak (CALISMAZ)"):"AKIS YOK (CALISMAZ)"}`); }
+            const calisan=tetler.filter(t=>{const a=akislar.find(x=>x.id===t.akis_id); return t.aktif && a && a.durum==="yayinda"});
+            console.log(calisan.length? `  → ${calisan.length} tetikleyici calisir durumda` : "  → UYARI: calisir tetikleyici yok; gelen mesaj hicbir akisi baslatmaz");
+          '
+          echo "== Koleksiyon sayilari"
+          for kol in hesaplar kisiler sohbetler mesajlar gunluk kosular; do
+            api "/api/k/$kol?limit=1000" | KOL=$kol node -e '
+              let s=""; process.stdin.on("data",d=>s+=d).on("end",()=>{
+                const r=JSON.parse(s); if(!r.ok){console.log(process.env.KOL, "HATA", r.mesaj); return}
+                const canli=r.veri.kayitlar.filter(k=>!k.silindi);
+                let ek="";
+                if(process.env.KOL==="hesaplar") ek=canli.map(h=>`${h.kanal}:${h.durum}`).join(", ");
+                if(process.env.KOL==="gunluk") ek=canli.slice(-8).map(g=>`${(g.zaman||"").slice(11,19)} ${g.olay_tipi}→${g.karar?.tur||"?"}${g.gonderildi?" gonderildi":(g.prova?" [prova]":"")}`).join(" | ");
+                if(process.env.KOL==="mesajlar") ek=canli.slice(-6).map(m=>`${(m.zaman||m.olusturuldu||"").slice(11,19)} ${m.yon}${/^\[prova\]/.test(m.metin||"")?" [prova]":""}`).join(", ");
+                if(process.env.KOL==="kosular") ek=canli.map(k=>`${k.durum||"?"}`).join(", ");
+                console.log(`  ${process.env.KOL}: ${canli.length}${ek?"  ["+ek+"]":""}`);
+              })'
+          done
+          if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
+            echo "== Telegram"
+            curl -sS "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getMe" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s);console.log(j.ok?`  bot: @${j.result.username} (id ${j.result.id})`:`  getMe HATA: ${j.description}`)})'
+            curl -sS "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getWebhookInfo" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s);if(!j.ok){console.log("  getWebhookInfo HATA:",j.description);return}const r=j.result||{};console.log(`  webhook: ${r.url||"KURULU DEGIL"} | bekleyen: ${r.pending_update_count} | son hata: ${r.last_error_date?new Date(r.last_error_date*1000).toISOString()+" "+r.last_error_message:"yok"} | izinli: ${JSON.stringify(r.allowed_updates||[])}`);if(!r.url)console.log("  → UYARI: bu bot icin webhook kurulu degil; gelen mesaj Worker tarafina ulasmaz. Worker dagitimini yeniden calistir.")})'
+          fi
