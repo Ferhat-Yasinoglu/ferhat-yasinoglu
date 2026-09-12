@@ -21,13 +21,3 @@ export function gunlukOzet(gunluk, { gunSayisi = 7, simdi = Date.now(), akisId }
 }
 
 /** Basit SVG çizgi grafiği (bağımlılıksız). seriler: [{ad, degerler[], renk}] */
-export function cizgiGrafigiSvg(etiketler, seriler, { w = 600, h = 200 } = {}) {
-  const padL = 32, padB = 24, padT = 10, padR = 10;
-  const max = Math.max(1, ...seriler.flatMap((s) => s.degerler));
-  const x = (i) => padL + (i / Math.max(1, etiketler.length - 1)) * (w - padL - padR);
-  const y = (v) => h - padB - (v / max) * (h - padB - padT);
-  const yollar = seriler.map((s) => `<path d="${s.degerler.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join('')}" fill="none" stroke="${s.renk}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`).join('');
-  const noktalar = seriler.map((s) => s.degerler.map((v, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3" fill="${s.renk}"><title>${s.ad}: ${v}</title></circle>`).join('')).join('');
-  const eksen = etiketler.map((e, i) => `<text x="${x(i).toFixed(1)}" y="${h - 6}" font-size="10" text-anchor="middle" fill="currentColor" opacity=".6">${e.slice(5)}</text>`).join('');
-  return `<svg class="grafik" viewBox="0 0 ${w} ${h}" role="img" aria-label="${seriler.map((s) => s.ad).join(', ')}"><line x1="${padL}" y1="${y(0)}" x2="${w - padR}" y2="${y(0)}" stroke="currentColor" opacity=".2"/><text x="4" y="${padT + 8}" font-size="10" fill="currentColor" opacity=".6">${max}</text>${yollar}${noktalar}${eksen}</svg>`;
-}
