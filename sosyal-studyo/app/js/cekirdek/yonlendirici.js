@@ -29,6 +29,8 @@ export class Yonlendirici {
       const mod = await e.rota.yukle();
       const sayfa = mod.default;
       const sonuc = await sayfa.cizim(this.kok, { ...this.ctx, param: e.param, sorgu: this.simdiki.sorgu, yol });
+      // Her çizimden sonra kısa bir giriş animasyonu; yeniden tetiklemek için sınıf sıfırlanır.
+      this.kok.classList.remove('sayfa-giris'); void this.kok.offsetWidth; this.kok.classList.add('sayfa-giris');
       this.temizleyici = typeof sonuc === 'function' ? sonuc : null;
       const h1 = this.kok.querySelector('h1');
       if (h1) { h1.setAttribute('tabindex', '-1'); h1.focus({ preventScroll: true }); }
@@ -36,8 +38,9 @@ export class Yonlendirici {
     } catch (err) {
       console.error('sayfa çizilemedi', yol, err);
       this.kok.replaceChildren();
-      const p = document.createElement('p'); p.className = 'durum-hata'; p.textContent = 'Sayfa yüklenemedi: ' + (err?.message || err);
-      this.kok.appendChild(p);
+      const { bosDurum } = await import('./dom.js');
+      const { simge } = await import('./simge.js');
+      this.kok.appendChild(bosDurum({ hata: true, simge: simge('hata', { boy: 44 }), baslik: 'Sayfa yüklenemedi', alt: err?.message || String(err) }));
     }
   }
 }
