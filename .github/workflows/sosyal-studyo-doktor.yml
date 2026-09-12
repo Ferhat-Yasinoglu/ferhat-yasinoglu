@@ -15,11 +15,17 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: "22"
+      # Dağıtım token'ları secretleri-duzelt.mjs'den geçiriyor; teşhis de aynı değeri kullanmalı,
+      # yoksa ham secret başka bir bota işaret edip yanıltıcı sonuç verir.
+      - name: Secret'lari temizle
+        env:
+          HAM_CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          HAM_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          HAM_YONETICI_ANAHTARI: ${{ secrets.YONETICI_ANAHTARI }}
+          HAM_TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: node sosyal-studyo/tools/secretleri-duzelt.mjs
       - name: Worker adresi
         id: adres
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           alt="$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).result?.subdomain||''))")"
           [ -n "$alt" ] || { echo "::error::workers.dev alt alan adi bulunamadi"; exit 1; }
@@ -27,8 +33,6 @@ jobs:
       - name: Teshis
         env:
           URL: ${{ steps.adres.outputs.url }}
-          YONETICI_ANAHTARI: ${{ secrets.YONETICI_ANAHTARI }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
           api() { curl -sS -H "Authorization: Bearer $YONETICI_ANAHTARI" -H "X-SS-Sema: 1" "$URL$1"; }
           echo "== /health"; curl -sS "$URL/health"; echo
@@ -58,6 +62,7 @@ jobs:
               })'
           done
           if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
-            echo "== Telegram getWebhookInfo"
-            curl -sS "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getWebhookInfo" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s).result||{};console.log("url:",r.url,"| bekleyen:",r.pending_update_count,"| son hata:",r.last_error_date?new Date(r.last_error_date*1000).toISOString()+" "+r.last_error_message:"yok","| izinli:",JSON.stringify(r.allowed_updates||[]))})'
+            echo "== Telegram"
+            curl -sS "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getMe" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s);console.log(j.ok?`  bot: @${j.result.username} (id ${j.result.id})`:`  getMe HATA: ${j.description}`)})'
+            curl -sS "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getWebhookInfo" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s);if(!j.ok){console.log("  getWebhookInfo HATA:",j.description);return}const r=j.result||{};console.log(`  webhook: ${r.url||"KURULU DEGIL"} | bekleyen: ${r.pending_update_count} | son hata: ${r.last_error_date?new Date(r.last_error_date*1000).toISOString()+" "+r.last_error_message:"yok"} | izinli: ${JSON.stringify(r.allowed_updates||[])}`);if(!r.url)console.log("  → UYARI: bu bot icin webhook kurulu degil; gelen mesaj Worker'a ulasmaz. Worker dagitimini yeniden calistir.")})'
           fi
