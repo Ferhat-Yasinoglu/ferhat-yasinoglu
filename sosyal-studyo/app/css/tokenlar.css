@@ -1,45 +1,80 @@
-/* Tasarım tokenları — fy-ajans'ın koyu/altın dilinin devamı. Yalnız mantıksal özellikler (RTL). */
+/* Tasarım tokenları — aydınlık, modern SaaS dili.
+   Renkler rgb üçlüsü olarak durur: rgb(var(--vurgu) / .12) gibi alfa kullanımı için.
+   Yalnız mantıksal özellikler kullanılır (RTL: Farsça arayüz aynı dosyayla çalışır). */
 :root {
-  --bg: 10 10 12;            /* rgb üçlüsü: rgb(var(--bg) / .5) kullanılabilir */
-  --yuzey: 22 22 26;
-  --yuzey-2: 32 32 38;
-  --cizgi: 255 255 255;
-  --metin: 244 241 235;
-  --metin-2: 176 172 164;
-  --metin-3: 122 118 112;
-  --altin: 212 175 55;
-  --altin-2: 246 214 120;
-  --mavi: 112 165 253;
-  --yesil: 158 206 106;
-  --kirmizi: 247 118 142;
-  --sari: 224 175 104;
-  --mor: 191 145 243;
+  /* Zemin ve yüzeyler — soğuk beyaz, kartlar saf beyaz, ayrım gölgeyle değil kontrastla kurulur. */
+  --bg: 246 247 250;
+  --yuzey: 255 255 255;
+  --yuzey-2: 241 243 247;
+  --yuzey-3: 232 235 241;
+  --cizgi: 15 23 42;          /* alfa ile çizgi/gölge tabanı */
 
-  --r-kucuk: 8px; --r: 14px; --r-buyuk: 20px;
+  --metin: 15 23 42;
+  --metin-2: 71 85 105;
+  --metin-3: 141 152 170;
+
+  /* Tek canlı vurgu. Marka rengi burada değişir, tüm arayüz onu izler. */
+  --vurgu: 79 70 229;
+  --vurgu-2: 67 56 202;       /* hover/basılı */
+  --vurgu-yz: 255 255 255;    /* vurgu üstündeki yazı */
+  --vurgu-sis: 238 236 254;   /* çok açık vurgu zemini */
+
+  --mavi: 37 99 235;
+  --yesil: 22 145 94;
+  --kirmizi: 220 51 74;
+  --sari: 191 122 10;
+  --mor: 139 92 246;
+  --altin: 180 128 24;        /* rozet rengi; arayüz vurgusu değil */
+
+  --r-kucuk: 10px; --r: 14px; --r-buyuk: 20px; --r-tam: 999px;
   --b-1: 4px; --b-2: 8px; --b-3: 12px; --b-4: 16px; --b-5: 24px; --b-6: 32px; --b-8: 48px;
-  --golge: 0 10px 30px rgb(0 0 0 / .35);
+
+  /* Katmanlı, düşük opaklıklı gölgeler: yükseklik hissi verir, kirletmez. */
+  --golge-1: 0 1px 2px rgb(var(--cizgi) / .06), 0 1px 3px rgb(var(--cizgi) / .04);
+  --golge-2: 0 2px 4px rgb(var(--cizgi) / .04), 0 6px 16px rgb(var(--cizgi) / .08);
+  --golge: 0 8px 24px rgb(var(--cizgi) / .10), 0 2px 6px rgb(var(--cizgi) / .06);
+  --golge-vurgu: 0 2px 8px rgb(var(--vurgu) / .28);
+
   --yazi: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Vazirmatn', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
   --mono: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  --ust-cubuk: 56px; --alt-cubuk: 60px; --kenar: 248px;
-  --gecis: 160ms ease;
-  color-scheme: dark;
-}
-:root[data-theme="light"] {
-  --bg: 248 246 241;
-  --yuzey: 255 255 255;
-  --yuzey-2: 241 238 231;
-  --cizgi: 20 18 14;
-  --metin: 24 22 18;
-  --metin-2: 92 88 80;
-  --metin-3: 140 134 124;
-  --altin: 166 128 20;
-  --altin-2: 120 92 10;
-  --mavi: 30 100 220;
-  --yesil: 46 130 60;
-  --kirmizi: 200 40 70;
-  --sari: 170 110 20;
-  --mor: 120 70 200;
-  --golge: 0 8px 24px rgb(0 0 0 / .12);
+  --f-xs: .75rem; --f-s: .8125rem; --f-m: .9375rem; --f-l: 1.0625rem; --f-xl: 1.3125rem; --f-2xl: 1.75rem;
+
+  --ust-cubuk: 60px; --alt-cubuk: 64px; --kenar: 256px;
+  --gecis: 160ms cubic-bezier(.2, 0, .2, 1);
   color-scheme: light;
 }
-@media (prefers-reduced-motion: reduce) { :root { --gecis: 0ms; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+:root[data-theme="dark"] {
+  --bg: 12 15 23;
+  --yuzey: 21 26 37;
+  --yuzey-2: 30 37 51;
+  --yuzey-3: 42 51 68;
+  --cizgi: 226 232 240;
+
+  --metin: 237 241 247;
+  --metin-2: 163 174 191;
+  --metin-3: 118 129 148;
+
+  --vurgu: 129 122 255;
+  --vurgu-2: 156 150 255;
+  --vurgu-yz: 16 18 32;
+  --vurgu-sis: 38 38 68;
+
+  --mavi: 96 148 255;
+  --yesil: 62 190 136;
+  --kirmizi: 255 118 140;
+  --sari: 230 172 64;
+  --mor: 176 142 255;
+  --altin: 224 178 72;
+
+  --golge-1: 0 1px 2px rgb(0 0 0 / .4);
+  --golge-2: 0 2px 6px rgb(0 0 0 / .4), 0 8px 20px rgb(0 0 0 / .3);
+  --golge: 0 10px 28px rgb(0 0 0 / .45);
+  --golge-vurgu: 0 2px 10px rgb(var(--vurgu) / .35);
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --gecis: 0ms; }
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

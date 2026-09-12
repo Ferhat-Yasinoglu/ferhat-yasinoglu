@@ -1,5 +1,5 @@
 // Analitik: dönem/akış seçici, SVG çizgi grafik, huni (adım ulaşma), kanal ve tetikleyici kırılımı, CSV.
-import { el, btn, kart, temizle, secim } from '../cekirdek/dom.js';
+import { el, btn, kart, temizle, secim, sayfaBas } from '../cekirdek/dom.js';
 import { gunlukOzet, cizgiGrafigiSvg } from '../paylasilan/analitik.js';
 
 export default {
@@ -33,7 +33,7 @@ export default {
         btn('⬇ CSV', { class: 'btn btn--kucuk', onclick: () => { const csv = ['gun,baslat,bitir,ajan,toplu,olay', ...o.gunler.map((g) => `${g},${o.seri[g].baslat},${o.seri[g].bitir},${o.seri[g].ajan},${o.seri[g].toplu},${o.seri[g].olay}`)].join('\n'); const b = new Blob([csv], { type: 'text/csv' }); const u = URL.createObjectURL(b); const l = document.createElement('a'); l.href = u; l.download = 'analitik.csv'; l.click(); } }));
     }
     donem.onchange = ciz; akisSec.onchange = ciz;
-    kok.append(el('h1', {}, t('nav.analitik', 'Analitik')), el('div', { class: 'satir', style: { marginBottom: '12px' } }, donem, akisSec), govde);
+    kok.append(sayfaBas(t('nav.analitik', 'Analitik'), { alt: t('analitik.alt', 'Akış başlatma, tamamlanma ve kanal dağılımı.') }), el('div', { class: 'satir', style: { marginBlockEnd: '16px' } }, donem, akisSec), govde);
     ciz();
   },
 };

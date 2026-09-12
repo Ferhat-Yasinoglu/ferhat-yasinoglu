@@ -1,5 +1,5 @@
 // Büyüme Araçları: yorum kuralları (reply-bot motoru), hoş geldin butonları, referans linkleri, oyunlaştırma.
-import { el, btn, kart, rozet, temizle, girdi, secim, alan, metinAlani } from '../cekirdek/dom.js';
+import { el, btn, kart, rozet, temizle, girdi, secim, alan, metinAlani, sayfaBas } from '../cekirdek/dom.js';
 import { kurallariAyristir, karar } from '../paylasilan/kurallar.js';
 
 export default {
@@ -11,7 +11,7 @@ export default {
     const sekmeler = el('div', { class: 'sekmeler' });
     const govde = el('div', {});
     for (const [k, ad] of [['yorumlar', t('buyume.yorumlar', 'Yorum yanıtları')], ['hosgeldin', t('buyume.hosgeldin', 'Hoş geldin butonları')], ['referans', t('buyume.referans', 'Referans linkleri')], ['oyun', t('buyume.oyun', 'Oyunlaştırma')]]) sekmeler.appendChild(el('button', { class: 'sekme', 'aria-selected': String(sekme === k), onclick: (e) => { sekme = k; [...sekmeler.children].forEach((x) => x.setAttribute('aria-selected', String(x === e.currentTarget))); history.replaceState(null, '', `#/buyume/${k}`); ciz(); } }, ad));
-    kok.append(el('h1', {}, t('nav.buyume', 'Büyüme Araçları')), sekmeler, govde);
+    kok.append(sayfaBas(t('nav.buyume', 'Büyüme Araçları'), { alt: t('buyume.alt', 'Yorumdan DM\'e, hoş geldin mesajı, referans linki ve oyun.') }), sekmeler, govde);
 
     async function yorumlarCiz() {
       temizle(govde);

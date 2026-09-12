@@ -1,5 +1,5 @@
 // Kişi kartı: kimlik, etiketler, değişkenler, puan geçmişi, olaylar, silme (KVKK).
-import { el, btn, kart, rozet, temizle, girdi, goreliZaman } from '../cekirdek/dom.js';
+import { el, btn, kart, rozet, temizle, girdi, goreliZaman, sayfaBas } from '../cekirdek/dom.js';
 import { pencereAcik, pencereKalan } from '../paylasilan/kanallar.js';
 
 export default {
@@ -18,7 +18,7 @@ export default {
     etiketleriCiz(k);
     const degiskenler = el('div', { class: 'tablo-kap' }, el('table', { class: 'tablo' }, el('tbody', {}, ...Object.entries(k.degiskenler || {}).map(([a, v]) => el('tr', {}, el('th', {}, a), el('td', {}, String(v)))))));
     kok.append(
-      el('div', { class: 'satir' }, btn('←', { class: 'btn btn--ikon btn--sade', onclick: () => history.back() }), el('div', { class: 'avatar' }, (k.ad || '?').slice(0, 1).toUpperCase()), el('h1', { style: { margin: 0 } }, k.ad || k.kullanici_adi)),
+      el('div', { class: 'sayfa-bas' }, btn('←', { class: 'btn btn--ikon btn--sade', 'aria-label': t('geri', 'Geri'), onclick: () => history.back() }), el('div', { class: 'avatar' }, (k.ad || '?').slice(0, 1).toUpperCase()), el('div', { class: 'sayfa-bas__govde' }, el('h1', {}, k.ad || k.kullanici_adi), el('p', { class: 'sayfa-bas__alt' }, [k.kanal, k.kullanici_adi ? '@' + k.kullanici_adi : ''].filter(Boolean).join(' · ')))),
       el('div', { class: 'satir', style: { marginBottom: '12px' } }, rozet(k.kanal, 'mavi'), kalan === null ? rozet('∞ ' + t('kisi.pencere_sinirsiz', 'pencere sınırsız'), 'yesil') : pencereAcik(k) ? rozet(`✅ ${Math.ceil(kalan)} sa`, 'yesil') : rozet('❌ ' + t('sohbet.kapandi', 'pencere kapalı'), 'kirmizi'), k.takip_ediyor === true ? rozet(t('kisi.takip', 'takip ediyor'), 'altin') : k.takip_ediyor === false ? rozet(t('kisi.takip_yok', 'takip etmiyor'), 'gri') : null, k.demo ? rozet('Demo', 'gri') : null),
       kart(el('h2', { class: 'kart__baslik' }, t('kisi.kimlik', 'Kimlik')), el('p', { class: 'kart__alt' }, `@${k.kullanici_adi || '—'} · ${k.dis_id} · ${t('kisi.kaynak', 'kaynak')}: ${k.kaynak || '—'} · ${t('kisi.son', 'son mesaj')}: ${goreliZaman(k.son_gelen, t)}`), kosular.length ? el('p', {}, '▶ ' + t('kisi.aktif_akis', 'Aktif akış var')) : null),
       kart(el('h2', { class: 'kart__baslik' }, t('kisi.etiketler', 'Etiketler')), etiketKap),

@@ -1,5 +1,5 @@
 // Ayarlar & Kurulum: genel, kanallar, worker, yedek, gizlilik.
-import { el, btn, kart, rozet, temizle, girdi, secim, alan, goreliZaman } from '../cekirdek/dom.js';
+import { el, btn, kart, rozet, temizle, girdi, secim, alan, goreliZaman, sayfaBas } from '../cekirdek/dom.js';
 import { DILLER, suankiDil } from '../i18n.js';
 import { KANALLAR } from '../paylasilan/kanallar.js';
 import { tohumla } from '../depo/tohum.js';
@@ -15,7 +15,7 @@ export default {
     const sekmeler = el('div', { class: 'sekmeler' });
     const govde = el('div', {});
     for (const [k, ad] of [['genel', t('ayar.genel', 'Genel')], ['kanallar', t('ayar.kanallar', 'Kanallar')], ['worker', 'Worker'], ['yedek', t('ayar.yedek', 'Yedek')], ['gizlilik', t('ayar.gizlilik', 'Gizlilik')]]) sekmeler.appendChild(el('button', { class: 'sekme', 'aria-selected': String(sekme === k), onclick: (e) => { sekme = k; [...sekmeler.children].forEach((x) => x.setAttribute('aria-selected', String(x === e.currentTarget))); history.replaceState(null, '', `#/ayarlar/${k}`); ciz(); } }, ad));
-    kok.append(el('h1', {}, t('nav.ayarlar', 'Ayarlar & Kurulum')), sekmeler, govde);
+    kok.append(sayfaBas(t('nav.ayarlar', 'Ayarlar & Kurulum'), { alt: t('ayar.alt', 'Dil, tema, kanallar, sunucu bağlantısı ve yedek.') }), sekmeler, govde);
 
     async function genelCiz() {
       temizle(govde);

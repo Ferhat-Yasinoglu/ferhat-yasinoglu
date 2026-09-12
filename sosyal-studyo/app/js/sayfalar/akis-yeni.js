@@ -1,5 +1,5 @@
 // Yeni akış: şablondan / boş. Tetikleyici + hesap seçip taslak oluşturur, düzenleyiciye gider.
-import { el, btn, kart, temizle, girdi, secim, alan } from '../cekirdek/dom.js';
+import { el, btn, kart, temizle, girdi, secim, alan, sayfaBas } from '../cekirdek/dom.js';
 import { SABLONLAR } from '../paylasilan/akis/sablonlar.js';
 import { TETIKLEYICI_BILGI, TETIKLEYICI_TIPLERI } from '../paylasilan/akis/tetikleyici.js';
 
@@ -37,6 +37,6 @@ export default {
       alan(t('tetik.eslesme', 'Eşleşme'), eslesme),
       el('div', { class: 'satir' }, btn(t('akis.olustur', 'Taslağı oluştur'), { type: 'submit', class: 'btn btn--birincil' }), btn(t('genel.vazgec', 'Vazgeç'), { onclick: () => git('/akislar') })),
     );
-    kok.append(el('h1', {}, t('akis.yeni_baslik', 'Yeni akış')), el('h2', {}, t('akis.sablon_sec', '1 · Şablon seç')), sablonKap, el('h2', {}, t('akis.tetik_ayarla', '2 · Tetikleyici ve hesap')), form);
+    kok.append(sayfaBas(t('akis.yeni_baslik', 'Yeni akış'), { alt: t('akis.yeni_alt', 'Bir şablon seç, tetikleyiciyi ayarla, düzenlemeye başla.'), geri: () => git('/akislar') }), el('h2', {}, t('akis.sablon_sec', '1 · Şablon seç')), sablonKap, el('h2', {}, t('akis.tetik_ayarla', '2 · Tetikleyici ve hesap')), form);
   },
 };
