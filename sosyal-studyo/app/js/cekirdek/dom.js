@@ -62,3 +62,11 @@ export function goreliZaman(iso, t = (k, tr) => tr) {
   if (fark < 86400) return `${Math.floor(fark / 3600)} ${t('zaman.sa', 'sa')}`;
   return `${Math.floor(fark / 86400)} ${t('zaman.gun', 'gün')}`;
 }
+
+/** Sayfa başlığı bloğu: başlık, kısa açıklama, sağda eylem düğmeleri. */
+export function sayfaBas(baslik, { alt, eylemler = [], geri } = {}) {
+  return el('div', { class: 'sayfa-bas' },
+    geri ? btn('←', { class: 'btn btn--ikon btn--sade', 'aria-label': 'Geri', onclick: geri }) : null,
+    el('div', { class: 'sayfa-bas__govde' }, el('h1', {}, baslik), alt ? el('p', { class: 'sayfa-bas__alt' }, alt) : null),
+    eylemler.filter(Boolean).length ? el('div', { class: 'sayfa-bas__eylem' }, ...eylemler) : null);
+}
