@@ -19,6 +19,12 @@ on:
       - "sosyal-studyo/tools/secretleri-duzelt.mjs"
       - ".github/workflows/sosyal-studyo-worker.yml"
   workflow_dispatch:
+    inputs:
+      prova:
+        description: "Prova modu: 1 = hiçbir dış mesaj gitmez (güvenli), 0 = canlı gönderim açık"
+        type: choice
+        default: "1"
+        options: ["1", "0"]
 
 defaults:
   run:
@@ -76,7 +82,7 @@ jobs:
       - name: Dagit
         id: dagit
         env:
-          PROVA: ${{ vars.SS_PROVA || '1' }}
+          PROVA: ${{ inputs.prova || vars.SS_PROVA || '1' }}
         run: |
           set -o pipefail
           npx wrangler deploy --config "$TOML" --var "SURUM:${GITHUB_SHA::7}" --var "PROVA:${PROVA}" 2>&1 | tee dagit.log
@@ -141,4 +147,11 @@ jobs:
             echo '```json'
             echo "$saglik"
             echo '```'
+            echo
+            if echo "$saglik" | grep -q '"prova":true'; then
+              echo "**PROVA açık:** bot karar verir ve günlüğe yazar ama dışarı mesaj göndermez."
+              echo "Canlıya almak için bu workflow'u \"Run workflow\" ile prova = 0 seçerek çalıştır; ayrıca uygulamada Ayarlar → Kanallar → \"Canlıya al\" gerekir. İkisi birden olmadan mesaj gitmez."
+            else
+              echo "**CANLI:** hesabı \"canli\" olan kanallarda gerçek mesaj gönderilir."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
