@@ -43,6 +43,14 @@ export async function gonder(env, kisi, eylem, fetchFn = fetch) {
 
 export async function callbackKapat(env, id, fetchFn = fetch) { try { await tgCagir(env, 'answerCallbackQuery', { callback_query_id: id }, fetchFn); } catch {} }
 
+/** Kurulu webhook beklenen adres mi? {kurulu, mevcut} döner; token yoksa null. */
+export async function webhookDurumu(env, workerUrl, fetchFn = fetch) {
+  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_WEBHOOK_SECRET) return null;
+  const bilgi = await tgCagir(env, 'getWebhookInfo', {}, fetchFn);
+  const beklenen = `${workerUrl}/tg/webhook`;
+  return { kurulu: bilgi.url === beklenen, mevcut: bilgi.url || '', bekleyen: bilgi.pending_update_count || 0 };
+}
+
 export async function webhookKur(env, workerUrl, fetchFn = fetch) {
   const me = await tgCagir(env, 'getMe', {}, fetchFn);
   const url = `${workerUrl}/tg/webhook`;

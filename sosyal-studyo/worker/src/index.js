@@ -33,6 +33,15 @@ export default {
     if (yapilandirmaEksikleri(env).length) return;
     const db = new Veritabani(env.DB);
     const ozet = { geciken: 0, bekleyen: 0, toplu: 0, yorum: 0, silinen: 0 };
+    // Webhook nöbeti: Telegram'daki kayıt silinir ya da başka adrese kayarsa mesajlar sessizce
+    // birikir. 5 dakikada bir kontrol edilip gerekirse yeniden kurulur (adres meta'da saklanır).
+    try {
+      const wurl = await db.metaAl('worker_url');
+      if (wurl) {
+        const d = await tg.webhookDurumu(env, wurl);
+        if (d && !d.kurulu) { await tg.webhookKur(env, wurl); ozet.webhook = `yeniden kuruldu (onceki: ${d.mevcut || 'yok'}, bekleyen: ${d.bekleyen})`; }
+      }
+    } catch (e) { console.error('webhook nobeti', e); }
     try { ozet.geciken = await gecikenleriKostur(env, db); } catch (e) { console.error('geciken', e); }
     try { const esik = new Date(Date.now() - 2 * 60000).toISOString(); for (const o of await db.bekleyenGelenler(esik)) { await db.gelenBitir(o.olay_id, 'retry'); try { o.olay_id = o.olay_id + ':r'; await olayIsle(env, db, o); ozet.bekleyen++; } catch (e) { console.error('retry', e); } } } catch (e) { console.error('bekleyen', e); }
     try { ozet.toplu = await topluParcaGonder(env, db); } catch (e) { console.error('toplu', e); }

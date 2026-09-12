@@ -37,7 +37,9 @@ export class UzakDepo extends IdbDepo {
 
   async kaydet(kol, kayit, sec) {
     const yerel = await super.kaydet(kol, kayit, sec);
-    if (YAZAR.has(kol)) this.gonder({ tur: 'kaydet', kol, id: yerel.id, kayit: yerel }).catch(() => {});
+    // Demo kayıtları yereldedir; sunucuya gönderilirse gerçek hesapların yanında ikinci bir
+    // kayıt olarak görünüp motoru yanıltır.
+    if (YAZAR.has(kol) && yerel.demo !== 1) this.gonder({ tur: 'kaydet', kol, id: yerel.id, kayit: yerel }).catch(() => {});
     return yerel;
   }
   async sil(kol, id) { const r = await super.sil(kol, id); if (r && YAZAR.has(kol)) this.gonder({ tur: 'sil', kol, id }).catch(() => {}); return r; }
