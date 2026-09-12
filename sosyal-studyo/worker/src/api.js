@@ -30,6 +30,8 @@ export async function apiIsle(env, db, istek, url, { fetchFn = fetch, ctx } = {}
   try {
     // GET /api/durum — doktor
     if (yol === 'durum' && istek.method === 'GET') {
+      // Cron'un webhook nöbeti için genel adres; yalnız burada ve kanal kurulumunda yazılır.
+      await db.metaKaydet('worker_url', `${url.protocol}//${url.host}`);
       const doktor = [];
       doktor.push({ ad: 'D1', durum: 'ok', detay: `şema ${await db.metaAl('sema_surumu')}` });
       doktor.push({ ad: 'PROVA', durum: String(env.PROVA || '1') === '1' ? 'warn' : 'ok', detay: String(env.PROVA || '1') === '1' ? 'canlı gönderim kapalı (varsayılan)' : 'canlı' });
@@ -108,10 +110,16 @@ export async function apiIsle(env, db, istek, url, { fetchFn = fetch, ctx } = {}
     // Kanal kurulumu
     if (yol === 'kanal/telegram/kur' && istek.method === 'POST') {
       if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_WEBHOOK_SECRET) return hata('eksik', 'TELEGRAM_BOT_TOKEN ve TELEGRAM_WEBHOOK_SECRET secret\'ları gerekli', 422, cors);
-      const r = await webhookKur(env, `${url.protocol}//${url.host}`, fetchFn);
-      const mevcut = (await db.listele('hesaplar')).find((h) => h.kanal === 'telegram');
-      await db.kaydet('hesaplar', { ...(mevcut || {}), kanal: 'telegram', ad: '@' + r.bot.username, dis_id: r.bot.username, durum: mevcut?.durum || 'prova' }, { onek: 'hes' });
-      return ok(r, cors);
+      const workerUrl = `${url.protocol}//${url.host}`;
+      await db.metaKaydet('worker_url', workerUrl);
+      const r = await webhookKur(env, workerUrl, fetchFn);
+      // Tekilleştirme: kanal başına tek hesap kalır; 'canli' olan korunur, fazlalıklar mezar taşına döner.
+      // Birden çok kayıt kalırsa motor yanlış olanı seçip "canlıya al" etkisiz görünebiliyordu.
+      const hepsi = (await db.listele('hesaplar')).filter((h) => h.kanal === 'telegram');
+      const mevcut = hepsi.find((h) => h.durum === 'canli') || hepsi[0];
+      for (const h of hepsi) if (mevcut && h.id !== mevcut.id) await db.sil('hesaplar', h.id);
+      const hesap = await db.kaydet('hesaplar', { ...(mevcut || {}), kanal: 'telegram', ad: '@' + r.bot.username, dis_id: r.bot.username, durum: mevcut?.durum || 'prova' }, { onek: 'hes' });
+      return ok({ ...r, hesap, tekillestirilen: Math.max(0, hepsi.length - 1) }, cors);
     }
     if (yol === 'kanal/hesap/durum' && istek.method === 'POST') {
       const { hesap_id, durum } = await govde(); const h = await db.al('hesaplar', hesap_id); if (!h) return hata('yok', 'hesap yok', 404, cors);
