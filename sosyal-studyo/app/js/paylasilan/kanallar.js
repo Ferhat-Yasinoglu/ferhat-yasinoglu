@@ -10,7 +10,7 @@ export const ETIKET = {
 
 export const KANALLAR = {
   telegram: {
-    ad: 'Telegram', simge: '✈️', kurulum_dk: 5, etiket: ETIKET.CALISIR,
+    ad: 'Telegram', ikon: 'telegram', kurulum_dk: 5, etiket: ETIKET.CALISIR,
     ozet: 'BotFather token\'ı ile dakikalar içinde; webhook, akışlar ve gerçek toplu mesaj çalışır.',
     yetenekler: {
       dm: ETIKET.CALISIR, butonlar: ETIKET.CALISIR, toplu: ETIKET.CALISIR, gecikme: ETIKET.CALISIR,
@@ -19,7 +19,7 @@ export const KANALLAR = {
     sinirlar: { pencere_saat: null, mesaj_sn: 30 },
   },
   instagram: {
-    ad: 'Instagram', simge: '📸', kurulum_dk: 60, etiket: ETIKET.CALISIR,
+    ad: 'Instagram', ikon: 'instagram', kurulum_dk: 60, etiket: ETIKET.CALISIR,
     ozet: 'Kendi profesyonel hesabın: DM, yorum→DM, yoruma yanıt, gizleme. Yorum webhook\'u onaysız gecikmeli (polling) çalışır.',
     yetenekler: {
       dm: ETIKET.CALISIR, butonlar: ETIKET.CALISIR, toplu: ETIKET.IZIN_YOK, gecikme: ETIKET.CALISIR,
@@ -29,7 +29,7 @@ export const KANALLAR = {
     sinirlar: { pencere_saat: 24, buton: 3, etiket_kr: 20, metin_kr: 1000, yorum_gunluk: 150 },
   },
   whatsapp: {
-    ad: 'WhatsApp', simge: '💬', kurulum_dk: 60, etiket: ETIKET.CALISIR,
+    ad: 'WhatsApp', ikon: 'whatsapp', kurulum_dk: 60, etiket: ETIKET.CALISIR,
     ozet: 'Cloud API test numarasıyla hemen; toplu mesaj yalnız onaylı şablonla ve ücretli.',
     yetenekler: {
       dm: ETIKET.CALISIR, butonlar: ETIKET.CALISIR, toplu: ETIKET.ONAY_GEREKIR, gecikme: ETIKET.CALISIR,
@@ -38,7 +38,7 @@ export const KANALLAR = {
     sinirlar: { pencere_saat: 24, buton: 3 },
   },
   tiktok: {
-    ad: 'TikTok', simge: '🎵', kurulum_dk: 0, etiket: ETIKET.IZIN_YOK,
+    ad: 'TikTok', ikon: 'tiktok', kurulum_dk: 0, etiket: ETIKET.IZIN_YOK,
     ozet: 'DM/yorum otomasyonu için API yok; yalnız içerik araçları (fikir, kanca, senaryo, karusel).',
     yetenekler: { dm: ETIKET.IZIN_YOK, yorum: ETIKET.IZIN_YOK, toplu: ETIKET.IZIN_YOK, icerik: ETIKET.CALISIR },
     sinirlar: {},
