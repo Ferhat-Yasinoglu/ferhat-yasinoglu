@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="431 219 738 513" role="img" aria-label="FY">
+  <defs>
+    <linearGradient id="mgFace" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b08c2e"/><stop offset=".45" stop-color="#77591a"/><stop offset="1" stop-color="#3f2e0c"/>
+    </linearGradient>
+    <linearGradient id="mgArm" x1="0" y1="0" x2=".6" y2="1">
+      <stop offset="0" stop-color="#f6d878"/><stop offset=".5" stop-color="#d0a53a"/><stop offset="1" stop-color="#8d6c1d"/>
+    </linearGradient>
+    <linearGradient id="mgBand" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff6d2"/><stop offset=".35" stop-color="#f6d772"/><stop offset="1" stop-color="#d9b23f"/>
+    </linearGradient>
+    <linearGradient id="mgMid" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f4d36c"/><stop offset=".55" stop-color="#b58f2b"/><stop offset="1" stop-color="#6d5214"/>
+    </linearGradient>
+    <linearGradient id="mgPanel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a2110"/><stop offset=".5" stop-color="#171209"/><stop offset="1" stop-color="#0d0a05"/>
+    </linearGradient>
+    <linearGradient id="mgTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff8dc"/><stop offset="1" stop-color="#fff8dc" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="mgSheen" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="mgHaze" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#e2b64a" stop-opacity=".5"/><stop offset="1" stop-color="#e2b64a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="mgEye" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fffbe6"/><stop offset=".45" stop-color="#ffe27a"/><stop offset="1" stop-color="#ffcf3f" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="mgNode" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fffbe8"/><stop offset=".55" stop-color="#ffe07a"/><stop offset="1" stop-color="#e9b93a"/>
+    </radialGradient>
+    <filter id="mglow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="7"/></filter>
+    <filter id="mglowS" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="mgrain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 .9  0 0 0 0 .6  0 0 0 .2 0" result="tint"/>
+      <feComposite in="tint" in2="SourceGraphic" operator="in" result="noise"/>
+      <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="noise"/></feMerge>
+    </filter>
+    <clipPath id="mcLetters"><path d="M471 243 H821 L918 403 L1026 243 H1145 L972 497 V708 H855 V497 L753 329 H578 V400 H767 L708 500 H578 V708 H455 V259 A16 16 0 0 1 471 243 Z"/></clipPath>
+    <clipPath id="mcNet"><path d="M1035 249 H1131 L966 485 L924 405 Z M966 505 V702 H883 V632 Z"/></clipPath>
+    <clipPath id="mcPanel"><path d="M460 259 A11 11 0 0 1 471 248 H573 V703 H460 Z"/><rect x="572" y="396" width="24" height="108"/></clipPath>
+    
+  </defs>
+  <g id="mletters">
+    <!-- arka parıltı -->
+    <g ><path d="M471 243 H821 L918 403 L1026 243 H1145 L972 497 V708 H855 V497 L753 329 H578 V400 H767 L708 500 H578 V708 H455 V259 A16 16 0 0 1 471 243 Z" fill="none" stroke="#d4af37" stroke-width="10" opacity=".55" filter="url(#mglow)"/></g>
+    <!-- yüzeyler -->
+    <g filter="url(#mgrain)" >
+      <path d="M578 243 H701 L753 329 H578 Z" fill="url(#mgFace)"/>
+      <path d="M738 243 H821 L972 497 L873 628 L877 628 L877 497 Z" fill="url(#mgArm)"/>
+      <path d="M701 243 H738 L877 497 V708 H855 V497 Z" fill="url(#mgBand)"/>
+      <path d="M578 400 H767 L708 500 H578 Z" fill="url(#mgMid)"/>
+      <path d="M805 243 H821 L972 497 H958 Z" fill="url(#mgBand)" opacity=".55"/>
+    </g>
+    <!-- üst yüzey ışığı -->
+    <g clip-path="url(#mcLetters)" >
+      <rect x="455" y="243" width="690" height="14" fill="url(#mgTop)" opacity=".9"/>
+      <rect x="578" y="400" width="189" height="7" fill="url(#mgTop)" opacity=".7"/>
+    </g>
+    <!-- F gövdesi: yapay zekâ yüzü paneli -->
+    <path d="M460 259 A11 11 0 0 1 471 248 H573 V703 H460 Z" fill="url(#mgPanel)" />
+    <g clip-path="url(#mcPanel)" >
+      <ellipse cx="588" cy="430" rx="52" ry="150" fill="url(#mgHaze)"/>
+      <path d="M460 274 C 486 262, 528 280, 548 316 C 559 334, 566 350, 567 372 L 566 396 C 571 401, 573 407, 569 413 L 568 428 C 575 440, 590 450, 592 457 C 588 463, 580 466, 578 468 L 580 474 C 585 479, 585 486, 580 489 C 583 493, 582 498, 577 502 C 573 508, 566 513, 559 515 L 548 525 L 541 547 V703 H460 Z" fill="none" stroke="#f5d76e" stroke-width="7" stroke-linejoin="round" opacity=".7" filter="url(#mglowS)" />
+      <path d="M460 274 C 486 262, 528 280, 548 316 C 559 334, 566 350, 567 372 L 566 396 C 571 401, 573 407, 569 413 L 568 428 C 575 440, 590 450, 592 457 C 588 463, 580 466, 578 468 L 580 474 C 585 479, 585 486, 580 489 C 583 493, 582 498, 577 502 C 573 508, 566 513, 559 515 L 548 525 L 541 547 V703 H460 Z" fill="#030201"/>
+      <path d="M460 274 C 486 262, 528 280, 548 316 C 559 334, 566 350, 567 372 L 566 396 C 571 401, 573 407, 569 413 L 568 428 C 575 440, 590 450, 592 457 C 588 463, 580 466, 578 468 L 580 474 C 585 479, 585 486, 580 489 C 583 493, 582 498, 577 502 C 573 508, 566 513, 559 515 L 548 525 L 541 547 V703 H460 Z" fill="none" stroke="#ffe9a8" stroke-width="3.2" stroke-linejoin="round" />
+      
+      <path d="M 468 292 C 500 292, 526 316, 538 344" fill="none" stroke="#f3d475" stroke-width="3" stroke-linecap="round"/>
+      <path d="M 462 312 C 490 310, 514 330, 527 356" fill="none" stroke="#c9a544" stroke-width="2" stroke-linecap="round"/>
+      <path d="M 462 336 C 482 336, 502 350, 512 372" fill="none" stroke="#c9a544" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="474" cy="424" r="28" fill="none" stroke="#e9c453" stroke-width="3.5"/>
+      <circle class="" cx="474" cy="424" r="28" fill="none" stroke="#fff1bd" stroke-width="4" stroke-dasharray="26 150" stroke-linecap="round"/>
+      <circle cx="474" cy="424" r="17" fill="none" stroke="#f5d76e" stroke-width="5"/>
+      <g fill="none" stroke="#d9b64a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><polyline points="497,300 497,344"/><polyline points="474,452 474,540 484,552 484,700"/><polyline points="502,431 516,431 516,560 510,566 510,700"/><polyline points="548,528 541,547"/><polyline points="541,547 541,700"/><polyline points="556,517 556,545 563,553 563,640 556,648 556,700"/></g>
+      <g fill="none" stroke="#fff4c8" stroke-width="2.6" stroke-linecap="round"></g>
+      <circle cx="497" cy="322" r="4" fill="#f9dc7a"/><circle cx="484" cy="557" r="4" fill="#f9dc7a"/><circle cx="477" cy="617" r="4" fill="#f9dc7a"/><circle cx="510" cy="690" r="4" fill="#f9dc7a"/><circle cx="563" cy="600" r="4" fill="#f9dc7a"/><circle cx="556" cy="686" r="4" fill="#f9dc7a"/>
+      <g >
+        <circle class="" cx="556" cy="415" r="9" fill="url(#mgEye)"/>
+        <ellipse cx="556" cy="415" rx="5" ry="2.6" fill="#fffbea"/>
+      </g>
+    </g>
+    <!-- Y sağ kolu: ağ paneli -->
+    <path d="M1026 243 H1145 L972 497 L918 403 Z M972 497 V708 H877 V628 Z" fill="url(#mgPanel)" />
+    <g clip-path="url(#mcNet)" >
+      <g stroke="#e3bd52" stroke-width="1.4" opacity=".9"><line  x1="1093" y1="257" x2="1028" y2="287"/><line  x1="1093" y1="257" x2="1062" y2="324"/><line  x1="1028" y1="287" x2="1062" y2="324"/><line  x1="1011" y1="269" x2="1028" y2="287"/><line  x1="1028" y1="287" x2="1029" y2="357"/><line  x1="1062" y1="324" x2="1029" y2="357"/><line  x1="1011" y1="269" x2="995" y2="335"/><line  x1="995" y1="335" x2="954" y2="351"/><line  x1="995" y1="335" x2="1029" y2="357"/><line  x1="954" y1="351" x2="963" y2="379"/><line  x1="1029" y1="357" x2="963" y2="379"/><line  x1="1029" y1="357" x2="982" y2="429"/><line  x1="963" y1="379" x2="982" y2="429"/><line  x1="963" y1="379" x2="940" y2="417"/><line  x1="940" y1="417" x2="982" y2="429"/><line  x1="1062" y1="324" x2="982" y2="429"/><line  x1="1093" y1="257" x2="1136" y2="251"/><line  x1="1136" y1="251" x2="1062" y2="324"/><line  x1="1035" y1="251" x2="1011" y2="269"/><line  x1="1035" y1="251" x2="1028" y2="287"/><line  x1="982" y1="429" x2="936" y2="536"/><line  x1="936" y1="536" x2="961" y2="609"/><line  x1="936" y1="536" x2="898" y2="604"/><line  x1="898" y1="604" x2="961" y2="609"/><line  x1="898" y1="604" x2="923" y2="637"/><line  x1="961" y1="609" x2="923" y2="637"/><line  x1="923" y1="637" x2="897" y2="657"/><line  x1="923" y1="637" x2="943" y2="678"/><line  x1="961" y1="609" x2="943" y2="678"/><line  x1="897" y1="657" x2="943" y2="678"/><line  x1="943" y1="678" x2="966" y2="700"/><line  x1="897" y1="657" x2="880" y2="700"/><line  x1="898" y1="604" x2="880" y2="636"/><line  x1="880" y1="636" x2="897" y2="657"/><line  x1="961" y1="609" x2="966" y2="700"/><line  x1="936" y1="536" x2="923" y2="637"/></g>
+      <g stroke="#fff4c8" stroke-width="2.6" stroke-linecap="round"></g>
+      <g filter="url(#mglowS)"><circle cx="1093" cy="257" r="9" fill="#ffd966" opacity=".55"/><circle cx="1028" cy="287" r="9" fill="#ffd966" opacity=".55"/><circle cx="1062" cy="324" r="9" fill="#ffd966" opacity=".55"/><circle cx="954" cy="351" r="9" fill="#ffd966" opacity=".55"/><circle cx="1029" cy="357" r="9" fill="#ffd966" opacity=".55"/><circle cx="963" cy="379" r="9" fill="#ffd966" opacity=".55"/><circle cx="982" cy="429" r="9" fill="#ffd966" opacity=".55"/><circle cx="936" cy="536" r="9" fill="#ffd966" opacity=".55"/><circle cx="898" cy="604" r="9" fill="#ffd966" opacity=".55"/><circle cx="961" cy="609" r="9" fill="#ffd966" opacity=".55"/><circle cx="943" cy="678" r="9" fill="#ffd966" opacity=".55"/></g>
+      <circle class="" style="animation-delay:0.00s" cx="1093" cy="257" r="5" fill="url(#mgNode)"/><circle class="" style="animation-delay:-0.37s" cx="1011" cy="269" r="4" fill="url(#mgNode)"/><circle class="" style="animation-delay:-0.74s" cx="1028" cy="287" r="5" fill="url(#mgNode)"/><circle class="" style="animation-delay:-1.11s" cx="1062" cy="324" r="5" fill="url(#mgNode)"/><circle class="" style="animation-delay:-1.48s" cx="995" cy="335" r="3" fill="url(#mgNode)"/><circle class="" style="animation-delay:-1.85s" cx="954" cy="351" r="5" fill="url(#mgNode)"/><circle class="" style="animation-delay:-2.22s" cx="1029" cy="357" r="5" fill="url(#mgNode)"/><circle class="" style="animation-delay:-2.59s" cx="963" cy="379" r="5" fill="url(#mgNode)"/><circle class="" style="animation-delay:-2.96s" cx="940" cy="417" r="3" fill="url(#mgNode)"/><circle class="" style="animation-delay:-0.13s" cx="982" cy="429" r="5" fill="url(#mgNode)"/><circle class="" style="animation-delay:-0.50s" cx="936" cy="536" r="5" fill="url(#mgNode)"/><circle class="" style="animation-delay:-0.87s" cx="898" cy="604" r="5" fill="url(#mgNode)"/><circle class="" style="animation-delay:-1.24s" cx="961" cy="609" r="6" fill="url(#mgNode)"/><circle class="" style="animation-delay:-1.61s" cx="923" cy="637" r="3.5" fill="url(#mgNode)"/><circle class="" style="animation-delay:-1.98s" cx="897" cy="657" r="4.5" fill="url(#mgNode)"/><circle class="" style="animation-delay:-2.35s" cx="943" cy="678" r="5.5" fill="url(#mgNode)"/><circle class="" style="animation-delay:-2.72s" cx="1136" cy="251" r="3" fill="url(#mgNode)"/><circle class="" style="animation-delay:-3.09s" cx="1035" cy="251" r="3" fill="url(#mgNode)"/><circle class="" style="animation-delay:-0.26s" cx="966" cy="700" r="3" fill="url(#mgNode)"/><circle class="" style="animation-delay:-0.63s" cx="880" cy="700" r="3" fill="url(#mgNode)"/><circle class="" style="animation-delay:-1.00s" cx="880" cy="636" r="3" fill="url(#mgNode)"/>
+    </g>
+    <!-- kenarlar -->
+    <path d="M1026 243 H1145 L972 497 L918 403 Z M972 497 V708 H877 V628 Z" fill="none" stroke="#ffe9a8" stroke-width="3" stroke-linejoin="round" />
+    <path d="M460 259 A11 11 0 0 1 471 248 H573 V703 H460 Z" fill="none" stroke="#f0cd62" stroke-width="2.2" stroke-linejoin="round" opacity=".9" />
+    <path d="M471 243 H821 L918 403 L1026 243 H1145 L972 497 V708 H855 V497 L753 329 H578 V400 H767 L708 500 H578 V708 H455 V259 A16 16 0 0 1 471 243 Z" fill="none" stroke="#fff0b8" stroke-width="3" stroke-linejoin="round" />
+    
+  </g>
+</svg>
