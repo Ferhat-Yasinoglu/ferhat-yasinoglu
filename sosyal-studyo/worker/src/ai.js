@@ -59,8 +59,11 @@ export async function ozellikCalistir(env, db, ozellik, girdi, fetchFn = fetch) 
  *  demek yetmiyor; saptanan dil sistem istemine somut bir satır olarak yazılır.
  *  Puanlama eşleşen kelime SAYISIYLA yapılır: tek ortak kelime (ör. "bot")
  *  iki dili beraberliğe düşürmesin. Ortak alıntı kelimeler listelerde yok. */
-const DE_KELIME = /\b(und|oder|nicht|kostet|kosten|preis|wie|was|warum|ich|wir|sie|ist|sind|eine|einen|eines|kann|können|kannst|bitte|danke|hallo|guten|tag|für|mit|auch|brauche|brauchen|machen|erstellen|haben|hast|mein|meine|ihre|nach|schon|gern)\b/g;
-const TR_KELIME = /\b(ve|ile|için|bir|bu|şu|ne|nasıl|neden|merhaba|selam|fiyat|kaç|mı|mi|mu|mü|yapar|yapıyor|yapabilir|misin|musun|mısın|var|yok|lütfen|teşekkür|teşekkürler|olur|değil|çok|istiyorum|görebilir|kadar)\b/g;
+// \b kesme işaretini sınır sayar: "I've" içindeki "ve" Türkçe "ve" ile eşleşiyordu
+// ve İngilizce mesaj Türkçe sanılıyordu. Sınırlar kesme işaretini de kelime karakteri sayar.
+const S1 = "(?<![\\w'’])", S2 = "(?![\\w'’])";
+const DE_KELIME = new RegExp(S1 + '(und|oder|nicht|kostet|kosten|preis|wie|was|warum|ich|wir|sie|ist|sind|eine|einen|eines|kann|können|kannst|bitte|danke|hallo|guten|tag|für|mit|auch|brauche|brauchen|machen|erstellen|haben|hast|mein|meine|ihre|nach|schon|gern)' + S2, 'g');
+const TR_KELIME = new RegExp(S1 + '(ve|ile|için|bir|bu|şu|ne|nasıl|neden|merhaba|selam|fiyat|kaç|mı|mi|mu|mü|yapar|yapıyor|yapabilir|misin|musun|mısın|var|yok|lütfen|teşekkür|teşekkürler|olur|değil|çok|istiyorum|görebilir|kadar)' + S2, 'g');
 const DE_HARF = /[äöüß]/;
 const TR_HARF = /[çğışÇĞİŞ]/;   // ö/ü ortak: Almanca ile karışmasın diye dışarıda
 
