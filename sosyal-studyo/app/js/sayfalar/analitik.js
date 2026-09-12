@@ -1,5 +1,6 @@
 // Analitik: dönem/akış seçici, SVG çizgi grafik, huni (adım ulaşma), kanal ve tetikleyici kırılımı, CSV.
-import { el, btn, kart, temizle, secim, sayfaBas } from '../cekirdek/dom.js';
+import { el, btn, kart, temizle, secim, sayfaBas, btnS } from '../cekirdek/dom.js';
+import { simge } from '../cekirdek/simge.js';
 import { gunlukOzet, cizgiGrafigiSvg } from '../paylasilan/analitik.js';
 
 export default {
@@ -18,7 +19,7 @@ export default {
       const o = gunlukOzet(gunluk, { gunSayisi: gun, akisId: akisSec.value || undefined });
       const onceki = gunlukOzet(gunluk, { gunSayisi: gun, simdi: Date.now() - gun * 86400e3, akisId: akisSec.value || undefined });
       const yuzde = (a, b) => (b ? Math.round(((a - b) / b) * 100) : a ? 100 : 0);
-      const fark = (a, b) => { const y = yuzde(a, b); return el('span', { class: 'kart__alt', style: { color: y >= 0 ? 'rgb(var(--yesil))' : 'rgb(var(--kirmizi))' } }, `${y >= 0 ? '▲' : '▼'} ${Math.abs(y)}%`); };
+      const fark = (a, b) => { const y = yuzde(a, b); return el('span', { class: 'kart__alt', style: { color: y >= 0 ? 'rgb(var(--yesil))' : 'rgb(var(--kirmizi))' } }, `${y >= 0 ? '+' : '−'}${Math.abs(y)}%`); };
       const grafik = el('div', {}); grafik.innerHTML = cizgiGrafigiSvg(o.gunler, [{ ad: t('analitik.baslatma', 'Başlatma'), degerler: o.gunler.map((g) => o.seri[g].baslat), renk: '#70a5fd' }, { ad: t('analitik.tamamlama', 'Tamamlama'), degerler: o.gunler.map((g) => o.seri[g].bitir), renk: '#9ece6a' }]);
       const akis = akisSec.value ? akislar.find((a) => a.id === akisSec.value) : null;
       const huni = akis ? el('div', { class: 'liste' }, ...akis.adimlar.map((a, i) => { const n = o.adim[i] || 0; const en = Math.max(1, ...Object.values(o.adim)); return el('div', { class: 'liste__satir' }, el('span', { class: 'adim__no' }, String(i + 1)), el('div', { class: 'liste__govde' }, el('div', { class: 'liste__alt' }, a.type + ': ' + (a.text || a.reason || '').slice(0, 40)), el('div', { class: 'ilerleme' }, el('div', { class: 'ilerleme__dolu', style: { width: `${(n / en) * 100}%` } }))), el('strong', {}, String(n))); })) : el('p', { class: 'kart__alt' }, t('analitik.akis_sec', 'Adım ulaşma hunisi için bir akış seç.'));
@@ -29,8 +30,8 @@ export default {
         kart(el('h2', { class: 'kart__baslik' }, t('analitik.huni', 'Adım ulaşma')), huni),
         kart(el('h2', { class: 'kart__baslik' }, t('analitik.kanal', 'Kanal kırılımı')), kirilim(o.kanal)),
         kart(el('h2', { class: 'kart__baslik' }, t('analitik.tetik', 'Tetikleyici / kaynak')), kirilim(o.tetik)),
-        el('p', { class: 'kart__alt' }, gunluk.some((g) => g.sanal) ? '🧪 ' + t('analitik.sanal_not', 'Simülatör olayları dahil (yerel mod).') : ''),
-        btn('⬇ CSV', { class: 'btn btn--kucuk', onclick: () => { const csv = ['gun,baslat,bitir,ajan,toplu,olay', ...o.gunler.map((g) => `${g},${o.seri[g].baslat},${o.seri[g].bitir},${o.seri[g].ajan},${o.seri[g].toplu},${o.seri[g].olay}`)].join('\n'); const b = new Blob([csv], { type: 'text/csv' }); const u = URL.createObjectURL(b); const l = document.createElement('a'); l.href = u; l.download = 'analitik.csv'; l.click(); } }));
+        gunluk.some((g) => g.sanal) ? el('p', { class: 'kart__alt satir' }, simge('prova', { boy: 16 }), t('analitik.sanal_not', 'Simülatör olayları dahil (yerel mod).')) : null,
+        btnS('indir', 'CSV', { class: 'btn btn--kucuk', onclick: () => { const csv = ['gun,baslat,bitir,ajan,toplu,olay', ...o.gunler.map((g) => `${g},${o.seri[g].baslat},${o.seri[g].bitir},${o.seri[g].ajan},${o.seri[g].toplu},${o.seri[g].olay}`)].join('\n'); const b = new Blob([csv], { type: 'text/csv' }); const u = URL.createObjectURL(b); const l = document.createElement('a'); l.href = u; l.download = 'analitik.csv'; l.click(); } }));
     }
     donem.onchange = ciz; akisSec.onchange = ciz;
     kok.append(sayfaBas(t('nav.analitik', 'Analitik'), { alt: t('analitik.alt', 'Akış başlatma, tamamlanma ve kanal dağılımı.') }), el('div', { class: 'satir', style: { marginBlockEnd: '16px' } }, donem, akisSec), govde);

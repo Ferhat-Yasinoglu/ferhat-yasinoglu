@@ -5,7 +5,8 @@ import { yerelDepoAc } from './depo/idb.js';
 import { tohumla } from './depo/tohum.js';
 import { hatirlatmaGerekli } from './depo/yedek.js';
 import { Yonlendirici } from './cekirdek/yonlendirici.js';
-import { el, temizle, btn } from './cekirdek/dom.js';
+import { el, temizle, btn, sirala } from './cekirdek/dom.js';
+import { simge } from './cekirdek/simge.js';
 import { bildir, basari, hata } from './cekirdek/bildirim.js';
 import { modal, onayla, sor } from './cekirdek/modal.js';
 import { t, yukle as dilYukle, uygula as i18nUygula, DILLER, suankiDil } from './i18n.js';
@@ -15,26 +16,26 @@ globalThis.UYGULAMA_SURUMU = UYGULAMA_SURUMU;
 
 const MENU = [
   { grup: 'Otomasyon', anahtar: 'otomasyon', ogeler: [
-    { yol: '/ozet', ad: 'Özet', anahtar: 'nav.ozet', simge: '🏠', alt: true },
-    { yol: '/akislar', ad: 'Akışlar', anahtar: 'nav.akislar', simge: '⚡', alt: true },
-    { yol: '/sohbetler', ad: 'Sohbetler', anahtar: 'nav.sohbetler', simge: '💬', alt: true },
-    { yol: '/toplu', ad: 'Toplu Mesaj', anahtar: 'nav.toplu', simge: '📣' },
-    { yol: '/buyume', ad: 'Büyüme Araçları', anahtar: 'nav.buyume', simge: '🌱' },
-    { yol: '/ajan', ad: 'AI Ajan', anahtar: 'nav.ajan', simge: '✨' },
+    { yol: '/ozet', ad: 'Özet', anahtar: 'nav.ozet', simge: 'ozet', alt: true },
+    { yol: '/akislar', ad: 'Akışlar', anahtar: 'nav.akislar', simge: 'akis', alt: true },
+    { yol: '/sohbetler', ad: 'Sohbetler', anahtar: 'nav.sohbetler', simge: 'sohbet', alt: true },
+    { yol: '/toplu', ad: 'Toplu Mesaj', anahtar: 'nav.toplu', kisa: 'nav.toplu_kisa', kisaAd: 'Toplu', simge: 'toplu' },
+    { yol: '/buyume', ad: 'Büyüme Araçları', anahtar: 'nav.buyume', kisa: 'nav.buyume_kisa', kisaAd: 'Büyüme', simge: 'buyume' },
+    { yol: '/ajan', ad: 'AI Ajan', anahtar: 'nav.ajan', simge: 'ajan' },
   ] },
   { grup: 'Kişiler', anahtar: 'kisiler', ogeler: [
-    { yol: '/kisiler', ad: 'Kişiler & Puanlar', anahtar: 'nav.kisiler', simge: '👥', alt: true },
-    { yol: '/analitik', ad: 'Analitik', anahtar: 'nav.analitik', simge: '📈' },
+    { yol: '/kisiler', ad: 'Kişiler & Puanlar', anahtar: 'nav.kisiler', kisa: 'nav.kisiler_kisa', kisaAd: 'Kişiler', simge: 'kisiler', alt: true },
+    { yol: '/analitik', ad: 'Analitik', anahtar: 'nav.analitik', simge: 'analitik' },
   ] },
   { grup: 'İçerik', anahtar: 'icerik', ogeler: [
-    { yol: '/fikirler', ad: 'Fikirler & Senaryo', anahtar: 'nav.fikirler', simge: '💡' },
-    { yol: '/kancalar', ad: 'Kanca Kütüphanesi', anahtar: 'nav.kancalar', simge: '🪝' },
-    { yol: '/karusel', ad: 'Karusel', anahtar: 'nav.karusel', simge: '🎠' },
-    { yol: '/video', ad: 'Video Analizi', anahtar: 'nav.video', simge: '🎬' },
-    { yol: '/galeri', ad: 'Galeri', anahtar: 'nav.galeri', simge: '🖼️' },
+    { yol: '/fikirler', ad: 'Fikirler & Senaryo', anahtar: 'nav.fikirler', kisa: 'nav.fikirler_kisa', kisaAd: 'Fikirler', simge: 'fikir' },
+    { yol: '/kancalar', ad: 'Kanca Kütüphanesi', anahtar: 'nav.kancalar', kisa: 'nav.kancalar_kisa', kisaAd: 'Kancalar', simge: 'kanca' },
+    { yol: '/karusel', ad: 'Karusel', anahtar: 'nav.karusel', simge: 'karusel' },
+    { yol: '/video', ad: 'Video Analizi', anahtar: 'nav.video', simge: 'video' },
+    { yol: '/galeri', ad: 'Galeri', anahtar: 'nav.galeri', simge: 'galeri' },
   ] },
   { grup: 'Sistem', anahtar: 'sistem', ogeler: [
-    { yol: '/ayarlar', ad: 'Ayarlar & Kurulum', anahtar: 'nav.ayarlar', simge: '⚙️' },
+    { yol: '/ayarlar', ad: 'Ayarlar & Kurulum', anahtar: 'nav.ayarlar', kisa: 'nav.ayarlar_kisa', kisaAd: 'Ayarlar', simge: 'ayarlar' },
   ] },
 ];
 
@@ -74,11 +75,11 @@ function menuCiz(kok, alt) {
   temizle(kok);
   for (const g of MENU) {
     kok.appendChild(el('div', { class: 'menu__grup' }, t('menu.grup.' + g.anahtar, g.grup)));
-    for (const o of g.ogeler) kok.appendChild(el('a', { href: '#' + o.yol, dataset: { yol: o.yol } }, el('span', { class: 'ikon', 'aria-hidden': 'true' }, o.simge), t(o.anahtar, o.ad)));
+    for (const o of g.ogeler) kok.appendChild(el('a', { href: '#' + o.yol, dataset: { yol: o.yol } }, simge(o.simge), t(o.anahtar, o.ad)));
   }
   temizle(alt);
-  for (const o of MENU.flatMap((g) => g.ogeler).filter((o) => o.alt)) alt.appendChild(el('a', { href: '#' + o.yol, dataset: { yol: o.yol } }, el('span', { class: 'ikon' }, o.simge), t(o.anahtar, o.ad)));
-  alt.appendChild(btn('', { class: 'alt__daha', onclick: dahaAc }, el('span', { class: 'ikon' }, '☰'), t('nav.daha', 'Daha')));
+  for (const o of MENU.flatMap((g) => g.ogeler).filter((o) => o.alt)) alt.appendChild(el('a', { href: '#' + o.yol, dataset: { yol: o.yol } }, simge(o.simge, { boy: 22 }), el('span', { class: 'alt__etiket' }, o.kisa ? t(o.kisa, o.kisaAd) : t(o.anahtar, o.ad))));
+  alt.appendChild(btn('', { class: 'alt__daha', onclick: dahaAc }, simge('menu', { boy: 22 }), el('span', { class: 'alt__etiket' }, t('nav.daha', 'Daha'))));
 }
 
 async function aramaAc(ctx, ilk) {
@@ -88,13 +89,14 @@ async function aramaAc(ctx, ilk) {
   const kapat = () => document.querySelector('.ortu')?.remove();
   const [kisiler, akislar] = await Promise.all([depo.listele('kisiler'), depo.listele('akislar')]);
   const sayfalar = MENU.flatMap((g) => g.ogeler).map((o) => ({ tur: 'sayfa', ad: t(o.anahtar, o.ad), simge: o.simge, yol: o.yol }));
-  const hepsi = [...sayfalar, ...akislar.map((a) => ({ tur: 'akis', ad: a.ad, simge: '⚡', yol: `/akis/${a.id}`, alt: a.durum === 'yayinda' ? t('akis.yayinda', 'Yayında') : t('akis.taslak', 'Taslak') })), ...kisiler.map((k) => ({ tur: 'kisi', ad: k.ad, simge: '👤', yol: `/kisi/${k.id}`, alt: [k.kanal, k.kullanici_adi ? '@' + k.kullanici_adi : ''].filter(Boolean).join(' · ') }))];
+  const hepsi = [...sayfalar, ...akislar.map((a) => ({ tur: 'akis', ad: a.ad, simge: 'akis', yol: `/akis/${a.id}`, alt: a.durum === 'yayinda' ? t('akis.yayinda', 'Yayında') : t('akis.taslak', 'Taslak') })), ...kisiler.map((k) => ({ tur: 'kisi', ad: k.ad, simge: 'kisiler', yol: `/kisi/${k.id}`, alt: [k.kanal, k.kullanici_adi ? '@' + k.kullanici_adi : ''].filter(Boolean).join(' · ') }))];
   function ciz() {
     temizle(sonuc);
     const q = kutu.value.trim().toLowerCase();
     const bulunan = (q ? hepsi.filter((x) => `${x.ad} ${x.alt || ''}`.toLowerCase().includes(q)) : sayfalar).slice(0, 12);
     if (!bulunan.length) { sonuc.appendChild(el('div', { class: 'liste__satir' }, el('div', { class: 'liste__alt' }, t('ara.yok', 'Sonuç yok')))); return; }
-    for (const x of bulunan) sonuc.appendChild(el('a', { class: 'liste__satir', href: '#' + x.yol, onclick: kapat }, el('span', { class: 'ikon', 'aria-hidden': 'true' }, x.simge), el('div', { class: 'liste__govde' }, el('div', { class: 'liste__baslik' }, x.ad), x.alt ? el('div', { class: 'liste__alt' }, x.alt) : null)));
+    for (const x of bulunan) sonuc.appendChild(el('a', { class: 'liste__satir', href: '#' + x.yol, onclick: kapat }, el('span', { class: 'avatar avatar--kucuk avatar--sade' }, simge(x.simge, { boy: 16 })), el('div', { class: 'liste__govde' }, el('div', { class: 'liste__baslik' }, x.ad), x.alt ? el('div', { class: 'liste__alt' }, x.alt) : null)));
+    sirala(sonuc, 'sirali-hizli');
   }
   kutu.oninput = ciz;
   kutu.onkeydown = (e) => { if (e.key === 'Enter') { const a = sonuc.querySelector('a'); if (a) { a.click(); } } };
@@ -105,7 +107,8 @@ async function aramaAc(ctx, ilk) {
 
 function dahaAc() {
   const izgara = el('div', { class: 'daha-sayfa' });
-  for (const o of MENU.flatMap((g) => g.ogeler).filter((o) => !o.alt)) izgara.appendChild(el('a', { href: '#' + o.yol, onclick: () => document.querySelector('.ortu')?.remove() }, el('span', { class: 'ikon' }, o.simge), t(o.anahtar, o.ad)));
+  for (const o of MENU.flatMap((g) => g.ogeler).filter((o) => !o.alt)) izgara.appendChild(el('a', { href: '#' + o.yol, onclick: () => document.querySelector('.ortu')?.remove() }, simge(o.simge, { boy: 22 }), t(o.anahtar, o.ad)));
+  sirala(izgara, 'sirali-hizli');
   modal({ baslik: t('nav.daha', 'Daha'), govde: izgara });
 }
 
@@ -124,15 +127,15 @@ async function bantlariYenile(ctx) {
   const parcalar = [];
   const ayar = await ctx.depo.ayarlar();
   const meta = await ctx.depo.meta();
-  if (!ctx.depo.kalici) parcalar.push(el('div', { class: 'bant bant--kirmizi' }, '⚠️ ', t('bant.kalici_degil', 'Tarayıcı depolaması açılamadı: veriler bu sekme kapanınca silinir. Yedek indir.')));
+  if (!ctx.depo.kalici) parcalar.push(el('div', { class: 'bant bant--kirmizi' }, simge('uyari', { boy: 18 }), t('bant.kalici_degil', 'Tarayıcı depolaması açılamadı: veriler bu sekme kapanınca silinir. Yedek indir.')));
   // Yerel mod bandı bir kez kapatılabilir (oturum boyunca); her sayfada bağırmasın.
   let yerelKapali = false; try { yerelKapali = sessionStorage.getItem('ss-yerel-bant') === '1'; } catch {}
-  if ((ayar.mod || 'yerel') === 'yerel' && !yerelKapali) parcalar.push(el('div', { class: 'bant bant--mavi' }, '🔵 ', t('bant.yerel', 'Yerel mod: veriler yalnız bu cihazda. Kanalları ve AI\'ı açmak için Worker\'ı bağla.'), btn(t('bant.worker_bagla', 'Worker\'ı bağla'), { class: 'btn btn--kucuk', onclick: () => ctx.git('/ayarlar/worker') }), el('button', { class: 'bant__kapat', type: 'button', 'aria-label': t('genel.kapat', 'Kapat'), onclick: (e) => { try { sessionStorage.setItem('ss-yerel-bant', '1'); } catch {} e.currentTarget.parentElement.remove(); } }, '✕')));
+  if ((ayar.mod || 'yerel') === 'yerel' && !yerelKapali) parcalar.push(el('div', { class: 'bant bant--mavi' }, simge('bilgi', { boy: 18 }), t('bant.yerel', 'Yerel mod: veriler yalnız bu cihazda. Kanalları ve AI\'ı açmak için Worker\'ı bağla.'), btn(t('bant.worker_bagla', 'Worker\'ı bağla'), { class: 'btn btn--kucuk', onclick: () => ctx.git('/ayarlar/worker') }), el('button', { class: 'bant__kapat', type: 'button', 'aria-label': t('genel.kapat', 'Kapat'), onclick: (e) => { try { sessionStorage.setItem('ss-yerel-bant', '1'); } catch {} e.currentTarget.closest('.bant').remove(); } }, simge('kapat', { boy: 16 }))));
   const kuyruk = ctx.depo.gidenSayisi ? await ctx.depo.gidenSayisi() : 0;
-  if (!navigator.onLine || kuyruk) parcalar.push(el('div', { class: 'bant bant--gri' }, '📴 ', navigator.onLine ? t('bant.kuyruk', 'Worker\'a gönderilmeyi bekleyen {n} değişiklik.', { n: kuyruk }) : t('bant.cevrimdisi', 'Çevrimdışısın; değişiklikler bu cihazda kaydediliyor.'), kuyruk && navigator.onLine ? btn(t('bant.simdi_gonder', 'Şimdi gönder'), { class: 'btn btn--kucuk', onclick: () => ctx.depo.gidenKutusunuBosalt().then(() => bantlariYenile(ctx)) }) : null));
-  if (ctx.depo.mod === 'bagli' && ctx.depo.cevrimici === false) parcalar.push(el('div', { class: 'bant bant--kirmizi' }, '⚠️ ', t('bant.worker_yok', 'Worker\'a ulaşılamıyor; önbellekten gösteriliyor.')));
+  if (!navigator.onLine || kuyruk) parcalar.push(el('div', { class: 'bant bant--gri' }, simge(navigator.onLine ? 'yukle' : 'anten', { boy: 18 }), navigator.onLine ? t('bant.kuyruk', 'Worker\'a gönderilmeyi bekleyen {n} değişiklik.', { n: kuyruk }) : t('bant.cevrimdisi', 'Çevrimdışısın; değişiklikler bu cihazda kaydediliyor.'), kuyruk && navigator.onLine ? btn(t('bant.simdi_gonder', 'Şimdi gönder'), { class: 'btn btn--kucuk', onclick: () => ctx.depo.gidenKutusunuBosalt().then(() => bantlariYenile(ctx)) }) : null));
+  if (ctx.depo.mod === 'bagli' && ctx.depo.cevrimici === false) parcalar.push(el('div', { class: 'bant bant--kirmizi' }, simge('uyari', { boy: 18 }), t('bant.worker_yok', 'Worker\'a ulaşılamıyor; önbellekten gösteriliyor.')));
   const h = hatirlatmaGerekli(meta, ayar);
-  if (h.gerekli) parcalar.push(el('div', { class: 'bant bant--sari' }, '💾 ', t('bant.yedek', 'Yedek eski: {sebep}.', { sebep: h.sebep }), btn(t('bant.yedek_indir', 'Yedeği indir'), { class: 'btn btn--kucuk', onclick: async () => { const { indir } = await import('./depo/yedek.js'); await indir(await ctx.depo.disaAktar()); basari(t('yedek.indirildi', 'Yedek indirildi')); bantlariYenile(ctx); } })));
+  if (h.gerekli) parcalar.push(el('div', { class: 'bant bant--sari' }, simge('kaydet', { boy: 18 }), t('bant.yedek', 'Yedek eski: {sebep}.', { sebep: h.sebep }), btn(t('bant.yedek_indir', 'Yedeği indir'), { class: 'btn btn--kucuk', onclick: async () => { const { indir } = await import('./depo/yedek.js'); await indir(await ctx.depo.disaAktar()); basari(t('yedek.indirildi', 'Yedek indirildi')); bantlariYenile(ctx); } })));
   if (benimSira !== bantSira) return; // daha yeni bir çizim başladı
   temizle(kap); for (const p of parcalar) kap.appendChild(p);
 }
@@ -177,9 +180,9 @@ async function baslat() {
   document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); aramaAc(ctx, ''); } });
 
   const ustSag = document.getElementById('ust-sag');
-  ustSag.appendChild(btn('🔍', { class: 'btn btn--ikon btn--sade ust__ara-btn', 'aria-label': t('ara.etiket', 'Ara'), onclick: () => aramaAc(ctx, '') }));
+  ustSag.appendChild(btn(simge('ara'), { class: 'btn btn--ikon btn--sade ust__ara-btn', 'aria-label': t('ara.etiket', 'Ara'), onclick: () => aramaAc(ctx, '') }));
   const temaBtn = btn('', { class: 'btn btn--ikon btn--sade', 'aria-label': 'Tema', title: t('ayar.tema', 'Tema'), onclick: () => { const y = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; document.documentElement.dataset.theme = y; try { localStorage.setItem('ss-tema', y); } catch {} temaIkon(); } });
-  const temaIkon = () => { temaBtn.textContent = document.documentElement.dataset.theme === 'light' ? '🌙' : '☀️'; };
+  const temaIkon = () => { temizle(temaBtn); temaBtn.appendChild(simge(document.documentElement.dataset.theme === 'light' ? 'gece' : 'gunduz')); };
   temaIkon();
   ustSag.appendChild(temaBtn);
   ustSag.appendChild(el('select', { class: 'input', 'aria-label': 'Dil', style: { width: 'auto', minHeight: '38px', paddingInlineEnd: '28px' }, onchange: (e) => ctx.dilDegistir(e.target.value) }, ...DILLER.map(([k, ad]) => el('option', { value: k, selected: k === suankiDil() }, ad))));

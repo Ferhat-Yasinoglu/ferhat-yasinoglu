@@ -1,6 +1,7 @@
 // Toplu Mesaj: segmentli, planlı gönderim. Yerel modda "simüle et" alıcı sayısını ve
 // kanal gerçeklerini gösterir; gerçek gönderim Worker'da (bağlı mod).
-import { el, btn, kart, rozet, temizle, girdi, secim, alan, metinAlani, goreliZaman, sayfaBas } from '../cekirdek/dom.js';
+import { el, btn, kart, rozet, temizle, girdi, secim, alan, metinAlani, goreliZaman, sayfaBas, btnS } from '../cekirdek/dom.js';
+import { simge } from '../cekirdek/simge.js';
 import { bos } from '../cekirdek/durum.js';
 import { pencereAcik, KANALLAR } from '../paylasilan/kanallar.js';
 
@@ -28,14 +29,14 @@ export default {
     async function ciz() {
       temizle(liste);
       const isler = await depo.listele('toplu_mesajlar', { sirala: 'guncellendi', azalan: true });
-      if (!isler.length) { liste.appendChild(bos({ simge: '📣', baslik: t('toplu.bos', 'Henüz toplu mesaj yok'), aciklama: t('toplu.bos_aciklama', 'Etiketlere göre segment seç, mesajı yaz, önce kendine gönder.'), eylem: { metin: t('toplu.yeni', 'Yeni toplu mesaj'), cb: () => git('/toplu/yeni') } })); return; }
+      if (!isler.length) { liste.appendChild(bos({ simge: 'toplu', baslik: t('toplu.bos', 'Henüz toplu mesaj yok'), aciklama: t('toplu.bos_aciklama', 'Etiketlere göre segment seç, mesajı yaz, önce kendine gönder.'), eylem: { metin: t('toplu.yeni', 'Yeni toplu mesaj'), cb: () => git('/toplu/yeni') } })); return; }
       for (const i of isler) {
         const s = i.sayim || { toplam: 0, gonderildi: 0, atlandi: 0, basarisiz: 0 };
         const oran = s.toplam ? ((s.gonderildi + s.atlandi + s.basarisiz) / s.toplam) * 100 : 0;
-        liste.appendChild(kart(el('div', { class: 'satir satir--arasi' }, el('h2', { class: 'kart__baslik' }, i.ad), rozet(i.durum, { taslak: 'gri', kuyrukta: 'mavi', gonderiliyor: 'mavi', bitti: 'yesil', duraklatildi: 'sari', basarisiz: 'kirmizi', simule: 'mor' }[i.durum] || 'gri')), el('div', { class: 'kart__alt' }, `${i.kanal || '—'} · ${s.toplam} ${t('toplu.alici', 'alıcı')} · ✓ ${s.gonderildi} · ⏭ ${s.atlandi} · ✗ ${s.basarisiz}${i.prova ? ' · prova' : ''}`), el('div', { class: 'ilerleme' }, el('div', { class: 'ilerleme__dolu', style: { width: `${oran}%` } })), el('div', { class: 'satir' }, btn(t('akis.ac', 'Aç'), { class: 'btn btn--kucuk', onclick: () => git(`/toplu/${i.id}`) }), btn(t('akis.cogalt', 'Çoğalt'), { class: 'btn btn--kucuk', onclick: async () => { const { id, rev, sayim, durum, ...k } = i; await depo.kaydet('toplu_mesajlar', { ...k, ad: i.ad + ' (kopya)', durum: 'taslak', sayim: null }); ciz(); } }))));
+        liste.appendChild(kart(el('div', { class: 'satir satir--arasi' }, el('h2', { class: 'kart__baslik' }, i.ad), rozet(i.durum, { taslak: 'gri', kuyrukta: 'mavi', gonderiliyor: 'mavi', bitti: 'yesil', duraklatildi: 'sari', basarisiz: 'kirmizi', simule: 'mor' }[i.durum] || 'gri')), el('div', { class: 'kart__alt' }, `${i.kanal || '—'} · ${s.toplam} ${t('toplu.alici', 'alıcı')} · ${s.gonderildi} ${t('toplu.gonderildi', 'gönderildi')} · ${s.atlandi} ${t('toplu.atlandi', 'atlandı')} · ${s.basarisiz} ${t('toplu.basarisiz', 'başarısız')}${i.prova ? ' · prova' : ''}`), el('div', { class: 'ilerleme' }, el('div', { class: 'ilerleme__dolu', style: { width: `${oran}%` } })), el('div', { class: 'satir' }, btn(t('akis.ac', 'Aç'), { class: 'btn btn--kucuk', onclick: () => git(`/toplu/${i.id}`) }), btn(t('akis.cogalt', 'Çoğalt'), { class: 'btn btn--kucuk', onclick: async () => { const { id, rev, sayim, durum, ...k } = i; await depo.kaydet('toplu_mesajlar', { ...k, ad: i.ad + ' (kopya)', durum: 'taslak', sayim: null }); ciz(); } }))));
       }
     }
-    kok.append(sayfaBas(t('nav.toplu', 'Toplu Mesaj'), { alt: t('toplu.alt', 'Seçtiğin kişilere sırayla, limitlere uyarak mesaj gönderir.'), eylemler: [btn('+ ' + t('toplu.yeni', 'Yeni toplu mesaj'), { class: 'btn btn--birincil', onclick: () => git('/toplu/yeni') })] }), liste);
+    kok.append(sayfaBas(t('nav.toplu', 'Toplu Mesaj'), { alt: t('toplu.alt', 'Seçtiğin kişilere sırayla, limitlere uyarak mesaj gönderir.'), eylemler: [btnS('arti', t('toplu.yeni', 'Yeni toplu mesaj'), { class: 'btn btn--birincil', onclick: () => git('/toplu/yeni') })] }), liste);
     await ciz();
     return depo.dinle('toplu_mesajlar', ciz);
   },
@@ -64,7 +65,7 @@ async function yeniCiz(kok, ctx) {
     const acik = alicilar.filter((k) => pencereAcik(k));
     const igKapali = alicilar.filter((k) => k.kanal === 'instagram' && !pencereAcik(k)).length;
     const wa = alicilar.filter((k) => k.kanal === 'whatsapp').length;
-    ozet.replaceChildren(el('span', {}, `👥 ${alicilar.length} ${t('toplu.alici', 'alıcı')} · ✅ ${acik.length} ${t('toplu.pencere_acik', 'penceresi açık')}`), igKapali ? el('span', {}, ` · Instagram'da ${igKapali} kişi atlanacak (24 sa dışı)`) : null, wa ? el('span', {}, ` · WhatsApp ${wa}: ${t('toplu.wa_sablon', 'yalnız onaylı şablonla')}`) : null);
+    ozet.replaceChildren(el('span', { class: 'satir' }, simge('kisiler', { boy: 15 }), `${alicilar.length} ${t('toplu.alici', 'alıcı')} · ${acik.length} ${t('toplu.pencere_acik', 'penceresi açık')}`), igKapali ? el('span', {}, ` · Instagram'da ${igKapali} kişi atlanacak (24 sa dışı)`) : null, wa ? el('span', {}, ` · WhatsApp ${wa}: ${t('toplu.wa_sablon', 'yalnız onaylı şablonla')}`) : null);
     return { alicilar, acik, secim };
   }
   for (const g of [hesap, kanal, hepsi, herhangi, haric]) g.oninput = hesapla; hesap.onchange = hesapla; kanal.onchange = hesapla;
@@ -86,7 +87,7 @@ async function yeniCiz(kok, ctx) {
     el('h2', {}, t('toplu.hedef', 'Hedef')), secili.length ? el('p', { class: 'bant bant--mavi' }, `${secili.length} ${t('toplu.secili', 'seçili kişi')}`) : null, alan(t('toplu.hepsi', 'Şu etiketlerin hepsi'), hepsi), alan(t('toplu.herhangi', 'Herhangi biri'), herhangi), alan(t('toplu.haric', 'Hariç'), haric), ozet,
     el('h2', {}, t('toplu.mesaj', 'Mesaj')), alan(t('adim.metin', 'Metin'), metin), alan(t('toplu.butonlar_etiket', 'Butonlar'), butonlar, { ipucu: t('toplu.buton_ipucu', 'Instagram/WhatsApp en fazla 3 buton gösterir.') }),
     el('h2', {}, t('toplu.zaman', 'Zaman')), alan(t('toplu.planla', 'Planla (boş = hemen)'), zaman),
-    el('div', { class: 'satir' }, btn(t('toplu.taslak', 'Taslak kaydet'), { onclick: () => kaydet('taslak') }), mod === 'yerel' ? btn('🧪 ' + t('toplu.simule', 'Simüle et'), { class: 'btn btn--birincil', onclick: () => kaydet('simule') }) : btn(t('toplu.kuyruga', 'Kuyruğa al'), { class: 'btn btn--birincil', onclick: () => kaydet('kuyrukta') })),
+    el('div', { class: 'satir' }, btn(t('toplu.taslak', 'Taslak kaydet'), { onclick: () => kaydet('taslak') }), mod === 'yerel' ? btnS('prova', t('toplu.simule', 'Simüle et'), { class: 'btn btn--birincil', onclick: () => kaydet('simule') }) : btn(t('toplu.kuyruga', 'Kuyruğa al'), { class: 'btn btn--birincil', onclick: () => kaydet('kuyrukta') })),
     mod === 'yerel' ? el('p', { class: 'kart__alt' }, t('toplu.yerel_not', 'Yerel modda gerçek gönderim yok; Worker bağlanınca "Kuyruğa al" görünür.')) : null);
 }
 

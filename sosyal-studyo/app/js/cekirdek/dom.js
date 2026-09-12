@@ -1,5 +1,7 @@
 // DOM yardımcıları. `innerHTML` bilerek yok: kullanıcı metni her zaman textContent
 // üzerinden yazılır, XSS kapısı hiç açılmaz.
+import { simge } from './simge.js';
+
 export function el(tag, attrs = {}, ...cocuklar) {
   const e = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs || {})) {
@@ -41,6 +43,8 @@ export function formVerisi(form) {
 
 /** Kısa yardımcılar */
 export const btn = (metin, attrs = {}, ...c) => el('button', { type: 'button', class: 'btn', ...attrs }, metin, ...c);
+/** Simgeli düğme: btnS('indir', 'CSV', { class: 'btn btn--kucuk' }) */
+export const btnS = (ad, metin, attrs = {}, ...c) => btn(simge(ad, { boy: attrs.class?.includes('btn--kucuk') ? 16 : 18 }), attrs, metin, ...c);
 export const ikon = (s) => el('span', { class: 'ikon', 'aria-hidden': 'true' }, s);
 export function alan(etiket, girdi, { ipucu, hata } = {}) {
   return el('label', { class: 'field' }, el('span', { class: 'field__etiket' }, etiket), girdi, ipucu ? el('span', { class: 'field__ipucu' }, ipucu) : null, hata ? el('span', { class: 'field__hata' }, hata) : null);
@@ -63,10 +67,97 @@ export function goreliZaman(iso, t = (k, tr) => tr) {
   return `${Math.floor(fark / 86400)} ${t('zaman.gun', 'gün')}`;
 }
 
-/** Sayfa başlığı bloğu: başlık, kısa açıklama, sağda eylem düğmeleri. */
-export function sayfaBas(baslik, { alt, eylemler = [], geri } = {}) {
+/** Sayfa başlığı bloğu: deco üst etiket, başlık, kısa açıklama, sağda eylem düğmeleri. */
+export function sayfaBas(baslik, { alt, eylemler = [], geri, ustEtiket } = {}) {
   return el('div', { class: 'sayfa-bas' },
-    geri ? btn('←', { class: 'btn btn--ikon btn--sade', 'aria-label': 'Geri', onclick: geri }) : null,
-    el('div', { class: 'sayfa-bas__govde' }, el('h1', {}, baslik), alt ? el('p', { class: 'sayfa-bas__alt' }, alt) : null),
+    geri ? btn(simge('sol'), { class: 'btn btn--ikon btn--sade', 'aria-label': 'Geri', onclick: geri }) : null,
+    el('div', { class: 'sayfa-bas__govde' },
+      ustEtiket ? el('div', { class: 'sayfa-bas__ust' }, ustEtiket) : null,
+      el('h1', {}, baslik),
+      alt ? el('p', { class: 'sayfa-bas__alt' }, alt) : null),
     eylemler.filter(Boolean).length ? el('div', { class: 'sayfa-bas__eylem' }, ...eylemler) : null);
+}
+
+/* ---------- Marka grafikleri ---------- */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+export function svgEl(tag, attrs = {}, ...c) {
+  const e = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) { if (v === null || v === undefined || v === false) continue; e.setAttribute(k, String(v)); }
+  for (const x of c.flat(Infinity)) { if (x) e.appendChild(x); }
+  return e;
+}
+
+/** Sparkline: sayaç kartının arkasına giden ince altın çizgi + dolgu.
+ *  `degerler` en az iki sayı; hepsi eşitse düz çizgi çizer. */
+export function sparkline(degerler, { g = 160, y = 40, dolgu = true } = {}) {
+  const d = degerler.length >= 2 ? degerler : [0, ...degerler, 0];
+  const enB = Math.max(...d), enK = Math.min(...d);
+  const araliq = enB - enK || 1;
+  const adim = g / (d.length - 1);
+  const nokta = d.map((v, i) => [i * adim, y - 3 - ((v - enK) / araliq) * (y - 8)]);
+  const cizgi = nokta.map(([x, yy], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${yy.toFixed(1)}`).join(' ');
+  const svg = svgEl('svg', { class: 'grafik', viewBox: `0 0 ${g} ${y}`, preserveAspectRatio: 'none', 'aria-hidden': 'true' });
+  if (dolgu) svg.appendChild(svgEl('path', { class: 'grafik__alan', d: `${cizgi} L${g} ${y} L0 ${y} Z` }));
+  svg.appendChild(svgEl('path', { class: 'grafik__cizgi cizilen', d: cizgi, style: `--uz:${Math.round(g * 1.4)}` }));
+  const [sx, sy] = nokta[nokta.length - 1];
+  svg.appendChild(svgEl('circle', { class: 'grafik__nokta', cx: sx.toFixed(1), cy: sy.toFixed(1), r: 2.4 }));
+  return svg;
+}
+
+/** Çubuk grafik: gün gün sayılar. `veri` = [[etiket, sayı], …] */
+export function cubukGrafik(veri, { y = 120, etiketli = true } = {}) {
+  const enB = Math.max(1, ...veri.map(([, v]) => v));
+  const gen = Math.max(veri.length * 26, 160);
+  const svg = svgEl('svg', { class: 'grafik', viewBox: `0 0 ${gen} ${y}`, role: 'img' });
+  const taban = etiketli ? y - 16 : y - 2;
+  svg.appendChild(svgEl('line', { class: 'grafik__eksen', x1: 0, y1: taban, x2: gen, y2: taban }));
+  veri.forEach(([et, v], i) => {
+    const h = Math.max(2, (v / enB) * (taban - 8));
+    const x = i * (gen / veri.length) + 4;
+    const w = gen / veri.length - 8;
+    svg.appendChild(svgEl('rect', {
+      class: 'grafik__cubuk cubuk', x, y: taban - h, width: w, height: h, rx: 3, style: `--i:${i}`,
+    }, svgEl('title', {}, document.createTextNode(`${et}: ${v}`))));
+    if (etiketli && (veri.length <= 8 || i % 2 === 0)) {
+      const t = svgEl('text', { class: 'grafik__yazi', x: x + w / 2, y: y - 3, 'text-anchor': 'middle' });
+      t.appendChild(document.createTextNode(et));
+      svg.appendChild(t);
+    }
+  });
+  return svg;
+}
+
+/** Halka ölçer: 0–1 arası oran. Kurulum ilerlemesi ve puan göstergeleri için. */
+export function halka(oran, { boy = 84, kalinlik = 6, yazi } = {}) {
+  const r = (boy - kalinlik) / 2, cevre = 2 * Math.PI * r;
+  const svg = svgEl('svg', { width: boy, height: boy, viewBox: `0 0 ${boy} ${boy}`, 'aria-hidden': 'true' },
+    svgEl('circle', { class: 'halka__iz', cx: boy / 2, cy: boy / 2, r, fill: 'none', 'stroke-width': kalinlik }),
+    svgEl('circle', {
+      class: 'halka__dolu halka-dolu', cx: boy / 2, cy: boy / 2, r, fill: 'none', 'stroke-width': kalinlik,
+      'stroke-dasharray': cevre.toFixed(1),
+      'stroke-dashoffset': (cevre * (1 - Math.max(0, Math.min(1, oran)))).toFixed(1),
+      style: `--cevre:${cevre.toFixed(1)}`,
+    }));
+  return el('div', { class: 'halka' }, svg, yazi ? el('span', { class: 'halka__yazi' }, yazi) : null);
+}
+
+/** Boş/hata durumu: marka çizimi + başlık + açıklama + eylem. */
+export function bosDurum({ simge: s, baslik, alt, eylem, hata } = {}) {
+  return el('div', { class: 'durum giris' + (hata ? ' durum--hata' : '') },
+    el('div', { class: 'takim-kat', 'aria-hidden': 'true' }),
+    s ? el('div', { class: 'durum__simge' }, s) : null,
+    baslik ? el('div', { class: 'durum__baslik' }, baslik) : null,
+    alt ? el('p', { class: 'durum__alt' }, alt) : null,
+    eylem || null);
+}
+
+/** Deco etiket: iki yanı altın hatlı, büyük harf küçük başlık. */
+export const decoEtiket = (metin, { sol = false } = {}) =>
+  el('div', { class: 'deco-etiket' + (sol ? ' deco-etiket--sol' : '') }, el('span', {}, metin));
+
+/** Liste/ızgara öğelerine sırayla açılma gecikmesi verir. */
+export function sirala(kap, sinif = 'sirali') {
+  kap.classList.add(sinif);
+  [...kap.children].forEach((c, i) => c.style.setProperty('--i', String(i)));
+  return kap;
 }

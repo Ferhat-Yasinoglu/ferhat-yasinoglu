@@ -1,6 +1,7 @@
 // Akış düzenleyici: bağlantılı düğüm şeması (sürükle-bırak, dallar tıklanınca hedefe gider),
 // adım formu, tetikleyici paneli, doğrulama, yayın, yan yana simülatör.
-import { el, btn, rozet, temizle, girdi, secim, alan, metinAlani, sayfaBas } from '../cekirdek/dom.js';
+import { el, btn, rozet, temizle, girdi, secim, alan, metinAlani, sayfaBas, btnS } from '../cekirdek/dom.js';
+import { simge } from '../cekirdek/simge.js';
 import { ADIM_BILGI, ADIM_TIPLERI, KOSUL_TURLERI, adimlariDogrula } from '../paylasilan/akis/adimlar.js';
 import { TETIKLEYICI_BILGI, TETIKLEYICI_TIPLERI, cakismaBul } from '../paylasilan/akis/tetikleyici.js';
 import { simulator, adimOzeti } from '../bilesenler/simulator.js';
@@ -11,7 +12,7 @@ function adimFormu(adim, adimlar, i, t) {
   const f = el('div', {});
   const hedefSecim = (deger, ad) => secim([['', '—'], ...adimlar.map((a, j) => [String(j), `${j + 1} · ${adimOzeti(a).ad}: ${(adimOzeti(a).metin || '').slice(0, 30)}`])], { value: deger === undefined ? '' : String(deger), name: ad });
   const listeGirdi = (ad, deger) => girdi({ name: ad, value: (deger || []).join(', '), placeholder: 'etiket1, etiket2' });
-  const tipSec = secim(ADIM_TIPLERI.map((k) => [k, `${ADIM_BILGI[k].simge} ${ADIM_BILGI[k].ad}`]), { value: adim.type, name: 'type' });
+  const tipSec = secim(ADIM_TIPLERI.map((k) => [k, ADIM_BILGI[k].ad]), { value: adim.type, name: 'type' });
   const govde = el('div', {});
   function govdeCiz(tip) {
     temizle(govde);
@@ -24,9 +25,9 @@ function adimFormu(adim, adimlar, i, t) {
         ekle(alan(t('adim.metin', 'Metin'), metinAlani({ name: 'text', value: a.text || '' })));
         if (tip === 'buttons') ekle(alan(t('adim.save_as', 'Seçimi kaydet (değişken adı)'), girdi({ name: 'save_as', value: a.save_as || '' })));
         const satirlar = el('div', { class: 'onay-listesi' });
-        const satirEkle = (c = {}) => satirlar.appendChild(el('div', { class: 'satir', dataset: { secenek: '1' } }, girdi({ name: 'c_label', value: c.label || '', placeholder: t('adim.buton', 'Buton metni'), style: { flex: '2' } }), hedefSecim(c.goto, 'c_goto'), girdi({ name: 'c_tags', value: (c.add_tags || []).join(', '), placeholder: 'etiketler', style: { flex: '1' } }), btn('✕', { class: 'btn btn--ikon btn--kucuk', onclick: (e) => e.currentTarget.parentElement.remove() })));
+        const satirEkle = (c = {}) => satirlar.appendChild(el('div', { class: 'satir', dataset: { secenek: '1' } }, girdi({ name: 'c_label', value: c.label || '', placeholder: t('adim.buton', 'Buton metni'), style: { flex: '2' } }), hedefSecim(c.goto, 'c_goto'), girdi({ name: 'c_tags', value: (c.add_tags || []).join(', '), placeholder: 'etiketler', style: { flex: '1' } }), btn(simge('kapat'), { class: 'btn btn--ikon btn--kucuk', onclick: (e) => e.currentTarget.parentElement.remove() })));
         (a.choices || []).forEach(satirEkle);
-        ekle(el('div', { class: 'field' }, el('span', { class: 'field__etiket' }, t('adim.secenekler', 'Seçenekler (buton · hedef adım · etiketler)')), satirlar, btn('+ ' + t('adim.secenek_ekle', 'Seçenek ekle'), { class: 'btn btn--kucuk', onclick: () => satirEkle() })));
+        ekle(el('div', { class: 'field' }, el('span', { class: 'field__etiket' }, t('adim.secenekler', 'Seçenekler (buton · hedef adım · etiketler)')), satirlar, btnS('arti', t('adim.secenek_ekle', 'Seçenek ekle'), { class: 'btn btn--kucuk', onclick: () => satirEkle() })));
         break; }
       case 'delay': ekle(alan(t('adim.saniye', 'Saniye'), girdi({ name: 'seconds', type: 'number', min: 0, max: 604800, value: a.seconds ?? 60 }), { ipucu: '3600 = 1 saat, 86400 = 1 gün' })); break;
       case 'tag': ekle(alan(t('adim.etiket_ekle', 'Etiket ekle'), listeGirdi('add_tags', a.add_tags)), alan(t('adim.etiket_sil', 'Etiket kaldır'), listeGirdi('remove_tags', a.remove_tags))); break;
@@ -109,11 +110,11 @@ export default {
     const sekmeler = el('div', { class: 'sekmeler', role: 'tablist' });
     const kaydetBtn = btn(t('genel.kaydet', 'Kaydet'), { class: 'btn', onclick: () => kaydet() });
     const yayinBtn = btn('', { class: 'btn btn--birincil', onclick: () => yayinDegistir() });
-    const dahaBtn = btn('⋯', { class: 'btn btn--ikon', 'aria-label': t('genel.daha', 'Daha'), onclick: (e) => dahaMenu(e.currentTarget) });
+    const dahaBtn = btn(simge('daha'), { class: 'btn btn--ikon', 'aria-label': t('genel.daha', 'Daha'), onclick: (e) => dahaMenu(e.currentTarget) });
 
     function durumYaz() {
       const yayinda = akis.durum === 'yayinda';
-      durumRozet.replaceChildren(rozet(yayinda ? '● ' + t('akis.yayinda', 'Yayında') : '○ ' + t('akis.taslak', 'Taslak'), yayinda ? 'yesil' : 'gri'));
+      durumRozet.replaceChildren(rozet(yayinda ? t('akis.yayinda', 'Yayında') : t('akis.taslak', 'Taslak'), yayinda ? 'yesil' : 'gri'));
       yayinBtn.textContent = yayinda ? t('akis.taslaga_al', 'Taslağa al') : t('akis.yayinla', 'Yayınla');
       yayinBtn.className = yayinda ? 'btn' : 'btn btn--birincil';
     }
@@ -121,10 +122,10 @@ export default {
       const kap = anchor.parentElement; kap.classList.add('acilir');
       kap.querySelector('.acilir__menu')?.remove();
       const menu = el('div', { class: 'acilir__menu' },
-        btn('⬇ ' + t('akis.disa', 'JSON indir'), { onclick: () => { menu.remove(); const blob = new Blob([JSON.stringify({ akis }, null, 2)], { type: 'application/json' }); const u = URL.createObjectURL(blob); const l = document.createElement('a'); l.href = u; l.download = `${akis.ad}.json`; l.click(); } }),
+        btnS('indir', t('akis.disa', 'JSON indir'), { onclick: () => { menu.remove(); const blob = new Blob([JSON.stringify({ akis }, null, 2)], { type: 'application/json' }); const u = URL.createObjectURL(blob); const l = document.createElement('a'); l.href = u; l.download = `${akis.ad}.json`; l.click(); } }),
         btn('⧉ ' + t('akis.cogalt', 'Çoğalt'), { onclick: async () => { menu.remove(); const k = structuredClone(akis); delete k.id; delete k.rev; k.ad = akis.ad + ' (kopya)'; k.durum = 'taslak'; k.demo = 0; const y = await depo.kaydet('akislar', k); git(`/akis/${y.id}`); } }),
-        btn('✓ ' + t('akis.dogrula', 'Doğrula'), { onclick: () => { menu.remove(); dogrula(true); } }),
-        btn('🗑 ' + t('genel.sil', 'Sil'), { class: 'btn', style: { color: 'rgb(var(--kirmizi))' }, onclick: async () => { menu.remove(); if (await onayla(t('akis.sil_onay', '"{ad}" silinsin mi?', { ad: akis.ad }), { tehlikeli: true })) { await depo.sil('akislar', akis.id); git('/akislar'); } } }));
+        btnS('onay', t('akis.dogrula', 'Doğrula'), { onclick: () => { menu.remove(); dogrula(true); } }),
+        btnS('cop', t('genel.sil', 'Sil'), { class: 'btn', style: { color: 'rgb(var(--kirmizi))' }, onclick: async () => { menu.remove(); if (await onayla(t('akis.sil_onay', '"{ad}" silinsin mi?', { ad: akis.ad }), { tehlikeli: true })) { await depo.sil('akislar', akis.id); git('/akislar'); } } }));
       kap.appendChild(menu);
       setTimeout(() => document.addEventListener('click', (e) => { if (!menu.contains(e.target) && e.target !== anchor) menu.remove(); }, { once: true }), 0);
     }
@@ -139,7 +140,7 @@ export default {
         temizle(dogrulamaKutu);
         if (r.hatalar.length) dogrulamaKutu.appendChild(el('div', { class: 'bant bant--kirmizi' }, el('ul', { style: { margin: 0, paddingInlineStart: '18px' } }, ...r.hatalar.map((h) => el('li', {}, h)))));
         if (r.uyarilar.length) dogrulamaKutu.appendChild(el('div', { class: 'bant bant--sari' }, el('ul', { style: { margin: 0, paddingInlineStart: '18px' } }, ...r.uyarilar.map((h) => el('li', {}, h)))));
-        if (!r.hatalar.length && !r.uyarilar.length) dogrulamaKutu.appendChild(el('div', { class: 'bant bant--mavi' }, '✓ ' + t('akis.gecerli', 'Akış geçerli.')));
+        if (!r.hatalar.length && !r.uyarilar.length) dogrulamaKutu.appendChild(el('div', { class: 'bant bant--mavi' }, simge('onay'), '' + t('akis.gecerli', 'Akış geçerli.')));
       }
       return r;
     }
@@ -221,19 +222,19 @@ export default {
           el('span', { class: 'sema__tut', 'aria-hidden': 'true', title: t('akis.surukle', 'Sürükleyerek sırala') }, '⋮⋮'),
           el('div', { class: 'sema__no' }, String(i + 1)),
           el('div', { class: 'sema__govde' },
-            el('div', { class: 'sema__tur' }, `${o.simge} ${o.ad}`),
+            el('div', { class: 'sema__tur satir' }, simge(o.ikon || 'bilgi', { boy: 14 }), o.ad),
             el('div', { class: 'sema__ozet' }, o.metin || '—'),
             dallar.length ? el('div', { class: 'sema__dallar' }, ...dallar) : null),
           el('div', { class: 'sema__eylem', onclick: (e) => e.stopPropagation() },
             btn('+', { class: 'btn btn--ikon btn--kucuk btn--sade', title: t('adim.sonra_ekle', 'Altına ekle'), 'aria-label': t('adim.sonra_ekle', 'Altına ekle'), onclick: () => adimEkle(i) }),
             btn('⧉', { class: 'btn btn--ikon btn--kucuk btn--sade', title: t('akis.cogalt', 'Çoğalt'), 'aria-label': t('akis.cogalt', 'Çoğalt'), onclick: () => { akis.adimlar.splice(i + 1, 0, structuredClone(a)); hedefleriKaydir(i + 1, +1); kaydet(true); adimlariCiz(); } }),
-            btn('✕', { class: 'btn btn--ikon btn--kucuk btn--sade', title: t('genel.sil', 'Sil'), 'aria-label': t('genel.sil', 'Sil'), onclick: () => sil(i) })));
+            btn(simge('kapat'), { class: 'btn btn--ikon btn--kucuk btn--sade', title: t('genel.sil', 'Sil'), 'aria-label': t('genel.sil', 'Sil'), onclick: () => sil(i) })));
         sema.appendChild(dugum);
       });
       function sil(i) { akis.adimlar.splice(i, 1); hedefleriKaydir(i + 1, -1); hedefleriEsle((v) => (v === i ? undefined : v)); seciliAdim = Math.min(i, akis.adimlar.length - 1); kaydet(true); adimlariCiz(); }
       if (!akis.adimlar.length) sema.appendChild(el('p', { class: 'kart__alt', style: { textAlign: 'center' } }, t('akis.adim_yok', 'Henüz adım yok. İlk adımı ekle.')));
       sema.appendChild(el('div', { class: 'sema__bag', 'aria-hidden': 'true' }));
-      sema.appendChild(btn('+ ' + t('adim.ekle', 'Adım ekle'), { class: 'btn btn--birincil sema__ekle', onclick: () => adimEkle(akis.adimlar.length - 1) }));
+      sema.appendChild(btnS('arti', t('adim.ekle', 'Adım ekle'), { class: 'btn btn--birincil sema__ekle', onclick: () => adimEkle(akis.adimlar.length - 1) }));
       govde.append(sema, el('p', { class: 'kart__alt', style: { marginBlockStart: '12px' } }, t('akis.ipucu', 'Bir adıma tıklayarak düzenle; sürükleyerek sırala. Mavi etiketler hedef adıma götürür. Klavye: Enter düzenle, Alt+↑/↓ taşı, Delete sil.')));
     }
     async function tetikleyicileriCiz() {
@@ -242,14 +243,14 @@ export default {
       const liste = el('div', { class: 'liste' });
       for (const x of tetler) {
         liste.appendChild(el('div', { class: 'liste__satir' },
-          el('div', { class: 'avatar avatar--kucuk' }, x.aktif ? '▶' : '⏸'),
+          el('div', { class: 'avatar avatar--kucuk' + (x.aktif ? '' : ' avatar--sade') }, simge(x.aktif ? 'oynat' : 'duraklat', { boy: 14 })),
           el('div', { class: 'liste__govde' }, el('div', { class: 'liste__baslik' }, `${TETIKLEYICI_BILGI[x.tip]?.ad || x.tip}${x.hesap_id ? ' · ' + (hesaplar.find((h) => h.id === x.hesap_id)?.ad || '') : ''}`), el('div', { class: 'liste__alt' }, `${x.eslesme || 'contains'} · ${(x.anahtar_kelimeler || []).join(', ') || '—'} · ${t('tetik.yeniden_kisa', 'yeniden')}: ${x.yeniden_baslatma_sn || 0} sn`)),
-          btn(x.aktif ? '⏸' : '▶', { class: 'btn btn--kucuk btn--ikon btn--sade', title: x.aktif ? t('tetik.duraklat', 'Duraklat') : t('tetik.etkinlestir', 'Etkinleştir'), onclick: async () => { await depo.kaydet('tetikleyiciler', { ...x, aktif: x.aktif ? 0 : 1 }); tetikleyicileriCiz(); } }),
-          btn('✎', { class: 'btn btn--kucuk btn--ikon btn--sade', title: t('genel.duzenle', 'Düzenle'), onclick: async () => { const f = tetikFormu(x, hesaplar, t); const r = await modal({ baslik: t('tetik.duzenle', 'Tetikleyici'), govde: f, dugmeler: [{ metin: t('genel.vazgec', 'Vazgeç'), deger: null }, { metin: t('genel.kaydet', 'Kaydet'), sinif: 'btn--birincil', cb: () => f.oku() }] }); if (r && typeof r === 'object') { await depo.kaydet('tetikleyiciler', r); tetikleyicileriCiz(); } } }),
-          btn('✕', { class: 'btn btn--kucuk btn--ikon btn--sade', title: t('genel.sil', 'Sil'), onclick: async () => { await depo.sil('tetikleyiciler', x.id); tetikleyicileriCiz(); } })));
+          btn(simge(x.aktif ? 'duraklat' : 'oynat'), { class: 'btn btn--kucuk btn--ikon btn--sade', title: x.aktif ? t('tetik.duraklat', 'Duraklat') : t('tetik.etkinlestir', 'Etkinleştir'), onclick: async () => { await depo.kaydet('tetikleyiciler', { ...x, aktif: x.aktif ? 0 : 1 }); tetikleyicileriCiz(); } }),
+          btn(simge('kalem'), { class: 'btn btn--kucuk btn--ikon btn--sade', title: t('genel.duzenle', 'Düzenle'), onclick: async () => { const f = tetikFormu(x, hesaplar, t); const r = await modal({ baslik: t('tetik.duzenle', 'Tetikleyici'), govde: f, dugmeler: [{ metin: t('genel.vazgec', 'Vazgeç'), deger: null }, { metin: t('genel.kaydet', 'Kaydet'), sinif: 'btn--birincil', cb: () => f.oku() }] }); if (r && typeof r === 'object') { await depo.kaydet('tetikleyiciler', r); tetikleyicileriCiz(); } } }),
+          btn(simge('kapat'), { class: 'btn btn--kucuk btn--ikon btn--sade', title: t('genel.sil', 'Sil'), onclick: async () => { await depo.sil('tetikleyiciler', x.id); tetikleyicileriCiz(); } })));
       }
       govde.append(liste.children.length ? liste : el('div', { class: 'bant bant--sari' }, t('akis.tetik_yok', 'Tetikleyici yok: akış yalnız elle ya da başka akıştan başlatılabilir.')),
-        el('div', { class: 'satir', style: { marginBlockStart: '12px' } }, btn('+ ' + t('tetik.ekle', 'Tetikleyici ekle'), { class: 'btn btn--birincil', disabled: tetler.length >= 4, onclick: async () => { const f = tetikFormu({ akis_id: akis.id }, hesaplar, t); const r = await modal({ baslik: t('tetik.ekle', 'Tetikleyici ekle'), govde: f, dugmeler: [{ metin: t('genel.vazgec', 'Vazgeç'), deger: null }, { metin: t('genel.ekle', 'Ekle'), sinif: 'btn--birincil', cb: () => f.oku() }] }); if (r && typeof r === 'object') { await depo.kaydet('tetikleyiciler', r); tetikleyicileriCiz(); } } }), el('span', { class: 'kart__alt' }, t('tetik.en_fazla', 'En fazla 4 tetikleyici.'))));
+        el('div', { class: 'satir', style: { marginBlockStart: '12px' } }, btnS('arti', t('tetik.ekle', 'Tetikleyici ekle'), { class: 'btn btn--birincil', disabled: tetler.length >= 4, onclick: async () => { const f = tetikFormu({ akis_id: akis.id }, hesaplar, t); const r = await modal({ baslik: t('tetik.ekle', 'Tetikleyici ekle'), govde: f, dugmeler: [{ metin: t('genel.vazgec', 'Vazgeç'), deger: null }, { metin: t('genel.ekle', 'Ekle'), sinif: 'btn--birincil', cb: () => f.oku() }] }); if (r && typeof r === 'object') { await depo.kaydet('tetikleyiciler', r); tetikleyicileriCiz(); } } }), el('span', { class: 'kart__alt' }, t('tetik.en_fazla', 'En fazla 4 tetikleyici.'))));
     }
     function sekmeCiz() {
       temizle(sekmeler);
@@ -263,7 +264,7 @@ export default {
     durumYaz();
     kok.append(
       el('div', { class: 'sema__baslik-kutusu' },
-        btn('←', { class: 'btn btn--ikon btn--sade', 'aria-label': t('geri', 'Geri'), onclick: () => git('/akislar') }),
+        btn(simge('sol'), { class: 'btn btn--ikon btn--sade', 'aria-label': t('geri', 'Geri'), onclick: () => git('/akislar') }),
         baslikGirdi, durumRozet,
         el('div', { class: 'satir', style: { position: 'relative' } }, kaydetBtn, yayinBtn, dahaBtn)),
       dogrulamaKutu, sekmeler, duzen,

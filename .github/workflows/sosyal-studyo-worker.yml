@@ -7,7 +7,7 @@
 #   Secrets (zorunlu): CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, YONETICI_ANAHTARI (≥32 karakter)
 #   Secrets (isteğe bağlı): TELEGRAM_BOT_TOKEN, META_APP_SECRET, META_VERIFY_TOKEN, IG_ACCESS_TOKEN,
 #                           IG_USER_ID, WA_ACCESS_TOKEN, WA_PHONE_NUMBER_ID, ANTHROPIC_API_KEY
-#   Variables: WORKER_DAGITIMI_ACIK = 1 (bu iş ancak o zaman çalışır), SS_PROVA = 0 (canlıya alınca)
+#   Variables: WORKER_DAGITIMI_ACIK = 1 (bu iş ancak o zaman çalışır), SS_PROVA (istege bagli; bos birakilirsa yayindaki PROVA degeri korunur)
 name: Sosyal Studyo Worker
 
 on:
@@ -79,10 +79,29 @@ jobs:
       - name: Gocleri uygula
         run: npx wrangler d1 migrations apply sosyal-studyo --remote --config "$TOML"
 
+      # PROVA yapışkandır: elle seçilmediyse ve SS_PROVA degiskeni yoksa, su an
+      # yayinda olan Worker'in degeri korunur. Boylece kod degisikligi yuzunden
+      # calisan bir bot sessizce provaya dusmez. Worker hic yoksa guvenli taraf: prova acik.
+      - name: Onceki PROVA degeri
+        id: onceki
+        env:
+          SECIM: ${{ inputs.prova }}
+          DEGISKEN: ${{ vars.SS_PROVA }}
+        run: |
+          if [ -n "$SECIM" ]; then echo "prova=$SECIM" >> "$GITHUB_OUTPUT"; echo "PROVA elle secildi: $SECIM"; exit 0; fi
+          if [ -n "$DEGISKEN" ]; then echo "prova=$DEGISKEN" >> "$GITHUB_OUTPUT"; echo "PROVA degiskenden: $DEGISKEN"; exit 0; fi
+          alt="$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).result?.subdomain||''))" || true)"
+          onceki=""
+          if [ -n "$alt" ]; then
+            onceki="$(curl -fsS --max-time 12 "https://sosyal-studyo.$alt.workers.dev/health" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{process.stdout.write(JSON.parse(s).prova?'1':'0')}catch{}})" || true)"
+          fi
+          if [ -n "$onceki" ]; then echo "prova=$onceki" >> "$GITHUB_OUTPUT"; echo "PROVA yayindaki Worker'dan korundu: $onceki";
+          else echo "prova=1" >> "$GITHUB_OUTPUT"; echo "Yayinda Worker bulunamadi; PROVA guvenli tarafta: 1"; fi
+
       - name: Dagit
         id: dagit
         env:
-          PROVA: ${{ inputs.prova || vars.SS_PROVA || '1' }}
+          PROVA: ${{ steps.onceki.outputs.prova }}
         run: |
           set -o pipefail
           npx wrangler deploy --config "$TOML" --var "SURUM:${GITHUB_SHA::7}" --var "PROVA:${PROVA}" 2>&1 | tee dagit.log
