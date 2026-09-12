@@ -36,6 +36,26 @@ async function durumYaz() {
   }
   const calisan = tetler.filter((x) => { const a = akislar.find((y) => y.id === x.akis_id); return x.aktif && a && a.durum === 'yayinda'; });
   console.log(calisan.length ? `→ ${calisan.length} tetikleyici çalışır durumda` : '→ UYARI: çalışır tetikleyici yok; gelen mesaj hiçbir akışı başlatmaz');
+
+  // Ters yön: yayında ama kendisini başlatan tetikleyicisi olmayan akış. Ekranda
+  // "Yayında" yazdığı için çalıştığı sanılır; aslında hiç koşmaz. Sessiz tuzak.
+  const oksuz = akislar.filter((a) => a.durum === 'yayinda' && !tetler.some((x) => x.akis_id === a.id && x.aktif));
+  for (const a of oksuz) console.log(`::warning::"${a.ad}" (${a.id}) yayında ama aktif tetikleyicisi yok — hiçbir mesaj bu akışı başlatmaz.`);
+
+  // Aynı kanalda aynı anahtar kelimeyi bekleyen iki tetikleyici: hangisinin
+  // kazandığı kayıt sırasına kalır, davranış öngörülemez olur.
+  const anahtarlar = new Map();
+  for (const x of tetler.filter((t) => t.aktif && t.tip === 'keyword')) {
+    for (const k of (x.anahtar_kelimeler || []).map((k) => String(k).toLowerCase().trim())) {
+      const yer = `${x.hesap_id || '*'}:${k}`;
+      if (anahtarlar.has(yer)) console.log(`::warning::"${k}" anahtar kelimesi iki tetikleyicide birden var (${anahtarlar.get(yer)} ve ${x.id}); hangisinin çalışacağı belirsiz.`);
+      else anahtarlar.set(yer, x.id);
+    }
+  }
+
+  // Hiçbir akışı olmayan olay tipleri: ilk temas en değerli an, orada bir şey yoksa söyle.
+  const tipler = new Set(tetler.filter((x) => x.aktif).map((x) => x.tip));
+  if (!tipler.has('start')) console.log('::warning::"/start" için tetikleyici yok: bota ilk yazan kişiyi hiçbir akış karşılamıyor (AI ajanı devrede olduğu için sessizlik yok, ama karşılama akışı yok).');
   return { akislar, tetler, hesaplar, saglik };
 }
 
