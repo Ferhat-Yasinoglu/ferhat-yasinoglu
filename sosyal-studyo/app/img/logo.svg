@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Sosyal Stüdyo">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6d678"/><stop offset="1" stop-color="#d4af37"/></linearGradient></defs>
+  <rect width="64" height="64" rx="16" fill="#111014"/>
+  <path d="M18 40c0-9 6-14 14-14s14 5 14 14c0 3-1 5-3 7l3 6-9-3c-2 .5-3.5.8-5 .8-8 0-14-5-14-10.8z" fill="url(#g)"/>
+  <circle cx="26" cy="38" r="2.4" fill="#111014"/><circle cx="33" cy="38" r="2.4" fill="#111014"/><circle cx="40" cy="38" r="2.4" fill="#111014"/>
+  <path d="M40 12l2.2 5.8L48 20l-5.8 2.2L40 28l-2.2-5.8L32 20l5.8-2.2z" fill="#f6d678"/>
+</svg>
