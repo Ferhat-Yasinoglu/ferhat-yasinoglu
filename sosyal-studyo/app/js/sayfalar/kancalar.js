@@ -1,5 +1,5 @@
 // Kanca Kütüphanesi: arama (Türkçe normalize), filtre, favori, kullanım sayacı, hazır paket, AI öneri.
-import { el, btn, kart, rozet, temizle, girdi, secim } from '../cekirdek/dom.js';
+import { el, btn, kart, rozet, temizle, girdi, secim, sayfaBas } from '../cekirdek/dom.js';
 import { normalize } from '../paylasilan/metin.js';
 import { aiIstemci } from '../ai-istemci.js';
 
@@ -22,7 +22,7 @@ export default {
       for (const k of kancalar) liste.appendChild(kart(el('p', { style: { fontWeight: '600', fontSize: '1.05rem', margin: 0 } }, k.metin), el('div', { class: 'satir' }, rozet(k.dil || 'tr', 'gri'), rozet(k.format || '—', 'mor'), ...(k.nis || []).map((n) => rozet(n, 'mavi')), el('span', { class: 'kart__alt' }, `${k.kullanim || 0}× · ${k.kaynak || 'elle'}`)), el('div', { class: 'satir' }, btn('⧉', { class: 'btn btn--kucuk btn--ikon', title: t('genel.kopyala', 'Kopyala'), onclick: async () => { await navigator.clipboard?.writeText(k.metin); await depo.kaydet('kancalar', { ...k, kullanim: (k.kullanim || 0) + 1 }); ctx.basari(t('genel.kopyalandi', 'Kopyalandı')); } }), btn(k.favori ? '★' : '☆', { class: 'btn btn--kucuk btn--ikon', onclick: async () => { await depo.kaydet('kancalar', { ...k, favori: !k.favori }); ciz(); } }), btn('🎠', { class: 'btn btn--kucuk btn--ikon', title: t('kanca.karusele', 'Karusele ekle'), onclick: () => { sessionStorage.setItem('ss-kanca', k.metin); ctx.git('/karusel'); } }), btn('✕', { class: 'btn btn--kucuk btn--ikon', onclick: async () => { await depo.sil('kancalar', k.id); ciz(); } }))));
     }
     arama.oninput = ciz; dil.onchange = ciz; format.onchange = ciz;
-    kok.append(el('h1', {}, t('nav.kancalar', 'Kanca Kütüphanesi')), el('div', { class: 'satir' }, arama, dil, format),
+    kok.append(sayfaBas(t('nav.kancalar', 'Kanca Kütüphanesi'), { alt: t('kancalar.alt', 'İlk üç saniyeyi kurtaran açılış cümleleri.') }), el('div', { class: 'satir', style: { marginBlockEnd: '16px' } }, arama, dil, format),
       el('div', { class: 'satir', style: { margin: '8px 0' } },
         btn('+ ' + t('kanca.yaz', 'Kanca yaz'), { class: 'btn btn--birincil btn--kucuk', onclick: async () => { const m = await sor(t('kanca.yaz', 'Kanca yaz'), { cokSatir: true }); if (!m) return; const var_ = (await depo.listele('kancalar')).find((k) => normalize(k.metin) === normalize(m)); if (var_) { ctx.bildir(t('kanca.zaten', 'Bu kanca zaten var; favoriye eklendi.')); await depo.kaydet('kancalar', { ...var_, favori: true }); } else await depo.kaydet('kancalar', { metin: m, dil: 'tr', format: 'reels', nis: [], kaynak: 'elle' }); ciz(); } }),
         btn('📦 ' + t('kanca.hazir', 'Hazır 30 kancayı yükle'), { class: 'btn btn--kucuk', onclick: async () => { const r = await fetch('./data/kancalar-hazir.json'); const liste = await r.json(); const mevcutlar = new Set((await depo.listele('kancalar')).map((k) => normalize(k.metin))); let n = 0; for (const k of liste) if (!mevcutlar.has(normalize(k.metin))) { await depo.kaydet('kancalar', { ...k, kaynak: 'tohum' }); n++; } ctx.basari(t('kanca.yuklendi', '{n} kanca eklendi', { n })); ciz(); } }),

@@ -95,10 +95,13 @@ select.input { appearance: none; padding-inline-end: var(--b-5); background-imag
 
 /* ---------- Bant ---------- */
 .bant {
-  padding: 10px var(--b-4); border-radius: var(--r-kucuk); font-size: var(--f-s); font-weight: 500;
-  display: flex; gap: var(--b-3); align-items: center; flex-wrap: wrap;
+  padding: 8px var(--b-3); border-radius: var(--r-kucuk); font-size: var(--f-s); font-weight: 500;
+  display: flex; gap: var(--b-2); align-items: center; flex-wrap: wrap; line-height: 1.35;
   border: 1px solid transparent;
 }
+.bant .btn--kucuk { min-height: 30px; }
+.bant__kapat { margin-inline-start: auto; background: none; border: 0; cursor: pointer; color: inherit; opacity: .6; font-size: 1rem; line-height: 1; padding: 2px 4px; }
+.bant__kapat:hover { opacity: 1; }
 .bant--mavi { background: rgb(var(--mavi) / .08); color: rgb(var(--mavi)); border-color: rgb(var(--mavi) / .2); }
 .bant--sari { background: rgb(var(--sari) / .1); color: rgb(var(--sari)); border-color: rgb(var(--sari) / .24); }
 .bant--gri { background: rgb(var(--yuzey-2)); color: rgb(var(--metin-2)); border-color: rgb(var(--cizgi) / .08); }
@@ -241,6 +244,12 @@ select.input { appearance: none; padding-inline-end: var(--b-5); background-imag
 .balon__butonlar .btn { min-height: 34px; font-size: var(--f-s); border-color: rgb(var(--vurgu) / .35); color: rgb(var(--vurgu)); background: rgb(var(--yuzey)); box-shadow: none; }
 [dir="rtl"] .balon--gelen { border-start-start-radius: 18px; border-start-end-radius: 6px; }
 [dir="rtl"] .balon--giden { border-end-end-radius: 18px; border-end-start-radius: 6px; }
+
+/* Simülatör telefonunda bakış açısı karşıdaki kişinin: senin yazdığın sağda, botun cevabı solda.
+   Ana Sohbetler ekranı operatörün bakışıdır (gelen solda, giden sağda), o yüzden yalnız burada ters. */
+.telefon .balon--gelen { align-self: flex-end; background: rgb(var(--vurgu)); color: rgb(var(--vurgu-yz)); border-start-start-radius: 18px; border-end-end-radius: 6px; }
+.telefon .balon--giden { align-self: flex-start; background: rgb(var(--yuzey)); color: rgb(var(--metin)); border-end-end-radius: 18px; border-start-start-radius: 6px; }
+.telefon .balon--sistem { align-self: center; background: none; color: rgb(var(--metin-3)); }
 
 /* Simülatör telefonu */
 .telefon { max-width: 390px; margin-inline: auto; background: rgb(var(--bg)); border: 1px solid rgb(var(--cizgi) / .12); border-radius: 26px; padding: var(--b-3); display: flex; flex-direction: column; gap: var(--b-2); min-height: 440px; box-shadow: var(--golge); }

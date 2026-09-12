@@ -1,5 +1,5 @@
 // Fikirler & Senaryo: fikir panosu, senaryo yazımı (elle her zaman, AI Worker'la), kancaya köprü.
-import { el, btn, kart, rozet, temizle, girdi, secim, alan, metinAlani } from '../cekirdek/dom.js';
+import { el, btn, kart, rozet, temizle, girdi, secim, alan, metinAlani, sayfaBas } from '../cekirdek/dom.js';
 import { aiIstemci } from '../ai-istemci.js';
 
 const FORMATLAR = [['reels', 'Reels'], ['story', 'Story'], ['karusel', 'Karusel'], ['dm', 'DM kampanyası']];
@@ -39,7 +39,7 @@ export default {
         ciz();
       }
     }
-    kok.append(el('h1', {}, t('nav.fikirler', 'Fikirler & Senaryo')), kart(el('div', { class: 'satir' }, nis, hedef, format), el('div', { class: 'satir' }, uretBtn, btn('+ ' + t('fikir.elle', 'Elle fikir ekle'), { onclick: async () => { const f = el('div', {}, alan('Başlık', girdi({ name: 'b' })), alan('Açıklama', metinAlani({ name: 'a' })), alan('Format', secim(FORMATLAR, { name: 'f' }))); const r = await modal({ baslik: t('fikir.elle', 'Fikir ekle'), govde: f, dugmeler: [{ metin: t('genel.vazgec', 'Vazgeç'), deger: null }, { metin: t('genel.ekle', 'Ekle'), sinif: 'btn--birincil', cb: () => ({ baslik: f.querySelector('[name=b]').value.trim(), aciklama: f.querySelector('[name=a]').value.trim(), format: f.querySelector('[name=f]').value }) }] }); if (r?.baslik) { await depo.kaydet('fikirler', { ...r, durum: 'fikir', kaynak: 'elle' }); ciz(); } } }), !mevcut ? el('span', { class: 'kart__alt' }, t('ai.yerel_kisa', 'AI üretimi için Worker gerekir; elle yazmak her zaman açık.')) : null)), liste);
+    kok.append(sayfaBas(t('nav.fikirler', 'Fikirler & Senaryo'), { alt: t('fikirler.alt', 'İçerik fikri üret, beğendiğini senaryoya çevir.') }), kart(el('div', { class: 'satir' }, nis, hedef, format), el('div', { class: 'satir' }, uretBtn, btn('+ ' + t('fikir.elle', 'Elle fikir ekle'), { onclick: async () => { const f = el('div', {}, alan('Başlık', girdi({ name: 'b' })), alan('Açıklama', metinAlani({ name: 'a' })), alan('Format', secim(FORMATLAR, { name: 'f' }))); const r = await modal({ baslik: t('fikir.elle', 'Fikir ekle'), govde: f, dugmeler: [{ metin: t('genel.vazgec', 'Vazgeç'), deger: null }, { metin: t('genel.ekle', 'Ekle'), sinif: 'btn--birincil', cb: () => ({ baslik: f.querySelector('[name=b]').value.trim(), aciklama: f.querySelector('[name=a]').value.trim(), format: f.querySelector('[name=f]').value }) }] }); if (r?.baslik) { await depo.kaydet('fikirler', { ...r, durum: 'fikir', kaynak: 'elle' }); ciz(); } } }), !mevcut ? el('span', { class: 'kart__alt' }, t('ai.yerel_kisa', 'AI üretimi için Worker gerekir; elle yazmak her zaman açık.')) : null)), liste);
     ciz();
   },
 };

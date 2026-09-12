@@ -125,7 +125,9 @@ async function bantlariYenile(ctx) {
   const ayar = await ctx.depo.ayarlar();
   const meta = await ctx.depo.meta();
   if (!ctx.depo.kalici) parcalar.push(el('div', { class: 'bant bant--kirmizi' }, '⚠️ ', t('bant.kalici_degil', 'Tarayıcı depolaması açılamadı: veriler bu sekme kapanınca silinir. Yedek indir.')));
-  if ((ayar.mod || 'yerel') === 'yerel') parcalar.push(el('div', { class: 'bant bant--mavi' }, '🔵 ', t('bant.yerel', 'Yerel mod: veriler yalnız bu cihazda. Kanalları ve AI\'ı açmak için Worker\'ı bağla.'), btn(t('bant.worker_bagla', 'Worker\'ı bağla'), { class: 'btn btn--kucuk', onclick: () => ctx.git('/ayarlar/worker') })));
+  // Yerel mod bandı bir kez kapatılabilir (oturum boyunca); her sayfada bağırmasın.
+  let yerelKapali = false; try { yerelKapali = sessionStorage.getItem('ss-yerel-bant') === '1'; } catch {}
+  if ((ayar.mod || 'yerel') === 'yerel' && !yerelKapali) parcalar.push(el('div', { class: 'bant bant--mavi' }, '🔵 ', t('bant.yerel', 'Yerel mod: veriler yalnız bu cihazda. Kanalları ve AI\'ı açmak için Worker\'ı bağla.'), btn(t('bant.worker_bagla', 'Worker\'ı bağla'), { class: 'btn btn--kucuk', onclick: () => ctx.git('/ayarlar/worker') }), el('button', { class: 'bant__kapat', type: 'button', 'aria-label': t('genel.kapat', 'Kapat'), onclick: (e) => { try { sessionStorage.setItem('ss-yerel-bant', '1'); } catch {} e.currentTarget.parentElement.remove(); } }, '✕')));
   const kuyruk = ctx.depo.gidenSayisi ? await ctx.depo.gidenSayisi() : 0;
   if (!navigator.onLine || kuyruk) parcalar.push(el('div', { class: 'bant bant--gri' }, '📴 ', navigator.onLine ? t('bant.kuyruk', 'Worker\'a gönderilmeyi bekleyen {n} değişiklik.', { n: kuyruk }) : t('bant.cevrimdisi', 'Çevrimdışısın; değişiklikler bu cihazda kaydediliyor.'), kuyruk && navigator.onLine ? btn(t('bant.simdi_gonder', 'Şimdi gönder'), { class: 'btn btn--kucuk', onclick: () => ctx.depo.gidenKutusunuBosalt().then(() => bantlariYenile(ctx)) }) : null));
   if (ctx.depo.mod === 'bagli' && ctx.depo.cevrimici === false) parcalar.push(el('div', { class: 'bant bant--kirmizi' }, '⚠️ ', t('bant.worker_yok', 'Worker\'a ulaşılamıyor; önbellekten gösteriliyor.')));

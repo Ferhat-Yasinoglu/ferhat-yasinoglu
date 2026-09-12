@@ -1,7 +1,7 @@
 // Sohbetler: iki panelli gelen kutusu. Masaüstünde solda konuşma listesi, ortada mesajlar,
 // geniş ekranda sağda kişi bilgisi. Telefonda tek panel: liste ↔ sohbet.
 // Yerel modda simülatör koşuları da sohbet gibi görünür (yalnız okunur).
-import { el, btn, temizle, girdi, rozet, goreliZaman, metinAlani } from '../cekirdek/dom.js';
+import { el, btn, temizle, girdi, rozet, goreliZaman, metinAlani, ekle } from '../cekirdek/dom.js';
 import { bos } from '../cekirdek/durum.js';
 import { pencereKalan } from '../paylasilan/kanallar.js';
 
@@ -111,14 +111,14 @@ export default {
       // Sağ panel: kişi bilgisi
       if (kisi) {
         const kalan = pencereKalan(kisi);
-        bilgi.append(
+        ekle(bilgi, [
           el('div', { style: { textAlign: 'center', paddingBlock: '8px' } }, el('div', { class: 'avatar', style: { width: '64px', height: '64px', fontSize: '1.5rem', marginInline: 'auto' } }, ad.slice(0, 1).toUpperCase()), el('div', { style: { fontWeight: '650', marginBlockStart: '8px', fontSize: 'var(--f-l)' } }, ad), el('div', { class: 'kart__alt' }, kisi.kullanici_adi ? '@' + kisi.kullanici_adi : '')),
           bilgiSatiri(t('kisi.kanal', 'Kanal'), kanalRozeti(kisi.kanal)),
           bilgiSatiri(t('kisi.puan', 'Puan'), el('strong', {}, String(kisi.puan || 0))),
           bilgiSatiri(t('kisi.pencere', '24 saat penceresi'), kalan === null ? rozet('∞', 'yesil') : kalan > 0 ? rozet(`${Math.ceil(kalan)} sa`, 'yesil') : rozet(t('sohbet.kapandi', 'kapalı'), 'kirmizi')),
           el('div', {}, el('div', { class: 'field__etiket', style: { marginBlockEnd: '6px' } }, t('kisi.etiketler', 'Etiketler')), el('div', { class: 'satir' }, ...((kisi.etiketler || []).length ? kisi.etiketler.map((e) => rozet(e, 'vurgu')) : [el('span', { class: 'kart__alt' }, '—')]))),
           Object.keys(kisi.degiskenler || {}).length ? el('div', {}, el('div', { class: 'field__etiket', style: { marginBlockEnd: '6px' } }, t('kisi.degiskenler', 'Bilgiler')), ...Object.entries(kisi.degiskenler).map(([k, v]) => bilgiSatiri(k, String(v)))) : null,
-          btn(t('sohbet.kisi_kart', 'Kişi kartı'), { class: 'btn btn--tam', onclick: () => git(`/kisi/${kisi.id}`) }));
+          btn(t('sohbet.kisi_kart', 'Kişi kartı'), { class: 'btn btn--tam', onclick: () => git(`/kisi/${kisi.id}`) })]);
       }
     }
 

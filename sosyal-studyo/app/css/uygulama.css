@@ -44,12 +44,12 @@ img { max-width: 100%; }
 }
 
 /* ---- Gövde ve gezinme ---- */
-.govde { display: grid; grid-template-columns: 1fr; min-height: calc(100dvh - var(--ust-cubuk)); }
+.govde { display: grid; grid-template-columns: minmax(0, 1fr); min-height: calc(100dvh - var(--ust-cubuk)); }
 .kenar { display: none; }
 .icerik {
   padding: var(--b-4);
   padding-block-end: calc(var(--alt-cubuk) + env(safe-area-inset-bottom) + var(--b-6));
-  width: 100%; max-width: 1120px; margin-inline: auto;
+  width: 100%; max-width: 1120px; margin-inline: auto; min-width: 0;
 }
 .icerik--genis { max-width: none; }
 .bantlar { display: flex; flex-direction: column; gap: var(--b-2); margin-block-end: var(--b-4); }
@@ -98,7 +98,7 @@ img { max-width: 100%; }
 .daha-sayfa a:hover { background: rgb(var(--vurgu-sis)); color: rgb(var(--vurgu)); }
 
 @media (min-width: 1024px) {
-  .govde { grid-template-columns: var(--kenar) 1fr; }
+  .govde { grid-template-columns: var(--kenar) minmax(0, 1fr); }
   .kenar {
     display: block; position: sticky; inset-block-start: var(--ust-cubuk);
     height: calc(100dvh - var(--ust-cubuk)); overflow: auto;
