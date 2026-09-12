@@ -1,0 +1,53 @@
+// Hazır akış şablonları — "Yeni akış" sihirbazının girişi. ChatPlace'in kütüphanesinden esinle.
+export const SABLONLAR = [
+  { id: 'fiyat', ad: 'Fiyat sorusu', aciklama: 'Fiyat soranı iki soruyla nitelendirir, etiketler, teklif ister.', kanal: null, tetik: { tip: 'keyword', anahtar_kelimeler: ['fiyat', 'ücret', 'price'] },
+    adimlar: [
+      { type: 'message', text: 'Merhaba {{ad}}! İki küçük soruyla sana en doğru rakamı vereyim.' },
+      { type: 'buttons', text: 'Hangi hizmet?', save_as: 'hizmet', choices: [{ label: 'Web sitesi', add_tags: ['ilgi-web'] }, { label: 'Otomasyon', add_tags: ['ilgi-bot'] }, { label: 'Diğer' }] },
+      { type: 'question', text: 'Bütçe aralığın nedir?', save_as: 'butce' },
+      { type: 'tag', add_tags: ['lead-fiyat'] },
+      { type: 'score', delta: 5, reason: 'fiyat sordu', once_per: 'run' },
+      { type: 'message', text: 'Teşekkürler! {{hizmet}} için {{butce}} bütçesiyle en kısa sürede teklif göndereceğim.' },
+      { type: 'end' } ] },
+  { id: 'karsilama', ad: 'Karşılama', aciklama: 'İlk mesajda hoş geldin, üç seçenekle yönlendirme.', kanal: null, tetik: { tip: 'start' },
+    adimlar: [
+      { type: 'message', text: 'Hoş geldin {{ad}}! 👋' },
+      { type: 'buttons', text: 'Ne yapmak istersin?', choices: [{ label: 'Hizmetler', goto: 2 }, { label: 'Fiyat', goto: 4 }, { label: 'Bir insanla konuş', goto: 6 }] },
+      { type: 'message', text: 'Web sitesi, otomasyon ve yapay zekâ eğitimi veriyoruz.' },
+      { type: 'end' },
+      { type: 'message', text: 'Fiyatlar projeye göre değişir; "fiyat" yazarsan kısa bir anket başlar.' },
+      { type: 'end' },
+      { type: 'tag', add_tags: ['insan-istedi'] },
+      { type: 'message', text: 'Not aldım, en kısa sürede bir insan yazacak 🙂' },
+      { type: 'end' } ] },
+  { id: 'takip-lead', ad: 'Takip kontrolü + lead magnet', aciklama: 'Yorumdan gelen kişiye DM; takip ediyorsa linki ver, etmiyorsa önce takip iste.', kanal: 'instagram', tetik: { tip: 'comment', anahtar_kelimeler: ['rehber', 'link', 'istiyorum'] },
+    adimlar: [
+      { type: 'comment_reply', texts: ['DM\'ine yolladım {{username}} 🙂', 'Gönderdim, DM\'ini kontrol et!', '{{username}} DM\'de 📩', 'Mesaj kutuna baktın mı? 🙂', 'Yolladım {{username}}!', 'Rehber DM\'de ✨', '{{username}} bak DM\'e 👀', 'Gönderildi 🙂', 'DM kutunda {{username}}', 'İşte orada — DM 📩'] },
+      { type: 'private_reply', text: 'Rehberi istediğin için teşekkürler! Devam etmek için düğmeye bas.', choices: [{ label: 'Rehberi al' }] },
+      { type: 'condition', check: { kind: 'follows' }, then: 3, else: 5 },
+      { type: 'message', text: 'İşte rehber: https://ornek.site/rehber 🎁' },
+      { type: 'end' },
+      { type: 'buttons', text: 'Rehberi alabilmen için önce takip etmen gerekiyor 🙂 Takip ettin mi?', choices: [{ label: 'Takip ettim, kontrol et', goto: 2 }] },
+      { type: 'end' } ] },
+  { id: 'referans', ad: 'Referans programı', aciklama: 'Referans linkinden gelene puan, davet edene de puan.', kanal: 'telegram', tetik: { tip: 'ref_link' },
+    adimlar: [
+      { type: 'message', text: 'Bir arkadaşının davetiyle geldin, hoş geldin {{ad}}! 🎉' },
+      { type: 'score', delta: 10, reason: 'referansla geldi', once_per: 'run' },
+      { type: 'tag', add_tags: ['referans'] },
+      { type: 'end' } ] },
+  { id: 'anket', ad: 'Anket', aciklama: 'Üç soruluk memnuniyet anketi, puanla teşekkür.', kanal: null, tetik: { tip: 'keyword', anahtar_kelimeler: ['anket'] },
+    adimlar: [
+      { type: 'buttons', text: 'Hizmetimizi nasıl buldun?', save_as: 'memnuniyet', choices: [{ label: '😍 Harika' }, { label: '🙂 İyi' }, { label: '😕 Olmadı', add_tags: ['memnun-degil'] }] },
+      { type: 'question', text: 'Bir cümleyle neden?', save_as: 'neden' },
+      { type: 'score', delta: 3, reason: 'anket doldurdu', once_per: 'day' },
+      { type: 'message', text: 'Teşekkürler {{ad}}! Notunu aldım: "{{neden}}"' },
+      { type: 'end' } ] },
+  { id: 'ai-asistan', ad: 'Şirket asistanı (AI)', aciklama: 'Kural yoksa AI ajan cevaplar; emin değilse bir insana devreder.', kanal: null, tetik: { tip: 'any_message' },
+    adimlar: [
+      { type: 'ai_reply', instruction: 'Soruya bilgi tabanından kısa ve net cevap ver.', on_skip_goto: 2, max_chars: 400 },
+      { type: 'end' },
+      { type: 'tag', add_tags: ['insan-istedi'] },
+      { type: 'message', text: 'Bunu bir insana iletiyorum, en kısa sürede dönüş yapacağız 🙂' },
+      { type: 'end' } ] },
+  { id: 'bos', ad: 'Boş akış', aciklama: 'Sıfırdan başla.', kanal: null, tetik: { tip: 'keyword', anahtar_kelimeler: [] }, adimlar: [{ type: 'message', text: 'Merhaba {{ad}}!' }, { type: 'end' }] },
+];

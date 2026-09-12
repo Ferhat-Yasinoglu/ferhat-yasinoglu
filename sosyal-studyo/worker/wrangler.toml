@@ -1,0 +1,38 @@
+# Sosyal Stüdyo Worker — webhook'lar, akış motoru, kişiler, toplu mesaj, AI proxy.
+# nodejs_compat AÇILMAZ: yalnız Web API (fetch, crypto.subtle) — Node'da test edilebilir kalsın.
+name = "sosyal-studyo"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+# Yalnız bu kaynaklardan gelen panel isteklerine yanıt verilir (virgülle ayır). Boşsa hiçbirine.
+ALLOWED_ORIGINS = "https://ferhat-yasinoglu.github.io"
+# "1" = PROVA: hesap 'canli' olmadıkça hiçbir dış gönderim yapılmaz; karar günlüğe düşer.
+PROVA = "1"
+# AI: Anthropic anahtarı girilirse MODEL kullanılır; yoksa Workers AI (AI_MODEL, ücretsiz katman).
+MODEL = "claude-haiku-4-5"
+AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8-fast"
+# Günlük AI istek tavanı (hesap geneli); brifingdeki gunlukKredi ayrıca uygulanır.
+AI_GUNLUK_TAVAN = "300"
+# Günlük saklama (gün)
+GUNLUK_SAKLAMA_GUN = "30"
+
+# D1: `npx wrangler d1 create sosyal-studyo` çıktısındaki id'yi yaz. YAZILMAZSA worker 503 döner (fail-closed).
+[[d1_databases]]
+binding = "DB"
+database_name = "sosyal-studyo"
+database_id = "D1_ID_BURAYA"
+
+# Workers AI (Anthropic anahtarı yoksa devreye girer)
+[ai]
+binding = "AI"
+
+# Bekçi: gecikmeli adımlar, bekleyen gelen kutusu, toplu mesaj parçaları, yorum polling, temizlik
+[triggers]
+crons = ["*/5 * * * *"]
+
+# Gizli değerler toml'a YAZILMAZ; terminalden: npx wrangler secret put AD
+#   YONETICI_ANAHTARI (≥32 karakter, panel girişi)
+#   TELEGRAM_BOT_TOKEN · TELEGRAM_WEBHOOK_SECRET
+#   META_APP_SECRET · META_VERIFY_TOKEN · IG_ACCESS_TOKEN · IG_USER_ID · WA_ACCESS_TOKEN · WA_PHONE_NUMBER_ID
+#   ANTHROPIC_API_KEY (isteğe bağlı)

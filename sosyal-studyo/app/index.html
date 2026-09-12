@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="tr" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https:; media-src 'self' blob:; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="theme-color" content="#0a0a0c">
+<meta name="description" content="Sosyal Stüdyo — sosyal medya otomasyon stüdyosu: akışlar, kişiler, toplu mesaj, içerik araçları. Çerçevesiz PWA.">
+<title>Sosyal Stüdyo</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./img/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./img/icon-192.png">
+<link rel="stylesheet" href="./css/tokenlar.css">
+<link rel="stylesheet" href="./css/bilesenler.css">
+<link rel="stylesheet" href="./css/uygulama.css">
+<script src="./js/cekirdek/tema.js"></script>
+</head>
+<body>
+<header class="ust">
+  <a class="ust__logo" href="#/ozet"><img src="./img/logo.svg" alt="" width="28" height="28"><span data-i18n="uygulama.ad">Sosyal Stüdyo</span></a>
+  <div class="ust__sag" id="ust-sag"></div>
+</header>
+<div class="govde">
+  <aside class="kenar" aria-label="Menü"><nav class="menu" id="kenar-menu"></nav></aside>
+  <main class="icerik" id="icerik">
+    <div class="bantlar" id="bantlar"></div>
+    <div id="sayfa">
+      <p class="js-gerekli">Bu uygulama JavaScript ile çalışır. Tarayıcında JavaScript kapalıysa aç ve sayfayı yenile.</p>
+    </div>
+  </main>
+</div>
+<nav class="alt" id="alt-cubuk" aria-label="Ana gezinme"></nav>
+<script type="module" src="./js/uygulama.js"></script>
+</body>
+</html>
