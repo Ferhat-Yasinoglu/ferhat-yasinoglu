@@ -1,0 +1,207 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="292 30 960 880" role="img" aria-label="FY">
+  <defs>
+    <linearGradient id="hgFace" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b08c2e"/><stop offset=".45" stop-color="#77591a"/><stop offset="1" stop-color="#3f2e0c"/>
+    </linearGradient>
+    <linearGradient id="hgArm" x1="0" y1="0" x2=".6" y2="1">
+      <stop offset="0" stop-color="#f6d878"/><stop offset=".5" stop-color="#d0a53a"/><stop offset="1" stop-color="#8d6c1d"/>
+    </linearGradient>
+    <linearGradient id="hgBand" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff6d2"/><stop offset=".35" stop-color="#f6d772"/><stop offset="1" stop-color="#d9b23f"/>
+    </linearGradient>
+    <linearGradient id="hgMid" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f4d36c"/><stop offset=".55" stop-color="#b58f2b"/><stop offset="1" stop-color="#6d5214"/>
+    </linearGradient>
+    <linearGradient id="hgPanel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a2110"/><stop offset=".5" stop-color="#171209"/><stop offset="1" stop-color="#0d0a05"/>
+    </linearGradient>
+    <linearGradient id="hgTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff8dc"/><stop offset="1" stop-color="#fff8dc" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="hgSheen" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="hgHaze" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#e2b64a" stop-opacity=".5"/><stop offset="1" stop-color="#e2b64a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="hgEye" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fffbe6"/><stop offset=".45" stop-color="#ffe27a"/><stop offset="1" stop-color="#ffcf3f" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="hgNode" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fffbe8"/><stop offset=".55" stop-color="#ffe07a"/><stop offset="1" stop-color="#e9b93a"/>
+    </radialGradient>
+    <filter id="hglow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="7"/></filter>
+    <filter id="hglowS" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="hgrain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 .9  0 0 0 0 .6  0 0 0 .2 0" result="tint"/>
+      <feComposite in="tint" in2="SourceGraphic" operator="in" result="noise"/>
+      <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="noise"/></feMerge>
+    </filter>
+    <clipPath id="hcLetters"><path d="M471 243 H821 L918 403 L1026 243 H1145 L972 497 V708 H855 V497 L753 329 H578 V400 H767 L708 500 H578 V708 H455 V259 A16 16 0 0 1 471 243 Z"/></clipPath>
+    <clipPath id="hcNet"><path d="M1035 249 H1131 L966 485 L924 405 Z M966 505 V702 H883 V632 Z"/></clipPath>
+    <clipPath id="hcPanel"><path d="M460 259 A11 11 0 0 1 471 248 H573 V703 H460 Z"/><rect x="572" y="396" width="24" height="108"/></clipPath>
+    
+    <radialGradient id="hgPlate" cx=".5" cy=".46" r=".52">
+      <stop offset="0" stop-color="#1c160a"/><stop offset=".55" stop-color="#0e0b05"/><stop offset="1" stop-color="#070604" stop-opacity=".92"/>
+    </radialGradient>
+    <linearGradient id="hgBeam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe8a3" stop-opacity="0"/><stop offset=".6" stop-color="#ffe8a3" stop-opacity=".55"/><stop offset="1" stop-color="#fff5cf"/>
+    </linearGradient>
+    <linearGradient id="hgFloorLine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f5d76e" stop-opacity="0"/><stop offset=".5" stop-color="#fff2c0" stop-opacity=".9"/><stop offset="1" stop-color="#f5d76e" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="hgReflect" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#fff" stop-opacity=".45"/>
+    </linearGradient>
+    <mask id="hmReflect"><rect x="415" y="558" width="597" height="150" fill="url(#hgReflect)"/></mask>
+    <filter id="hblurR" x="-10%" y="-10%" width="120%" height="140%"><feGaussianBlur stdDeviation="2.5"/></filter>
+    <filter id="hglowXL" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="16"/></filter>
+
+  </defs>
+  <style>
+    .hsheen { animation: hsheen 7s 2.6s cubic-bezier(.4,0,.2,1) infinite backwards; }
+    @keyframes hsheen { 0% { transform: translateX(-560px); } 55%, 100% { transform: translateX(900px); } }
+    .hnd { transform-box: fill-box; transform-origin: center; animation: htw 3.2s ease-in-out infinite backwards; }
+    @keyframes htw { 0%, 100% { opacity: .55; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.25); } }
+    .hpk { stroke-dasharray: 7 93; animation: hpk 4s linear infinite; }
+    @keyframes hpk { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+    .heye { animation: heye 3.6s ease-in-out infinite; }
+    @keyframes heye { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
+    .hear { transform-box: fill-box; transform-origin: center; animation: hspin 9s linear infinite; }
+    @keyframes hspin { to { transform: rotate(360deg); } }
+    .htr { stroke-dasharray: 10 90; animation: htr 3.4s linear infinite; }
+    @keyframes htr { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+    .hgl { animation: hgl 5s ease-in-out infinite; }
+    @keyframes hgl { 0%, 100% { opacity: .55; } 50% { opacity: .95; } }
+    
+    .harc { transform-box: view-box; transform-origin: 772px 469px; animation: hspin 14s linear infinite; }
+    .harc2 { transform-box: view-box; transform-origin: 772px 469px; animation: hspinR 23s linear infinite; }
+    @keyframes hspinR { to { transform: rotate(-360deg); } }
+    .hring { stroke-dasharray: 2387.6; stroke-dashoffset: 2387.6; animation: hiRing 1.3s .35s cubic-bezier(.4,0,.2,1) both, hring 6s 1.7s ease-in-out infinite; }
+    @keyframes hring { 0%, 100% { opacity: .55; } 50% { opacity: .9; } }
+    .hbeam { animation: hbeam 4.5s ease-in-out infinite; }
+    @keyframes hbeam { 0%, 100% { opacity: .55; } 40% { opacity: 1; } 60% { opacity: .7; } }
+    .hdrop { animation: hdrop 4.5s 2.8s cubic-bezier(.5,0,.8,.4) infinite backwards; }
+    @keyframes hdrop { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(150px); opacity: 0; } }
+    .hpt { animation: hpt var(--d, 6s) ease-in-out var(--dl, 0s) infinite; }
+    @keyframes hpt { 0%, 100% { transform: translateY(0); opacity: .35; } 50% { transform: translateY(-16px); opacity: 1; } }
+    .hln { animation: hln var(--d, 6s) ease-in-out var(--dl, 0s) infinite; }
+    @keyframes hln { 0%, 100% { opacity: .25; } 50% { opacity: .8; } }
+    .hfloor { animation: hfloor 5s ease-in-out infinite; }
+    @keyframes hfloor { 0%, 100% { opacity: .7; } 50% { opacity: 1; } }
+    .hrefl { animation: hrefl 7s ease-in-out infinite; }
+    @keyframes hrefl { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
+    .hfloat { animation: hfloat 6s ease-in-out infinite; }
+    @keyframes hfloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    
+    /* Açılış, bir kez: halka çizilir (.35–1.65 s), ışın iner, harf kenarları çizilir (.5–2 s), yüzeyler ve paneller dolar,
+       ağ hatları çizilip düğümler sırayla yanar (1.6–2.8 s), göz parlar (2.4 s); parçacıklar ve zemin en son belirir. */
+    @keyframes hiRing { to { stroke-dashoffset: 0; } }
+    .hiLine { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: hiLine var(--d, 1.4s) var(--t, .6s) cubic-bezier(.4,0,.2,1) both; }
+    @keyframes hiLine { to { stroke-dashoffset: 0; } }
+    .hiFade { animation: hiFade var(--d, .7s) var(--t, 1.2s) ease-out both; }
+    @keyframes hiFade { from { opacity: 0; } to { opacity: 1; } }
+    .hiEdge { stroke-dasharray: 100; stroke-dashoffset: 100; animation: hiEdge .5s calc(1.6s + var(--i, 0) * .03s) ease-out both; }
+    @keyframes hiEdge { to { stroke-dashoffset: 0; } }
+    .hiGrow { transform-box: view-box; transform-origin: 772px 30px; animation: hiGrow .7s .2s cubic-bezier(.2,.7,.3,1) both; }
+    @keyframes hiGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+    .hiFlash { transform-box: fill-box; transform-origin: center; animation: hiFlash .6s 2.4s cubic-bezier(.2,.7,.3,1.4) both; }
+    @keyframes hiFlash { from { transform: scale(0); } 60% { transform: scale(1.6); } to { transform: scale(1); } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+  <!-- halka içi plaka -->
+  <circle cx="772" cy="469" r="380" fill="url(#hgPlate)"/>
+  <!-- ışın (açılışta yukarıdan iner) -->
+  <g class="hiGrow"><g class="hbeam">
+    <rect x="770.5" y="30" width="3" height="213" fill="url(#hgBeam)"/>
+    <rect x="766" y="30" width="12" height="213" fill="url(#hgBeam)" opacity=".35" filter="url(#hglowS)"/>
+    <circle cx="772" cy="89" r="12" fill="#fff4cf" opacity=".8" filter="url(#hglowS)"/>
+    <circle cx="772" cy="89" r="4" fill="#fffdf2"/>
+  </g></g>
+  <g class="hdrop"><circle cx="772" cy="93" r="5" fill="#fff9e0"/><circle cx="772" cy="93" r="11" fill="#ffe9a3" opacity=".6" filter="url(#hglowS)"/></g>
+  <!-- halka (açılışta çizilir; parıltı ve dönen ışıklar çizim bitince belirir) -->
+  <circle class="hring" cx="772" cy="469" r="380" fill="none" stroke="#d9b544" stroke-width="3"/>
+  <g class="hiFade" style="--t:1.5s;--d:0.6s">
+  <circle cx="772" cy="469" r="380" fill="none" stroke="#d4af37" stroke-width="8" opacity=".28" filter="url(#hglow)"/>
+  <circle class="harc" cx="772" cy="469" r="380" fill="none" stroke="#fff3c6" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="310.4 2077.2" filter="url(#hglowS)"/>
+  <circle class="harc2" cx="772" cy="469" r="380" fill="none" stroke="#ffe08a" stroke-width="3" stroke-linecap="round" stroke-dasharray="119.4 2268.2" opacity=".9"/>
+  </g>
+  <!-- parçacıklar -->
+  <g class="hiFade" style="--t:2s;--d:0.8s"><g class="hln" style="--d:7s;--dl:0s"><line x1="346" y1="225" x2="346" y2="375" stroke="#e6c352" stroke-width="2"/><circle cx="346" cy="375" r="4" fill="#f5d76e"/></g><g class="hln" style="--d:6s;--dl:-2.1s"><line x1="346" y1="525" x2="346" y2="581" stroke="#e6c352" stroke-width="2"/><circle cx="346" cy="581" r="4" fill="#f5d76e"/></g><g class="hln" style="--d:5s;--dl:-1.2s"><line x1="420" y1="214" x2="420" y2="238" stroke="#e6c352" stroke-width="2"/><circle cx="420" cy="238" r="4" fill="#f5d76e"/></g><g class="hln" style="--d:8s;--dl:-0.6s"><line x1="1090" y1="130" x2="1090" y2="230" stroke="#e6c352" stroke-width="2"/><circle cx="1090" cy="230" r="4" fill="#f5d76e"/></g><g class="hln" style="--d:9s;--dl:-3s"><line x1="1210" y1="450" x2="1210" y2="690" stroke="#e6c352" stroke-width="2"/><circle cx="1210" cy="690" r="4" fill="#f5d76e"/></g><rect class="hpt" style="--d:6s;--dl:-1.5s" x="1184.5" y="312.5" width="11" height="11" fill="#d4af37"/><rect class="hpt" style="--d:7s;--dl:-2.6s" x="1184" y="575" width="12" height="12" fill="#d4af37"/><rect class="hpt" style="--d:6s;--dl:-0.3s" x="415.5" y="125.5" width="9" height="9" fill="#d4af37"/><circle class="hpt" style="--d:5s;--dl:-1.8s" cx="1000" cy="130" r="4" fill="#f5d76e"/><circle class="hpt" style="--d:6s;--dl:-0.9s" cx="952" cy="268" r="7" fill="#f5d76e"/><circle class="hpt" style="--d:5s;--dl:-2.4s" cx="560" cy="130" r="3" fill="#f5d76e"/><circle class="hpt" style="--d:6s;--dl:-3.3s" cx="1180" cy="120" r="3" fill="#f5d76e"/><circle class="hpt" style="--d:7s;--dl:-1.1s" cx="335" cy="470" r="5" fill="#f5d76e"/><circle class="hpt" style="--d:6s;--dl:-0.2s" cx="1245" cy="420" r="4" fill="#f5d76e"/><circle class="hpt" style="--d:5s;--dl:-2.9s" cx="580" cy="780" r="3" fill="#f5d76e"/><circle class="hpt" style="--d:6s;--dl:-1.7s" cx="1075" cy="665" r="4" fill="#f5d76e"/><circle class="hpt" style="--d:6s;--dl:-0.5s" cx="390" cy="640" r="3" fill="#f5d76e"/><circle class="hpt" style="--d:5s;--dl:-3.6s" cx="1150" cy="500" r="3" fill="#f5d76e"/></g>
+  <!-- zemin -->
+  <g class="hiFade" style="--t:2s;--d:0.8s"><g class="hfloor">
+    <ellipse cx="772" cy="714" rx="300" ry="14" fill="#f5d76e" opacity=".5" filter="url(#hglowXL)"/>
+    <rect x="292" y="712" width="960" height="2.5" fill="url(#hgFloorLine)"/>
+    <ellipse cx="772" cy="768" rx="420" ry="70" fill="#d4af37" opacity=".16" filter="url(#hglowXL)"/>
+    <g stroke="#d4af37" stroke-opacity=".16" stroke-width="1">
+      <line x1="292" y1="818" x2="1252" y2="818"/>
+      <line x1="642" y1="716" x2="292" y2="898"/>
+      <line x1="902" y1="716" x2="1252" y2="898"/>
+      <line x1="732" y1="716" x2="642" y2="910"/>
+      <line x1="812" y1="716" x2="902" y2="910"/>
+    </g>
+    <circle cx="772" cy="714" r="7" fill="#fffaea"/>
+    <circle cx="772" cy="714" r="22" fill="#ffe9a3" opacity=".65" filter="url(#hglowS)"/>
+  </g></g>
+  <!-- harfler ve aynadaki yansımaları birlikte yüzer -->
+  <g class="hfloat">
+    <g class="hrefl" mask="url(#hmReflect)" filter="url(#hblurR)" transform="matrix(1 0 0 -1 0 1420)"><use href="#hletters"/></g>
+    
+  <g id="hletters">
+    <!-- arka parıltı -->
+    <g class="hiFade" style="--t:1s;--d:0.8s"><path d="M471 243 H821 L918 403 L1026 243 H1145 L972 497 V708 H855 V497 L753 329 H578 V400 H767 L708 500 H578 V708 H455 V259 A16 16 0 0 1 471 243 Z" fill="none" stroke="#d4af37" stroke-width="10" opacity=".55" filter="url(#hglow)"/></g>
+    <!-- yüzeyler -->
+    <g filter="url(#hgrain)" class="hiFade" style="--t:1.2s;--d:0.8s">
+      <path d="M578 243 H701 L753 329 H578 Z" fill="url(#hgFace)"/>
+      <path d="M738 243 H821 L972 497 L873 628 L877 628 L877 497 Z" fill="url(#hgArm)"/>
+      <path d="M701 243 H738 L877 497 V708 H855 V497 Z" fill="url(#hgBand)"/>
+      <path d="M578 400 H767 L708 500 H578 Z" fill="url(#hgMid)"/>
+      <path d="M805 243 H821 L972 497 H958 Z" fill="url(#hgBand)" opacity=".55"/>
+    </g>
+    <!-- üst yüzey ışığı -->
+    <g clip-path="url(#hcLetters)" class="hiFade" style="--t:1.4s;--d:0.7s">
+      <rect x="455" y="243" width="690" height="14" fill="url(#hgTop)" opacity=".9"/>
+      <rect x="578" y="400" width="189" height="7" fill="url(#hgTop)" opacity=".7"/>
+    </g>
+    <!-- F gövdesi: yapay zekâ yüzü paneli -->
+    <path d="M460 259 A11 11 0 0 1 471 248 H573 V703 H460 Z" fill="url(#hgPanel)" class="hiFade" style="--t:1.3s;--d:0.7s"/>
+    <g clip-path="url(#hcPanel)" class="hiFade" style="--t:1.4s;--d:0.7s">
+      <ellipse cx="588" cy="430" rx="52" ry="150" fill="url(#hgHaze)"/>
+      <path d="M460 274 C 486 262, 528 280, 548 316 C 559 334, 566 350, 567 372 L 566 396 C 571 401, 573 407, 569 413 L 568 428 C 575 440, 590 450, 592 457 C 588 463, 580 466, 578 468 L 580 474 C 585 479, 585 486, 580 489 C 583 493, 582 498, 577 502 C 573 508, 566 513, 559 515 L 548 525 L 541 547 V703 H460 Z" fill="none" stroke="#f5d76e" stroke-width="7" stroke-linejoin="round" opacity=".7" filter="url(#hglowS)" class="hiLine" pathLength="1000" style="--t:1.5s;--d:0.9s"/>
+      <path d="M460 274 C 486 262, 528 280, 548 316 C 559 334, 566 350, 567 372 L 566 396 C 571 401, 573 407, 569 413 L 568 428 C 575 440, 590 450, 592 457 C 588 463, 580 466, 578 468 L 580 474 C 585 479, 585 486, 580 489 C 583 493, 582 498, 577 502 C 573 508, 566 513, 559 515 L 548 525 L 541 547 V703 H460 Z" fill="#030201"/>
+      <path d="M460 274 C 486 262, 528 280, 548 316 C 559 334, 566 350, 567 372 L 566 396 C 571 401, 573 407, 569 413 L 568 428 C 575 440, 590 450, 592 457 C 588 463, 580 466, 578 468 L 580 474 C 585 479, 585 486, 580 489 C 583 493, 582 498, 577 502 C 573 508, 566 513, 559 515 L 548 525 L 541 547 V703 H460 Z" fill="none" stroke="#ffe9a8" stroke-width="3.2" stroke-linejoin="round" class="hiLine" pathLength="1000" style="--t:1.5s;--d:0.9s"/>
+      
+      <path d="M 468 292 C 500 292, 526 316, 538 344" fill="none" stroke="#f3d475" stroke-width="3" stroke-linecap="round"/>
+      <path d="M 462 312 C 490 310, 514 330, 527 356" fill="none" stroke="#c9a544" stroke-width="2" stroke-linecap="round"/>
+      <path d="M 462 336 C 482 336, 502 350, 512 372" fill="none" stroke="#c9a544" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="474" cy="424" r="28" fill="none" stroke="#e9c453" stroke-width="3.5"/>
+      <circle class="hear" cx="474" cy="424" r="28" fill="none" stroke="#fff1bd" stroke-width="4" stroke-dasharray="26 150" stroke-linecap="round"/>
+      <circle cx="474" cy="424" r="17" fill="none" stroke="#f5d76e" stroke-width="5"/>
+      <g fill="none" stroke="#d9b64a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><polyline points="497,300 497,344"/><polyline points="474,452 474,540 484,552 484,700"/><polyline points="502,431 516,431 516,560 510,566 510,700"/><polyline points="548,528 541,547"/><polyline points="541,547 541,700"/><polyline points="556,517 556,545 563,553 563,640 556,648 556,700"/></g>
+      <g fill="none" stroke="#fff4c8" stroke-width="2.6" stroke-linecap="round"><polyline class="htr" pathLength="100" style="animation-delay:0.0s" points="474,452 474,540 484,552 484,700"/><polyline class="htr" pathLength="100" style="animation-delay:-1.1s" points="502,431 516,431 516,560 510,566 510,700"/><polyline class="htr" pathLength="100" style="animation-delay:-2.2s" points="548,528 541,547"/></g>
+      <circle cx="497" cy="322" r="4" fill="#f9dc7a"/><circle cx="484" cy="557" r="4" fill="#f9dc7a"/><circle cx="477" cy="617" r="4" fill="#f9dc7a"/><circle cx="510" cy="690" r="4" fill="#f9dc7a"/><circle cx="563" cy="600" r="4" fill="#f9dc7a"/><circle cx="556" cy="686" r="4" fill="#f9dc7a"/>
+      <g class="hiFlash">
+        <circle class="heye" cx="556" cy="415" r="9" fill="url(#hgEye)"/>
+        <ellipse cx="556" cy="415" rx="5" ry="2.6" fill="#fffbea"/>
+      </g>
+    </g>
+    <!-- Y sağ kolu: ağ paneli -->
+    <path d="M1026 243 H1145 L972 497 L918 403 Z M972 497 V708 H877 V628 Z" fill="url(#hgPanel)" class="hiFade" style="--t:1.5s;--d:0.7s"/>
+    <g clip-path="url(#hcNet)" class="hiFade" style="--t:1.7s;--d:0.7s">
+      <g stroke="#e3bd52" stroke-width="1.4" opacity=".9"><line class="hiEdge" pathLength="100" style="--i:0" x1="1093" y1="257" x2="1028" y2="287"/><line class="hiEdge" pathLength="100" style="--i:1" x1="1093" y1="257" x2="1062" y2="324"/><line class="hiEdge" pathLength="100" style="--i:2" x1="1028" y1="287" x2="1062" y2="324"/><line class="hiEdge" pathLength="100" style="--i:3" x1="1011" y1="269" x2="1028" y2="287"/><line class="hiEdge" pathLength="100" style="--i:4" x1="1028" y1="287" x2="1029" y2="357"/><line class="hiEdge" pathLength="100" style="--i:5" x1="1062" y1="324" x2="1029" y2="357"/><line class="hiEdge" pathLength="100" style="--i:6" x1="1011" y1="269" x2="995" y2="335"/><line class="hiEdge" pathLength="100" style="--i:7" x1="995" y1="335" x2="954" y2="351"/><line class="hiEdge" pathLength="100" style="--i:8" x1="995" y1="335" x2="1029" y2="357"/><line class="hiEdge" pathLength="100" style="--i:9" x1="954" y1="351" x2="963" y2="379"/><line class="hiEdge" pathLength="100" style="--i:10" x1="1029" y1="357" x2="963" y2="379"/><line class="hiEdge" pathLength="100" style="--i:11" x1="1029" y1="357" x2="982" y2="429"/><line class="hiEdge" pathLength="100" style="--i:12" x1="963" y1="379" x2="982" y2="429"/><line class="hiEdge" pathLength="100" style="--i:13" x1="963" y1="379" x2="940" y2="417"/><line class="hiEdge" pathLength="100" style="--i:14" x1="940" y1="417" x2="982" y2="429"/><line class="hiEdge" pathLength="100" style="--i:15" x1="1062" y1="324" x2="982" y2="429"/><line class="hiEdge" pathLength="100" style="--i:16" x1="1093" y1="257" x2="1136" y2="251"/><line class="hiEdge" pathLength="100" style="--i:17" x1="1136" y1="251" x2="1062" y2="324"/><line class="hiEdge" pathLength="100" style="--i:18" x1="1035" y1="251" x2="1011" y2="269"/><line class="hiEdge" pathLength="100" style="--i:19" x1="1035" y1="251" x2="1028" y2="287"/><line class="hiEdge" pathLength="100" style="--i:20" x1="982" y1="429" x2="936" y2="536"/><line class="hiEdge" pathLength="100" style="--i:21" x1="936" y1="536" x2="961" y2="609"/><line class="hiEdge" pathLength="100" style="--i:22" x1="936" y1="536" x2="898" y2="604"/><line class="hiEdge" pathLength="100" style="--i:23" x1="898" y1="604" x2="961" y2="609"/><line class="hiEdge" pathLength="100" style="--i:24" x1="898" y1="604" x2="923" y2="637"/><line class="hiEdge" pathLength="100" style="--i:25" x1="961" y1="609" x2="923" y2="637"/><line class="hiEdge" pathLength="100" style="--i:26" x1="923" y1="637" x2="897" y2="657"/><line class="hiEdge" pathLength="100" style="--i:27" x1="923" y1="637" x2="943" y2="678"/><line class="hiEdge" pathLength="100" style="--i:28" x1="961" y1="609" x2="943" y2="678"/><line class="hiEdge" pathLength="100" style="--i:29" x1="897" y1="657" x2="943" y2="678"/><line class="hiEdge" pathLength="100" style="--i:30" x1="943" y1="678" x2="966" y2="700"/><line class="hiEdge" pathLength="100" style="--i:31" x1="897" y1="657" x2="880" y2="700"/><line class="hiEdge" pathLength="100" style="--i:32" x1="898" y1="604" x2="880" y2="636"/><line class="hiEdge" pathLength="100" style="--i:33" x1="880" y1="636" x2="897" y2="657"/><line class="hiEdge" pathLength="100" style="--i:34" x1="961" y1="609" x2="966" y2="700"/><line class="hiEdge" pathLength="100" style="--i:35" x1="936" y1="536" x2="923" y2="637"/></g>
+      <g stroke="#fff4c8" stroke-width="2.6" stroke-linecap="round"><line class="hpk" pathLength="100" style="animation-delay:2.6s" x1="1093" y1="257" x2="1062" y2="324"/><line class="hpk" pathLength="100" style="animation-delay:3.2s" x1="1028" y1="287" x2="1029" y2="357"/><line class="hpk" pathLength="100" style="animation-delay:3.8s" x1="1029" y1="357" x2="982" y2="429"/><line class="hpk" pathLength="100" style="animation-delay:4.4s" x1="936" y1="536" x2="961" y2="609"/><line class="hpk" pathLength="100" style="animation-delay:5.0s" x1="923" y1="637" x2="943" y2="678"/><line class="hpk" pathLength="100" style="animation-delay:5.6s" x1="995" y1="335" x2="954" y2="351"/><line class="hpk" pathLength="100" style="animation-delay:6.2s" x1="982" y1="429" x2="936" y2="536"/></g>
+      <g filter="url(#hglowS)"><circle cx="1093" cy="257" r="9" fill="#ffd966" opacity=".55"/><circle cx="1028" cy="287" r="9" fill="#ffd966" opacity=".55"/><circle cx="1062" cy="324" r="9" fill="#ffd966" opacity=".55"/><circle cx="954" cy="351" r="9" fill="#ffd966" opacity=".55"/><circle cx="1029" cy="357" r="9" fill="#ffd966" opacity=".55"/><circle cx="963" cy="379" r="9" fill="#ffd966" opacity=".55"/><circle cx="982" cy="429" r="9" fill="#ffd966" opacity=".55"/><circle cx="936" cy="536" r="9" fill="#ffd966" opacity=".55"/><circle cx="898" cy="604" r="9" fill="#ffd966" opacity=".55"/><circle cx="961" cy="609" r="9" fill="#ffd966" opacity=".55"/><circle cx="943" cy="678" r="9" fill="#ffd966" opacity=".55"/></g>
+      <circle class="hnd" style="animation-delay:2.00s" cx="1093" cy="257" r="5" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:2.12s" cx="1011" cy="269" r="4" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:2.24s" cx="1028" cy="287" r="5" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:2.36s" cx="1062" cy="324" r="5" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:2.48s" cx="995" cy="335" r="3" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:2.60s" cx="954" cy="351" r="5" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:2.72s" cx="1029" cy="357" r="5" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:2.84s" cx="963" cy="379" r="5" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:2.96s" cx="940" cy="417" r="3" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:3.08s" cx="982" cy="429" r="5" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:3.20s" cx="936" cy="536" r="5" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:3.32s" cx="898" cy="604" r="5" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:3.44s" cx="961" cy="609" r="6" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:3.56s" cx="923" cy="637" r="3.5" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:3.68s" cx="897" cy="657" r="4.5" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:3.80s" cx="943" cy="678" r="5.5" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:3.92s" cx="1136" cy="251" r="3" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:4.04s" cx="1035" cy="251" r="3" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:4.16s" cx="966" cy="700" r="3" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:4.28s" cx="880" cy="700" r="3" fill="url(#hgNode)"/><circle class="hnd" style="animation-delay:4.40s" cx="880" cy="636" r="3" fill="url(#hgNode)"/>
+    </g>
+    <!-- kenarlar -->
+    <path d="M1026 243 H1145 L972 497 L918 403 Z M972 497 V708 H877 V628 Z" fill="none" stroke="#ffe9a8" stroke-width="3" stroke-linejoin="round" class="hiLine" pathLength="1000" style="--t:1s;--d:1.1s"/>
+    <path d="M460 259 A11 11 0 0 1 471 248 H573 V703 H460 Z" fill="none" stroke="#f0cd62" stroke-width="2.2" stroke-linejoin="round" opacity=".9" class="hiLine" pathLength="1000" style="--t:0.9s;--d:1s"/>
+    <path d="M471 243 H821 L918 403 L1026 243 H1145 L972 497 V708 H855 V497 L753 329 H578 V400 H767 L708 500 H578 V708 H455 V259 A16 16 0 0 1 471 243 Z" fill="none" stroke="#fff0b8" stroke-width="3" stroke-linejoin="round" class="hiLine" pathLength="1000" style="--t:0.5s;--d:1.5s"/>
+    <!-- gezen ışık: eğiklik üst grupta, animasyon rect'te (CSS transform animasyonu öznitelik transform'unu ezer) -->
+    <g clip-path="url(#hcLetters)"><g transform="skewX(-22)">
+      <rect class="hsheen" x="455" y="223" width="220" height="505" fill="url(#hgSheen)"/>
+    </g></g>
+  </g>
+  </g>
+</svg>
