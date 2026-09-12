@@ -9,13 +9,21 @@ export async function tgCagir(env, yontem, govde, fetchFn = fetch) {
   return j.result;
 }
 
+/** Telegram'ın language_code'unu desteklediğimiz dörde indirger; tanımadığını İngilizce sayar. */
+export function dilKodu(kod) {
+  const k = String(kod || '').slice(0, 2).toLowerCase();
+  return ['tr', 'de', 'fa', 'en'].includes(k) ? k : (k === 'az' ? 'tr' : k === 'ps' || k === 'da' ? 'fa' : 'en');
+}
+
 /** Telegram güncellemesi → ortak olay (null = ilgisiz). */
 export function olayaCevir(update, hesap_id) {
   const m = update.message;
   if (m?.text !== undefined || m?.caption !== undefined) {
     const text = m.text ?? m.caption ?? '';
     const from = m.from || {};
-    const temel = { kaynak: 'telegram', kanal: 'telegram', hesap_id, olay_id: `tg:${update.update_id}`, dis_id: String(m.chat.id), ad: [from.first_name, from.last_name].filter(Boolean).join(' ') || from.username || String(m.chat.id), kullanici_adi: from.username || '', zaman: new Date((m.date || 0) * 1000).toISOString() };
+    // language_code Telegram'dan gelir; "/start"ta metinde dil ipucu olmadığı için
+    // karşılamayı doğru dilde yazmanın tek kaynağı budur.
+    const temel = { kaynak: 'telegram', kanal: 'telegram', hesap_id, olay_id: `tg:${update.update_id}`, dis_id: String(m.chat.id), ad: [from.first_name, from.last_name].filter(Boolean).join(' ') || from.username || String(m.chat.id), kullanici_adi: from.username || '', dil: dilKodu(from.language_code), zaman: new Date((m.date || 0) * 1000).toISOString() };
     const start = /^\/start(?:@\w+)?(?:\s+(\S+))?$/.exec(text);
     if (start) return { ...temel, tip: 'start', text, ref: start[1]?.startsWith('ref_') ? start[1].slice(4) : start[1] || null };
     return { ...temel, tip: 'dm', text };

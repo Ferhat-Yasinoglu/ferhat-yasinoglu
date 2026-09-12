@@ -80,13 +80,15 @@ export function dilSez(metin = '') {
 const DIL_ADI = { tr: 'Türkçe', de: 'Almanca (Deutsch)', en: 'İngilizce (English)', fa: 'Farsça (فارسی)' };
 
 /** Ajan cevabı: brifing + bilgi tabanı; emin değilse null. */
-export async function ajanCevap(env, db, { brifing, mesaj, gecmis = [], kanal }, fetchFn = fetch) {
+export async function ajanCevap(env, db, { brifing, mesaj, gecmis = [], kanal, dil: dilUstu }, fetchFn = fetch) {
   if (!brifing) return null;
   if (!(await butceVar(db, env, 'ajan'))) return null;
   const gunKredi = await db.sayac('ajan:' + brifing.id);
   if (brifing.gunlukKredi && gunKredi >= brifing.gunlukKredi) return null;
   const bilgi = (brifing.bilgi_tabani || []).filter((b) => b.aktif !== 0).map((b) => `## ${b.baslik}\n${b.metin}`).join('\n\n').slice(0, 32000);
-  const dil = dilSez(mesaj);
+  // Dil dışarıdan geldiyse (ör. Telegram language_code) ona güvenilir; "/start"
+  // gibi metinde ipucu olmayan olaylarda sezgi çalışmaz.
+  const dil = DIL_ADI[dilUstu] ? dilUstu : dilSez(mesaj);
   const dilKurali = `CEVAP DİLİ: ${DIL_ADI[dil]}. Cevabın tamamı ${DIL_ADI[dil]} olmalı; tek kelime bile başka dile kayma.`;
   const sistem = `${dilKurali}\n\n${brifing.kimlik}\n\nEn fazla ${brifing.maxKarakter || 400} karakter. Emoji kullanma.\nYasak konular: ${(brifing.yasaklar || []).join(', ') || 'yok'}.\nKanal: ${kanal || 'dm'}.\n\nBİLGİ TABANI (yalnız buna dayan):\n${bilgi || '(boş)'}\n\nEmin değilsen ya da bilgi tabanında cevap yoksa tam olarak <skip> yaz.\n${dilKurali}`;
   const mesajlar = [...gecmis.slice(-6).map((m) => ({ role: m.yon === 'gelen' ? 'user' : 'assistant', content: m.metin })), { role: 'user', content: String(mesaj).slice(0, 2000) }];
