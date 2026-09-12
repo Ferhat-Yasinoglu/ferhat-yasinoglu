@@ -6,8 +6,8 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0b0a08",
-  "theme_color": "#0b0a08",
+  "background_color": "#070604",
+  "theme_color": "#070604",
   "lang": "tr",
   "icons": [
     {
@@ -18,8 +18,12 @@
     {
       "src": "img/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
+    },
+    {
+      "src": "img/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
     }
   ]
 }

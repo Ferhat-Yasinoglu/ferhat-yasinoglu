@@ -46,10 +46,8 @@ img { max-width: 100%; }
 .ust__logo { display: flex; align-items: center; gap: 9px; font-weight: 700; text-decoration: none; color: rgb(var(--metin)); font-size: var(--f-l); letter-spacing: .02em; }
 .ust__logo:hover { color: rgb(var(--metin)); }
 .marka { display: inline-flex; }
-.marka img { width: 34px; height: auto; display: block; }
-/* Koyu temada ışıklı işaret, aydınlıkta fildişi zemin için çizilmiş varyant. */
-:root[data-theme="light"] .marka--koyu { display: none; }
-:root:not([data-theme="light"]) .marka--acik { display: none; }
+/* Animasyonlu vektör işaret (fy-ajans ile aynı dosya). Oran 738:513. */
+.marka img { width: 40px; height: auto; display: block; }
 .ust__logo .marka img { filter: drop-shadow(0 0 10px rgb(var(--vurgu) / .45)); transition: filter var(--gecis); }
 :root[data-theme="light"] .ust__logo .marka img { filter: none; }
 .ust__logo:hover .marka img { filter: drop-shadow(0 0 16px rgb(var(--vurgu) / .8)); }
@@ -139,7 +137,7 @@ img { max-width: 100%; }
   margin-block-start: auto; padding: var(--b-4) var(--b-3) 0; border-block-start: 1px solid rgb(var(--vurgu) / .14);
   display: flex; align-items: center; gap: var(--b-3);
 }
-.kenar__marka .marka img { width: 30px; height: auto; opacity: .85; }
+.kenar__marka .marka img { width: 34px; opacity: .9; }
 .kenar__marka-yazi { font-size: 10px; line-height: 1.4; color: rgb(var(--metin-3)); letter-spacing: .1em; text-transform: uppercase; font-weight: 700; }
 
 .daha-sayfa { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--b-3); }

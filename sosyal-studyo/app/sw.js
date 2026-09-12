@@ -6,6 +6,7 @@ const ONBELLEK = 'ss-' + SURUM;
 const KABUK = [
   './', './index.html', './manifest.webmanifest', './css/tokenlar.css', './css/bilesenler.css', './css/uygulama.css',
   './js/cekirdek/tema.js', './js/uygulama.js', './js/i18n.js', './img/logo.svg', './img/icon-192.png', './img/icon-512.png',
+  './img/logo-mark.svg', './img/logo-mark-static.svg', './img/logo-hero.svg', './img/logo-hero-static.svg',
 ];
 
 self.addEventListener('install', (e) => {
