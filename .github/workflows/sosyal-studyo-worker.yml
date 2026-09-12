@@ -21,10 +21,13 @@ on:
   workflow_dispatch:
     inputs:
       prova:
-        description: "Prova modu: 1 = hiçbir dış mesaj gitmez (güvenli), 0 = canlı gönderim açık"
+        # Varsayilan "koru": elle tetikleme yayindaki durumu degistirmesin. Secim
+        # kutusunun varsayilani "1" oldugu icin her dispatch "elle secildi" sayiliyor
+        # ve calisan botu sessizce provaya dusuruyordu.
+        description: "Prova modu — koru: yayındakini değiştirme · 1: dış mesaj gitmez · 0: canlı gönderim"
         type: choice
-        default: "1"
-        options: ["1", "0"]
+        default: "koru"
+        options: ["koru", "1", "0"]
 
 defaults:
   run:
@@ -88,7 +91,7 @@ jobs:
           SECIM: ${{ inputs.prova }}
           DEGISKEN: ${{ vars.SS_PROVA }}
         run: |
-          if [ -n "$SECIM" ]; then echo "prova=$SECIM" >> "$GITHUB_OUTPUT"; echo "PROVA elle secildi: $SECIM"; exit 0; fi
+          if [ -n "$SECIM" ] && [ "$SECIM" != "koru" ]; then echo "prova=$SECIM" >> "$GITHUB_OUTPUT"; echo "PROVA elle secildi: $SECIM"; exit 0; fi
           if [ -n "$DEGISKEN" ]; then echo "prova=$DEGISKEN" >> "$GITHUB_OUTPUT"; echo "PROVA degiskenden: $DEGISKEN"; exit 0; fi
           alt="$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).result?.subdomain||''))" || true)"
           onceki=""
