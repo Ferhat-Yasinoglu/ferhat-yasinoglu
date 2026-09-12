@@ -1,5 +1,5 @@
 // Özet: bugünün sayıları, kanal durumu, kurulum ilerlemesi, son olaylar. Bir bakışta "ne oluyor".
-import { el, btn, kart, rozet, temizle, goreliZaman, sayfaBas } from '../cekirdek/dom.js';
+import { el, btn, kart, rozet, temizle, goreliZaman, sayfaBas, ekle } from '../cekirdek/dom.js';
 import { KANALLAR } from '../paylasilan/kanallar.js';
 
 export default {
@@ -55,14 +55,14 @@ export default {
 
     const uyari = !hesaplar.some((h) => !h.demo) ? el('div', { class: 'bant bant--mavi', style: { cursor: 'pointer' }, onclick: () => git('/ayarlar/kurulum/telegram') }, '📡 ', t('ozet.kanal_yok', 'Gerçek kanal yok — Telegram\'ı 5 dakikada bağla.')) : null;
 
-    kok.append(
+    ekle(kok, [
       sayfaBas(t('nav.ozet', 'Özet'), { alt: tarihBasligi(t), eylemler: [btn('⚡ ' + t('akislar.yeni', 'Yeni akış'), { class: 'btn btn--birincil', onclick: () => git('/akislar/yeni') }), btn('📣 ' + t('nav.toplu', 'Toplu mesaj'), { onclick: () => git('/toplu') })] }),
       uyari,
       el('h2', { style: { marginBlockStart: '8px' } }, t('ozet.bugun', 'Bugün')), sayaclar,
       ilerleme ? el('h2', {}, t('ozet.kurulum', 'Kurulum')) : null, ilerleme,
       el('h2', {}, t('ozet.kanallar', 'Kanallar')), kanalKartlari,
       el('div', { class: 'satir satir--arasi', style: { marginBlockStart: '24px' } }, el('h2', { style: { margin: 0 } }, t('ozet.son', 'Son olaylar')), btn(t('ozet.hepsi', 'Tümü'), { class: 'btn btn--kucuk btn--sade', onclick: () => git('/analitik') })),
-      son.length ? gunlukListe : el('p', { class: 'kart__alt' }, t('ozet.olay_yok', 'Henüz olay yok. Bir akışı Test sekmesinde çalıştır; simülatör olayları burada görünür.')));
+      son.length ? gunlukListe : el('p', { class: 'kart__alt' }, t('ozet.olay_yok', 'Henüz olay yok. Bir akışı Test sekmesinde çalıştır; simülatör olayları burada görünür.'))]);
   },
 };
 function tarihBasligi(t) {

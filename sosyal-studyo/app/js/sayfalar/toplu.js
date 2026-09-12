@@ -1,6 +1,6 @@
 // Toplu Mesaj: segmentli, planlı gönderim. Yerel modda "simüle et" alıcı sayısını ve
 // kanal gerçeklerini gösterir; gerçek gönderim Worker'da (bağlı mod).
-import { el, btn, kart, rozet, temizle, girdi, secim, alan, metinAlani, goreliZaman } from '../cekirdek/dom.js';
+import { el, btn, kart, rozet, temizle, girdi, secim, alan, metinAlani, goreliZaman, sayfaBas } from '../cekirdek/dom.js';
 import { bos } from '../cekirdek/durum.js';
 import { pencereAcik, KANALLAR } from '../paylasilan/kanallar.js';
 
@@ -35,7 +35,7 @@ export default {
         liste.appendChild(kart(el('div', { class: 'satir satir--arasi' }, el('h2', { class: 'kart__baslik' }, i.ad), rozet(i.durum, { taslak: 'gri', kuyrukta: 'mavi', gonderiliyor: 'mavi', bitti: 'yesil', duraklatildi: 'sari', basarisiz: 'kirmizi', simule: 'mor' }[i.durum] || 'gri')), el('div', { class: 'kart__alt' }, `${i.kanal || '—'} · ${s.toplam} ${t('toplu.alici', 'alıcı')} · ✓ ${s.gonderildi} · ⏭ ${s.atlandi} · ✗ ${s.basarisiz}${i.prova ? ' · prova' : ''}`), el('div', { class: 'ilerleme' }, el('div', { class: 'ilerleme__dolu', style: { width: `${oran}%` } })), el('div', { class: 'satir' }, btn(t('akis.ac', 'Aç'), { class: 'btn btn--kucuk', onclick: () => git(`/toplu/${i.id}`) }), btn(t('akis.cogalt', 'Çoğalt'), { class: 'btn btn--kucuk', onclick: async () => { const { id, rev, sayim, durum, ...k } = i; await depo.kaydet('toplu_mesajlar', { ...k, ad: i.ad + ' (kopya)', durum: 'taslak', sayim: null }); ciz(); } }))));
       }
     }
-    kok.append(el('h1', {}, t('nav.toplu', 'Toplu Mesaj')), liste, btn('+ ' + t('toplu.yeni', 'Yeni toplu mesaj'), { class: 'btn btn--birincil btn--sabit', onclick: () => git('/toplu/yeni') }));
+    kok.append(sayfaBas(t('nav.toplu', 'Toplu Mesaj'), { alt: t('toplu.alt', 'Seçtiğin kişilere sırayla, limitlere uyarak mesaj gönderir.'), eylemler: [btn('+ ' + t('toplu.yeni', 'Yeni toplu mesaj'), { class: 'btn btn--birincil', onclick: () => git('/toplu/yeni') })] }), liste);
     await ciz();
     return depo.dinle('toplu_mesajlar', ciz);
   },
@@ -81,7 +81,7 @@ async function yeniCiz(kok, ctx) {
     git(`/toplu/${y.id}`);
   }
   const mod = await ctx.mod();
-  kok.append(el('div', { class: 'satir' }, btn('←', { class: 'btn btn--ikon btn--sade', onclick: () => git('/toplu') }), el('h1', { style: { margin: 0 } }, t('toplu.yeni', 'Yeni toplu mesaj'))),
+  kok.append(sayfaBas(t('toplu.yeni', 'Yeni toplu mesaj'), { geri: () => git('/toplu') }),
     alan(t('toplu.ad', 'Ad'), ad), el('div', { class: 'satir' }, alan(t('akis.hesap', 'Hesap'), hesap), alan(t('toplu.kanal', 'Kanal'), kanal)),
     el('h2', {}, t('toplu.hedef', 'Hedef')), secili.length ? el('p', { class: 'bant bant--mavi' }, `${secili.length} ${t('toplu.secili', 'seçili kişi')}`) : null, alan(t('toplu.hepsi', 'Şu etiketlerin hepsi'), hepsi), alan(t('toplu.herhangi', 'Herhangi biri'), herhangi), alan(t('toplu.haric', 'Hariç'), haric), ozet,
     el('h2', {}, t('toplu.mesaj', 'Mesaj')), alan(t('adim.metin', 'Metin'), metin), alan(t('toplu.butonlar_etiket', 'Butonlar'), butonlar, { ipucu: t('toplu.buton_ipucu', 'Instagram/WhatsApp en fazla 3 buton gösterir.') }),
@@ -95,7 +95,7 @@ async function detayCiz(kok, ctx, id) {
   const i = await depo.al('toplu_mesajlar', id);
   if (!i) { kok.appendChild(el('p', { class: 'durum-hata' }, t('toplu.yok', 'İş bulunamadı'))); return; }
   const s = i.sayim || { toplam: 0, gonderildi: 0, atlandi: 0, basarisiz: 0 };
-  kok.append(el('div', { class: 'satir' }, btn('←', { class: 'btn btn--ikon btn--sade', onclick: () => git('/toplu') }), el('h1', { style: { margin: 0 } }, i.ad), rozet(i.durum, 'mavi'), i.prova ? rozet('prova', 'sari') : null),
+  kok.append(sayfaBas(i.ad, { geri: () => git('/toplu'), eylemler: [rozet(i.durum, 'mavi'), i.prova ? rozet('prova', 'sari') : null] }),
     kart(el('div', { class: 'satir' }, el('span', { class: 'sayac' }, el('span', { class: 'sayac__deger' }, String(s.toplam)), el('span', { class: 'sayac__etiket' }, t('toplu.alici', 'alıcı'))), el('span', { class: 'sayac' }, el('span', { class: 'sayac__deger' }, String(s.gonderildi)), el('span', { class: 'sayac__etiket' }, t('toplu.gonderildi', 'gönderildi'))), el('span', { class: 'sayac' }, el('span', { class: 'sayac__deger' }, String(s.atlandi)), el('span', { class: 'sayac__etiket' }, t('toplu.atlandi', 'atlandı'))), el('span', { class: 'sayac' }, el('span', { class: 'sayac__deger' }, String(s.basarisiz)), el('span', { class: 'sayac__etiket' }, t('toplu.basarisiz', 'başarısız')))),
       el('p', { class: 'kart__alt' }, `${i.kanal || '—'} · ${i.planlanan ? t('toplu.planlanan', 'planlanan') + ': ' + goreliZaman(i.planlanan, t) : t('toplu.hemen', 'hemen')} · ${t('toplu.segment', 'segment')}: ${JSON.stringify(i.segment)}`),
       el('div', { class: 'kod' }, i.adimlar?.[0]?.text || ''), i.adimlar?.[0]?.choices ? el('div', { class: 'satir' }, ...i.adimlar[0].choices.map((c) => rozet(c.label, 'mavi'))) : null),
