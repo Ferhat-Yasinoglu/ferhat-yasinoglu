@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import worker from '../src/index.js';
 import { ortam, sahteFetch } from './sahte-d1.js';
+import { Veritabani } from '../src/db.js';
 
 const ctx = { waitUntil: () => {} };
 const istek = (yol, { method = 'GET', anahtar, govde, basliklar = {} } = {}, env) => new Request('https://w.example' + yol, { method, headers: { Origin: 'https://ferhat-yasinoglu.github.io', 'X-SS-Sema': '1', ...(anahtar ? { Authorization: 'Bearer ' + anahtar } : {}), ...(govde ? { 'Content-Type': 'application/json' } : {}), ...basliklar }, body: govde ? JSON.stringify(govde) : undefined });
@@ -84,5 +85,43 @@ describe('/api yetki, CORS, koleksiyonlar', () => {
     const j = await r.json(); expect(j.veri.bot.username).toBe('demo_bot');
     expect(f.cagrilar.find((c) => c.url.endsWith('/setWebhook')).govde).toMatchObject({ url: 'https://w.example/tg/webhook', secret_token: 'gizli-token' });
     expect((await db.listele('hesaplar'))[0]).toMatchObject({ kanal: 'telegram', durum: 'prova', dis_id: 'demo_bot' });
+  });
+});
+
+describe('webhook nöbeti ve hesap tekilleştirme', () => {
+  it('cron: webhook silinmişse yeniden kurar, kuruluysa dokunmaz', async () => {
+    const env = ortam();
+    const db = new Veritabani(env.DB);
+    await db.metaKaydet('worker_url', 'https://w.example');
+
+    const silinmis = sahteFetch({ webhookUrl: '', bekleyen: 3 });
+    globalThis.fetch = silinmis;
+    await worker.scheduled({}, env, ctx);
+    expect(silinmis.cagrilar.some((c) => c.url.endsWith('/setWebhook'))).toBe(true);
+    expect(String(await db.metaAl('son_cron'))).toMatch(/yeniden kuruldu/);
+
+    const kurulu = sahteFetch({ webhookUrl: 'https://w.example/tg/webhook' });
+    globalThis.fetch = kurulu;
+    await worker.scheduled({}, env, ctx);
+    expect(kurulu.cagrilar.some((c) => c.url.endsWith('/setWebhook'))).toBe(false);
+  });
+
+  it('telegram kurulumu aynı kanaldaki fazla hesapları tekilleştirir, canlı olanı korur', async () => {
+    const env = ortam();
+    const db = new Veritabani(env.DB);
+    await db.kaydet('hesaplar', { kanal: 'telegram', ad: 'eski1', durum: 'prova' }, { onek: 'hes' });
+    const canli = await db.kaydet('hesaplar', { kanal: 'telegram', ad: 'eski2', durum: 'canli' }, { onek: 'hes' });
+    await db.kaydet('hesaplar', { kanal: 'telegram', ad: 'eski3', durum: 'prova' }, { onek: 'hes' });
+
+    globalThis.fetch = sahteFetch({ webhookUrl: '' });
+    const r = await worker.fetch(new Request('https://w.test/api/kanal/telegram/kur', { method: 'POST', headers: { Authorization: 'Bearer ' + env.YONETICI_ANAHTARI, 'X-SS-Sema': '1', 'Content-Type': 'application/json' }, body: '{}' }), env, ctx);
+    expect(r.status).toBe(200);
+    const j = await r.json();
+    expect(j.veri.tekillestirilen).toBe(2);
+
+    const kalan = (await db.listele('hesaplar')).filter((h) => h.kanal === 'telegram' && !h.silindi);
+    expect(kalan).toHaveLength(1);
+    expect(kalan[0].id).toBe(canli.id);
+    expect(kalan[0].durum).toBe('canli');
   });
 });

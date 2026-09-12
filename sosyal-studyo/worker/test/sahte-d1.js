@@ -15,7 +15,7 @@ export function sahteD1() {
 }
 
 /** Sahte ağ: çağrıları kaydeder; Telegram/Meta/Anthropic için makul yanıtlar döner. */
-export function sahteFetch({ anthropicMetin = 'Merhaba! Nasıl yardımcı olabilirim?' } = {}) {
+export function sahteFetch({ anthropicMetin = 'Merhaba! Nasıl yardımcı olabilirim?', webhookUrl = 'https://w.example/tg/webhook', bekleyen = 0 } = {}) {
   const cagrilar = [];
   const f = async (url, init = {}) => {
     const u = String(url); const govde = init.body ? JSON.parse(init.body) : null;
@@ -23,7 +23,7 @@ export function sahteFetch({ anthropicMetin = 'Merhaba! Nasıl yardımcı olabil
     const cevap = (j, status = 200) => new Response(JSON.stringify(j), { status, headers: { 'Content-Type': 'application/json' } });
     if (u.includes('api.telegram.org')) {
       if (u.endsWith('/getMe')) return cevap({ ok: true, result: { id: 1, username: 'demo_bot' } });
-      if (u.endsWith('/getWebhookInfo')) return cevap({ ok: true, result: { url: 'https://w.example/tg/webhook' } });
+      if (u.endsWith('/getWebhookInfo')) return cevap({ ok: true, result: { url: webhookUrl, pending_update_count: bekleyen } });
       return cevap({ ok: true, result: { message_id: cagrilar.length } });
     }
     if (u.includes('graph.facebook.com')) return cevap({ id: 'm' + cagrilar.length, recipient_id: 'x' });
