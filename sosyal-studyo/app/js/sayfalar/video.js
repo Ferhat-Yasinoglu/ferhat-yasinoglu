@@ -1,6 +1,6 @@
 // Video Analizi: transkript yapıştır (her zaman) ya da telefondan video seç (ses + kareler → Worker).
 // Başkasının videosu URL ile indirilmez (ToS). Yerel modda elle notlarla çalışır.
-import { el, btn, kart, rozet, temizle, girdi, alan, metinAlani, goreliZaman } from '../cekirdek/dom.js';
+import { el, btn, kart, rozet, temizle, girdi, alan, metinAlani, goreliZaman, sayfaBas } from '../cekirdek/dom.js';
 import { aiIstemci } from '../ai-istemci.js';
 
 export default {
@@ -13,7 +13,7 @@ export default {
       const v = await depo.al('video_analizleri', ctx.param.id);
       if (!v) { kok.appendChild(el('p', { class: 'durum-hata' }, 'Analiz yok')); return; }
       const s = v.sonuc || {};
-      kok.append(el('div', { class: 'satir' }, btn('←', { class: 'btn btn--ikon btn--sade', onclick: () => git('/video') }), el('h1', { style: { margin: 0 } }, v.baslik || t('video.analiz', 'Analiz'))),
+      kok.append(sayfaBas(v.baslik || t('video.analiz', 'Analiz'), { geri: () => git('/video') }),
         kart(el('h2', { class: 'kart__baslik' }, '🪝 ' + t('video.kanca', 'Kanca (ilk 3 sn)')), el('p', {}, s.kanca || '—')),
         kart(el('h2', { class: 'kart__baslik' }, t('video.yapi', 'Yapı')), ...(s.yapi || []).map((y) => el('div', { class: 'kart__alt' }, `${y.sn}s · ${y.bolum}: ${y.not || ''}`))),
         kart(el('h2', { class: 'kart__baslik' }, 'CTA'), el('p', {}, s.cta || '—'), el('p', { class: 'kart__alt' }, `${t('video.tempo', 'Tempo')}: ${s.tempo || '—'} · ${t('video.puan', 'kaydırma durdurma tahmini')}: ${s.puan ?? '—'}/10`)),
@@ -46,7 +46,7 @@ export default {
       await depo.kaydet('galeri', { tur: 'video_analiz', baslik: v.baslik, kaynak: { kol: 'video_analizleri', id: v.id }, onizleme: sonuc.kanca });
       git(`/video/${v.id}`);
     }
-    kok.append(el('h1', {}, t('nav.video', 'Video Analizi')), el('p', { class: 'kart__alt' }, t('video.aciklama', 'Bir videonun kancasını, yapısını ve CTA\'sını çıkarır; alternatif kancalar önerir. Başkasının videosu URL ile indirilmez — kendi videonu seç ya da transkript yapıştır.')),
+    kok.append(sayfaBas(t('nav.video', 'Video Analizi'), { alt: t('video.alt', 'Kendi videonun kancasını, yapısını ve çağrısını çıkarır.') }), el('p', { class: 'kart__alt' }, t('video.aciklama', 'Bir videonun kancasını, yapısını ve CTA\'sını çıkarır; alternatif kancalar önerir. Başkasının videosu URL ile indirilmez — kendi videonu seç ya da transkript yapıştır.')),
       kart(alan(t('video.baslik_etiket', 'Başlık'), baslik), alan(t('video.transkript', 'Transkript'), transkript), el('div', { class: 'satir' }, dosyaBtn, dosyaNot), el('div', { class: 'satir' }, btn('✨ ' + t('video.ai', 'AI ile analiz et'), { class: 'btn btn--birincil', disabled: !mevcut, onclick: () => analizEt(false) }), btn('✍️ ' + t('video.elle_analiz', 'Elle bölümle'), { onclick: () => analizEt(true) }), !mevcut ? el('span', { class: 'kart__alt' }, t('ai.yerel_kisa', 'AI üretimi için Worker gerekir; elle yazmak her zaman açık.')) : null)),
       el('h2', {}, t('video.gecmis', 'Analizler')), liste);
     ciz();

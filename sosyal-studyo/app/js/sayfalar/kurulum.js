@@ -1,5 +1,5 @@
 // Kanal kurulum rehberi: adım listesi, kopyala düğmeleri, onay kutuları; Telegram için "Webhook kur".
-import { el, btn, kart, rozet, temizle, girdi, alan } from '../cekirdek/dom.js';
+import { el, btn, kart, rozet, temizle, girdi, alan, sayfaBas } from '../cekirdek/dom.js';
 import { KANALLAR } from '../paylasilan/kanallar.js';
 
 const REHBER = {
@@ -57,7 +57,7 @@ export default {
       if (s.eylem === 'ig-baglan') govde.appendChild(btn('📸 ' + t('kurulum.ig_baglan', 'Instagram\'a bağlan'), { class: 'btn btn--kucuk btn--birincil', disabled: !worker, onclick: () => { location.href = `${worker}/api/kanal/instagram/baglan?donus=${encodeURIComponent(location.href)}`; } }));
       liste.appendChild(el('label', {}, cb, govde));
     });
-    kok.append(el('div', { class: 'satir' }, btn('←', { class: 'btn btn--ikon btn--sade', onclick: () => git('/ayarlar/kanallar') }), el('h1', { style: { margin: 0 } }, `${b.simge} ${b.ad} ${t('kurulum.baslik', 'kurulumu')}`), rozet(b.etiket.ad, b.etiket.renk)),
+    kok.append(sayfaBas(`${b.simge} ${b.ad} ${t('kurulum.baslik', 'kurulumu')}`, { geri: () => git('/ayarlar/kanallar'), eylemler: [rozet(b.etiket.ad, b.etiket.renk)] }),
       el('p', { class: 'kart__alt' }, b.ozet), !worker && kanal !== 'tiktok' ? el('div', { class: 'bant bant--sari' }, '⚠️ ' + t('kurulum.worker_yok', 'Önce Worker\'ı bağla; kanal kurulumu Worker üzerinden yapılır.'), btn('Worker', { class: 'btn btn--kucuk', onclick: () => git('/ayarlar/worker') })) : null,
       liste,
       kanal !== 'tiktok' && !hesap ? btn(t('kurulum.hesap_kaydet', 'Bu kanalı PROVA olarak ekle (yerel)'), { class: 'btn', style: { marginTop: '12px' }, onclick: async () => { await depo.kaydet('hesaplar', { kanal, ad: b.ad, dis_id: '', durum: 'prova' }); ctx.basari(t('kurulum.eklendi', 'Hesap prova olarak eklendi')); git('/ayarlar/kanallar'); } }) : null);

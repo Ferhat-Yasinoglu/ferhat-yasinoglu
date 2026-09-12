@@ -1,5 +1,5 @@
 // Kişiler & Puanlar: kişi listesi, etiketler, puan kuralları, liderlik tablosu, CSV.
-import { el, btn, kart, rozet, temizle, girdi, secim, alan, goreliZaman } from '../cekirdek/dom.js';
+import { el, btn, kart, rozet, temizle, girdi, secim, alan, goreliZaman, sayfaBas } from '../cekirdek/dom.js';
 import { bos } from '../cekirdek/durum.js';
 import { normalize } from '../paylasilan/metin.js';
 import { pencereAcik } from '../paylasilan/kanallar.js';
@@ -29,14 +29,14 @@ export default {
     const sekmeler = el('div', { class: 'sekmeler' });
     const govde = el('div', {});
     for (const [k, ad] of [['kisiler', t('kisiler.kisiler', 'Kişiler')], ['etiketler', t('kisiler.etiketler', 'Etiketler')], ['puanlar', t('kisiler.puanlar', 'Puanlar')]]) sekmeler.appendChild(el('button', { class: 'sekme', 'aria-selected': String(sekme === k), onclick: (e) => { sekme = k; [...sekmeler.children].forEach((x) => x.setAttribute('aria-selected', String(x === e.currentTarget))); history.replaceState(null, '', `#/kisiler${k === 'kisiler' ? '' : '/' + k}`); ciz(); } }, ad));
-    kok.append(el('h1', {}, t('nav.kisiler', 'Kişiler & Puanlar')), sekmeler, govde);
+    kok.append(sayfaBas(t('nav.kisiler', 'Kişiler & Puanlar'), { alt: t('kisiler.alt', 'Botunla konuşan herkes, etiketleri ve puanları.') }), sekmeler, govde);
 
     async function kisilerCiz() {
       temizle(govde);
       const etiketler = await depo.listele('etiketler');
-      const arama = girdi({ type: 'search', placeholder: t('kisiler.ara', 'Ad, kullanıcı adı…') });
-      const kanal = secim([['', t('akislar.tum_kanallar', 'Tüm kanallar')], ['telegram', 'Telegram'], ['instagram', 'Instagram'], ['whatsapp', 'WhatsApp']]);
-      const etiket = secim([['', t('kisiler.tum_etiketler', 'Tüm etiketler')], ...etiketler.map((e) => [e.ad, e.ad])]);
+      const arama = girdi({ type: 'search', placeholder: t('kisiler.ara', 'Ad, kullanıcı adı…'), style: { flex: '2', minWidth: '180px', width: 'auto' } });
+      const kanal = secim([['', t('akislar.tum_kanallar', 'Tüm kanallar')], ['telegram', 'Telegram'], ['instagram', 'Instagram'], ['whatsapp', 'WhatsApp']], { style: { flex: '1', minWidth: '150px', width: 'auto' } });
+      const etiket = secim([['', t('kisiler.tum_etiketler', 'Tüm etiketler')], ...etiketler.map((e) => [e.ad, e.ad])], { style: { flex: '1', minWidth: '150px', width: 'auto' } });
       const pencere = el('label', { class: 'cip' }, el('input', { type: 'checkbox' }), ' ' + t('kisiler.pencere_acik', 'penceresi açık'));
       const liste = el('div', { class: 'liste' });
       const secili = new Set();

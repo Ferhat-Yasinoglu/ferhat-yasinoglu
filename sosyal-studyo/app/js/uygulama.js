@@ -81,6 +81,28 @@ function menuCiz(kok, alt) {
   alt.appendChild(btn('', { class: 'alt__daha', onclick: dahaAc }, el('span', { class: 'ikon' }, '☰'), t('nav.daha', 'Daha')));
 }
 
+async function aramaAc(ctx, ilk) {
+  const { depo, t } = ctx;
+  const kutu = el('input', { class: 'input', type: 'search', placeholder: t('ara.yer_uzun', 'Sayfa, kişi ya da akış ara…'), value: ilk || '' });
+  const sonuc = el('div', { class: 'liste', style: { marginBlockStart: '12px' } });
+  const kapat = () => document.querySelector('.ortu')?.remove();
+  const [kisiler, akislar] = await Promise.all([depo.listele('kisiler'), depo.listele('akislar')]);
+  const sayfalar = MENU.flatMap((g) => g.ogeler).map((o) => ({ tur: 'sayfa', ad: t(o.anahtar, o.ad), simge: o.simge, yol: o.yol }));
+  const hepsi = [...sayfalar, ...akislar.map((a) => ({ tur: 'akis', ad: a.ad, simge: '⚡', yol: `/akis/${a.id}`, alt: a.durum === 'yayinda' ? t('akis.yayinda', 'Yayında') : t('akis.taslak', 'Taslak') })), ...kisiler.map((k) => ({ tur: 'kisi', ad: k.ad, simge: '👤', yol: `/kisi/${k.id}`, alt: [k.kanal, k.kullanici_adi ? '@' + k.kullanici_adi : ''].filter(Boolean).join(' · ') }))];
+  function ciz() {
+    temizle(sonuc);
+    const q = kutu.value.trim().toLowerCase();
+    const bulunan = (q ? hepsi.filter((x) => `${x.ad} ${x.alt || ''}`.toLowerCase().includes(q)) : sayfalar).slice(0, 12);
+    if (!bulunan.length) { sonuc.appendChild(el('div', { class: 'liste__satir' }, el('div', { class: 'liste__alt' }, t('ara.yok', 'Sonuç yok')))); return; }
+    for (const x of bulunan) sonuc.appendChild(el('a', { class: 'liste__satir', href: '#' + x.yol, onclick: kapat }, el('span', { class: 'ikon', 'aria-hidden': 'true' }, x.simge), el('div', { class: 'liste__govde' }, el('div', { class: 'liste__baslik' }, x.ad), x.alt ? el('div', { class: 'liste__alt' }, x.alt) : null)));
+  }
+  kutu.oninput = ciz;
+  kutu.onkeydown = (e) => { if (e.key === 'Enter') { const a = sonuc.querySelector('a'); if (a) { a.click(); } } };
+  ciz();
+  modal({ baslik: t('ara.etiket', 'Ara'), govde: el('div', {}, kutu, sonuc) });
+  setTimeout(() => kutu.focus(), 30);
+}
+
 function dahaAc() {
   const izgara = el('div', { class: 'daha-sayfa' });
   for (const o of MENU.flatMap((g) => g.ogeler).filter((o) => !o.alt)) izgara.appendChild(el('a', { href: '#' + o.yol, onclick: () => document.querySelector('.ortu')?.remove() }, el('span', { class: 'ikon' }, o.simge), t(o.anahtar, o.ad)));
@@ -95,18 +117,24 @@ function aktifIsaretle(yol) {
   }
 }
 
+let bantSira = 0;
 async function bantlariYenile(ctx) {
   const kap = document.getElementById('bantlar');
-  temizle(kap);
+  const benimSira = ++bantSira;
+  const parcalar = [];
   const ayar = await ctx.depo.ayarlar();
   const meta = await ctx.depo.meta();
-  if (!ctx.depo.kalici) kap.appendChild(el('div', { class: 'bant bant--kirmizi' }, '⚠️ ', t('bant.kalici_degil', 'Tarayıcı depolaması açılamadı: veriler bu sekme kapanınca silinir. Yedek indir.')));
-  if ((ayar.mod || 'yerel') === 'yerel') kap.appendChild(el('div', { class: 'bant bant--mavi' }, '🔵 ', t('bant.yerel', 'Yerel mod: veriler yalnız bu cihazda. Kanalları ve AI\'ı açmak için Worker\'ı bağla.'), btn(t('bant.worker_bagla', 'Worker\'ı bağla'), { class: 'btn btn--kucuk', onclick: () => ctx.git('/ayarlar/worker') })));
+  if (!ctx.depo.kalici) parcalar.push(el('div', { class: 'bant bant--kirmizi' }, '⚠️ ', t('bant.kalici_degil', 'Tarayıcı depolaması açılamadı: veriler bu sekme kapanınca silinir. Yedek indir.')));
+  // Yerel mod bandı bir kez kapatılabilir (oturum boyunca); her sayfada bağırmasın.
+  let yerelKapali = false; try { yerelKapali = sessionStorage.getItem('ss-yerel-bant') === '1'; } catch {}
+  if ((ayar.mod || 'yerel') === 'yerel' && !yerelKapali) parcalar.push(el('div', { class: 'bant bant--mavi' }, '🔵 ', t('bant.yerel', 'Yerel mod: veriler yalnız bu cihazda. Kanalları ve AI\'ı açmak için Worker\'ı bağla.'), btn(t('bant.worker_bagla', 'Worker\'ı bağla'), { class: 'btn btn--kucuk', onclick: () => ctx.git('/ayarlar/worker') }), el('button', { class: 'bant__kapat', type: 'button', 'aria-label': t('genel.kapat', 'Kapat'), onclick: (e) => { try { sessionStorage.setItem('ss-yerel-bant', '1'); } catch {} e.currentTarget.parentElement.remove(); } }, '✕')));
   const kuyruk = ctx.depo.gidenSayisi ? await ctx.depo.gidenSayisi() : 0;
-  if (!navigator.onLine || kuyruk) kap.appendChild(el('div', { class: 'bant bant--gri' }, '📴 ', navigator.onLine ? t('bant.kuyruk', 'Worker\'a gönderilmeyi bekleyen {n} değişiklik.', { n: kuyruk }) : t('bant.cevrimdisi', 'Çevrimdışısın; değişiklikler bu cihazda kaydediliyor.'), kuyruk && navigator.onLine ? btn(t('bant.simdi_gonder', 'Şimdi gönder'), { class: 'btn btn--kucuk', onclick: () => ctx.depo.gidenKutusunuBosalt().then(() => bantlariYenile(ctx)) }) : null));
-  if (ctx.depo.mod === 'bagli' && ctx.depo.cevrimici === false) kap.appendChild(el('div', { class: 'bant bant--kirmizi' }, '⚠️ ', t('bant.worker_yok', 'Worker\'a ulaşılamıyor; önbellekten gösteriliyor.')));
+  if (!navigator.onLine || kuyruk) parcalar.push(el('div', { class: 'bant bant--gri' }, '📴 ', navigator.onLine ? t('bant.kuyruk', 'Worker\'a gönderilmeyi bekleyen {n} değişiklik.', { n: kuyruk }) : t('bant.cevrimdisi', 'Çevrimdışısın; değişiklikler bu cihazda kaydediliyor.'), kuyruk && navigator.onLine ? btn(t('bant.simdi_gonder', 'Şimdi gönder'), { class: 'btn btn--kucuk', onclick: () => ctx.depo.gidenKutusunuBosalt().then(() => bantlariYenile(ctx)) }) : null));
+  if (ctx.depo.mod === 'bagli' && ctx.depo.cevrimici === false) parcalar.push(el('div', { class: 'bant bant--kirmizi' }, '⚠️ ', t('bant.worker_yok', 'Worker\'a ulaşılamıyor; önbellekten gösteriliyor.')));
   const h = hatirlatmaGerekli(meta, ayar);
-  if (h.gerekli) kap.appendChild(el('div', { class: 'bant bant--sari' }, '💾 ', t('bant.yedek', 'Yedek eski: {sebep}.', { sebep: h.sebep }), btn(t('bant.yedek_indir', 'Yedeği indir'), { class: 'btn btn--kucuk', onclick: async () => { const { indir } = await import('./depo/yedek.js'); await indir(await ctx.depo.disaAktar()); basari(t('yedek.indirildi', 'Yedek indirildi')); bantlariYenile(ctx); } })));
+  if (h.gerekli) parcalar.push(el('div', { class: 'bant bant--sari' }, '💾 ', t('bant.yedek', 'Yedek eski: {sebep}.', { sebep: h.sebep }), btn(t('bant.yedek_indir', 'Yedeği indir'), { class: 'btn btn--kucuk', onclick: async () => { const { indir } = await import('./depo/yedek.js'); await indir(await ctx.depo.disaAktar()); basari(t('yedek.indirildi', 'Yedek indirildi')); bantlariYenile(ctx); } })));
+  if (benimSira !== bantSira) return; // daha yeni bir çizim başladı
+  temizle(kap); for (const p of parcalar) kap.appendChild(p);
 }
 
 async function depoyuAc() {
@@ -141,9 +169,20 @@ async function baslat() {
   menuCiz(document.getElementById('kenar-menu'), document.getElementById('alt-cubuk'));
   i18nUygula(document);
 
+  // Üst çubuk: masaüstünde arama, sağda tema ve dil. Arama menü ögelerini ve kişileri bulur.
+  const ustAra = document.getElementById('ust-ara');
+  const aramaKutusu = el('input', { class: 'input', type: 'search', placeholder: t('ara.yer', 'Ara… (Ctrl+K)'), 'aria-label': t('ara.etiket', 'Ara'), style: { minHeight: '38px' } });
+  ustAra.appendChild(aramaKutusu);
+  aramaKutusu.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); aramaAc(ctx, aramaKutusu.value); aramaKutusu.value = ''; } });
+  document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); aramaAc(ctx, ''); } });
+
   const ustSag = document.getElementById('ust-sag');
-  ustSag.appendChild(el('select', { class: 'input', 'aria-label': 'Dil', style: { width: 'auto', minHeight: '34px' }, onchange: (e) => ctx.dilDegistir(e.target.value) }, ...DILLER.map(([k, ad]) => el('option', { value: k, selected: k === suankiDil() }, ad))));
-  ustSag.appendChild(btn('◐', { class: 'btn btn--ikon btn--sade', 'aria-label': 'Tema', title: 'Açık/koyu tema', onclick: () => { const y = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; document.documentElement.dataset.theme = y; try { localStorage.setItem('ss-tema', y); } catch {} } }));
+  ustSag.appendChild(btn('🔍', { class: 'btn btn--ikon btn--sade ust__ara-btn', 'aria-label': t('ara.etiket', 'Ara'), onclick: () => aramaAc(ctx, '') }));
+  const temaBtn = btn('', { class: 'btn btn--ikon btn--sade', 'aria-label': 'Tema', title: t('ayar.tema', 'Tema'), onclick: () => { const y = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; document.documentElement.dataset.theme = y; try { localStorage.setItem('ss-tema', y); } catch {} temaIkon(); } });
+  const temaIkon = () => { temaBtn.textContent = document.documentElement.dataset.theme === 'light' ? '🌙' : '☀️'; };
+  temaIkon();
+  ustSag.appendChild(temaBtn);
+  ustSag.appendChild(el('select', { class: 'input', 'aria-label': 'Dil', style: { width: 'auto', minHeight: '38px', paddingInlineEnd: '28px' }, onchange: (e) => ctx.dilDegistir(e.target.value) }, ...DILLER.map(([k, ad]) => el('option', { value: k, selected: k === suankiDil() }, ad))));
 
   const yonlendirici = new Yonlendirici(ROTALAR, { kok: document.getElementById('sayfa'), cizimOncesi: ({ yol }) => { aktifIsaretle(yol); bantlariYenile(ctx); } });
   yonlendirici.ctx = ctx;
