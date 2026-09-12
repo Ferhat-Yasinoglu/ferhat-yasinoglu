@@ -1,26 +1,28 @@
 /* FY tasarım tokenları — altın üstü siyah, art deco.
-   Kaynak marka: devre hatlı F, takımyıldızlı Y, ince altın daire, zemin yansıması.
+   Renkler fy-ajans deposundaki brand/README.md ile birebir aynı: altın #d4af37,
+   parlak altın #f5d76e, koyu altın #a9821e, zemin #070604, krem #f4ecd8.
+   İki site aynı markayı gösterir; biri diğerinden kaymaz.
    Renkler rgb üçlüsü: rgb(var(--vurgu) / .12) gibi alfa kullanımı için.
    Yalnız mantıksal özellikler kullanılır (RTL: Farsça arayüz aynı dosyayla çalışır). */
 :root {
   /* Zemin: gece siyahı, sıcak tarafa çekik. Yüzeyler yükseldikçe ısınır. */
-  --bg: 11 10 8;
-  --bg-2: 15 13 10;
-  --yuzey: 22 19 14;
-  --yuzey-2: 30 26 19;
-  --yuzey-3: 42 36 26;
-  --cizgi: 212 175 79;         /* hairline'lar altın; alfa ile kullanılır */
+  --bg: 7 6 4;                 /* marka zemini #070604 */
+  --bg-2: 13 11 7;
+  --yuzey: 20 17 12;
+  --yuzey-2: 28 24 17;
+  --yuzey-3: 40 34 24;
+  --cizgi: 212 175 55;         /* hairline'lar altın; alfa ile kullanılır */
 
-  --metin: 245 239 226;
+  --metin: 244 236 216;        /* marka kremi #f4ecd8 */
   --metin-2: 178 166 143;
   --metin-3: 124 113 95;
 
   /* Altın — markanın tek vurgusu. Üç kademe: derin, ana, ışık. */
-  --altin-derin: 138 109 36;
-  --vurgu: 212 175 79;
-  --vurgu-2: 236 209 139;
-  --vurgu-yz: 14 12 8;          /* altın üstündeki yazı */
-  --vurgu-sis: 212 175 79;      /* alfa ile sisli altın zemin */
+  --altin-derin: 169 130 30;    /* koyu altın #a9821e */
+  --vurgu: 212 175 55;          /* altın #d4af37 */
+  --vurgu-2: 245 215 110;       /* parlak altın #f5d76e */
+  --vurgu-yz: 11 9 4;           /* altın üstündeki yazı */
+  --vurgu-sis: 212 175 55;      /* alfa ile sisli altın zemin */
 
   /* Anlam renkleri — altın-siyahla kavga etmesin diye kısık ve sıcak. */
   --mavi: 122 162 214;
@@ -28,7 +30,7 @@
   --kirmizi: 224 106 96;
   --sari: 226 184 74;
   --mor: 176 142 214;
-  --altin: 212 175 79;
+  --altin: 212 175 55;
 
   --r-kucuk: 8px; --r: 12px; --r-buyuk: 18px; --r-tam: 999px;
   --b-1: 4px; --b-2: 8px; --b-3: 12px; --b-4: 16px; --b-5: 24px; --b-6: 32px; --b-8: 48px;

@@ -74,9 +74,11 @@ export default {
       el('div', { class: 'ufuk giris', style: { textAlign: 'center', paddingBlock: 'var(--b-6) var(--b-5)' } },
         el('div', { class: 'ufuk__zemin', 'aria-hidden': 'true' }),
         el('div', { class: 'ufuk__cizgi', 'aria-hidden': 'true' }),
-        el('span', { class: 'marka', style: { position: 'relative' } },
-          el('img', { class: 'marka--koyu', src: './img/fy-isaret.png', alt: 'FY', width: 168, height: 123, style: { width: '168px', filter: 'drop-shadow(0 0 26px rgb(var(--vurgu) / .45))' } }),
-          el('img', { class: 'marka--acik', src: './img/fy-isaret-acik.png', alt: 'FY', width: 168, height: 123, style: { width: '168px' } })),
+        // Animasyonlu hero logosu: halka döner, parlama süpürür, zemin yansır.
+        // Hareket azaltılmışsa tarayıcı durağan varyantı seçer.
+        el('picture', { style: { position: 'relative' } },
+          el('source', { media: '(prefers-reduced-motion: reduce)', srcset: './img/logo-hero-static.svg' }),
+          el('img', { src: './img/logo-hero.svg', alt: 'FY', width: 960, height: 880, style: { width: 'min(260px, 60vw)', height: 'auto' } })),
         el('h1', { style: { marginBlockStart: 'var(--b-4)', position: 'relative' } }, t('baslangic.baslik', 'Sosyal Stüdyo\'ya hoş geldin')),
         el('div', { class: 'deco-etiket', style: { maxWidth: '340px', marginInline: 'auto', justifyContent: 'center' } },
           el('span', {}, t('uygulama.ajans', 'Yapay Zekâ Ajansı'))),
