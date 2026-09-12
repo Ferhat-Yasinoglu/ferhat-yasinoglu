@@ -2,6 +2,8 @@
 #   akis_yayinla : taslak akışları doğrulayıp yayına alır (doğrulama hatası varsa söyler, zorlamaz)
 #   canliya_al   : hesapları canlı yapar (dağıtımdaki PROVA ayrı bir fren, workflow_dispatch ile 0 yapılır)
 #   provaya_al   : hesapları provaya döndürür (dış gönderim anında durur)
+#   ajan_kur     : AI ajanının brifingini ve bilgi tabanını kurar, test sorularıyla dener
+#   ajan_test    : brifinge dokunmadan yalnız test sorularını sorar
 #   durum        : değişiklik yapmadan mevcut durumu yazar
 name: Sosyal Studyo Yonet
 
@@ -12,7 +14,7 @@ on:
         description: "Yapılacak işlem"
         type: choice
         default: durum
-        options: [durum, akis_yayinla, canliya_al, provaya_al]
+        options: [durum, akis_yayinla, canliya_al, provaya_al, ajan_kur, ajan_test]
       akis_id:
         description: "akis_yayinla için akış id'si (boş = tüm taslaklar)"
         type: string
@@ -42,8 +44,16 @@ jobs:
           [ -n "$alt" ] || { echo "::error::workers.dev alt alan adi bulunamadi"; exit 1; }
           echo "url=https://sosyal-studyo.$alt.workers.dev" >> "$GITHUB_OUTPUT"
       - name: Islem
+        if: ${{ !startsWith(inputs.islem, 'ajan_') }}
         env:
           URL: ${{ steps.adres.outputs.url }}
           ISLEM: ${{ inputs.islem }}
           AKIS_ID: ${{ inputs.akis_id }}
         run: node sosyal-studyo/tools/yonet.mjs
+
+      - name: Ajan
+        if: ${{ startsWith(inputs.islem, 'ajan_') }}
+        env:
+          URL: ${{ steps.adres.outputs.url }}
+          ISLEM: ${{ inputs.islem == 'ajan_kur' && 'kur' || 'test' }}
+        run: node sosyal-studyo/tools/ajan-kur.mjs
