@@ -33,18 +33,28 @@ jobs:
           api() { curl -sS -H "Authorization: Bearer $YONETICI_ANAHTARI" -H "X-SS-Sema: 1" "$URL$1"; }
           echo "== /health"; curl -sS "$URL/health"; echo
           echo "== /api/durum"; api /api/durum | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);if(!r.ok){console.log(r);return}for(const d of r.veri.doktor)console.log(`${d.durum.padEnd(5)} ${d.ad}: ${d.detay}`);console.log("kota:",JSON.stringify(r.veri.kota),"prova:",r.veri.prova,"surum:",r.veri.surum)})'
-          for kol in hesaplar akislar tetikleyiciler kisiler sohbetler mesajlar gunluk kosular; do
+          echo "== Akislar ve tetikleyiciler (akis tetiklenmesi icin akis 'yayinda' olmali)"
+          AKIS="$(api '/api/k/akislar?limit=200')" TET="$(api '/api/k/tetikleyiciler?limit=200')" node -e '
+            const oku=(s)=>{const r=JSON.parse(s); return r.ok? r.veri.kayitlar.filter(k=>!k.silindi) : []};
+            const akislar=oku(process.env.AKIS), tetler=oku(process.env.TET);
+            for(const a of akislar) console.log(`  akis ${a.id}  durum=${a.durum||"?"}  kanal=${a.kanal||"hepsi"}  adim=${(a.adimlar||[]).length}  ad="${(a.ad||"").slice(0,30)}"`);
+            for(const t of tetler){ const a=akislar.find(x=>x.id===t.akis_id);
+              console.log(`  tetik ${t.id}  tip=${t.tip}  aktif=${t.aktif?1:0}  akis=${t.akis_id} → ${a?(a.durum==="yayinda"?"YAYINDA (calisir)":"taslak (CALISMAZ)"):"AKIS YOK (CALISMAZ)"}`); }
+            const calisan=tetler.filter(t=>{const a=akislar.find(x=>x.id===t.akis_id); return t.aktif && a && a.durum==="yayinda"});
+            console.log(calisan.length? `  → ${calisan.length} tetikleyici calisir durumda` : "  → UYARI: calisir tetikleyici yok; gelen mesaj hicbir akisi baslatmaz");
+          '
+          echo "== Koleksiyon sayilari"
+          for kol in hesaplar kisiler sohbetler mesajlar gunluk kosular; do
             api "/api/k/$kol?limit=1000" | KOL=$kol node -e '
               let s=""; process.stdin.on("data",d=>s+=d).on("end",()=>{
                 const r=JSON.parse(s); if(!r.ok){console.log(process.env.KOL, "HATA", r.mesaj); return}
                 const canli=r.veri.kayitlar.filter(k=>!k.silindi);
                 let ek="";
                 if(process.env.KOL==="hesaplar") ek=canli.map(h=>`${h.kanal}:${h.durum}`).join(", ");
-                if(process.env.KOL==="akislar") ek=canli.map(a=>`${a.kanal||"?"}/${a.durum||"?"}`).join(", ");
-                if(process.env.KOL==="tetikleyiciler") ek=canli.map(t=>t.tip).join(", ");
-                if(process.env.KOL==="gunluk") ek=canli.slice(-5).map(g=>`${(g.zaman||"").slice(11,19)} ${g.kanal} ${g.olay_tipi} → ${g.karar?.tur||g.karar?.karar||JSON.stringify(g.karar||{}).slice(0,60)}`).join(" | ");
-                if(process.env.KOL==="mesajlar") ek=canli.slice(-5).map(m=>`${(m.zaman||m.olusturuldu||"").slice(11,19)} ${m.yon}`).join(", ");
-                console.log(`${process.env.KOL}: ${canli.length}${ek?"  ["+ek+"]":""}`);
+                if(process.env.KOL==="gunluk") ek=canli.slice(-8).map(g=>`${(g.zaman||"").slice(11,19)} ${g.olay_tipi}→${g.karar?.tur||"?"}${g.gonderildi?" gonderildi":(g.prova?" [prova]":"")}`).join(" | ");
+                if(process.env.KOL==="mesajlar") ek=canli.slice(-6).map(m=>`${(m.zaman||m.olusturuldu||"").slice(11,19)} ${m.yon}${/^\[prova\]/.test(m.metin||"")?" [prova]":""}`).join(", ");
+                if(process.env.KOL==="kosular") ek=canli.map(k=>`${k.durum||"?"}`).join(", ");
+                console.log(`  ${process.env.KOL}: ${canli.length}${ek?"  ["+ek+"]":""}`);
               })'
           done
           if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
