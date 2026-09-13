@@ -1,10 +1,15 @@
 // Meta (Instagram + WhatsApp Cloud API) adaptörü. Graph API v26.0.
+// İki ayrı konak: Instagram "API setup with Instagram login" ile kurulduğunda
+// çağrılar graph.instagram.com'a gider (token instagram_business_* izinleriyle
+// üretilir). WhatsApp Cloud API graph.facebook.com'da kalır. Önce ikisi de
+// facebook konağına gidiyordu; Instagram token'ı orada kabul edilmez.
 import { karuselGotoButonlari } from '../../app/js/paylasilan/akis/adimlar.js';
 
-const G = 'https://graph.facebook.com/v26.0';
+const G_FB = 'https://graph.facebook.com/v26.0';
+const G_IG = 'https://graph.instagram.com/v26.0';
 
-async function graph(yol, { token, method = 'POST', govde, query } = {}, fetchFn = fetch) {
-  const url = new URL(`${G}/${yol}`);
+async function graph(yol, { token, method = 'POST', govde, query, konak = G_FB } = {}, fetchFn = fetch) {
+  const url = new URL(`${konak}/${yol}`);
   if (query) for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v);
   url.searchParams.set('access_token', token);
   const r = await fetchFn(url, { method, headers: govde ? { 'Content-Type': 'application/json' } : {}, body: govde ? JSON.stringify(govde) : undefined });
@@ -58,16 +63,19 @@ export function olaylaraCevir(govde, hesaplar) {
   return olaylar;
 }
 
+/** Instagram çağrıları her zaman graph.instagram.com'a gider. */
+const igGraph = (yol, sec = {}, fetchFn) => graph(yol, { ...sec, konak: G_IG }, fetchFn);
+
 /** Eylemi Instagram'a gönderir: DM (quick_replies ≤13), özel yanıt, yorum yanıtı, gizleme. */
 export async function igGonder(env, kisi, eylem, fetchFn = fetch) {
   const token = env.IG_ACCESS_TOKEN;
   if (eylem.tip === 'mesaj') {
     const message = { text: String(eylem.text || '').slice(0, 1000) };
     if (eylem.choices?.length) message.quick_replies = eylem.choices.slice(0, 13).map((c, i) => ({ content_type: 'text', title: c.label.slice(0, 20), payload: `s:${eylem.adim}:${i}` }));
-    if (eylem.media?.url && !eylem.choices?.length) return graph('me/messages', { token, govde: { recipient: { id: kisi.dis_id }, message: { attachment: { type: eylem.media.tip === 'video' ? 'video' : 'image', payload: { url: eylem.media.url } } } } }, fetchFn);
-    return graph('me/messages', { token, govde: { recipient: { id: kisi.dis_id }, message } }, fetchFn);
+    if (eylem.media?.url && !eylem.choices?.length) return igGraph('me/messages', { token, govde: { recipient: { id: kisi.dis_id }, message: { attachment: { type: eylem.media.tip === 'video' ? 'video' : 'image', payload: { url: eylem.media.url } } } } }, fetchFn);
+    return igGraph('me/messages', { token, govde: { recipient: { id: kisi.dis_id }, message } }, fetchFn);
   }
-  if (eylem.tip === 'ozel_yanit') return graph('me/messages', { token, govde: { recipient: { comment_id: eylem.yorumId }, message: { text: String(eylem.text || '').slice(0, 1000), ...(eylem.choices?.length ? { quick_replies: eylem.choices.slice(0, 13).map((c, i) => ({ content_type: 'text', title: c.label.slice(0, 20), payload: `s:${eylem.adim}:${i}` })) } : {}) } } }, fetchFn);
+  if (eylem.tip === 'ozel_yanit') return igGraph('me/messages', { token, govde: { recipient: { comment_id: eylem.yorumId }, message: { text: String(eylem.text || '').slice(0, 1000), ...(eylem.choices?.length ? { quick_replies: eylem.choices.slice(0, 13).map((c, i) => ({ content_type: 'text', title: c.label.slice(0, 20), payload: `s:${eylem.adim}:${i}` })) } : {}) } } }, fetchFn);
   if (eylem.tip === 'karusel') {
     // Instagram generic template: en fazla 10 eleman, eleman başına 3 buton.
     const gotolar = karuselGotoButonlari(eylem.kartlar);
@@ -81,10 +89,10 @@ export async function igGonder(env, kisi, eylem, fetchFn = fetch) {
       if (bl.length) e.buttons = bl;
       return e;
     });
-    return graph('me/messages', { token, govde: { recipient: { id: kisi.dis_id }, message: { attachment: { type: 'template', payload: { template_type: 'generic', elements } } } } }, fetchFn);
+    return igGraph('me/messages', { token, govde: { recipient: { id: kisi.dis_id }, message: { attachment: { type: 'template', payload: { template_type: 'generic', elements } } } } }, fetchFn);
   }
-  if (eylem.tip === 'yorum_yanit') return graph(`${eylem.yorumId}/replies`, { token, query: { message: String(eylem.text || '').slice(0, 1000) } }, fetchFn);
-  if (eylem.tip === 'gizle') return graph(`${eylem.yorumId}`, { token, query: { hide: 'true' } }, fetchFn);
+  if (eylem.tip === 'yorum_yanit') return igGraph(`${eylem.yorumId}/replies`, { token, query: { message: String(eylem.text || '').slice(0, 1000) } }, fetchFn);
+  if (eylem.tip === 'gizle') return igGraph(`${eylem.yorumId}`, { token, query: { hide: 'true' } }, fetchFn);
   return null;
 }
 
@@ -100,7 +108,7 @@ export async function waGonder(env, kisi, eylem, fetchFn = fetch) {
 
 /** Onaysız uygulamalar için yorum polling'i: son gönderilerin yorumlarını çeker. */
 export async function igYorumlariCek(env, { limit = 8 } = {}, fetchFn = fetch) {
-  const r = await graph('me/media', { token: env.IG_ACCESS_TOKEN, method: 'GET', query: { fields: 'id,comments.limit(20){id,text,username,timestamp,from}', limit: String(limit) } }, fetchFn);
+  const r = await igGraph('me/media', { token: env.IG_ACCESS_TOKEN, method: 'GET', query: { fields: 'id,comments.limit(20){id,text,username,timestamp,from}', limit: String(limit) } }, fetchFn);
   const out = [];
   for (const m of r.data || []) for (const c of m.comments?.data || []) out.push({ gonderiId: m.id, yorumId: c.id, text: c.text, username: c.username, from: c.from, zaman: c.timestamp });
   return out;
