@@ -45,7 +45,7 @@ export default {
         const tt = tetler.filter((x) => x.akis_id === a.id);
         const baslatma = gunluk.filter((g) => g.akis_id === a.id && Date.parse(g.zaman || 0) > esik).length;
         const yayinda = a.durum === 'yayinda';
-        const onizleme = (a.adimlar || []).slice(0, 4).map((s) => ADIM_BILGI[s.type]?.ad || s.type).join(' → ') + ((a.adimlar || []).length > 4 ? ' → …' : '');
+        const onizleme = (a.adimlar || []).slice(0, 4).map((s) => t('adim.tip.' + s.type, ADIM_BILGI[s.type]?.ad || s.type)).join(' → ') + ((a.adimlar || []).length > 4 ? ' → …' : '');
         liste.appendChild(el('section', { class: 'kart kart--tik', onclick: () => git(`/akis/${a.id}`) },
           el('div', { class: 'satir satir--arasi', style: { alignItems: 'flex-start' } },
             el('div', { style: { minWidth: '0', flex: '1' } }, el('h2', { class: 'kart__baslik', style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, a.ad), el('div', { class: 'kart__alt' }, onizleme || t('akis.adim_yok_kisa', 'Adım yok'))),
