@@ -76,6 +76,18 @@ async function isle(istek, env, ctx) {
     let govde; try { govde = JSON.parse(ham); } catch { return new Response('json', { status: 400 }); }
     const db = new Veritabani(env.DB);
     const hesaplar = await db.listele('hesaplar');
+    // Kurulum sayfası hesabı dis_id'si boş kaydediyor (kurulum.js), gerçek Instagram kimliğini
+    // ancak ilk webhook getiriyor. Boş kalırsa botun kendi echo'su `dis_id === hesap.dis_id`
+    // kontrolünden geçemiyor ve aynı kanalda ikinci bir kayıt varsa olay yanlış hesaba yazılabiliyor.
+    // İlk gerçek olayda kimliği kalıcı yaz; sonraki eşleştirmeler birebir olur.
+    if (govde.object === 'instagram') {
+      for (const entry of govde.entry || []) {
+        const kimlik = String(entry?.id || '');
+        if (!kimlik) continue;
+        const h = meta.hesapEslestir(hesaplar, 'instagram', kimlik);
+        if (h && !h.dis_id) { h.dis_id = kimlik; try { await db.kaydet('hesaplar', { ...h }); } catch (e) { console.error('hesap kimligi', e); } }
+      }
+    }
     const olaylar = meta.olaylaraCevir(govde, hesaplar);
     // Meta 200'ü hızlı ister; iş waitUntil'da sürer. Başarısız olay gelen kutusunda 'pending' kalır, cron yeniden dener.
     ctx.waitUntil((async () => { for (const o of olaylar) { try { await olayIsle(env, db, o, { hesaplar }); } catch (e) { console.error('meta olay', e); } } })());

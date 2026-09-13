@@ -19,9 +19,31 @@ async function graph(yol, { token, method = 'POST', govde, query, konak = G_FB }
 }
 
 /** Meta webhook gövdesi → ortak olay listesi. */
+/**
+ * Gelen olayı hangi hesap kaydına bağlayacağımızı seçer.
+ *
+ * Aynı kanalda birden fazla kayıt olabiliyor (kurulum iki kez yapılırsa ya da kayıt
+ * hem yerelde hem Worker'da oluşursa). Eski sürüm `!h.dis_id` koşulunu birebir
+ * eşleşmeyle aynı kefeye koyduğu için sonuç ekleme sırasına bağlıydı: dis_id'si boş
+ * olan kayıt listede önce duruyorsa, kimliği gerçekten eşleşen kaydı geçiyordu.
+ * Artık kademeli: önce birebir eşleşen, sonra dis_id'si boş olan, en sonda kalan
+ * kayıt; her kademede 'canli' olan öne geçer.
+ */
+export function hesapEslestir(hesaplar, kanal, disId) {
+  const ayni = (hesaplar || []).filter((h) => h && h.kanal === kanal && !h.silindi);
+  const canliOnce = (liste) => liste.find((h) => h.durum === 'canli') || liste[0];
+  const kimlik = disId ? String(disId) : '';
+  return (
+    (kimlik && canliOnce(ayni.filter((h) => String(h.dis_id || '') === kimlik))) ||
+    canliOnce(ayni.filter((h) => !h.dis_id)) ||
+    canliOnce(ayni) ||
+    undefined
+  );
+}
+
 export function olaylaraCevir(govde, hesaplar) {
   const olaylar = [];
-  const hesapBul = (kanal, disId) => hesaplar.find((h) => h.kanal === kanal && (!disId || h.dis_id === disId || !h.dis_id)) || hesaplar.find((h) => h.kanal === kanal);
+  const hesapBul = (kanal, disId) => hesapEslestir(hesaplar, kanal, disId);
   if (govde.object === 'instagram') {
     for (const entry of govde.entry || []) {
       const hesap = hesapBul('instagram', String(entry.id));
