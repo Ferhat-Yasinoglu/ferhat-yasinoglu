@@ -7,7 +7,8 @@ import { baslat, ilerlet } from '../paylasilan/akis/kosucu.js';
 import { pencereAcik } from '../paylasilan/kanallar.js';
 import { ADIM_BILGI } from '../paylasilan/akis/adimlar.js';
 
-export function simulator(kok, { akis, depo, t, kanal = 'telegram', tetikTipi = 'keyword', kisiAdi = 'Deneme Kişi' }) {
+export function simulator(kok, { akis, depo, t, kanal = 'telegram', tetikTipi = 'keyword', kisiAdi = null }) {
+  kisiAdi = kisiAdi || t('sim.kisi', 'Deneme Kişi');
   temizle(kok);
   const durumSatiri = el('div', { class: 'satir satir--arasi kart__alt' });
   const ekran = el('div', { class: 'telefon__ekran', 'aria-live': 'polite' });
@@ -16,7 +17,7 @@ export function simulator(kok, { akis, depo, t, kanal = 'telegram', tetikTipi = 
   const atla = btnS('ileri', t('sim.atla', 'Gecikmeyi atla'), { class: 'btn btn--kucuk', hidden: true });
   const yeniden = btnS('yenile', t('sim.yeniden', 'Baştan'), { class: 'btn btn--kucuk' });
   const kanalSec = el('select', { class: 'input', 'aria-label': 'Kanal', style: { width: 'auto', minHeight: '32px' } }, ...['telegram', 'instagram', 'whatsapp'].map((k) => el('option', { value: k, selected: k === kanal }, k)));
-  const tetikSec = el('select', { class: 'input', 'aria-label': 'Olay', style: { width: 'auto', minHeight: '32px' } }, ...[['keyword', 'DM'], ['comment', 'Yorum'], ['start', '/start'], ['story_reply', 'Story yanıtı']].map(([k, ad]) => el('option', { value: k, selected: k === tetikTipi }, ad)));
+  const tetikSec = el('select', { class: 'input', 'aria-label': 'Olay', style: { width: 'auto', minHeight: '32px' } }, ...[['keyword', t('sim.olay_dm', 'DM')], ['comment', t('sim.olay_yorum', 'Yorum')], ['start', '/start'], ['story_reply', t('sim.olay_story', 'Story yanıtı')]].map(([k, ad]) => el('option', { value: k, selected: k === tetikTipi }, ad)));
   const panel = el('div', { class: 'kod', style: { fontSize: '.75rem' } });
   kok.append(
     el('div', { class: 'satir' }, kanalSec, tetikSec, yeniden, atla),
