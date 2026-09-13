@@ -16,6 +16,12 @@ import * as meta from './meta.js';
 import { saglayici } from './ai.js';
 import { SEMA_SURUMU } from '../../app/js/paylasilan/sema/surum.js';
 
+// Reddedilen webhook yazımı isolate ömrü boyunca dakikada bire kısılır: uç herkese açık,
+// her reddi D1'e yazmak sel altında yazma kotasını tüketip uygulamayı çökertirdi.
+// Anahtar env nesnesi: Workers aynı isolate'ta aynı env'i veriyor, yani üretimde
+// isolate başına bir sayaç; her testin kendi env'i olduğu için testler birbirine bağlanmıyor.
+const sonRedYazimi = new WeakMap();
+
 // /health herkese açık: her kaynaktan, özel başlıklarla da (X-SS-Sema) çağrılabilir.
 const HEALTH_CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-SS-Sema', 'Access-Control-Max-Age': '86400' };
 
@@ -72,9 +78,23 @@ async function isle(istek, env, ctx) {
   }
   if (url.pathname === '/meta/webhook' && istek.method === 'POST') {
     const ham = await istek.text();
-    if (eksik.length || !(await metaImzaGecerli(env, ham, istek.headers.get('X-Hub-Signature-256')))) return new Response('imza', { status: 401 });
-    let govde; try { govde = JSON.parse(ham); } catch { return new Response('json', { status: 400 }); }
     const db = new Veritabani(env.DB);
+    // Meta'nın uğradığını her koşulda kaydet. İmza reddi şimdiye kadar 401 dönüp hiçbir iz
+    // bırakmıyordu; bu yüzden "Meta hiç aramadı" ile "aradı ama META_APP_SECRET eşleşmedi"
+    // ayırt edilemiyordu — kurulum hatalarının en pahalı kör noktası. Gövde ve imza yazılmaz,
+    // yalnız zaman damgası ile sebep.
+    if (eksik.length || !(await metaImzaGecerli(env, ham, istek.headers.get('X-Hub-Signature-256')))) {
+      const sebep = eksik.length
+        ? `yapılandırma eksik: ${eksik.join(', ')}`
+        : (istek.headers.get('X-Hub-Signature-256') ? 'imza uyuşmadı — META_APP_SECRET Meta panelindekinden farklı' : 'imza başlığı yok');
+      if (Date.now() - (sonRedYazimi.get(env) || 0) > 60000) {
+        sonRedYazimi.set(env, Date.now());
+        await db.metaKaydet('meta_webhook_red', `${simdi()} ${sebep}`).catch((e) => console.error('red damgasi', e));
+      }
+      return new Response('imza', { status: 401 });
+    }
+    let govde; try { govde = JSON.parse(ham); } catch { return new Response('json', { status: 400 }); }
+    await db.metaKaydet('meta_webhook_kabul', `${simdi()} ${govde.object || '?'}`).catch((e) => console.error('kabul damgasi', e));
     const hesaplar = await db.listele('hesaplar');
     // Kurulum sayfası hesabı dis_id'si boş kaydediyor (kurulum.js), gerçek Instagram kimliğini
     // ancak ilk webhook getiriyor. Boş kalırsa botun kendi echo'su `dis_id === hesap.dis_id`
