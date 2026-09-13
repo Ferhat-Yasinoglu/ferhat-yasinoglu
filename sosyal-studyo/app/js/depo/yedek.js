@@ -28,9 +28,17 @@ export function hatirlatmaGerekli(meta, ayarlar = {}) {
   const aralikGun = ayarlar.yedek?.aralikGun ?? 7;
   const esik = ayarlar.yedek?.esikDegisiklik ?? 20;
   const sayac = meta.degisiklik_sayaci || 0;
-  if (!meta.son_yedek) return sayac > 0 ? { gerekli: true, sebep: 'hiç yedek alınmadı' } : { gerekli: false };
+  // Sebep çevrilebilir olsun diye Türkçe cümle değil kod döner; metni çağıran yazar.
+  if (!meta.son_yedek) return sayac > 0 ? { gerekli: true, kod: 'yok' } : { gerekli: false };
   const gun = (Date.now() - Date.parse(meta.son_yedek)) / 86400e3;
-  if (gun >= aralikGun) return { gerekli: true, sebep: `son yedek ${Math.floor(gun)} gün önce` };
-  if (sayac >= esik) return { gerekli: true, sebep: `${sayac} değişiklik yedeklenmedi` };
+  if (gun >= aralikGun) return { gerekli: true, kod: 'eski', gun: Math.floor(gun) };
+  if (sayac >= esik) return { gerekli: true, kod: 'degisiklik', sayi: sayac };
   return { gerekli: false };
+}
+
+/** Hatırlatma sebebini kullanıcının dilinde yazar. */
+export function hatirlatmaMetni(h, t) {
+  if (h.kod === 'eski') return t('yedek.sebep_eski', 'son yedek {gun} gün önce', { gun: h.gun });
+  if (h.kod === 'degisiklik') return t('yedek.sebep_degisiklik', '{sayi} değişiklik yedeklenmedi', { sayi: h.sayi });
+  return t('yedek.sebep_yok', 'hiç yedek alınmadı');
 }

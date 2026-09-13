@@ -1,6 +1,7 @@
 // Modal ve onay kutusu: odak tuzağı, Escape, yazarak onay ("CANLI", "SİL").
 import { el, btn } from './dom.js';
 import { simge } from './simge.js';
+import { t } from '../i18n.js';
 
 export function modal({ baslik, govde, dugmeler = [], kapatilabilir = true, genis = false }) {
   return new Promise((cozul) => {
@@ -10,7 +11,7 @@ export function modal({ baslik, govde, dugmeler = [], kapatilabilir = true, geni
       if (e.key === 'Tab') { const odak = [...kutu.querySelectorAll('button, input, select, textarea, a[href]')].filter((x) => !x.disabled); if (!odak.length) return; const i = odak.indexOf(document.activeElement); if (e.shiftKey && i <= 0) { e.preventDefault(); odak.at(-1).focus(); } else if (!e.shiftKey && i === odak.length - 1) { e.preventDefault(); odak[0].focus(); } }
     };
     const kutu = el('div', { class: `modal${genis ? ' modal--genis' : ''}`, role: 'dialog', 'aria-modal': 'true', 'aria-label': baslik },
-      el('header', { class: 'modal__baslik satir satir--arasi' }, el('h2', { style: { margin: 0, fontSize: 'inherit' } }, baslik), kapatilabilir ? btn(simge('kapat'), { class: 'btn btn--ikon btn--sade', 'aria-label': 'Kapat', onclick: () => kapat(null) }) : null),
+      el('header', { class: 'modal__baslik satir satir--arasi' }, el('h2', { style: { margin: 0, fontSize: 'inherit' } }, baslik), kapatilabilir ? btn(simge('kapat'), { class: 'btn btn--ikon btn--sade', 'aria-label': t('genel.kapat', 'Kapat'), onclick: () => kapat(null) }) : null),
       el('div', { class: 'modal__govde' }, govde),
       dugmeler.length ? el('footer', { class: 'modal__ayak' }, ...dugmeler.map((d) => btn(d.metin, { class: `btn ${d.sinif || ''}`, disabled: d.pasif, onclick: async () => { const r = d.cb ? await d.cb() : d.deger; if (r !== false) kapat(r ?? d.deger ?? true); } }))) : null);
     const ortu = el('div', { class: 'ortu', onclick: (e) => { if (e.target === ortu && kapatilabilir) kapat(null); } }, kutu);
@@ -20,12 +21,16 @@ export function modal({ baslik, govde, dugmeler = [], kapatilabilir = true, geni
   });
 }
 
-export async function onayla(mesaj, { baslik = 'Emin misin?', tehlikeli = false, yazarakOnay, evet = 'Evet', hayir = 'Vazgeç' } = {}) {
+export async function onayla(mesaj, { baslik, tehlikeli = false, yazarakOnay, evet, hayir } = {}) {
+  // Varsayilanlar cagri aninda cevrilir: modul yuklenirken dil henuz hazir olmayabilir.
+  baslik = baslik ?? t('genel.emin_misin', 'Emin misin?');
+  evet = evet ?? t('genel.evet', 'Evet');
+  hayir = hayir ?? t('genel.vazgec', 'Vazgeç');
   let girdi = null;
   const govde = el('div', {}, el('p', {}, mesaj));
   if (yazarakOnay) {
     girdi = el('input', { class: 'input', placeholder: yazarakOnay, autocomplete: 'off' });
-    govde.appendChild(el('p', { class: 'field__ipucu' }, `Onaylamak için "${yazarakOnay}" yaz.`));
+    govde.appendChild(el('p', { class: 'field__ipucu' }, t('genel.yazarak_onay', 'Onaylamak için "{kelime}" yaz.', { kelime: yazarakOnay })));
     govde.appendChild(girdi);
   }
   const r = await modal({ baslik, govde, dugmeler: [
@@ -38,6 +43,6 @@ export async function onayla(mesaj, { baslik = 'Emin misin?', tehlikeli = false,
 export async function sor(baslik, { varsayilan = '', placeholder = '', cokSatir = false } = {}) {
   const g = cokSatir ? el('textarea', { class: 'input', rows: 4 }) : el('input', { class: 'input', placeholder });
   g.value = varsayilan;
-  const r = await modal({ baslik, govde: g, dugmeler: [{ metin: 'Vazgeç', deger: null }, { metin: 'Tamam', sinif: 'btn--birincil', cb: () => g.value.trim() || false }] });
+  const r = await modal({ baslik, govde: g, dugmeler: [{ metin: t('genel.vazgec', 'Vazgeç'), deger: null }, { metin: t('genel.tamam', 'Tamam'), sinif: 'btn--birincil', cb: () => g.value.trim() || false }] });
   return typeof r === 'string' ? r : null;
 }

@@ -12,7 +12,7 @@ function adimFormu(adim, adimlar, i, t) {
   const f = el('div', {});
   const hedefSecim = (deger, ad) => secim([['', '—'], ...adimlar.map((a, j) => [String(j), `${j + 1} · ${adimOzeti(a).ad}: ${(adimOzeti(a).metin || '').slice(0, 30)}`])], { value: deger === undefined ? '' : String(deger), name: ad });
   const listeGirdi = (ad, deger) => girdi({ name: ad, value: (deger || []).join(', '), placeholder: 'etiket1, etiket2' });
-  const tipSec = secim(ADIM_TIPLERI.map((k) => [k, ADIM_BILGI[k].ad]), { value: adim.type, name: 'type' });
+  const tipSec = secim(ADIM_TIPLERI.map((k) => [k, t('adim.tip.' + k, ADIM_BILGI[k].ad)]), { value: adim.type, name: 'type' });
   const govde = el('div', {});
   function govdeCiz(tip) {
     temizle(govde);
@@ -222,7 +222,7 @@ export default {
           el('span', { class: 'sema__tut', 'aria-hidden': 'true', title: t('akis.surukle', 'Sürükleyerek sırala') }, '⋮⋮'),
           el('div', { class: 'sema__no' }, String(i + 1)),
           el('div', { class: 'sema__govde' },
-            el('div', { class: 'sema__tur satir' }, simge(o.ikon || 'bilgi', { boy: 14 }), o.ad),
+            el('div', { class: 'sema__tur satir' }, simge(o.ikon || 'bilgi', { boy: 14 }), t('adim.tip.' + a.type, o.ad)),
             el('div', { class: 'sema__ozet' }, o.metin || '—'),
             dallar.length ? el('div', { class: 'sema__dallar' }, ...dallar) : null),
           el('div', { class: 'sema__eylem', onclick: (e) => e.stopPropagation() },
