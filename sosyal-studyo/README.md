@@ -42,7 +42,7 @@ app/                      PWA (GitHub Pages'e olduğu gibi kopyalanır)
   js/cekirdek/            yönlendirici, dom, modal, bildirim, durum, tema
   js/depo/                IndexedDB deposu, bellek deposu, yedek, tohum
   js/paylasilan/          SAF modüller — tarayıcı ve Worker aynı dosyayı çalıştırır
-    akis/adimlar.js       15 adım tipi ve doğrulama
+    akis/adimlar.js       16 adım tipi ve doğrulama
     akis/kosucu.js        akış koşucusu (durum makinesi, yan etkisiz)
     akis/tetikleyici.js   olay → tetikleyici eşleme, öncelik kuralları
     kurallar.js           yorum/mesaj kural motoru (reply-bot mirası)
