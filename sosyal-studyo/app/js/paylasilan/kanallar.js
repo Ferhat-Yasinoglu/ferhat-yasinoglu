@@ -15,6 +15,7 @@ export const KANALLAR = {
     yetenekler: {
       dm: ETIKET.CALISIR, butonlar: ETIKET.CALISIR, toplu: ETIKET.CALISIR, gecikme: ETIKET.CALISIR,
       yorum: ETIKET.IZIN_YOK, story: ETIKET.IZIN_YOK, referans: ETIKET.CALISIR, ai_ajan: ETIKET.CALISIR,
+      karusel: ETIKET.CALISIR,
     },
     sinirlar: { pencere_saat: null, mesaj_sn: 30 },
   },
@@ -25,6 +26,7 @@ export const KANALLAR = {
       dm: ETIKET.CALISIR, butonlar: ETIKET.CALISIR, toplu: ETIKET.IZIN_YOK, gecikme: ETIKET.CALISIR,
       yorum: ETIKET.CALISIR, yorum_webhook: ETIKET.ONAY_GEREKIR, story: ETIKET.CALISIR,
       referans: ETIKET.CALISIR, ai_ajan: ETIKET.CALISIR, baska_hesaplar: ETIKET.ONAY_GEREKIR,
+      karusel: ETIKET.CALISIR,
     },
     sinirlar: { pencere_saat: 24, buton: 3, etiket_kr: 20, metin_kr: 1000, yorum_gunluk: 150 },
   },
@@ -34,13 +36,14 @@ export const KANALLAR = {
     yetenekler: {
       dm: ETIKET.CALISIR, butonlar: ETIKET.CALISIR, toplu: ETIKET.ONAY_GEREKIR, gecikme: ETIKET.CALISIR,
       yorum: ETIKET.IZIN_YOK, story: ETIKET.IZIN_YOK, referans: ETIKET.IZIN_YOK, ai_ajan: ETIKET.CALISIR,
+      karusel: ETIKET.ONAY_GEREKIR,
     },
     sinirlar: { pencere_saat: 24, buton: 3 },
   },
   tiktok: {
     ad: 'TikTok', ikon: 'tiktok', kurulum_dk: 0, etiket: ETIKET.IZIN_YOK,
     ozet: 'DM/yorum otomasyonu için API yok; yalnız içerik araçları (fikir, kanca, senaryo, karusel).',
-    yetenekler: { dm: ETIKET.IZIN_YOK, yorum: ETIKET.IZIN_YOK, toplu: ETIKET.IZIN_YOK, icerik: ETIKET.CALISIR },
+    yetenekler: { dm: ETIKET.IZIN_YOK, yorum: ETIKET.IZIN_YOK, toplu: ETIKET.IZIN_YOK, karusel: ETIKET.IZIN_YOK, icerik: ETIKET.CALISIR },
     sinirlar: {},
   },
 };

@@ -44,6 +44,29 @@ function adimFormu(adim, adimlar, i, t) {
       case 'ai_reply': ekle(alan(t('adim.talimat', 'Talimat'), metinAlani({ name: 'instruction', value: a.instruction || '' })), alan(t('adim.save_as', 'Cevabı kaydet'), girdi({ name: 'save_as', value: a.save_as || '' })), alan('max_chars', girdi({ name: 'max_chars', type: 'number', value: a.max_chars ?? 400 })), alan(t('adim.yedek_metin', 'Model susarsa metin'), girdi({ name: 'fallback_text', value: a.fallback_text || '' })), alan(t('adim.susarsa', 'Model susarsa →'), hedefSecim(a.on_skip_goto, 'on_skip_goto'))); break;
       case 'score': ekle(alan(t('adim.delta', 'Puan (±)'), girdi({ name: 'delta', type: 'number', value: a.delta ?? 1 })), alan(t('adim.sebep', 'Sebep'), girdi({ name: 'reason', value: a.reason || '' })), alan('once_per', secim([['run', 'koşu başına'], ['day', 'gün başına'], ['event', 'her seferinde']], { name: 'once_per', value: a.once_per || 'run' }))); break;
       case 'webhook': ekle(alan('URL (https)', girdi({ name: 'url', value: a.url || '' })), alan('Yöntem', secim([['POST', 'POST'], ['GET', 'GET']], { name: 'method', value: a.method || 'POST' })), alan('Gövde (JSON, {{degisken}} kullanılabilir)', metinAlani({ name: 'body', value: a.body || '' })), alan(t('adim.save_as', 'Sonucu kaydet'), girdi({ name: 'save_as', value: a.save_as || '' })), alan(t('adim.hata_ise', 'Hata olursa →'), hedefSecim(a.on_error_goto, 'on_error_goto'))); break;
+      case 'carousel': {
+        // Her kart bir satır: başlık · altyazı · görsel · buton(etiket, hedef/URL).
+        const kartlar = el('div', { class: 'onay-listesi' });
+        const kartEkle = (c = {}) => {
+          const b = (c.buttons || [])[0] || {};
+          kartlar.appendChild(el('div', { class: 'kart-satir', dataset: { kart: '1' } },
+            girdi({ name: 'k_title', value: c.title || '', placeholder: t('adim.kart_baslik', 'Kart başlığı') }),
+            girdi({ name: 'k_subtitle', value: c.subtitle || '', placeholder: t('adim.kart_alt', 'Altyazı') }),
+            girdi({ name: 'k_image', value: c.image_url || '', placeholder: t('adim.kart_gorsel', 'Görsel URL (https)') }),
+            el('div', { class: 'satir' },
+              girdi({ name: 'k_blabel', value: b.label || '', placeholder: t('adim.kart_buton', 'Buton metni') }),
+              hedefSecim(b.goto, 'k_bgoto'),
+              girdi({ name: 'k_burl', value: b.url || '', placeholder: 'https://…' }),
+              btn(simge('kapat'), { class: 'btn btn--ikon btn--kucuk', onclick: (e) => e.currentTarget.closest('[data-kart]').remove() }))));
+        };
+        (a.cards || []).forEach(kartEkle);
+        if (!(a.cards || []).length) kartEkle();
+        ekle(el('div', { class: 'field' },
+          el('span', { class: 'field__etiket' }, t('adim.kartlar', 'Kartlar (en fazla 10)')),
+          el('span', { class: 'field__ipucu' }, t('adim.kart_ipucu', 'Butonda ya hedef adım ya da URL olmalı. Instagram kartı yan yana gösterir; Telegram kartları alt alta gönderir.')),
+          kartlar,
+          btnS('arti', t('adim.kart_ekle', 'Kart ekle'), { class: 'btn btn--kucuk', onclick: () => kartEkle() })));
+        break; }
       case 'comment_reply': ekle(alan(t('adim.varyantlar', 'Yanıt varyantları (her satır bir varyant; en az 10 önerilir)'), metinAlani({ name: 'texts', rows: 8, value: (a.texts || []).join('\n') }))); break;
     }
   }
@@ -70,6 +93,21 @@ function adimFormu(adim, adimlar, i, t) {
     if (tip === 'ai_reply') { a.instruction = v('instruction'); a.max_chars = sayi('max_chars'); if (v('fallback_text')) a.fallback_text = v('fallback_text'); a.on_skip_goto = sayi('on_skip_goto'); if (a.on_skip_goto === undefined) delete a.on_skip_goto; }
     if (tip === 'score') { a.delta = Number(v('delta') || 0); a.reason = v('reason'); a.once_per = v('once_per'); }
     if (tip === 'webhook') { a.url = v('url'); a.method = v('method'); if (v('body')) a.body = v('body'); a.on_error_goto = sayi('on_error_goto'); if (a.on_error_goto === undefined) delete a.on_error_goto; }
+    if (tip === 'carousel') {
+      a.cards = [...f.querySelectorAll('[data-kart]')].map((k) => {
+        const g = (n) => k.querySelector(`[name="${n}"]`)?.value.trim() ?? '';
+        const c = { title: g('k_title') };
+        if (g('k_subtitle')) c.subtitle = g('k_subtitle');
+        if (g('k_image')) c.image_url = g('k_image');
+        if (g('k_blabel')) {
+          const b = { label: g('k_blabel') };
+          if (g('k_burl')) b.url = g('k_burl');
+          else if (g('k_bgoto') !== '') b.goto = Number(g('k_bgoto'));
+          c.buttons = [b];
+        }
+        return c;
+      }).filter((c) => c.title);
+    }
     if (tip === 'comment_reply') a.texts = v('texts').split('\n').map((s) => s.trim()).filter(Boolean);
     return a;
   };

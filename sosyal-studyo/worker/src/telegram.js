@@ -1,5 +1,7 @@
 // Telegram Bot API adaptörü: güncellemeyi ortak olay biçimine çevirir, mesaj/buton gönderir.
 // Butonlar callback_data 's:<adım>:<i>' taşır; eski butona basmak hiçbir şey yapmaz (koşucu bakar).
+import { karuselGotoButonlari } from '../../app/js/paylasilan/akis/adimlar.js';
+
 const API = (token, yontem) => `https://api.telegram.org/bot${token}/${yontem}`;
 
 export async function tgCagir(env, yontem, govde, fetchFn = fetch) {
@@ -45,6 +47,22 @@ export async function gonder(env, kisi, eylem, fetchFn = fetch) {
     if (eylem.choices?.length) govde.reply_markup = { inline_keyboard: eylem.choices.map((c, i) => [c.url ? { text: c.label, url: c.url } : { text: c.label.slice(0, 64), callback_data: `s:${eylem.adim}:${i}` }]) };
     if (eylem.media?.url) return tgCagir(env, eylem.media.tip === 'video' ? 'sendVideo' : 'sendPhoto', { chat_id, [eylem.media.tip === 'video' ? 'video' : 'photo']: eylem.media.url, caption: govde.text.slice(0, 1024), reply_markup: govde.reply_markup }, fetchFn);
     return tgCagir(env, 'sendMessage', govde, fetchFn);
+  }
+  if (eylem.tip === 'karusel') {
+    // Telegram'da yatay kart karuseli yok: her kart kendi butonlarıyla ayrı mesaj.
+    const gotolar = karuselGotoButonlari(eylem.kartlar);
+    let son = null;
+    for (const k of eylem.kartlar || []) {
+      const klavye = (k.buttons || []).map((b) => [b.url
+        ? { text: String(b.label).slice(0, 64), url: b.url }
+        : { text: String(b.label).slice(0, 64), callback_data: `s:${eylem.adim}:${gotolar.indexOf(b)}` }]);
+      const yazi = [k.title, k.subtitle].filter(Boolean).join('\n');
+      const markup = klavye.length ? { inline_keyboard: klavye } : undefined;
+      son = k.image_url
+        ? await tgCagir(env, 'sendPhoto', { chat_id, photo: k.image_url, caption: yazi.slice(0, 1024), reply_markup: markup }, fetchFn)
+        : await tgCagir(env, 'sendMessage', { chat_id, text: yazi.slice(0, 4096), reply_markup: markup }, fetchFn);
+    }
+    return son;
   }
   return null;
 }
