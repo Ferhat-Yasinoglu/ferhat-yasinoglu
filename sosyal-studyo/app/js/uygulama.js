@@ -3,7 +3,7 @@
 // ctx: { depo, t, git, bildir, basari, hata, modal, onayla, sor, ayarlar, mod, param, sorgu, yenileBantlar }
 import { yerelDepoAc } from './depo/idb.js';
 import { tohumla } from './depo/tohum.js';
-import { hatirlatmaGerekli } from './depo/yedek.js';
+import { hatirlatmaGerekli, hatirlatmaMetni } from './depo/yedek.js';
 import { Yonlendirici } from './cekirdek/yonlendirici.js';
 import { el, temizle, btn, sirala } from './cekirdek/dom.js';
 import { simge } from './cekirdek/simge.js';
@@ -135,7 +135,7 @@ async function bantlariYenile(ctx) {
   if (!navigator.onLine || kuyruk) parcalar.push(el('div', { class: 'bant bant--gri' }, simge(navigator.onLine ? 'yukle' : 'anten', { boy: 18 }), navigator.onLine ? t('bant.kuyruk', 'Worker\'a gönderilmeyi bekleyen {n} değişiklik.', { n: kuyruk }) : t('bant.cevrimdisi', 'Çevrimdışısın; değişiklikler bu cihazda kaydediliyor.'), kuyruk && navigator.onLine ? btn(t('bant.simdi_gonder', 'Şimdi gönder'), { class: 'btn btn--kucuk', onclick: () => ctx.depo.gidenKutusunuBosalt().then(() => bantlariYenile(ctx)) }) : null));
   if (ctx.depo.mod === 'bagli' && ctx.depo.cevrimici === false) parcalar.push(el('div', { class: 'bant bant--kirmizi' }, simge('uyari', { boy: 18 }), t('bant.worker_yok', 'Worker\'a ulaşılamıyor; önbellekten gösteriliyor.')));
   const h = hatirlatmaGerekli(meta, ayar);
-  if (h.gerekli) parcalar.push(el('div', { class: 'bant bant--sari' }, simge('kaydet', { boy: 18 }), t('bant.yedek', 'Yedek eski: {sebep}.', { sebep: h.sebep }), btn(t('bant.yedek_indir', 'Yedeği indir'), { class: 'btn btn--kucuk', onclick: async () => { const { indir } = await import('./depo/yedek.js'); await indir(await ctx.depo.disaAktar()); basari(t('yedek.indirildi', 'Yedek indirildi')); bantlariYenile(ctx); } })));
+  if (h.gerekli) parcalar.push(el('div', { class: 'bant bant--sari' }, simge('kaydet', { boy: 18 }), t('bant.yedek', 'Yedek eski: {sebep}.', { sebep: hatirlatmaMetni(h, t) }), btn(t('bant.yedek_indir', 'Yedeği indir'), { class: 'btn btn--kucuk', onclick: async () => { const { indir } = await import('./depo/yedek.js'); await indir(await ctx.depo.disaAktar()); basari(t('yedek.indirildi', 'Yedek indirildi')); bantlariYenile(ctx); } })));
   if (benimSira !== bantSira) return; // daha yeni bir çizim başladı
   temizle(kap); for (const p of parcalar) kap.appendChild(p);
 }
