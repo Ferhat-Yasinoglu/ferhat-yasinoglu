@@ -82,4 +82,16 @@ jobs:
                 }
                 console.log(`  token gecerli -> @${j.username} (id ${j.id}, tip ${j.account_type||"?"})`);
               })'
+            # Webhook abonelik anahtari: panelde "Webhook Subscription" kapaliysa Meta hic olay
+            # gondermez, her sey yesil gorunur ve sebep hicbir yerde yazmaz.
+            curl -sS -H "Authorization: Bearer $IG_ACCESS_TOKEN" "https://graph.instagram.com/v26.0/me/subscribed_apps" | node -e '
+              let s=""; process.stdin.on("data",d=>s+=d).on("end",()=>{
+                let j; try { j = JSON.parse(s) } catch { console.log("  abonelik: cevap okunamadi"); return }
+                if (j.error) { console.log(`  abonelik sorulamadi: ${j.error.message} [kod=${j.error.code||"?"}]`); return }
+                const kayitlar = j.data || [];
+                const alanlar = kayitlar.flatMap(k => k.subscribed_fields || []);
+                if (!kayitlar.length) { console.log("  ABONELIK YOK -> Meta panelinde Webhook Subscription dugmesini On yap; kapali oldugu surece Instagram hicbir mesaj gondermez"); return }
+                console.log(`  abonelik acik -> alanlar: ${alanlar.length ? alanlar.join(", ") : "(alan bildirilmedi)"}`);
+                if (alanlar.length && !alanlar.includes("messages")) console.log("  UYARI: messages alani yok; DM gelmez");
+              })'
           fi
