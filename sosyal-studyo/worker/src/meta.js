@@ -1,4 +1,6 @@
 // Meta (Instagram + WhatsApp Cloud API) adaptörü. Graph API v26.0.
+import { karuselGotoButonlari } from '../../app/js/paylasilan/akis/adimlar.js';
+
 const G = 'https://graph.facebook.com/v26.0';
 
 async function graph(yol, { token, method = 'POST', govde, query } = {}, fetchFn = fetch) {
@@ -66,6 +68,21 @@ export async function igGonder(env, kisi, eylem, fetchFn = fetch) {
     return graph('me/messages', { token, govde: { recipient: { id: kisi.dis_id }, message } }, fetchFn);
   }
   if (eylem.tip === 'ozel_yanit') return graph('me/messages', { token, govde: { recipient: { comment_id: eylem.yorumId }, message: { text: String(eylem.text || '').slice(0, 1000), ...(eylem.choices?.length ? { quick_replies: eylem.choices.slice(0, 13).map((c, i) => ({ content_type: 'text', title: c.label.slice(0, 20), payload: `s:${eylem.adim}:${i}` })) } : {}) } } }, fetchFn);
+  if (eylem.tip === 'karusel') {
+    // Instagram generic template: en fazla 10 eleman, eleman başına 3 buton.
+    const gotolar = karuselGotoButonlari(eylem.kartlar);
+    const elements = (eylem.kartlar || []).slice(0, 10).map((k) => {
+      const e = { title: String(k.title).slice(0, 80) };
+      if (k.subtitle) e.subtitle = String(k.subtitle).slice(0, 80);
+      if (k.image_url) e.image_url = k.image_url;
+      const bl = (k.buttons || []).slice(0, 3).map((b) => (b.url
+        ? { type: 'web_url', url: b.url, title: String(b.label).slice(0, 20) }
+        : { type: 'postback', title: String(b.label).slice(0, 20), payload: `s:${eylem.adim}:${gotolar.indexOf(b)}` }));
+      if (bl.length) e.buttons = bl;
+      return e;
+    });
+    return graph('me/messages', { token, govde: { recipient: { id: kisi.dis_id }, message: { attachment: { type: 'template', payload: { template_type: 'generic', elements } } } } }, fetchFn);
+  }
   if (eylem.tip === 'yorum_yanit') return graph(`${eylem.yorumId}/replies`, { token, query: { message: String(eylem.text || '').slice(0, 1000) } }, fetchFn);
   if (eylem.tip === 'gizle') return graph(`${eylem.yorumId}`, { token, query: { hide: 'true' } }, fetchFn);
   return null;

@@ -3,6 +3,15 @@
 // yapılması gereken eylemleri liste olarak döner. Gönderim, veritabanı, ağ
 // burada YOK: tarayıcıdaki simülatör de, Worker da aynı dosyayı çalıştırır.
 import { doldur, eslesir, normalize, varyantSec } from '../metin.js';
+import { karuselGotoButonlari } from './adimlar.js';
+
+/** Adımın seçenek listesi: buttons adımında choices, karuselde goto'lu kart butonları.
+    Yalnız url taşıyan buton bir bağlantıdır, seçim değildir. */
+function secenekListesi(adim) {
+  if (!adim) return [];
+  if (adim.type === 'carousel') return karuselGotoButonlari(adim.cards);
+  return adim.choices || [];
+}
 
 const EN_FAZLA_ADIM_TURU = 200; // sonsuz goto döngüsüne karşı kalkan
 
@@ -107,16 +116,25 @@ export async function ilerlet(kosuGirdi, kisiGirdi, girdi, ctx = {}) {
       if (adim.save_as) { kosu.degiskenler[adim.save_as] = girdi.text; kisi.degiskenler[adim.save_as] = girdi.text; }
       kosu.bekleme = null; kosu.adim += 1;
     } else if (kosu.bekleme === 'choice') {
+      // Karusel adımında seçenekler kartların butonlarında durur; ikisini aynı listeye indir.
+      const secenekler = secenekListesi(adim);
       let secim = null;
       if (girdi.tur === 'buton') {
         if (girdi.adim !== undefined && girdi.adim !== kosu.adim) return { kosu, kisi, eylemler }; // eski buton
-        secim = adim.choices.find((c) => (girdi.value !== undefined && c.value === girdi.value) || normalize(c.label) === normalize(girdi.label));
+        secim = secenekler.find((c) => (girdi.value !== undefined && c.value === girdi.value) || normalize(c.label) === normalize(girdi.label));
       } else if (girdi.tur === 'metin') {
-        secim = adim.choices.find((c) => normalize(c.label) === normalize(girdi.text) || (c.value && normalize(c.value) === normalize(girdi.text)));
+        secim = secenekler.find((c) => normalize(c.label) === normalize(girdi.text) || (c.value && normalize(c.value) === normalize(girdi.text)));
       }
       if (!secim) {
-        // Hiçbir seçeneğe uymayan cevap: soruyu yeniden sor, ilerleme yok.
-        eylemler.push({ tip: 'mesaj', text: doldur(adim.text, degiskenler(kosu, kisi)), choices: adim.choices, adim: kosu.adim });
+        // Hiçbir seçeneğe uymayan cevap: adımı yeniden gönder, ilerleme yok.
+        const d = degiskenler(kosu, kisi);
+        if (adim.type === 'carousel') {
+          eylemler.push({ tip: 'karusel', kartlar: (adim.cards || []).map((c) => ({
+            ...c, title: doldur(c.title, d), subtitle: c.subtitle ? doldur(c.subtitle, d) : undefined,
+          })), adim: kosu.adim });
+        } else {
+          eylemler.push({ tip: 'mesaj', text: doldur(adim.text, d), choices: adim.choices, adim: kosu.adim });
+        }
         return { kosu, kisi, eylemler };
       }
       if (adim.save_as) { kosu.degiskenler[adim.save_as] = secim.value ?? secim.label; kisi.degiskenler[adim.save_as] = secim.value ?? secim.label; }
@@ -150,6 +168,16 @@ export async function ilerlet(kosuGirdi, kisiGirdi, girdi, ctx = {}) {
       case 'note': kosu.adim += 1; break;
       case 'message':
         eylemler.push({ tip: 'mesaj', text: doldur(a.text, d), media: a.media, adim: i });
+        kosu.adim += 1; break;
+      case 'carousel':
+        // Kart metinleri de değişken alır; bir butonda goto varsa akış seçim bekler.
+        eylemler.push({ tip: 'karusel', kartlar: (a.cards || []).map((c) => ({
+          ...c, title: doldur(c.title, d), subtitle: c.subtitle ? doldur(c.subtitle, d) : undefined,
+        })), adim: i });
+        if ((a.cards || []).some((c) => (c.buttons || []).some((b) => b.goto !== undefined))) {
+          kosu.bekleme = 'choice'; kosu.kaydet_alan = a.save_as || null;
+          return { kosu, kisi, eylemler };
+        }
         kosu.adim += 1; break;
       case 'question':
         eylemler.push({ tip: 'mesaj', text: doldur(a.text, d), adim: i });
