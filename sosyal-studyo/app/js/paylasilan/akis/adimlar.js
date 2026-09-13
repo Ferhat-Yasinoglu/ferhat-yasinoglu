@@ -1,12 +1,17 @@
 // Akış adım tipleri ve doğrulama. botflow-mcp'nin yedi adımı (message, question,
-// buttons, delay, tag, goto, end) + sekiz yeni (note, condition, ai_reply, score,
-// webhook, comment_reply, private_reply, hide). Akış yayınlanırken doğrulanır,
-// koşarken değil: goto dışarı taşan bir akış kimseyi sohbet ortasında bırakmaz.
+// buttons, delay, tag, goto, end) + dokuz yeni (note, condition, ai_reply, score,
+// webhook, comment_reply, private_reply, hide, carousel). Akış yayınlanırken
+// doğrulanır, koşarken değil: goto dışarı taşan bir akış kimseyi sohbet
+// ortasında bırakmaz.
 
 export const ADIM_TIPLERI = [
   'message', 'question', 'buttons', 'delay', 'tag', 'goto', 'end', 'note',
   'condition', 'ai_reply', 'score', 'webhook', 'comment_reply', 'private_reply', 'hide',
+  'carousel',
 ];
+
+// Gönderilebilir kart karuseli sınırları (Instagram generic template tavanı 10).
+export const KARUSEL_SINIRI = { kart: 10, baslik: 80, altyazi: 80, buton: 3 };
 
 export const KOSUL_TURLERI = ['tag', 'var', 'follows', 'time', 'score', 'channel', 'window_open'];
 
@@ -19,6 +24,12 @@ export const KANAL_SINIRLARI = {
   instagram: { buton: 3,   etiket: 20,  metin: 1000 },
   whatsapp:  { buton: 3,   etiket: 20,  metin: 4096 },
 };
+
+/** Karuselin seçim üreten butonları, kart sırasıyla düz liste. Koşucu ve
+    göndericiler buton indisini bu sıradan okur; ikisi ayrışmasın diye tek yerde. */
+export function karuselGotoButonlari(kartlar = []) {
+  return kartlar.flatMap((c) => (c?.buttons || []).filter((b) => b && b.goto !== undefined));
+}
 
 const DEGISKEN_ADI = /^[A-Za-z_][A-Za-z0-9_]{0,39}$/;
 
@@ -69,6 +80,34 @@ export function adimlariDogrula(adimlar, { kanal, tetikleyiciTipleri = [] } = {}
       gorulen.add(n);
       hedefKontrol(i, `choices[${j}].goto`, s.goto);
       if (s.url !== undefined && !/^https:\/\//.test(String(s.url))) hata(i, `choices[${j}].url https olmalı`);
+    });
+  };
+
+  // Gönderilebilir karusel: her kart bir başlık + isteğe bağlı görsel ve butonlar.
+  // Karusel sayfasındaki PNG tasarımcısından ayrıdır; bu mesajla gönderilir.
+  const kartlar = (i, liste) => {
+    if (!Array.isArray(liste) || liste.length === 0) return hata(i, 'cards boş');
+    if (liste.length > KARUSEL_SINIRI.kart) hata(i, `en fazla ${KARUSEL_SINIRI.kart} kart`);
+    liste.forEach((c, j) => {
+      if (!c || typeof c !== 'object') return hata(i, `cards[${j}] bir nesne olmalı`);
+      if (typeof c.title !== 'string' || !c.title.trim()) hata(i, `cards[${j}].title boş`);
+      else if (c.title.length > KARUSEL_SINIRI.baslik) hata(i, `cards[${j}].title ${KARUSEL_SINIRI.baslik} karakteri aşıyor`);
+      if (c.subtitle !== undefined) {
+        if (typeof c.subtitle !== 'string') hata(i, `cards[${j}].subtitle metin olmalı`);
+        else if (c.subtitle.length > KARUSEL_SINIRI.altyazi) hata(i, `cards[${j}].subtitle ${KARUSEL_SINIRI.altyazi} karakteri aşıyor`);
+      }
+      if (c.image_url !== undefined && !/^https:\/\//.test(String(c.image_url))) hata(i, `cards[${j}].image_url https olmalı`);
+      if (c.buttons !== undefined) {
+        if (!Array.isArray(c.buttons)) return hata(i, `cards[${j}].buttons liste olmalı`);
+        if (c.buttons.length > KARUSEL_SINIRI.buton) hata(i, `cards[${j}] en fazla ${KARUSEL_SINIRI.buton} buton`);
+        c.buttons.forEach((b, m) => {
+          if (!b || typeof b.label !== 'string' || !b.label.trim()) return hata(i, `cards[${j}].buttons[${m}].label boş`);
+          if (b.label.length > 20) hata(i, `cards[${j}].buttons[${m}].label 20 karakteri aşıyor`);
+          if (b.url !== undefined && !/^https:\/\//.test(String(b.url))) hata(i, `cards[${j}].buttons[${m}].url https olmalı`);
+          hedefKontrol(i, `cards[${j}].buttons[${m}].goto`, b.goto);
+          if (b.url === undefined && b.goto === undefined) hata(i, `cards[${j}].buttons[${m}]: url ya da goto gerekli`);
+        });
+      }
     });
   };
 
@@ -123,6 +162,9 @@ export function adimlariDogrula(adimlar, { kanal, tetikleyiciTipleri = [] } = {}
         else if (a.texts.length < 10) uyar(i, 'yorum yanıtı için en az 10 varyant önerilir (spam algısı)');
         if (!yorumTetigi) hata(i, 'comment_reply için akışta yorum tetikleyicisi olmalı');
         break;
+      case 'carousel':
+        kartlar(i, a.cards);
+        break;
       case 'private_reply':
         metinKontrol(i, 'text', a.text); secenekler(i, a.choices, false);
         if (!yorumTetigi) hata(i, 'private_reply için akışta yorum tetikleyicisi olmalı');
@@ -151,4 +193,5 @@ export const ADIM_BILGI = {
   comment_reply: { ad: 'Yoruma yanıt',    ikon: 'sohbet' },
   private_reply: { ad: 'Yorum → DM',      ikon: 'gelen' },
   hide:          { ad: 'Yorumu gizle',    ikon: 'gozKapali' },
+  carousel:      { ad: 'Karusel',          ikon: 'karusel' },
 };

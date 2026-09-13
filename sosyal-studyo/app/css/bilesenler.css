@@ -493,3 +493,35 @@ span.sema__dal { cursor: default; }
 
 /* Şema dal etiketi telefonda kutuya sığmıyordu; sarsın. */
 .sema__dallar { min-width: 0; }
+
+/* ================= Gönderilebilir karusel =================
+   Simülatörde ve akış önizlemesinde kart şeridi. Gerçekte Instagram
+   generic template, Telegram'da ardışık kart mesajları olarak gider. */
+/* Karusel balonu sohbet sütununun tamamını alır: yoksa tek kart sığar ve
+   şerit kaydırılabilir görünmez. */
+.balon:has(.karusel-serit) { max-inline-size: 100%; inline-size: 100%; }
+.karusel-serit {
+  display: flex; gap: var(--b-2); overflow-x: auto; padding-block-end: var(--b-2);
+  margin-block-start: var(--b-2); scroll-snap-type: x mandatory;
+  scrollbar-width: thin; scrollbar-color: rgb(var(--vurgu) / .4) transparent;
+}
+.karusel-kart {
+  flex: none; inline-size: 165px; scroll-snap-align: start;
+  display: flex; flex-direction: column; gap: 5px; padding: var(--b-2);
+  border: 1px solid rgb(var(--vurgu) / .3); border-radius: var(--r-2);
+  background: rgb(var(--vurgu) / .06);
+}
+.karusel-kart__gorsel {
+  inline-size: 100%; aspect-ratio: 16 / 9; object-fit: cover;
+  border-radius: var(--r-1); background: rgb(var(--metin-3) / .15);
+}
+.karusel-kart__baslik { font-weight: 700; font-size: var(--f-s); line-height: 1.35; }
+.karusel-kart__alt { color: rgb(var(--metin-2)); font-size: var(--f-xs); line-height: 1.4; }
+.karusel-kart__btn {
+  display: block; margin-block-start: auto; padding: 7px 10px; border-radius: var(--r-1);
+  border: 1px solid rgb(var(--vurgu) / .45); background: none; color: rgb(var(--vurgu-2));
+  font: inherit; font-size: var(--f-xs); font-weight: 650; text-align: center;
+  text-decoration: none; cursor: pointer; transition: background var(--gecis);
+}
+.karusel-kart__btn:hover { background: rgb(var(--vurgu) / .18); }
+@media (pointer: coarse) { .karusel-kart__btn { min-height: 40px; } }

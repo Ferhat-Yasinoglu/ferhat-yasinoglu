@@ -5,11 +5,14 @@ import { simge } from '../cekirdek/simge.js';
 import { bos } from '../cekirdek/durum.js';
 import { pencereAcik, KANALLAR } from '../paylasilan/kanallar.js';
 
-export function aliciSec(kisiler, { hesap_id, kanal, etiketHepsi = [], etiketHerhangi = [], etiketHaric = [], secili }) {
+export function aliciSec(kisiler, { hesap_id, kanal, etiketHepsi = [], etiketHerhangi = [], etiketHaric = [], sonGun, secili }, simdi = Date.now()) {
+  const esik = Number.isFinite(sonGun) && sonGun > 0 ? simdi - sonGun * 86400000 : null;
   return kisiler.filter((k) => {
     if (secili?.length) return secili.includes(k.id);
     if (hesap_id && k.hesap_id !== hesap_id) return false;
     if (kanal && k.kanal !== kanal) return false;
+    // "Son N günde yazan": hiç yazmamış kişi bu segmente girmez.
+    if (esik !== null && !(k.son_gelen && Date.parse(k.son_gelen) >= esik)) return false;
     const e = k.etiketler || [];
     if (etiketHepsi.length && !etiketHepsi.every((x) => e.includes(x))) return false;
     if (etiketHerhangi.length && !etiketHerhangi.some((x) => e.includes(x))) return false;
@@ -56,11 +59,12 @@ async function yeniCiz(kok, ctx) {
   const haric = girdi({ placeholder: t('toplu.etiket_haric', 'hariç') });
   const metin = metinAlani({ placeholder: t('toplu.metin', 'Mesaj… {{ad}} kullanılabilir'), rows: 4 });
   const butonlar = girdi({ placeholder: t('toplu.butonlar', 'Butonlar (virgül, en fazla 3)') });
+  const sonGun = girdi({ type: 'number', min: 1, max: 365, placeholder: t('toplu.son_gun_ipucu', 'ör. 30') });
   const zaman = girdi({ type: 'datetime-local' });
   const ozet = el('div', { class: 'bant bant--mavi' });
   const liste = (g) => g.value.split(',').map((s) => s.trim()).filter(Boolean);
   function hesapla() {
-    const secim = { hesap_id: hesap.value || undefined, kanal: kanal.value || (hesaplar.find((h) => h.id === hesap.value)?.kanal) || undefined, etiketHepsi: liste(hepsi), etiketHerhangi: liste(herhangi), etiketHaric: liste(haric), secili };
+    const secim = { hesap_id: hesap.value || undefined, kanal: kanal.value || (hesaplar.find((h) => h.id === hesap.value)?.kanal) || undefined, etiketHepsi: liste(hepsi), etiketHerhangi: liste(herhangi), etiketHaric: liste(haric), sonGun: sonGun.value ? Number(sonGun.value) : undefined, secili };
     const alicilar = aliciSec(kisiler, secim);
     const acik = alicilar.filter((k) => pencereAcik(k));
     const igKapali = alicilar.filter((k) => k.kanal === 'instagram' && !pencereAcik(k)).length;
@@ -68,14 +72,14 @@ async function yeniCiz(kok, ctx) {
     ozet.replaceChildren(el('span', { class: 'satir' }, simge('kisiler', { boy: 15 }), `${alicilar.length} ${t('toplu.alici', 'alıcı')} · ${acik.length} ${t('toplu.pencere_acik', 'penceresi açık')}`), igKapali ? el('span', {}, ` · Instagram'da ${igKapali} kişi atlanacak (24 sa dışı)`) : null, wa ? el('span', {}, ` · WhatsApp ${wa}: ${t('toplu.wa_sablon', 'yalnız onaylı şablonla')}`) : null);
     return { alicilar, acik, secim };
   }
-  for (const g of [hesap, kanal, hepsi, herhangi, haric]) g.oninput = hesapla; hesap.onchange = hesapla; kanal.onchange = hesapla;
+  for (const g of [hesap, kanal, hepsi, herhangi, haric, sonGun]) g.oninput = hesapla; hesap.onchange = hesapla; kanal.onchange = hesapla;
   hesapla();
   async function kaydet(durum) {
     const { alicilar, acik, secim } = hesapla();
     const adimlar = [{ type: 'message', text: metin.value.trim() }]; const b = liste(butonlar).slice(0, 3); if (b.length) adimlar[0] = { type: 'buttons', text: metin.value.trim(), choices: b.map((label) => ({ label })) };
     if (!metin.value.trim()) { ctx.hata(t('toplu.metin_gerekli', 'Mesaj boş olamaz')); return; }
     const mod = await ctx.mod();
-    const is = { ad: ad.value.trim(), hesap_id: hesap.value || null, kanal: secim.kanal || null, adimlar, segment: { hepsi: secim.etiketHepsi, herhangi: secim.etiketHerhangi, haric: secim.etiketHaric, secili }, alicilar_donduruldu: alicilar.map((k) => k.id), planlanan: zaman.value ? new Date(zaman.value).toISOString() : null, durum, prova: mod === 'yerel' ? 1 : 0, sayim: { toplam: alicilar.length, gonderildi: 0, atlandi: 0, basarisiz: 0 } };
+    const is = { ad: ad.value.trim(), hesap_id: hesap.value || null, kanal: secim.kanal || null, adimlar, segment: { hepsi: secim.etiketHepsi, herhangi: secim.etiketHerhangi, haric: secim.etiketHaric, son_gun: secim.sonGun ?? null, secili }, alicilar_donduruldu: alicilar.map((k) => k.id), planlanan: zaman.value ? new Date(zaman.value).toISOString() : null, durum, prova: mod === 'yerel' ? 1 : 0, sayim: { toplam: alicilar.length, gonderildi: 0, atlandi: 0, basarisiz: 0 } };
     if (durum === 'simule') { is.sayim = { toplam: alicilar.length, gonderildi: acik.length, atlandi: alicilar.length - acik.length, basarisiz: 0 }; is.durum = 'simule'; is.baslangic = new Date().toISOString(); is.bitis = is.baslangic; for (const k of acik.slice(0, 50)) await depo.kaydet('gunluk', { sanal: 1, zaman: new Date().toISOString(), kanal: k.kanal, kisi_id: k.id, olay_tipi: 'toplu', metin_ozeti: metin.value.slice(0, 80), karar: { tur: 'toplu' }, prova: 1, gonderildi: 0 }); }
     const y = await depo.kaydet('toplu_mesajlar', is);
     ctx.basari(durum === 'simule' ? t('toplu.simule_edildi', 'Simüle edildi: {n} kişiye gidecekti', { n: acik.length }) : t('genel.kaydedildi', 'Kaydedildi'));
@@ -84,7 +88,7 @@ async function yeniCiz(kok, ctx) {
   const mod = await ctx.mod();
   kok.append(sayfaBas(t('toplu.yeni', 'Yeni toplu mesaj'), { geri: () => git('/toplu') }),
     alan(t('toplu.ad', 'Ad'), ad), el('div', { class: 'satir' }, alan(t('akis.hesap', 'Hesap'), hesap), alan(t('toplu.kanal', 'Kanal'), kanal)),
-    el('h2', {}, t('toplu.hedef', 'Hedef')), secili.length ? el('p', { class: 'bant bant--mavi' }, `${secili.length} ${t('toplu.secili', 'seçili kişi')}`) : null, alan(t('toplu.hepsi', 'Şu etiketlerin hepsi'), hepsi), alan(t('toplu.herhangi', 'Herhangi biri'), herhangi), alan(t('toplu.haric', 'Hariç'), haric), ozet,
+    el('h2', {}, t('toplu.hedef', 'Hedef')), secili.length ? el('p', { class: 'bant bant--mavi' }, `${secili.length} ${t('toplu.secili', 'seçili kişi')}`) : null, alan(t('toplu.hepsi', 'Şu etiketlerin hepsi'), hepsi), alan(t('toplu.herhangi', 'Herhangi biri'), herhangi), alan(t('toplu.haric', 'Hariç'), haric), alan(t('toplu.son_gun', 'Yalnız son N günde yazanlar (boş = hepsi)'), sonGun, { ipucu: t('toplu.son_gun_not', 'Uzun süredir sessiz kişileri elemek için. Instagram zaten 24 saat penceresi ister.') }), ozet,
     el('h2', {}, t('toplu.mesaj', 'Mesaj')), alan(t('adim.metin', 'Metin'), metin), alan(t('toplu.butonlar_etiket', 'Butonlar'), butonlar, { ipucu: t('toplu.buton_ipucu', 'Instagram/WhatsApp en fazla 3 buton gösterir.') }),
     el('h2', {}, t('toplu.zaman', 'Zaman')), alan(t('toplu.planla', 'Planla (boş = hemen)'), zaman),
     el('div', { class: 'satir' }, btn(t('toplu.taslak', 'Taslak kaydet'), { onclick: () => kaydet('taslak') }), mod === 'yerel' ? btnS('prova', t('toplu.simule', 'Simüle et'), { class: 'btn btn--birincil', onclick: () => kaydet('simule') }) : btn(t('toplu.kuyruga', 'Kuyruğa al'), { class: 'btn btn--birincil', onclick: () => kaydet('kuyrukta') })),

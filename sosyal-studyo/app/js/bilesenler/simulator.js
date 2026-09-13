@@ -47,6 +47,22 @@ export function simulator(kok, { akis, depo, t, kanal = 'telegram', tetikTipi = 
         let butonlar = null;
         if (e.choices?.length) butonlar = el('div', { class: 'balon__butonlar' }, ...e.choices.map((c) => btn(c.label, { onclick: () => butonBas(c, e.adim) })));
         { const b = balon('', 'giden', butonlar); if (e.kaynak === 'ai') b.insertBefore(simge('parilti', { boy: 14 }), b.firstChild); b.insertBefore(document.createTextNode(e.text), butonlar || null); }
+      } else if (e.tip === 'karusel') {
+        // Yatay kaydırılan kart şeridi: telefonda gerçekte göründüğü gibi.
+        const serit = el('div', { class: 'karusel-serit' });
+        for (const k of e.kartlar || []) {
+          const kart = el('div', { class: 'karusel-kart' });
+          if (k.image_url) kart.appendChild(el('img', { class: 'karusel-kart__gorsel', src: k.image_url, alt: '', loading: 'lazy' }));
+          kart.appendChild(el('div', { class: 'karusel-kart__baslik' }, k.title));
+          if (k.subtitle) kart.appendChild(el('div', { class: 'karusel-kart__alt' }, k.subtitle));
+          for (const b of k.buttons || []) {
+            kart.appendChild(b.url
+              ? el('a', { class: 'karusel-kart__btn', href: b.url, target: '_blank', rel: 'noopener noreferrer' }, b.label)
+              : btn(b.label, { class: 'karusel-kart__btn', onclick: () => butonBas(b, e.adim) }));
+          }
+          serit.appendChild(kart);
+        }
+        balon('', 'giden', serit);
       } else if (e.tip === 'yorum_yanit') balon(t('sim.yorum_yanit', 'Yoruma yanıt') + ': ' + e.text, 'giden');
       else if (e.tip === 'ozel_yanit') balon(t('sim.ozel', 'Yorum → DM') + ': ' + e.text, 'giden', e.choices?.length ? el('div', { class: 'balon__butonlar' }, ...e.choices.map((c) => btn(c.label, { onclick: () => butonBas(c, e.adim) }))) : null);
       else if (e.tip === 'gizle') sistem(t('sim.gizle', 'yorum gizlendi'), 'gozKapali');
@@ -97,6 +113,6 @@ export function simulator(kok, { akis, depo, t, kanal = 'telegram', tetikTipi = 
 
 export const adimOzeti = (a) => {
   const b = ADIM_BILGI[a.type] || { ad: a.type, ikon: 'bilgi' };
-  const m = a.text || a.texts?.[0] || a.reason || a.url || (a.add_tags ? '+' + a.add_tags.join(', ') : '') || (a.remove_tags ? '−' + a.remove_tags.join(', ') : '') || (a.seconds !== undefined ? `${a.seconds} sn` : '') || (a.goto !== undefined ? `→ ${a.goto + 1}` : '') || (a.check ? `${a.check.kind} → evet ${a.then + 1} / hayır ${a.else + 1}` : '') || a.instruction || '';
+  const m = a.text || a.texts?.[0] || (a.cards ? `${a.cards.length} kart · ${a.cards.map((c) => c.title).filter(Boolean).join(' · ').slice(0, 60)}` : '') || a.reason || a.url || (a.add_tags ? '+' + a.add_tags.join(', ') : '') || (a.remove_tags ? '−' + a.remove_tags.join(', ') : '') || (a.seconds !== undefined ? `${a.seconds} sn` : '') || (a.goto !== undefined ? `→ ${a.goto + 1}` : '') || (a.check ? `${a.check.kind} → evet ${a.then + 1} / hayır ${a.else + 1}` : '') || a.instruction || '';
   return { ...b, metin: m };
 };
