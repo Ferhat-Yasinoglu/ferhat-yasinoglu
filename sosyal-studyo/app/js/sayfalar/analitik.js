@@ -23,10 +23,12 @@ export default {
       const fark = (a, b) => { const y = yuzde(a, b); return el('span', { class: 'kart__alt', style: { color: y >= 0 ? 'rgb(var(--yesil))' : 'rgb(var(--kirmizi))' } }, `${y >= 0 ? '+' : '−'}${Math.abs(y)}%`); };
       // Seriler marka tokenlarıyla boyanır: başlatma altın (ana ölçü), tamamlama yeşil (sonuç).
       const seriler = [
-        { ad: t('analitik.baslatma', 'Başlatma'), degerler: o.gunler.map((g) => o.seri[g].baslat), renk: 'rgb(var(--vurgu))' },
-        { ad: t('analitik.tamamlama', 'Tamamlama'), degerler: o.gunler.map((g) => o.seri[g].bitir), renk: 'rgb(var(--yesil))' },
+        { ad: t('analitik.baslatma', 'Başlatma'), degerler: o.gunler.map((g) => o.seri[g].baslat), renk: 'rgb(var(--seri-1))' },
+        { ad: t('analitik.tamamlama', 'Tamamlama'), degerler: o.gunler.map((g) => o.seri[g].bitir), renk: 'rgb(var(--seri-3))' },
       ];
-      const grafik = el('div', {}, cizgiGrafigi(o.gunler, seriler), grafikAnahtari(seriler));
+      const bosMetin = { baslik: t('grafik.veri_yok', 'Bu aralıkta veri yok'), alt: t('grafik.veri_yok_alt', 'Akışlar çalışmaya başlayınca gün gün eğilim burada çizilir.') };
+      const veriVar = seriler.some((x) => x.degerler.some((v) => v > 0));
+      const grafik = el('div', {}, cizgiGrafigi(o.gunler, seriler, { bos: bosMetin }), veriVar ? grafikAnahtari(seriler) : null);
       const akis = akisSec.value ? akislar.find((a) => a.id === akisSec.value) : null;
       const huni = akis ? el('div', { class: 'liste' }, ...akis.adimlar.map((a, i) => { const n = o.adim[i] || 0; const en = Math.max(1, ...Object.values(o.adim)); return el('div', { class: 'liste__satir' }, el('span', { class: 'adim__no' }, String(i + 1)), el('div', { class: 'liste__govde' }, el('div', { class: 'liste__alt' }, a.type + ': ' + (a.text || a.reason || '').slice(0, 40)), el('div', { class: 'ilerleme' }, el('div', { class: 'ilerleme__dolu', style: { width: `${(n / en) * 100}%` } }))), el('strong', {}, String(n))); })) : el('p', { class: 'kart__alt' }, t('analitik.akis_sec', 'Adım ulaşma hunisi için bir akış seç.'));
       const kirilim = (obj) => el('div', { class: 'satir' }, ...Object.entries(obj).sort((a, b) => b[1] - a[1]).map(([k, v]) => el('span', { class: 'cip' }, `${k}: ${v}`)), !Object.keys(obj).length ? el('span', { class: 'kart__alt' }, '—') : null);

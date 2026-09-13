@@ -94,7 +94,10 @@ export function sparkline(degerler, { g = 160, y = 40, dolgu = true } = {}) {
   const enB = Math.max(...d), enK = Math.min(...d);
   const araliq = enB - enK || 1;
   const adim = g / (d.length - 1);
-  const nokta = d.map((v, i) => [i * adim, y - 3 - ((v - enK) / araliq) * (y - 8)]);
+  // Taban 5px yukarıda: sıfır çizgisi kartın alt kenarında kaybolmasın. Yoksa
+  // çoğu günü sıfır olan seride yalnız köşedeki diyagonal görünüyor, çizgi
+  // grafik değil çizim hatası gibi duruyordu.
+  const nokta = d.map((v, i) => [i * adim, y - 5 - ((v - enK) / araliq) * (y - 12)]);
   const cizgi = nokta.map(([x, yy], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${yy.toFixed(1)}`).join(' ');
   const svg = svgEl('svg', { class: 'grafik', viewBox: `0 0 ${g} ${y}`, preserveAspectRatio: 'none', 'aria-hidden': 'true' });
   if (dolgu) svg.appendChild(svgEl('path', { class: 'grafik__alan', d: `${cizgi} L${g} ${y} L0 ${y} Z` }));
@@ -165,45 +168,104 @@ export function sirala(kap, sinif = 'sirali') {
 /** Çok serili çizgi grafik. `seriler` = [{ ad, degerler, renk }]. Renk bir CSS
  *  rengi (ör. 'rgb(var(--vurgu))'); marka tokenları geçerlidir.
  *  DOM ile kurulur — proje genelinde innerHTML kullanılmaz. */
-export function cizgiGrafigi(etiketler, seriler, { g = 600, y: yuk = 200 } = {}) {
-  const solP = 34, altP = 24, ustP = 12, sagP = 10;
-  const enB = Math.max(1, ...seriler.flatMap((x) => x.degerler));
+export function cizgiGrafigi(etiketler, seriler, { g = 640, y: yuk = 220, bos } = {}) {
+  const solP = 42, altP = 28, ustP = 14, sagP = 12;
+  const tumDeger = seriler.flatMap((x) => x.degerler);
+  const veriVar = tumDeger.some((v) => v > 0);
+
+  // Hiç veri yoksa boş bir çerçeve değil, ne olduğunu söyleyen bir blok döner.
+  // Önce sıfır verili grafik kocaman boş bir kutu olarak çiziliyordu.
+  // Metin çağırandan gelir: dom.js çekirdek katman, sözlük burada aranmaz.
+  if (!veriVar) return bosDurum({ simge: simge('analitik', { boy: 30 }), baslik: bos?.baslik || '—', alt: bos?.alt });
+
+  // Ölçek: tavanı "güzel" bir sayıya yuvarla ki ızgara çizgileri tam sayı olsun.
+  const hamEnB = Math.max(1, ...tumDeger);
+  const basamak = Math.pow(10, Math.floor(Math.log10(hamEnB)));
+  const enB = Math.ceil(hamEnB / basamak) * basamak;
   const kx = (i) => solP + (i / Math.max(1, etiketler.length - 1)) * (g - solP - sagP);
   const ky = (v) => yuk - altP - (v / enB) * (yuk - altP - ustP);
 
+  const sarmal = el('div', { class: 'grafik-sarmal' });
   const svg = svgEl('svg', {
-    class: 'grafik', viewBox: `0 0 ${g} ${yuk}`, role: 'img',
+    class: 'grafik grafik--cizgi', viewBox: `0 0 ${g} ${yuk}`, role: 'img',
     'aria-label': seriler.map((x) => `${x.ad}: ${x.degerler.join(', ')}`).join(' · '),
   });
-  // Taban ekseni ve tavan değeri
+
+  // Izgara ve y ekseni: üç kademe (0, yarı, tavan). Izgara geri planda kalır.
+  for (const v of [0, enB / 2, enB]) {
+    svg.appendChild(svgEl('line', { class: 'grafik__izgara', x1: solP, y1: ky(v), x2: g - sagP, y2: ky(v) }));
+    const et = svgEl('text', { class: 'grafik__yazi', x: solP - 8, y: ky(v) + 4, 'text-anchor': 'end' });
+    et.appendChild(document.createTextNode(String(Math.round(v))));
+    svg.appendChild(et);
+  }
   svg.appendChild(svgEl('line', { class: 'grafik__eksen', x1: solP, y1: ky(0), x2: g - sagP, y2: ky(0) }));
-  const tavan = svgEl('text', { class: 'grafik__yazi', x: 4, y: ustP + 8 });
-  tavan.appendChild(document.createTextNode(String(enB)));
-  svg.appendChild(tavan);
 
   for (const [n, x] of seriler.entries()) {
     const d = x.degerler.map((v, i) => `${i ? 'L' : 'M'}${kx(i).toFixed(1)} ${ky(v).toFixed(1)}`).join('');
     svg.appendChild(svgEl('path', {
-      d, fill: 'none', stroke: x.renk, 'stroke-width': 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round',
+      d, fill: 'none', stroke: x.renk, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round',
       class: 'cizilen', style: `--uz:${Math.round(g * 1.6)};animation-delay:${n * 140}ms`,
     }));
-    for (const [i, v] of x.degerler.entries()) {
-      const nokta = svgEl('circle', { cx: kx(i).toFixed(1), cy: ky(v).toFixed(1), r: 3, fill: x.renk });
-      const baslik = svgEl('title');
-      baslik.appendChild(document.createTextNode(`${x.ad}: ${v}`));
-      nokta.appendChild(baslik);
-      svg.appendChild(nokta);
-    }
   }
+
+  // İmleç ve işaretçiler: fare hangi güne denk geliyorsa o gün vurgulanır.
+  const imlec = svgEl('line', { class: 'grafik__imlec', x1: 0, y1: ustP, x2: 0, y2: yuk - altP, opacity: '0' });
+  svg.appendChild(imlec);
+  const isaretler = seriler.map((x) => {
+    const c = svgEl('circle', { class: 'grafik__isaret', r: 4.5, fill: x.renk, opacity: '0' });
+    svg.appendChild(c); return c;
+  });
+  sarmal.appendChild(svg);
+
+  const balon = el('div', { class: 'grafik-balon', hidden: true });
+  sarmal.appendChild(balon);
+
+  const indisBul = (oranX) => {
+    const px = oranX * g;
+    let en = 0, enFark = Infinity;
+    for (let i = 0; i < etiketler.length; i++) { const f = Math.abs(kx(i) - px); if (f < enFark) { enFark = f; en = i; } }
+    return en;
+  };
+  const gizle = () => {
+    imlec.setAttribute('opacity', '0');
+    for (const c of isaretler) c.setAttribute('opacity', '0');
+    balon.hidden = true;
+  };
+  sarmal.addEventListener('pointermove', (e) => {
+    const k = sarmal.getBoundingClientRect();
+    if (!k.width) return;
+    const i = indisBul((e.clientX - k.left) / k.width);
+    imlec.setAttribute('x1', kx(i)); imlec.setAttribute('x2', kx(i)); imlec.setAttribute('opacity', '1');
+    seriler.forEach((x, n) => {
+      isaretler[n].setAttribute('cx', kx(i).toFixed(1));
+      isaretler[n].setAttribute('cy', ky(x.degerler[i] || 0).toFixed(1));
+      isaretler[n].setAttribute('opacity', '1');
+    });
+    temizle(balon);
+    balon.appendChild(el('div', { class: 'grafik-balon__gun' }, String(etiketler[i])));
+    for (const x of seriler) {
+      balon.appendChild(el('div', { class: 'grafik-balon__satir' },
+        el('i', { style: { background: x.renk } }),
+        el('span', { class: 'grafik-balon__ad' }, x.ad),
+        el('strong', {}, String(x.degerler[i] ?? 0))));
+    }
+    balon.hidden = false;
+    // Balon imlecin yanında durur, kenara dayanınca içeri kaçar.
+    const oran = kx(i) / g;
+    balon.style.insetInlineStart = `${Math.min(88, Math.max(2, oran * 100))}%`;
+    balon.style.transform = oran > 0.6 ? 'translateX(-100%)' : 'none';
+  });
+  sarmal.addEventListener('pointerleave', gizle);
+
   // Tarih etiketleri — sıkışmasın diye seyreltilir.
-  const atla = Math.ceil(etiketler.length / 10);
+  const atla = Math.ceil(etiketler.length / 8);
   for (const [i, e] of etiketler.entries()) {
     if (i % atla) continue;
-    const t = svgEl('text', { class: 'grafik__yazi', x: kx(i).toFixed(1), y: yuk - 6, 'text-anchor': 'middle' });
+    const t = svgEl('text', { class: 'grafik__yazi', x: kx(i).toFixed(1), y: yuk - 8, 'text-anchor': 'middle' });
     t.appendChild(document.createTextNode(String(e).slice(5)));
     svg.appendChild(t);
   }
-  return svg;
+  return sarmal;
 }
 
 /** Grafik serisi için renk anahtarı. */
