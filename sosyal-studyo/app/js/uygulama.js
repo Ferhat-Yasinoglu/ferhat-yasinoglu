@@ -124,20 +124,41 @@ let bantSira = 0;
 async function bantlariYenile(ctx) {
   const kap = document.getElementById('bantlar');
   const benimSira = ++bantSira;
-  const parcalar = [];
+  // İki sınıf: kritik olan tam bant kalır (veri kaybı riski, Worker düştü),
+  // bilgilendirici olan tek satırlık durum şeridine iner. Önceden ikisi de
+  // tam banttı ve her sayfanın tepesini yiyip asıl içeriği ekran altına itiyordu.
+  const kritik = [];
+  const durumlar = [];
   const ayar = await ctx.depo.ayarlar();
   const meta = await ctx.depo.meta();
-  if (!ctx.depo.kalici) parcalar.push(el('div', { class: 'bant bant--kirmizi' }, simge('uyari', { boy: 18 }), t('bant.kalici_degil', 'Tarayıcı depolaması açılamadı: veriler bu sekme kapanınca silinir. Yedek indir.')));
-  // Yerel mod bandı bir kez kapatılabilir (oturum boyunca); her sayfada bağırmasın.
+
+  if (!ctx.depo.kalici) kritik.push(el('div', { class: 'bant bant--kirmizi' }, simge('uyari', { boy: 18 }), t('bant.kalici_degil', 'Tarayıcı depolaması açılamadı: veriler bu sekme kapanınca silinir. Yedek indir.')));
+  if (ctx.depo.mod === 'bagli' && ctx.depo.cevrimici === false) kritik.push(el('div', { class: 'bant bant--kirmizi' }, simge('uyari', { boy: 18 }), t('bant.worker_yok', 'Worker\'a ulaşılamıyor; önbellekten gösteriliyor.')));
+
+  const durum = (tur, ikon, metin, eylem) => {
+    const d = el('span', { class: `serit-cip serit-cip--${tur}` }, simge(ikon, { boy: 14 }), el('span', { class: 'serit-cip__yazi' }, metin));
+    if (eylem) d.appendChild(el('button', { class: 'serit-cip__eylem', type: 'button', onclick: eylem.cb }, eylem.ad));
+    return d;
+  };
+
   let yerelKapali = false; try { yerelKapali = sessionStorage.getItem('ss-yerel-bant') === '1'; } catch {}
-  if ((ayar.mod || 'yerel') === 'yerel' && !yerelKapali) parcalar.push(el('div', { class: 'bant bant--mavi' }, simge('bilgi', { boy: 18 }), t('bant.yerel', 'Yerel mod: veriler yalnız bu cihazda. Kanalları ve AI\'ı açmak için Worker\'ı bağla.'), btn(t('bant.worker_bagla', 'Worker\'ı bağla'), { class: 'btn btn--kucuk', onclick: () => ctx.git('/ayarlar/worker') }), el('button', { class: 'bant__kapat', type: 'button', 'aria-label': t('genel.kapat', 'Kapat'), onclick: (e) => { try { sessionStorage.setItem('ss-yerel-bant', '1'); } catch {} e.currentTarget.closest('.bant').remove(); } }, simge('kapat', { boy: 16 }))));
+  if ((ayar.mod || 'yerel') === 'yerel' && !yerelKapali) {
+    const d = durum('bilgi', 'bilgi', t('durum.yerel', 'Yerel mod'), { ad: t('durum.yerel_eylem', 'Worker\'ı bağla'), cb: () => ctx.git('/ayarlar/worker') });
+    d.appendChild(el('button', { class: 'serit-cip__kapat', type: 'button', 'aria-label': t('genel.kapat', 'Kapat'), onclick: (e) => { try { sessionStorage.setItem('ss-yerel-bant', '1'); } catch {} e.currentTarget.closest('.serit-cip').remove(); } }, simge('kapat', { boy: 13 })));
+    durumlar.push(d);
+  }
+
   const kuyruk = ctx.depo.gidenSayisi ? await ctx.depo.gidenSayisi() : 0;
-  if (!navigator.onLine || kuyruk) parcalar.push(el('div', { class: 'bant bant--gri' }, simge(navigator.onLine ? 'yukle' : 'anten', { boy: 18 }), navigator.onLine ? t('bant.kuyruk', 'Worker\'a gönderilmeyi bekleyen {n} değişiklik.', { n: kuyruk }) : t('bant.cevrimdisi', 'Çevrimdışısın; değişiklikler bu cihazda kaydediliyor.'), kuyruk && navigator.onLine ? btn(t('bant.simdi_gonder', 'Şimdi gönder'), { class: 'btn btn--kucuk', onclick: () => ctx.depo.gidenKutusunuBosalt().then(() => bantlariYenile(ctx)) }) : null));
-  if (ctx.depo.mod === 'bagli' && ctx.depo.cevrimici === false) parcalar.push(el('div', { class: 'bant bant--kirmizi' }, simge('uyari', { boy: 18 }), t('bant.worker_yok', 'Worker\'a ulaşılamıyor; önbellekten gösteriliyor.')));
+  if (!navigator.onLine) durumlar.push(durum('uyari', 'anten', t('durum.cevrimdisi', 'Çevrimdışı')));
+  else if (kuyruk) durumlar.push(durum('uyari', 'yukle', t('durum.kuyruk', '{n} bekleyen değişiklik', { n: kuyruk }), { ad: t('durum.kuyruk_eylem', 'Gönder'), cb: () => ctx.depo.gidenKutusunuBosalt().then(() => bantlariYenile(ctx)) }));
+
   const h = hatirlatmaGerekli(meta, ayar);
-  if (h.gerekli) parcalar.push(el('div', { class: 'bant bant--sari' }, simge('kaydet', { boy: 18 }), t('bant.yedek', 'Yedek eski: {sebep}.', { sebep: hatirlatmaMetni(h, t) }), btn(t('bant.yedek_indir', 'Yedeği indir'), { class: 'btn btn--kucuk', onclick: async () => { const { indir } = await import('./depo/yedek.js'); await indir(await ctx.depo.disaAktar()); basari(t('yedek.indirildi', 'Yedek indirildi')); bantlariYenile(ctx); } })));
+  if (h.gerekli) durumlar.push(durum('uyari', 'kaydet', t('durum.yedek', 'Yedek eski'), { ad: t('durum.yedek_eylem', 'İndir'), cb: async () => { const { indir } = await import('./depo/yedek.js'); await indir(await ctx.depo.disaAktar()); basari(t('yedek.indirildi', 'Yedek indirildi')); bantlariYenile(ctx); } }));
+
   if (benimSira !== bantSira) return; // daha yeni bir çizim başladı
-  temizle(kap); for (const p of parcalar) kap.appendChild(p);
+  temizle(kap);
+  for (const b of kritik) kap.appendChild(b);
+  if (durumlar.length) kap.appendChild(el('div', { class: 'serit' }, ...durumlar));
 }
 
 async function depoyuAc() {
