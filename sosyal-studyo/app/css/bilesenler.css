@@ -47,12 +47,15 @@
 /* ================= Kartlar ================= */
 .kart {
   position: relative; padding: var(--b-5); border-radius: var(--r);
-  background:
-    linear-gradient(rgb(var(--yuzey)), rgb(var(--yuzey) / .92)),
-    radial-gradient(130% 120% at 0% 0%, rgb(var(--vurgu) / .06), transparent 58%);
-  border: 1px solid rgb(var(--cizgi) / .15);
-  box-shadow: var(--golge-2), inset 0 1px 0 rgb(var(--vurgu) / .08);
+  /* Yükselti kademesi: üstte iç ışık, sol üstte hafif altın yansıma, altta gölge. */
+  background: var(--kat-1);
+  border: var(--kenarlik);
+  box-shadow: var(--yukselti-2);
   transition: border-color var(--gecis), box-shadow var(--gecis), transform var(--gecis);
+}
+.kart::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(120% 100% at 0% 0%, rgb(var(--vurgu) / .05), transparent 60%);
 }
 /* Üst kenarda ince altın hat — deco çerçevenin izi */
 .kart::before {
@@ -63,8 +66,8 @@
 .kart__baslik { font-weight: 650; font-size: var(--f-m); letter-spacing: -.01em; display: flex; align-items: center; gap: var(--b-2); }
 .kart__alt { color: rgb(var(--metin-2)); font-size: var(--f-s); }
 .kart--tik { cursor: pointer; }
-.kart--tik:hover, .kart--tik:focus-visible { border-color: rgb(var(--vurgu) / .5); box-shadow: var(--golge), var(--isik); transform: translateY(-2px); }
-.kart--vurgu { border-color: rgb(var(--vurgu) / .42); box-shadow: var(--golge-2), var(--isik), inset 0 1px 0 rgb(var(--vurgu) / .16); }
+.kart--tik:hover, .kart--tik:focus-visible { border-color: rgb(var(--vurgu) / .5); box-shadow: var(--yukselti-3), var(--isik); transform: translateY(-3px); }
+.kart--vurgu { border-color: rgb(var(--vurgu) / .42); box-shadow: var(--yukselti-2), var(--isik), var(--ic-isik-guclu); }
 .kart--duz { background: rgb(var(--yuzey-2) / .6); box-shadow: none; padding: var(--b-4); }
 .kart--duz::before { display: none; }
 
@@ -80,20 +83,28 @@
 .sayac {
   position: relative; overflow: hidden;
   display: flex; flex-direction: column; gap: 2px; padding: var(--b-4);
-  border-radius: var(--r); border: 1px solid rgb(var(--cizgi) / .15);
-  background: linear-gradient(160deg, rgb(var(--yuzey-2)), rgb(var(--yuzey)));
-  box-shadow: var(--golge-1), inset 0 1px 0 rgb(var(--vurgu) / .07);
+  border-radius: var(--r); border: var(--kenarlik);
+  background: var(--kat-2);
+  box-shadow: var(--yukselti-1);
   transition: border-color var(--gecis), box-shadow var(--gecis), transform var(--gecis);
 }
-.sayac:hover { border-color: rgb(var(--vurgu) / .42); box-shadow: var(--golge-2), var(--isik); transform: translateY(-2px); }
+.sayac:hover { border-color: rgb(var(--vurgu) / .42); box-shadow: var(--yukselti-2), var(--isik); transform: translateY(-2px); }
 .sayac__etiket { font-size: var(--f-xs); font-weight: 700; letter-spacing: var(--deco-aralik); text-transform: uppercase; color: rgb(var(--metin-3)); }
 .sayac__deger { font-size: var(--f-2xl); font-weight: 700; letter-spacing: -.03em; line-height: 1.1; color: rgb(var(--metin)); font-variant-numeric: tabular-nums; }
 .sayac__fark { font-size: var(--f-xs); font-weight: 600; }
 .sayac__fark--arti { color: rgb(var(--yesil)); }
 .sayac__fark--eksi { color: rgb(var(--kirmizi)); }
 .sayac__simge { color: rgb(var(--vurgu)); opacity: .85; }
-/* Sayaç arkasındaki sparkline */
-.sayac__cizgi { position: absolute; inset-inline: 0; inset-block-end: 0; height: 34px; opacity: .5; pointer-events: none; }
+/* Sayaç arkasındaki sparkline. Veri yokken de çizilir (düz dinlenme çizgisi):
+   gizlenince kart içi boş görünüyordu. Sessiz kartta hem çizgi hem rakam kısılır,
+   böylece hareketi olan kartlar ızgarada kendiliğinden öne çıkar. */
+.sayac__cizgi { position: absolute; inset-inline: 0; inset-block-end: 0; height: 38px; opacity: .55; pointer-events: none; }
+.sayac__fark--durgun { color: rgb(var(--metin-3)); font-weight: 500; }
+.sayac--sessiz .sayac__cizgi { opacity: .22; }
+.sayac--sessiz .sayac__deger { color: rgb(var(--metin-3)); }
+.sayac--sessiz .sayac__simge { opacity: .4; }
+/* Rakamlar tablo hizasında: ızgarada alt alta gelen sayılar kaymasın. */
+.sayac__deger, .rakam { font-variant-numeric: tabular-nums; }
 
 /* ================= Rozetler ================= */
 .rozet {
@@ -525,3 +536,93 @@ span.sema__dal { cursor: default; }
 }
 .karusel-kart__btn:hover { background: rgb(var(--vurgu) / .18); }
 @media (pointer: coarse) { .karusel-kart__btn { min-height: 40px; } }
+
+/* ================= Durum şeridi =================
+   Bilgilendirici uyarılar tek satırda toplanır. Önce her biri tam bant olarak
+   sayfanın tepesini yiyordu; kritik olmayan bir bilgi asıl içeriği ekranın
+   altına itmemeli. Kritik olanlar (.bant) tam genişlikte kalır. */
+.serit {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--b-2);
+  margin-block-end: var(--b-4);
+}
+.serit-cip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 6px 5px 10px; border-radius: var(--r-tam);
+  border: var(--kenarlik); background: var(--kat-2); box-shadow: var(--yukselti-1);
+  font-size: var(--f-xs); font-weight: 600; color: rgb(var(--metin-2));
+  line-height: 1.6;
+}
+.serit-cip--bilgi { color: rgb(var(--metin-2)); }
+.serit-cip--bilgi .simge { color: rgb(var(--vurgu)); }
+.serit-cip--uyari { border-color: rgb(var(--sari) / .4); }
+.serit-cip--uyari .simge { color: rgb(var(--sari)); }
+.serit-cip__yazi { white-space: nowrap; }
+.serit-cip__eylem {
+  border: 0; background: rgb(var(--vurgu) / .14); color: rgb(var(--vurgu-2));
+  font: inherit; font-weight: 700; padding: 3px 10px; border-radius: var(--r-tam);
+  cursor: pointer; transition: background var(--gecis);
+}
+.serit-cip__eylem:hover { background: rgb(var(--vurgu) / .28); }
+.serit-cip__kapat {
+  border: 0; background: none; color: inherit; opacity: .55; cursor: pointer;
+  display: grid; place-items: center; padding: 2px; border-radius: var(--r-tam);
+}
+.serit-cip__kapat:hover { opacity: 1; }
+@media (pointer: coarse) {
+  /* Parmakla 44px: şerit telefonda tek satır olarak biraz yükselir ama
+     iki tam banttan hâlâ çok daha az yer kaplar. */
+  .serit-cip__eylem { min-height: 44px; display: inline-flex; align-items: center; }
+  .serit-cip__kapat { min-width: 44px; min-height: 44px; }
+}
+
+/* ================= Çizgi grafik: ızgara, imleç, balon =================
+   Izgara ve eksen geri planda kalır, veri öne çıkar. Fare bir güne yaklaşınca
+   dikey imleç ve seri işaretçileri belirir, balon o günün değerlerini okur. */
+.grafik-sarmal { position: relative; }
+.grafik--cizgi { inline-size: 100%; block-size: auto; display: block; touch-action: pan-y; }
+.grafik__izgara { stroke: var(--izgara); stroke-width: 1; }
+.grafik__eksen { stroke: var(--eksen); stroke-width: 1; }
+.grafik__yazi { fill: rgb(var(--metin-3)); font-size: 11px; font-variant-numeric: tabular-nums; }
+.grafik__imlec { stroke: rgb(var(--vurgu) / .55); stroke-width: 1; stroke-dasharray: 3 3; }
+.grafik__isaret { stroke: rgb(var(--bg)); stroke-width: 2; }
+.grafik-balon {
+  position: absolute; inset-block-start: 4px; z-index: 2; pointer-events: none;
+  min-inline-size: 132px; padding: var(--b-2) var(--b-3); border-radius: var(--r-kucuk);
+  border: var(--kenarlik-2); background: var(--kat-2); box-shadow: var(--yukselti-3);
+  font-size: var(--f-xs); line-height: 1.7;
+}
+.grafik-balon__gun { font-weight: 700; color: rgb(var(--metin)); margin-block-end: 2px; }
+.grafik-balon__satir { display: flex; align-items: center; gap: 6px; }
+.grafik-balon__satir i { inline-size: 9px; block-size: 9px; border-radius: 2px; flex: none; }
+.grafik-balon__ad { color: rgb(var(--metin-2)); margin-inline-end: auto; }
+.grafik-balon strong { font-variant-numeric: tabular-nums; color: rgb(var(--metin)); }
+
+/* ================= Bölüm başlıkları =================
+   "Bugün / Kurulum / Kanallar" düz birer h2'ydi; sayfa tek bir uzun akış gibi
+   okunuyordu. Başlıktan sonra biten ince altın hat bölümleri birbirinden ayırır. */
+#sayfa h2:not(.kart__baslik):not(.modal__baslik) {
+  display: flex; align-items: center; gap: var(--b-3);
+  font-size: var(--f-xl); letter-spacing: -.015em;
+}
+#sayfa h2:not(.kart__baslik):not(.modal__baslik)::after {
+  content: ''; flex: 1; height: 1px; min-inline-size: 24px;
+  background: linear-gradient(90deg, rgb(var(--vurgu) / .38), rgb(var(--vurgu) / 0) 70%);
+}
+
+/* ================= Odak ve basış =================
+   Odak halkası her yerde aynı: altın, iki piksel, boşluklu. Klavyeyle gezen
+   biri nerede olduğunu hep aynı işaretten okur. */
+:focus-visible {
+  outline: 2px solid rgb(var(--vurgu));
+  outline-offset: 2px;
+  border-radius: var(--r-kucuk);
+}
+.btn:active:not(:disabled), .cip:active, .sekme:active { transform: translateY(1px); }
+.kart--tik:active { transform: translateY(-1px); }
+
+/* Hareketi azaltma tercihi: kalkış ve basış geri bildirimi kapanır,
+   renk/kenar geri bildirimi kalır — erişilebilirlik kaybolmaz. */
+@media (prefers-reduced-motion: reduce) {
+  .kart--tik:hover, .kart--tik:focus-visible, .sayac:hover,
+  .btn:active:not(:disabled), .cip:active, .sekme:active, .kart--tik:active { transform: none; }
+}

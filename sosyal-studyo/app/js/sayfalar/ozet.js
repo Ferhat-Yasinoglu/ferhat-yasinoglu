@@ -35,15 +35,20 @@ export default {
     const sayaclar = el('div', { class: 'izgara izgara--sayac' }, ...olcumler.map(([etiket, f, ikonAd]) => {
       const gecmis = [6, 5, 4, 3, 2, 1, 0].map((k) => { const g = gun(k); return f(gununkiler(g), g); });
       const bugunku = f(gunluk, bugun), dunku = f(gunlukDun, dun), fark = bugunku - dunku;
-      return el('div', { class: 'sayac' },
-        gecmis.filter((v) => v).length >= 2 ? el('div', { class: 'sayac__cizgi', 'aria-hidden': 'true' }, sparkline(gecmis)) : null,
+      // Yedi günün tamamı sıfırsa kart "bozuk" değil "sessiz" görünmeli: sparkline
+      // gizlenmez, dinlenme çizgisi olarak düz çizilir; rakam kısılır. Önce
+      // sparkline tamamen gizleniyordu ve kartlar içi boş kalıyordu.
+      const sessiz = gecmis.every((v) => !v) && !bugunku;
+      const k = el('div', { class: 'sayac' + (sessiz ? ' sayac--sessiz' : '') },
+        el('div', { class: 'sayac__cizgi', 'aria-hidden': 'true' }, sparkline(gecmis)),
         el('div', { class: 'satir satir--arasi' },
           el('span', { class: 'sayac__etiket' }, etiket),
           el('span', { class: 'sayac__simge' }, simge(ikonAd, { boy: 16 }))),
         el('span', { class: 'sayac__deger' }, el('span', { class: 'rakam' }, String(bugunku))),
         fark
           ? el('span', { class: 'sayac__fark ' + (fark > 0 ? 'sayac__fark--arti' : 'sayac__fark--eksi') }, `${fark > 0 ? '+' : ''}${fark} ${t('ozet.dune_gore', 'düne göre')}`)
-          : el('span', { class: 'sayac__fark', style: { color: 'rgb(var(--metin-3))' } }, t('ozet.dun_ayni', 'dünle aynı')));
+          : el('span', { class: 'sayac__fark sayac__fark--durgun' }, t('ozet.dun_ayni', 'dünle aynı')));
+      return k;
     }));
     sirala(sayaclar);
 

@@ -53,6 +53,35 @@
   /* Deco başlık dili: büyük harf, geniş harf arası. Dış yazı tipi yüklemeden art deco hissi. */
   --deco-aralik: .16em;
 
+  /* ---- Yükselti: her yüzey bir kademe. Üstte iç ışık, altta gölge:
+     ışık yukarıdan gelir, kart metal gibi yakalar. Düz siyah üstü düz siyah
+     yerine gerçek bir katman hissi verir. ---- */
+  --kat-1: linear-gradient(180deg, rgb(255 255 255 / .028), rgb(255 255 255 / 0) 120px), rgb(var(--yuzey));
+  --kat-2: linear-gradient(180deg, rgb(255 255 255 / .045), rgb(255 255 255 / 0) 140px), rgb(var(--yuzey-2));
+  --ic-isik: inset 0 1px 0 rgb(255 255 255 / .07);
+  --ic-isik-guclu: inset 0 1px 0 rgb(var(--vurgu-2) / .22);
+  --kenarlik: 1px solid rgb(var(--vurgu) / .14);
+  --kenarlik-2: 1px solid rgb(var(--vurgu) / .26);
+  --yukselti-1: var(--ic-isik), 0 1px 2px rgb(0 0 0 / .5);
+  --yukselti-2: var(--ic-isik), 0 2px 4px rgb(0 0 0 / .4), 0 8px 24px rgb(0 0 0 / .45);
+  --yukselti-3: var(--ic-isik), 0 4px 8px rgb(0 0 0 / .45), 0 18px 48px rgb(0 0 0 / .55);
+
+  /* ---- Grafik paleti ---- Kategorik sıra sabit, asla döngüye girmez.
+     OKLCH L .665 / C .13, tonlar 85(altın) 250 150 305 25.
+     dataviz doğrulayıcısı koyu zeminde (#070604) beş kontrolden de geçirdi:
+     açıklık bandı, kroma tabanı, renk körlüğü ayrımı, normal görü tabanı, kontrast. */
+  --seri-1: 184 140 25;    /* #b88c19 altın — marka serisi, hep ilk */
+  --seri-2: 79 152 224;    /* #4f98e0 */
+  --seri-3: 81 170 104;    /* #51aa68 */
+  --seri-4: 166 126 211;   /* #a67ed3 */
+  --seri-5: 216 113 106;   /* #d8716a */
+  /* Sıralı (büyüklük) rampası: tek ton, açıktan koyuya. */
+  --rampa-1: 62 48 14; --rampa-2: 104 79 18; --rampa-3: 148 112 22;
+  --rampa-4: 184 140 25; --rampa-5: 226 186 88;
+  /* Grafik mürekkebi: ızgara ve eksen geri planda kalır, veri öne çıkar. */
+  --izgara: rgb(var(--vurgu) / .10);
+  --eksen: rgb(var(--metin-3) / .55);
+
   --ust-cubuk: 62px; --alt-cubuk: 66px; --kenar: 264px;
   --gecis: 180ms cubic-bezier(.2, .6, .2, 1);
   --gecis-yavas: 420ms cubic-bezier(.2, .6, .2, 1);
@@ -90,5 +119,29 @@
   --golge: 0 12px 32px rgb(var(--cizgi) / .16), 0 2px 6px rgb(var(--cizgi) / .10);
   --isik: 0 0 18px rgb(var(--vurgu) / .16);
   --isik-guclu: 0 0 26px rgb(var(--vurgu) / .24);
+
+  /* Aydınlıkta ışık yukarıdan değil her yerden gelir: iç ışık yerine
+     yumuşak beyaz zemin, gölge daha kısık. */
+  --kat-1: linear-gradient(180deg, rgb(255 255 255 / .9), rgb(255 255 255 / .55) 140px), rgb(var(--yuzey));
+  --kat-2: linear-gradient(180deg, rgb(255 255 255 / .7), rgb(255 255 255 / .3) 160px), rgb(var(--yuzey-2));
+  --ic-isik: inset 0 1px 0 rgb(255 255 255 / .8);
+  --ic-isik-guclu: inset 0 1px 0 rgb(255 255 255 / .9);
+  --kenarlik: 1px solid rgb(var(--cizgi) / .16);
+  --kenarlik-2: 1px solid rgb(var(--cizgi) / .30);
+  --yukselti-1: var(--ic-isik), 0 1px 2px rgb(var(--cizgi) / .10);
+  --yukselti-2: var(--ic-isik), 0 2px 4px rgb(var(--cizgi) / .08), 0 8px 22px rgb(var(--cizgi) / .12);
+  --yukselti-3: var(--ic-isik), 0 4px 8px rgb(var(--cizgi) / .10), 0 18px 44px rgb(var(--cizgi) / .16);
+
+  /* Aydınlık grafik paleti ayrı seçildi — koyunun otomatik çevrilmişi değil.
+     OKLCH L .55 / C .14, aynı tonlar; fildişi zeminde (#f7f4ec) beş kontrol de geçti. */
+  --seri-1: 143 107 2;     /* #8f6b02 */
+  --seri-2: 31 116 191;    /* #1f74bf */
+  --seri-3: 28 135 66;     /* #1c8742 */
+  --seri-4: 133 89 178;    /* #8559b2 */
+  --seri-5: 181 74 70;     /* #b54a46 */
+  --rampa-1: 240 231 206; --rampa-2: 214 190 128; --rampa-3: 180 145 60;
+  --rampa-4: 143 107 2; --rampa-5: 92 68 4;
+  --izgara: rgb(var(--cizgi) / .13);
+  --eksen: rgb(var(--metin-3) / .7);
   color-scheme: light;
 }
