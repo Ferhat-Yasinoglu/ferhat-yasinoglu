@@ -1,5 +1,6 @@
 # Sosyal Stüdyo Worker teşhisi (elle tetiklenir): Worker sağlığı, doktor listesi, koleksiyon sayıları,
-# son günlük kararları ve Telegram webhook durumu. Mesaj metni ya da kişi bilgisi yazmaz, gizli değer yazmaz.
+# son günlük kararları, Telegram webhook durumu ve Instagram token geçerliliği.
+# Mesaj metni ya da kişi bilgisi yazmaz, gizli değer yazmaz (IG token yalnızca Meta'ya sorulur).
 name: Sosyal Studyo Doktor
 
 on:
@@ -33,6 +34,7 @@ jobs:
       - name: Teshis
         env:
           URL: ${{ steps.adres.outputs.url }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
         run: |
           api() { curl -sS -H "Authorization: Bearer $YONETICI_ANAHTARI" -H "X-SS-Sema: 1" "$URL$1"; }
           echo "== /health"; curl -sS "$URL/health"; echo
@@ -54,7 +56,7 @@ jobs:
                 const r=JSON.parse(s); if(!r.ok){console.log(process.env.KOL, "HATA", r.mesaj); return}
                 const canli=r.veri.kayitlar.filter(k=>!k.silindi);
                 let ek="";
-                if(process.env.KOL==="hesaplar") ek=canli.map(h=>`${h.kanal}:${h.durum}`).join(", ");
+                if(process.env.KOL==="hesaplar") ek=canli.map(h=>`${h.kanal}:${h.durum}${h.polling&&h.polling.aktif?"+yorum-taramasi":""}`).join(", ");
                 if(process.env.KOL==="gunluk") ek=canli.slice(-8).map(g=>`${(g.zaman||"").slice(11,19)} ${g.olay_tipi}→${g.karar?.tur||"?"}${g.gonderildi?" gonderildi":(g.prova?" [prova]":"")}`).join(" | ");
                 if(process.env.KOL==="mesajlar") ek=canli.slice(-6).map(m=>`${(m.zaman||m.olusturuldu||"").slice(11,19)} ${m.yon}${/^\[prova\]/.test(m.metin||"")?" [prova]":""}`).join(", ");
                 if(process.env.KOL==="kosular") ek=canli.map(k=>`${k.durum||"?"}`).join(", ");
@@ -65,4 +67,19 @@ jobs:
             echo "== Telegram"
             curl -sS "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getMe" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s);console.log(j.ok?`  bot: @${j.result.username} (id ${j.result.id})`:`  getMe HATA: ${j.description}`)})'
             curl -sS "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getWebhookInfo" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s);if(!j.ok){console.log("  getWebhookInfo HATA:",j.description);return}const r=j.result||{};console.log(`  webhook: ${r.url||"KURULU DEGIL"} | bekleyen: ${r.pending_update_count} | son hata: ${r.last_error_date?new Date(r.last_error_date*1000).toISOString()+" "+r.last_error_message:"yok"} | izinli: ${JSON.stringify(r.allowed_updates||[])}`);if(!r.url)console.log("  → UYARI: bu bot icin webhook kurulu degil; gelen mesaj Worker tarafina ulasmaz. Worker dagitimini yeniden calistir.")})'
+          fi
+          echo "== Instagram"
+          if [ -z "$IG_ACCESS_TOKEN" ]; then
+            echo "  UYARI: IG_ACCESS_TOKEN bos; Instagram mesajlarina cevap gonderilemez"
+          else
+            curl -sS -H "Authorization: Bearer $IG_ACCESS_TOKEN" "https://graph.instagram.com/v26.0/me?fields=id,username,account_type" | node -e '
+              let s=""; process.stdin.on("data",d=>s+=d).on("end",()=>{
+                let j; try { j = JSON.parse(s) } catch { console.log("  cevap okunamadi (Meta beklenmeyen yanit dondu)"); return }
+                if (j.error) {
+                  console.log(`  TOKEN GECERSIZ: ${j.error.message} [tip=${j.error.type||"?"} kod=${j.error.code||"?"}]`);
+                  console.log("  -> Meta panelinde Generate token ile yeni token uret, IG_ACCESS_TOKEN degerini guncelle, Worker dagitimini tekrar calistir.");
+                  return;
+                }
+                console.log(`  token gecerli -> @${j.username} (id ${j.id}, tip ${j.account_type||"?"})`);
+              })'
           fi
