@@ -99,7 +99,10 @@
 .rozet {
   display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: var(--r-tam);
   font-size: var(--f-xs); font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
-  border: 1px solid currentColor; white-space: nowrap; line-height: 1.5;
+  border: 1px solid currentColor; line-height: 1.5;
+  /* nowrap değil: uzun etiket (ör. "Platform izin vermiyor") küçülemeyip
+     satırdan taşıyordu. Kısa rozetler zaten tek satırda kalır. */
+  max-width: 100%; text-align: center; overflow-wrap: anywhere;
 }
 .rozet::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex: none; }
 .rozet--gri { color: rgb(var(--metin-3)); background: rgb(var(--metin-3) / .10); }
@@ -213,7 +216,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: rgb(var(--vurgu)); w
 .bant--kirmizi { border-inline-start-color: rgb(var(--kirmizi)); color: rgb(var(--kirmizi)); background: rgb(var(--kirmizi) / .08); }
 .bant--gri { border-inline-start-color: rgb(var(--metin-3)); color: rgb(var(--metin-2)); }
 .bant--altin { border-inline-start-color: rgb(var(--vurgu)); color: rgb(var(--vurgu-2)); background: rgb(var(--vurgu) / .08); box-shadow: var(--isik); }
-.bant__kapat { margin-inline-start: auto; background: none; border: 0; color: inherit; cursor: pointer; opacity: .7; display: grid; place-items: center; padding: 4px; }
+.bant__kapat {
+  margin-inline-start: auto; background: none; border: 0; color: inherit; cursor: pointer;
+  opacity: .7; display: grid; place-items: center; padding: 4px;
+  min-width: 32px; min-height: 32px;
+}
 .bant__kapat:hover { opacity: 1; }
 
 /* ================= Durum blokları (boş / hata / yükleniyor) ================= */
@@ -409,15 +416,20 @@ input[type="checkbox"], input[type="radio"] { accent-color: rgb(var(--vurgu)); w
 .sema__bag::after { content: ''; position: absolute; inset-block-end: 0; inset-inline-start: -3px; width: 7px; height: 7px; border-radius: 50%; background: rgb(var(--vurgu)); box-shadow: 0 0 8px rgb(var(--vurgu) / .8); animation: bagAk 2.4s ease-in-out infinite; }
 @keyframes bagAk { 0% { inset-block-end: 100%; opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { inset-block-end: 0; opacity: 0; } }
 .sema__dallar { display: flex; flex-direction: column; gap: var(--b-2); margin-inline-start: var(--b-6); padding-inline-start: var(--b-4); border-inline-start: 1px dashed rgb(var(--vurgu) / .35); }
-.sema__dal { font-size: var(--f-s); display: flex; align-items: center; gap: var(--b-2); }
-/* Dal etiketi: hedef adıma götüren küçük altın çip. */
-.sema__dal button, .sema__bag-etiket {
-  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: var(--r-tam);
-  border: 1px solid rgb(var(--vurgu) / .35); background: rgb(var(--vurgu) / .10); color: rgb(var(--vurgu-2));
-  font: inherit; font-size: var(--f-xs); font-weight: 650; cursor: pointer; white-space: nowrap;
+.sema__dal {
+  /* Sınıf düğümün kendisinde: hem <button> (hedefe git) hem <span> (tıklanmaz)
+     aynı çipi kullanır. Önceki ".sema__dal button" seçicisi hiçbir şeye uymuyordu. */
+  display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
+  max-width: 100%; padding: 5px 11px; border-radius: var(--r-tam);
+  border: 1px solid rgb(var(--vurgu) / .35); background: rgb(var(--vurgu) / .10);
+  color: rgb(var(--vurgu-2)); font: inherit; font-size: var(--f-xs); font-weight: 650;
+  /* Telefonda uzun dal etiketi kutuya sığmıyordu; sarsın. */
+  white-space: normal; text-align: start; overflow-wrap: anywhere;
   transition: background var(--gecis), border-color var(--gecis);
 }
-.sema__dal button:hover, .sema__bag-etiket:hover { background: rgb(var(--vurgu) / .2); border-color: rgb(var(--vurgu) / .7); }
+button.sema__dal { cursor: pointer; }
+button.sema__dal:hover { background: rgb(var(--vurgu) / .2); border-color: rgb(var(--vurgu) / .7); }
+span.sema__dal { cursor: default; }
 .sema__ekle {
   align-self: flex-start; margin-inline-start: 22px; margin-block: var(--b-1);
   min-height: 34px; border-radius: var(--r-tam); border: 1px dashed rgb(var(--vurgu) / .45);
@@ -460,3 +472,24 @@ input[type="checkbox"], input[type="radio"] { accent-color: rgb(var(--vurgu)); w
 /* ================= Simge ================= */
 .simge { flex: none; vertical-align: middle; }
 .ikon { display: inline-grid; place-items: center; }
+
+
+/* ---- Dokunma hedefleri ----
+   Fare ile yoğunluk iyi, parmakla 44px gerekiyor. Yalnız kaba işaretleyicide
+   büyütülür; masaüstünde satırlar sıkışık kalır. */
+/* Tablo hücresindeki etiketsiz onay kutusuna tıklanabilir alan verir. */
+.onay-hucre { display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+
+@media (pointer: coarse) {
+  .cip { min-height: 44px; }
+  .sekme { min-height: 44px; }
+  .bant__kapat { min-width: 44px; min-height: 44px; }
+  .btn--kucuk { min-height: 40px; }
+  .sema__tut, .sema__eylem .btn { min-width: 40px; min-height: 40px; }
+  /* Etiketsiz onay kutusu (ör. puan kuralları tablosu) parmakla zor tutuluyordu. */
+  input[type="checkbox"], input[type="radio"] { width: 22px; height: 22px; }
+  .onay-hucre { min-width: 44px; min-height: 44px; }
+}
+
+/* Şema dal etiketi telefonda kutuya sığmıyordu; sarsın. */
+.sema__dallar { min-width: 0; }
