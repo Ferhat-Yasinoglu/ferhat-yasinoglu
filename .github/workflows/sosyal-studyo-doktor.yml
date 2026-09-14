@@ -36,6 +36,7 @@ jobs:
           URL: ${{ steps.adres.outputs.url }}
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
           META_APP_SECRET: ${{ secrets.META_APP_SECRET }}
+          META_APP_ID: ${{ vars.META_APP_ID }}
         run: |
           api() { curl -sS -H "Authorization: Bearer $YONETICI_ANAHTARI" -H "X-SS-Sema: 1" "$URL$1"; }
           echo "== /health"; curl -sS "$URL/health"; echo
@@ -98,3 +99,5 @@ jobs:
           fi
           echo "== Webhook ucu (kendi imzamizla sonda)"
           node sosyal-studyo/tools/webhook-sonda.mjs || true
+          echo "== App Secret hangi uygulamaya ait"
+          node sosyal-studyo/tools/meta-uygulama.mjs || true
