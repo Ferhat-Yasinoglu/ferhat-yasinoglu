@@ -84,6 +84,10 @@ export const GIRDILER = [
   { ad: 'CLOUDFLARE_API_TOKEN', zorunlu: true, dogrula: cfDogrula, bicim: /^[A-Za-z0-9_-]{40}$/, ayikla: /[A-Za-z0-9_-]{40,}/g, beklenen: '40 karakter; yalnız İngilizce harf, rakam, _ ve -', ipucu: 'Cloudflare → My Profile → API Tokens → Create Token → "Edit Cloudflare Workers" şablonu + D1 Edit + Workers AI Edit → çıkan token\'ı kopyala' },
   { ad: 'CLOUDFLARE_ACCOUNT_ID', zorunlu: true, dogrula: async (v) => hex32.test(v), bicim: hex32, ayikla: /[0-9a-fA-F]{32}/g, beklenen: '32 karakter; yalnız 0-9 ve a-f', ipucu: 'Cloudflare → Workers & Pages sayfasının sağındaki Account ID' },
   { ad: 'YONETICI_ANAHTARI', zorunlu: true, dogrula: async (v) => yonetici.test(v), bicim: yonetici, beklenen: 'en az 32 karakter; İngilizce harf ve rakam', ipucu: 'kendin uydur ya da verilen anahtarı kullan; aynısını uygulamada Ayarlar → Worker\'a gireceksin' },
+  // Meta'nın imza doğrulaması ya tutar ya tutmaz; yanlış bir değer sessizce 401'e dönüşüyor ve
+  // Instagram'dan tek mesaj gelmiyor. Görünmez karakter ve Türkçe klavye bozması trim()'den
+  // geçtiği için buraya alındı: biçim tutmazsa dağıtım yüksek sesle dursun.
+  { ad: 'META_APP_SECRET', zorunlu: false, dogrula: async (v) => hex32.test(v), bicim: hex32, ayikla: /[0-9a-fA-F]{32}/g, beklenen: '32 karakter; yalnız 0-9 ve a-f', ipucu: 'Meta → developers.facebook.com/apps → uygulaman → App settings → Basic → App secret → Show' },
   { ad: 'TELEGRAM_BOT_TOKEN', zorunlu: false, dogrula: tgDogrula, bicim: /^\d{8,12}:[A-Za-z0-9_-]{30,}$/, ayikla: /\d{8,12}:[A-Za-z0-9_-]{30,}/g, beklenen: '123456789:AAH... biçiminde, iki nokta üst üste içerir', ipucu: 'Telegram → @BotFather → /newbot (ya da /mybots → API Token)' },
 ];
 

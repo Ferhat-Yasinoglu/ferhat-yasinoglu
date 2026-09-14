@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { temizle, sorunlar, adaylar, duzelt, calistir } from '../tools/secretleri-duzelt.mjs';
+import { temizle, sorunlar, adaylar, duzelt, calistir, GIRDILER } from '../tools/secretleri-duzelt.mjs';
 
 describe('secretleri-duzelt', () => {
   it('boşluk ve görünmez karakterleri atar', () => {
@@ -84,5 +84,67 @@ describe('secretleri-duzelt', () => {
     const hex = '0123456789abcdef0123456789abcdef';
     const s4 = await duzelt({ ad: 'ID', deger: `Account ID: ${hex}`, dogrula: async (v) => /^[0-9a-f]{32}$/.test(v), bicim: /^[0-9a-f]{32}$/, ayikla: /[0-9a-f]{32}/g });
     expect(s4.durum).toBe('ayiklandi'); expect(s4.deger).toBe(hex);
+  });
+
+  // Yanlış bir META_APP_SECRET Meta'nın imza doğrulamasında sessizce 401'e dönüşüyor:
+  // Instagram'dan tek mesaj gelmiyor, hiçbir ekranda sebep yazmıyor. Görünmez karakter ve
+  // Türkçe klavye bozması trim()'den geçtiği için denetime alındı.
+  describe('META_APP_SECRET', () => {
+    const g = GIRDILER.find((x) => x.ad === 'META_APP_SECRET');
+    const gecerli = '0123456789abcdef0123456789abcdef';
+    const calis = (deger) => duzelt({ ad: g.ad, deger, dogrula: g.dogrula, bicim: g.bicim, ayikla: g.ayikla });
+
+    it('denetim listesinde ve isteğe bağlı', () => {
+      expect(g).toBeTruthy();
+      expect(g.zorunlu).toBe(false);
+    });
+
+    it('geçerli değer olduğu gibi geçer', async () => {
+      const r = await calis(gecerli);
+      expect(r.durum).toBe('ok');
+      expect(r.deger).toBe(gecerli);
+    });
+
+    it('görünmez karakter atılır — trim() bunu yapamıyordu', async () => {
+      const r = await calis('\u200B' + gecerli + '\uFEFF');
+      expect(r.durum).toBe('ok');
+      expect(r.deger).toBe(gecerli);
+    });
+
+    it('Türkçe klavyenin bozduğu harf düzeltilir', async () => {
+      const bozuk = 'ç' + gecerli.slice(1);
+      const r = await calis(bozuk);
+      expect(r.durum).toBe('duzeltildi');
+      expect(r.deger).toBe('c' + gecerli.slice(1));
+    });
+
+    it('yanlış uzunluk dağıtımı durdurur, sessizce geçmez', async () => {
+      const r = await calis('abc123');
+      expect(r.durum).toBe('bicim');
+      expect(r.uzunluk).toBe(6);
+      expect(r.deger).toBe('');
+    });
+
+    it('hex olmayan karakter içeren 32 karakterlik değer reddedilir', async () => {
+      const r = await calis('z'.repeat(32));
+      expect(r.durum).toBe('bicim');
+    });
+
+    it('verilmemişse hata değil, atlanır', async () => {
+      const satirlar = [];
+      const { hata, cikti } = await calistir({ env: {}, girdiler: [g], yaz: (m) => satirlar.push(m) });
+      expect(hata).toBe(0);
+      expect(cikti).toHaveLength(0);
+      expect(satirlar.join()).toMatch(/atland/);
+    });
+
+    it('bozuksa calistir hata sayar ve değeri çıktıya koymaz', async () => {
+      const satirlar = [];
+      const { hata, cikti } = await calistir({ env: { HAM_META_APP_SECRET: 'kisa' }, girdiler: [g], yaz: (m) => satirlar.push(m) });
+      expect(hata).toBe(1);
+      expect(cikti).toHaveLength(0);
+      expect(satirlar.join()).toMatch(/::error::/);
+      expect(satirlar.join()).toMatch(/App secret/);
+    });
   });
 });
