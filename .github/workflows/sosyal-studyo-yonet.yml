@@ -5,6 +5,8 @@
 #   ajan_kur     : AI ajanının brifingini ve bilgi tabanını kurar, test sorularıyla dener
 #   ajan_test    : brifinge dokunmadan yalnız test sorularını sorar
 #   durum        : değişiklik yapmadan mevcut durumu yazar
+#   ig_abone     : Instagram webhook aboneliğini yeniden kurar (Meta ısrarlı hatadan sonra
+#                  göndermeyi kesmişse teslimatı yeniden başlatır; yeni izin istemez)
 name: Sosyal Studyo Yonet
 
 on:
@@ -14,7 +16,7 @@ on:
         description: "Yapılacak işlem"
         type: choice
         default: durum
-        options: [durum, akis_yayinla, canliya_al, provaya_al, ajan_kur, ajan_test]
+        options: [durum, akis_yayinla, canliya_al, provaya_al, ajan_kur, ajan_test, ig_abone]
       akis_id:
         description: "akis_yayinla için akış id'si (boş = tüm taslaklar)"
         type: string
@@ -43,8 +45,14 @@ jobs:
           alt="$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).result?.subdomain||''))")"
           [ -n "$alt" ] || { echo "::error::workers.dev alt alan adi bulunamadi"; exit 1; }
           echo "url=https://sosyal-studyo.$alt.workers.dev" >> "$GITHUB_OUTPUT"
+      - name: Instagram aboneligi
+        if: ${{ inputs.islem == 'ig_abone' }}
+        env:
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+        run: node sosyal-studyo/tools/ig-abone.mjs
+
       - name: Islem
-        if: ${{ !startsWith(inputs.islem, 'ajan_') }}
+        if: ${{ !startsWith(inputs.islem, 'ajan_') && inputs.islem != 'ig_abone' }}
         env:
           URL: ${{ steps.adres.outputs.url }}
           ISLEM: ${{ inputs.islem }}
