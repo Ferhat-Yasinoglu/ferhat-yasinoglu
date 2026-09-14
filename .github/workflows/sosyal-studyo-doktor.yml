@@ -35,6 +35,7 @@ jobs:
         env:
           URL: ${{ steps.adres.outputs.url }}
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          META_APP_SECRET: ${{ secrets.META_APP_SECRET }}
         run: |
           api() { curl -sS -H "Authorization: Bearer $YONETICI_ANAHTARI" -H "X-SS-Sema: 1" "$URL$1"; }
           echo "== /health"; curl -sS "$URL/health"; echo
@@ -95,3 +96,5 @@ jobs:
                 if (alanlar.length && !alanlar.includes("messages")) console.log("  UYARI: messages alani yok; DM gelmez");
               })'
           fi
+          echo "== Webhook ucu (kendi imzamizla sonda)"
+          node sosyal-studyo/tools/webhook-sonda.mjs || true
