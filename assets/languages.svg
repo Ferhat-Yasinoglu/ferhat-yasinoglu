@@ -32,11 +32,11 @@
           stroke-dasharray="14 8" />
   <text class="title" x="46" y="39">🎨 Most used languages</text>
   <g clip-path="url(#barclip)">
-    <rect x="28.0" y="70" width="205.8" height="12"
+    <rect x="28.0" y="70" width="205.6" height="12"
           fill="#e34e29" class="seg" style="animation-delay:0.15s" />
-    <rect x="233.8" y="70" width="139.1" height="12"
+    <rect x="233.6" y="70" width="139.3" height="12"
           fill="#f1e05a" class="seg" style="animation-delay:0.26s" />
-    <rect x="372.8" y="70" width="40.5" height="12"
+    <rect x="372.9" y="70" width="40.5" height="12"
           fill="#b79fcf" class="seg" style="animation-delay:0.37s" />
     <rect x="413.4" y="70" width="38.2" height="12"
           fill="#4e8bce" class="seg" style="animation-delay:0.48s" />
