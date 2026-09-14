@@ -37,6 +37,20 @@ export async function apiIsle(env, db, istek, url, { fetchFn = fetch, ctx } = {}
       doktor.push({ ad: 'PROVA', durum: String(env.PROVA || '1') === '1' ? 'warn' : 'ok', detay: String(env.PROVA || '1') === '1' ? 'canlı gönderim kapalı (varsayılan)' : 'canlı' });
       doktor.push({ ad: 'Telegram', durum: env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_WEBHOOK_SECRET ? 'ok' : 'warn', detay: env.TELEGRAM_BOT_TOKEN ? 'token var' : 'TELEGRAM_BOT_TOKEN yok' });
       doktor.push({ ad: 'Meta', durum: env.META_APP_SECRET && env.META_VERIFY_TOKEN ? 'ok' : 'warn', detay: env.META_APP_SECRET ? (env.IG_ACCESS_TOKEN ? 'IG token var' : 'IG token yok') : 'META_APP_SECRET yok' });
+      // Aynı kanalda ikinci bir hesap kaydı sessiz bir tuzak: gelen olay hangi kayda yazılırsa
+      // sohbetler orada birikiyor, kullanıcı diğerine bakıp "mesaj gelmiyor" sanıyor.
+      const hesaplarD = (await db.listele('hesaplar')).filter((h) => !h.silindi);
+      const cift = [...new Set(hesaplarD.map((h) => h.kanal))].filter((k) => hesaplarD.filter((h) => h.kanal === k).length > 1);
+      doktor.push({ ad: 'Hesaplar', durum: cift.length ? 'warn' : 'ok', detay: cift.length ? `${cift.join(', ')} kanalında birden fazla kayıt var — Ayarlar → Kanallar'dan fazlasını sil` : `${hesaplarD.length} kayıt` });
+      // "Instagram'dan mesaj gelmiyor" şikâyetinin cevabı burada: Meta hiç uğramadı mı,
+      // uğradı da imza mı tutmadı? İkisi bambaşka iş gerektiriyor.
+      const wKabul = await db.metaAl('meta_webhook_kabul');
+      const wRed = await db.metaAl('meta_webhook_red');
+      doktor.push({
+        ad: 'Meta webhook',
+        durum: wKabul ? 'ok' : (wRed ? 'warn' : 'warn'),
+        detay: wKabul ? `son kabul: ${wKabul}${wRed ? ` · son red: ${wRed}` : ''}` : (wRed ? `hiç kabul edilmedi · son red: ${wRed}` : 'Meta henüz hiç olay göndermedi'),
+      });
       doktor.push({ ad: 'AI', durum: saglayici(env) === 'yok' ? 'warn' : 'ok', detay: saglayici(env) });
       doktor.push({ ad: 'Cron', durum: (await db.metaAl('son_cron')) ? 'ok' : 'warn', detay: (await db.metaAl('son_cron')) || 'henüz çalışmadı' });
       const bugun = simdi().slice(0, 10);
