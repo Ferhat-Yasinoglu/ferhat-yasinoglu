@@ -28,10 +28,35 @@ if (j.error) {
 
 console.log(`  ESLESIYOR: App Secret, "${j.name}" (id ${j.id}) uygulamasina ait.`);
 
-// IG token'ı hangi uygulamaya bağlı? Farklıysa webhook'u başka uygulama gönderiyor demektir.
-const d = await fetch(`${G}/debug_token?input_token=${encodeURIComponent(process.env.IG_ACCESS_TOKEN || '')}&access_token=${encodeURIComponent(uygulamaBelirteci)}`);
-const dj = await d.json().catch(() => ({}));
-const veri = dj.data;
-if (dj.error || !veri) { console.log(`  IG token'in uygulamasi sorulamadi: ${dj.error?.message || 'yanit bos'}`); process.exit(0); }
+// IG token'ın hangi uygulamaya bağlı olduğu VE hangi izinleri taşıdığı.
+// İzin listesi kritik: instagram_business_manage_messages yoksa ne konuşmalar okunabiliyor
+// ne de Meta "messages" webhook'u gönderiyor — ikisi aynı izne bağlı.
+// debug_token bazen geçici olarak "Service temporarily unavailable" dönüyor; bir kez yeniden denenir.
+async function belirteciCoz() {
+  for (let deneme = 0; deneme < 2; deneme++) {
+    const d = await fetch(`${G}/debug_token?input_token=${encodeURIComponent(process.env.IG_ACCESS_TOKEN || '')}&access_token=${encodeURIComponent(uygulamaBelirteci)}`);
+    const dj = await d.json().catch(() => ({}));
+    if (dj.data) return dj.data;
+    if (deneme === 0 && /temporarily/i.test(String(dj.error?.message || ''))) continue;
+    return { hata: dj.error?.message || 'yanit bos' };
+  }
+  return { hata: 'iki denemede de yanit alinamadi' };
+}
+
+const veri = await belirteciCoz();
+if (veri.hata) { console.log(`  IG token cozulemedi: ${veri.hata}`); process.exit(0); }
+
 if (String(veri.app_id) === String(id)) console.log(`  IG token da ayni uygulamaya ait (app_id ${veri.app_id}).`);
-else console.log(`  DIKKAT: IG token baska bir uygulamaya ait (app_id ${veri.app_id}), App Secret ise ${id}. Webhook'u o uygulama gonderiyor olabilir.`);
+else console.log(`  IG token app_id=${veri.app_id} (Instagram App ID, Meta App ID'den farkli olmasi normal).`);
+
+const izinler = veri.scopes || [];
+console.log(`  token izinleri: ${izinler.length ? izinler.join(', ') : '(bildirilmedi)'}`);
+if (veri.expires_at) console.log(`  token bitis: ${new Date(veri.expires_at * 1000).toISOString().slice(0, 19)}`);
+if (veri.is_valid === false) console.log('::error::token gecersiz gorunuyor');
+
+const MESAJ_IZNI = 'instagram_business_manage_messages';
+if (izinler.length && !izinler.includes(MESAJ_IZNI)) {
+  console.log(`::error::${MESAJ_IZNI} izni YOK. Bu izin olmadan ne konusmalar okunabilir ne de Meta messages webhook'u gonderir.`);
+  console.log('  -> Instagram hesabinin uygulamaya verdigi izinler yenilenmeli: token yeniden uretilirken');
+  console.log('     mesajlasma izni de istenmeli (Meta panel > Instagram > API setup with Instagram login).');
+}
