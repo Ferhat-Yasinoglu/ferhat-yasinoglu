@@ -120,7 +120,7 @@ projects, publish Sosyal Stüdyo to Pages, deploy and diagnose its Worker, and f
 
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" alt="whoami: Farhad Yaqoobi, developer in NRW. Stack: JavaScript, TypeScript, PWA, Node, Workers." />
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" width="100%" alt="A portrait in gold scanlines beside a terminal: whoami — Farhad Yaqoobi, developer in NRW. Stack: JavaScript, TypeScript, PWA, Node, Workers." />
 
 </div>
 
