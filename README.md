@@ -19,6 +19,48 @@
 
 ## 🛠️ What I've built
 
+### 🎛️ Sosyal Stüdyo
+
+<sub>*A social media automation studio — flows, contacts, broadcasts and content tools in one app.*</sub>
+
+<a href="https://ferhat-yasinoglu.github.io/sosyal-studyo/">
+  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/sosyal-studyo.jpg" width="100%" alt="The flow editor: a conversation built from numbered steps — condition, comment reply, comment to DM, message, buttons" />
+</a>
+
+A conversation is a list of steps: ask something, branch on a button, tag the person, wait, hand
+over to an AI agent. Sixteen step types, and the runner that executes them is a pure state machine —
+the same file runs in the browser simulator and in the Cloudflare Worker that talks to Telegram,
+Instagram and WhatsApp. Local mode needs no server at all: build a flow, test it, manage contacts,
+write content, take a backup, all from IndexedDB with the network off.
+
+Every channel carries an honest label — *works*, *needs Meta approval*, *the platform doesn't allow
+this* — because the interesting part of this project was learning which promises the APIs actually
+keep. The Worker sends nothing outward until an account is explicitly switched off rehearsal mode.
+
+<sub>**Built with** JavaScript (ES6+) &nbsp;·&nbsp; Cloudflare Workers &nbsp;·&nbsp; D1 &nbsp;·&nbsp; IndexedDB &nbsp;·&nbsp; Service Workers &nbsp;·&nbsp; Vitest</sub><br>
+<sub>**Learned here** pure modules that run in both the browser and the Worker &nbsp;·&nbsp; webhook signature checks &nbsp;·&nbsp; failing closed when a secret is missing</sub>
+
+[![Live](https://img.shields.io/badge/Open-Live%20app-9ece6a?style=flat-square&logo=googlechrome&logoColor=white)](https://ferhat-yasinoglu.github.io/sosyal-studyo/)
+[![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/sosyal-studyo)
+
+<br>
+
+### 🤖 botflow-mcp
+
+<sub>*Telegram chatbot funnels, built by talking to a model instead of clicking a dashboard.*</sub>
+
+Connect a bot, describe a flow in plain steps, and the server runs the conversation —
+asking questions, keeping the answers, branching on button presses, tagging people and
+broadcasting to the segments those tags create. It speaks MCP, so a model drives the
+whole thing; Telegram is reached by long polling, so no public URL is needed.
+
+<sub>**Built with** TypeScript &nbsp;·&nbsp; Node.js &nbsp;·&nbsp; MCP &nbsp;·&nbsp; SQLite &nbsp;·&nbsp; Telegram Bot API</sub><br>
+<sub>**Learned here** the Model Context Protocol &nbsp;·&nbsp; resumable background jobs &nbsp;·&nbsp; migrating a schema in place</sub>
+
+[![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/botflow-mcp)
+
+<br>
+
 ### 📓 Açık Defter
 
 <sub>*An IT student's open notebook — my personal site and learning journal.*</sub>
@@ -54,22 +96,6 @@ straight from the browser. Afghani is supported and the invoice prints.
 
 <br>
 
-### 🤖 botflow-mcp
-
-<sub>*Telegram chatbot funnels, built by talking to a model instead of clicking a dashboard.*</sub>
-
-Connect a bot, describe a flow in plain steps, and the server runs the conversation —
-asking questions, keeping the answers, branching on button presses, tagging people and
-broadcasting to the segments those tags create. It speaks MCP, so a model drives the
-whole thing; Telegram is reached by long polling, so no public URL is needed.
-
-<sub>**Built with** TypeScript &nbsp;·&nbsp; Node.js &nbsp;·&nbsp; MCP &nbsp;·&nbsp; SQLite &nbsp;·&nbsp; Telegram Bot API</sub><br>
-<sub>**Learned here** the Model Context Protocol &nbsp;·&nbsp; resumable background jobs &nbsp;·&nbsp; migrating a schema in place</sub>
-
-[![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/botflow-mcp)
-
-<br>
-
 ### ✨ This profile
 
 <sub>*Every card on this page is generated in this repository.*</sub>
@@ -77,7 +103,8 @@ whole thing; Telegram is reached by long polling, so no public URL is needed.
 The header above, the terminal below, the language chart, the numbers, the contribution graph —
 none of them come from a third-party service. A Node script queries the GitHub API and writes
 animated SVGs into this repo; a workflow reruns it every six hours and commits only the cards
-whose content actually changed.
+whose content actually changed. Six more workflows live beside it: they run the tests for both
+projects, publish Sosyal Stüdyo to Pages, deploy and diagnose its Worker, and feed the snake below.
 
 [![Code](https://img.shields.io/badge/Read-cards.mjs-bf91f3?style=flat-square&logo=javascript&logoColor=white)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/blob/main/.github/scripts/cards.mjs)
 
@@ -87,7 +114,7 @@ whose content actually changed.
 
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" alt="whoami: Farhad Yaqoobi, developer in NRW. Stack: JavaScript, TypeScript, Firebase, PWA, Node." />
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" alt="whoami: Farhad Yaqoobi, developer in NRW. Stack: JavaScript, TypeScript, PWA, Node, Workers." />
 
 </div>
 
@@ -98,10 +125,16 @@ whose content actually changed.
 <div align="center">
 
 <a href="https://developer.mozilla.org/tr/docs/Web/JavaScript" title="JavaScript"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-javascript.svg" width="80" alt="JavaScript" /></a>
+<a href="https://www.typescriptlang.org/" title="TypeScript"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-typescript.svg" width="80" alt="TypeScript" /></a>
 <a href="https://developer.mozilla.org/tr/docs/Web/HTML" title="HTML5"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-html5.svg" width="80" alt="HTML5" /></a>
 <a href="https://developer.mozilla.org/tr/docs/Web/CSS" title="CSS"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-css.svg" width="80" alt="CSS" /></a>
-<a href="https://firebase.google.com/" title="Firebase"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-firebase.svg" width="80" alt="Firebase" /></a>
+<a href="https://nodejs.org/" title="Node.js"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-nodejs.svg" width="80" alt="Node.js" /></a>
 <a href="https://web.dev/explore/progressive-web-apps" title="PWA"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-pwa.svg" width="80" alt="PWA" /></a>
+<a href="https://firebase.google.com/" title="Firebase"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-firebase.svg" width="80" alt="Firebase" /></a>
+<a href="https://developers.cloudflare.com/workers/" title="Cloudflare Workers"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-cloudflare.svg" width="80" alt="Cloudflare Workers" /></a>
+
+<a href="https://www.sqlite.org/" title="SQLite"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-sqlite.svg" width="80" alt="SQLite" /></a>
+<a href="https://modelcontextprotocol.io/" title="Model Context Protocol"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-mcp.svg" width="80" alt="Model Context Protocol" /></a>
 <a href="https://git-scm.com/" title="Git"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-git.svg" width="80" alt="Git" /></a>
 <a href="https://github.com/" title="GitHub"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-github.svg" width="80" alt="GitHub" /></a>
 <a href="https://www.kernel.org/" title="Linux"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-linux.svg" width="80" alt="Linux" /></a>
@@ -111,7 +144,7 @@ whose content actually changed.
 
 </div>
 
-<div align="center"><sub>Currently learning <b>React</b> and backend fundamentals with <b>Node.js</b>.</sub></div>
+<div align="center"><sub>Currently learning <b>Cloudflare D1</b>, the <b>Meta Graph API</b>, and how far an AI agent can be trusted inside a product.</sub></div>
 
 ---
 
@@ -138,7 +171,7 @@ whose content actually changed.
 
 ### Say hello
 
-<sub>Always up for a conversation about web development, Firebase, or whatever you're building.</sub>
+<sub>Always up for a conversation about web development, messaging APIs, or whatever you're building.</sub>
 
 [![Email](https://img.shields.io/badge/Email-f7768e?style=flat-square&logo=gmail&logoColor=white)](mailto:farhadyaqoobi.kunduz@gmail.com)
 [![Instagram](https://img.shields.io/badge/Instagram-bf91f3?style=flat-square&logo=instagram&logoColor=white)](https://instagram.com/farhad___yaqoobi)
