@@ -1,14 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="480" height="190" viewBox="0 0 480 190" role="img" aria-label="By the numbers: 339 contributions, 191 commits, 142 pull requests, 4 public repos, 3 stars earned, 2 followers">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="480" height="190" viewBox="0 0 480 190" role="img" aria-label="By the numbers: 339 contributions, 191 commits, 142 pull requests, 4 public repos, 3 stars earned, 2 followers">
   <defs>
     
-    <linearGradient id="bg" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#f5d76e" stop-opacity=".15" />
-      <stop offset="0.16" stop-color="#15120b" stop-opacity="1" />
-      <stop offset="1" stop-color="#070604" stop-opacity="1" />
-    </linearGradient>
+    <pattern id="sizg" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M36 0 H0 V36" fill="none" stroke="#d4af37" stroke-opacity=".06" stroke-width="1" />
+    </pattern>
     <style>
     text { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; }
-    .card-bg { fill: url(#bg); stroke: #d4af37; stroke-opacity: .32; stroke-width: 1.2; }
+    .card-bg { fill: #070604; stroke: #d4af37; stroke-opacity: .3; stroke-width: 1; }
     /* Her animasyon "backwards" ile kurulur: animasyon hic calismazsa
        ogenin dogal hali gecerli olur, yani icerik yine de gorunur. */
     .rise { animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
@@ -20,57 +18,60 @@
       .title { font-size: 16px; font-weight: 700; fill: #f4ecd8; }
       .num { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
       .etk { font-size: 11px; fill: #9b8f72; letter-spacing: .3px; }
-      .cizgi { transform-box: fill-box; transform-origin: bottom;
-               animation: cikar .6s cubic-bezier(.2,.7,.3,1) backwards; }
-      @keyframes cikar { from { transform: scaleY(0); } to { transform: scaleY(1); } }
-      .puls { animation: puls 3.2s ease-in-out infinite; }
-      @keyframes puls { 0%,100% { r: 4; opacity: .55; } 50% { r: 6.5; opacity: 1; } }
+      .pim { transform-box: fill-box; transform-origin: center;
+             animation: cikar .5s cubic-bezier(.2,.7,.3,1) backwards; }
+      @keyframes cikar { from { transform: scale(0); } to { transform: scale(1); } }
+      .dugum { animation: dugum 3.4s ease-in-out infinite; }
+      @keyframes dugum { 0%,100% { fill-opacity: .45; } 50% { fill-opacity: 1; } }
     </style>
   </defs>
-  <rect class="card-bg" width="480" height="190" rx="14" />
-  <circle class="puls" cx="30" cy="34" r="4" fill="none" stroke="#d4af37" stroke-width="2" />
-  <text class="title" x="46" y="39">🧮 By the numbers</text>
+  
+  <rect class="card-bg" width="480" height="190" rx="4" />
+  <rect width="480" height="190" rx="4" fill="url(#sizg)" />
+  <path d="M0 34 H22" stroke="#d4af37" stroke-opacity=".32" stroke-width="1.4" fill="none" />
+  <rect class="dugum" x="24" y="30" width="8" height="8" fill="#d4af37" />
+  <text class="title" x="44" y="39">By the numbers</text>
   
     <g class="rise" style="animation-delay:0.12s">
-      <rect x="24" y="64" width="136" height="52" rx="12" fill="#f4ecd8" fill-opacity=".09" />
-      <rect class="cizgi" x="24" y="76" width="3" height="28" rx="1.5" fill="#f4ecd8"
+      <path d="M39 62 H162 V116 H30 V71 Z" fill="#f4ecd8" fill-opacity=".07" stroke="#f4ecd8" stroke-opacity=".3" stroke-width="1" />
+      <rect class="pim" x="26" y="85" width="8" height="8" fill="#f4ecd8"
             style="animation-delay:0.12s" />
-      <text class="num" x="40" y="92" fill="#f4ecd8">339</text>
-      <text class="etk" x="40" y="108">contributions · 1y</text>
+      <text class="num" x="46" y="91" fill="#f4ecd8">339</text>
+      <text class="etk" x="46" y="107">contributions · 1y</text>
     </g>
     <g class="rise" style="animation-delay:0.19s">
-      <rect x="172" y="64" width="136" height="52" rx="12" fill="#e8d9a8" fill-opacity=".09" />
-      <rect class="cizgi" x="172" y="76" width="3" height="28" rx="1.5" fill="#e8d9a8"
+      <path d="M183 62 H306 V116 H174 V71 Z" fill="#e8d9a8" fill-opacity=".07" stroke="#e8d9a8" stroke-opacity=".3" stroke-width="1" />
+      <rect class="pim" x="170" y="85" width="8" height="8" fill="#e8d9a8"
             style="animation-delay:0.19s" />
-      <text class="num" x="188" y="92" fill="#e8d9a8">191</text>
-      <text class="etk" x="188" y="108">commits · 1y</text>
+      <text class="num" x="190" y="91" fill="#e8d9a8">191</text>
+      <text class="etk" x="190" y="107">commits · 1y</text>
     </g>
     <g class="rise" style="animation-delay:0.26s">
-      <rect x="320" y="64" width="136" height="52" rx="12" fill="#d4af37" fill-opacity=".09" />
-      <rect class="cizgi" x="320" y="76" width="3" height="28" rx="1.5" fill="#d4af37"
+      <path d="M327 62 H450 V116 H318 V71 Z" fill="#d4af37" fill-opacity=".07" stroke="#d4af37" stroke-opacity=".3" stroke-width="1" />
+      <rect class="pim" x="314" y="85" width="8" height="8" fill="#d4af37"
             style="animation-delay:0.26s" />
-      <text class="num" x="336" y="92" fill="#d4af37">142</text>
-      <text class="etk" x="336" y="108">pull requests · 1y</text>
+      <text class="num" x="334" y="91" fill="#d4af37">142</text>
+      <text class="etk" x="334" y="107">pull requests · 1y</text>
     </g>
     <g class="rise" style="animation-delay:0.33s">
-      <rect x="24" y="126" width="136" height="52" rx="12" fill="#c08a3e" fill-opacity=".09" />
-      <rect class="cizgi" x="24" y="138" width="3" height="28" rx="1.5" fill="#c08a3e"
+      <path d="M39 128 H162 V182 H30 V137 Z" fill="#c08a3e" fill-opacity=".07" stroke="#c08a3e" stroke-opacity=".3" stroke-width="1" />
+      <rect class="pim" x="26" y="151" width="8" height="8" fill="#c08a3e"
             style="animation-delay:0.33s" />
-      <text class="num" x="40" y="154" fill="#c08a3e">4</text>
-      <text class="etk" x="40" y="170">public repos</text>
+      <text class="num" x="46" y="157" fill="#c08a3e">4</text>
+      <text class="etk" x="46" y="173">public repos</text>
     </g>
     <g class="rise" style="animation-delay:0.40s">
-      <rect x="172" y="126" width="136" height="52" rx="12" fill="#f5d76e" fill-opacity=".09" />
-      <rect class="cizgi" x="172" y="138" width="3" height="28" rx="1.5" fill="#f5d76e"
+      <path d="M183 128 H306 V182 H174 V137 Z" fill="#f5d76e" fill-opacity=".07" stroke="#f5d76e" stroke-opacity=".3" stroke-width="1" />
+      <rect class="pim" x="170" y="151" width="8" height="8" fill="#f5d76e"
             style="animation-delay:0.40s" />
-      <text class="num" x="188" y="154" fill="#f5d76e">3</text>
-      <text class="etk" x="188" y="170">stars earned</text>
+      <text class="num" x="190" y="157" fill="#f5d76e">3</text>
+      <text class="etk" x="190" y="173">stars earned</text>
     </g>
     <g class="rise" style="animation-delay:0.47s">
-      <rect x="320" y="126" width="136" height="52" rx="12" fill="#a9821e" fill-opacity=".09" />
-      <rect class="cizgi" x="320" y="138" width="3" height="28" rx="1.5" fill="#a9821e"
+      <path d="M327 128 H450 V182 H318 V137 Z" fill="#a9821e" fill-opacity=".07" stroke="#a9821e" stroke-opacity=".3" stroke-width="1" />
+      <rect class="pim" x="314" y="151" width="8" height="8" fill="#a9821e"
             style="animation-delay:0.47s" />
-      <text class="num" x="336" y="154" fill="#a9821e">2</text>
-      <text class="etk" x="336" y="170">followers</text>
+      <text class="num" x="334" y="157" fill="#a9821e">2</text>
+      <text class="etk" x="334" y="173">followers</text>
     </g>
 </svg>

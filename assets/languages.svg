@@ -1,15 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="480" height="190" viewBox="0 0 480 190" role="img" aria-label="Most used languages">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="480" height="190" viewBox="0 0 480 190" role="img" aria-label="Most used languages">
   <defs>
     
-    <linearGradient id="bg" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#f5d76e" stop-opacity=".15" />
-      <stop offset="0.16" stop-color="#15120b" stop-opacity="1" />
-      <stop offset="1" stop-color="#070604" stop-opacity="1" />
-    </linearGradient>
-    <clipPath id="barclip"><rect x="28" y="70" width="424" height="12" rx="6" /></clipPath>
+    <pattern id="dizg" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M36 0 H0 V36" fill="none" stroke="#d4af37" stroke-opacity=".06" stroke-width="1" />
+    </pattern>
     <style>
     text { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; }
-    .card-bg { fill: url(#bg); stroke: #d4af37; stroke-opacity: .32; stroke-width: 1.2; }
+    .card-bg { fill: #070604; stroke: #d4af37; stroke-opacity: .3; stroke-width: 1; }
     /* Her animasyon "backwards" ile kurulur: animasyon hic calismazsa
        ogenin dogal hali gecerli olur, yani icerik yine de gorunur. */
     .rise { animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
@@ -23,56 +20,61 @@
       .pc { font-size: 13px; fill: #9b8f72; font-variant-numeric: tabular-nums; }
       .seg { transform-box: fill-box; transform-origin: left center; animation: wipe .9s cubic-bezier(.2,.7,.3,1) backwards; }
       @keyframes wipe { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-      .spin { animation: spin 6s linear infinite; transform-origin: 30px 34px; }
-      @keyframes spin { to { transform: rotate(360deg); } }
+      .dugum { animation: dugum 3.4s ease-in-out infinite; }
+      @keyframes dugum { 0%,100% { fill-opacity: .45; } 50% { fill-opacity: 1; } }
     </style>
   </defs>
-  <rect class="card-bg" width="480" height="190" rx="14" />
-  <circle class="spin" cx="30" cy="34" r="4.5" fill="none" stroke="#d4af37" stroke-width="2"
-          stroke-dasharray="14 8" />
-  <text class="title" x="46" y="39">🎨 Most used languages</text>
-  <g clip-path="url(#barclip)">
-    <rect x="28.0" y="70" width="200.7" height="12"
+  
+  <rect class="card-bg" width="480" height="190" rx="4" />
+  <rect width="480" height="190" rx="4" fill="url(#dizg)" />
+  <path d="M0 34 H22" stroke="#d4af37" stroke-opacity=".32" stroke-width="1.4" fill="none" />
+  <rect class="dugum" x="24" y="30" width="8" height="8" fill="#d4af37" />
+  <text class="title" x="44" y="39">Most used languages</text>
+  <path d="M0 77 H30 M450 77 H480" stroke="#d4af37" stroke-opacity=".3" stroke-width="1.4" fill="none" />
+  <rect x="31" y="73" width="7" height="7" fill="#d4af37" fill-opacity=".55" />
+  <rect x="442" y="73" width="7" height="7" fill="#d4af37" fill-opacity=".55" />
+  
+    <rect x="40.0" y="72" width="182.3" height="10"
           fill="#e34e29" class="seg" style="animation-delay:0.15s" />
-    <rect x="228.7" y="70" width="141.5" height="12"
+    <rect x="225.3" y="72" width="128.5" height="10"
           fill="#f1e05a" class="seg" style="animation-delay:0.26s" />
-    <rect x="370.2" y="70" width="44.2" height="12"
+    <rect x="356.7" y="72" width="40.1" height="10"
           fill="#b79fcf" class="seg" style="animation-delay:0.37s" />
-    <rect x="414.4" y="70" width="37.2" height="12"
+    <rect x="399.8" y="72" width="33.8" height="10"
           fill="#4e8bce" class="seg" style="animation-delay:0.48s" />
-    <rect x="451.6" y="70" width="2.0" height="12"
+    <rect x="436.6" y="72" width="2.0" height="10"
           fill="#b8c2d0" class="seg" style="animation-delay:0.59s" />
-    <rect x="453.6" y="70" width="2.0" height="12"
-          fill="#a6afb3" class="seg" style="animation-delay:0.70s" /></g>
+    <rect x="441.6" y="72" width="2.0" height="10"
+          fill="#a6afb3" class="seg" style="animation-delay:0.70s" />
   
     <g class="rise" style="animation-delay:0.35s">
-      <circle cx="35" cy="114" r="5" fill="#e34e29" />
-      <text class="lg" x="48" y="118">HTML</text>
-      <text class="pc" x="230" y="118" text-anchor="end">47.3%</text>
+      <rect x="40" y="111" width="8" height="8" fill="#e34e29" />
+      <text class="lg" x="58" y="120">HTML</text>
+      <text class="pc" x="226" y="120" text-anchor="end">47.3%</text>
     </g>
     <g class="rise" style="animation-delay:0.43s">
-      <circle cx="261" cy="114" r="5" fill="#f1e05a" />
-      <text class="lg" x="274" y="118">JavaScript</text>
-      <text class="pc" x="456" y="118" text-anchor="end">33.4%</text>
+      <rect x="250" y="111" width="8" height="8" fill="#f1e05a" />
+      <text class="lg" x="268" y="120">JavaScript</text>
+      <text class="pc" x="436" y="120" text-anchor="end">33.4%</text>
     </g>
     <g class="rise" style="animation-delay:0.51s">
-      <circle cx="35" cy="140" r="5" fill="#b79fcf" />
-      <text class="lg" x="48" y="144">CSS</text>
-      <text class="pc" x="230" y="144" text-anchor="end">10.4%</text>
+      <rect x="40" y="137" width="8" height="8" fill="#b79fcf" />
+      <text class="lg" x="58" y="146">CSS</text>
+      <text class="pc" x="226" y="146" text-anchor="end">10.4%</text>
     </g>
     <g class="rise" style="animation-delay:0.59s">
-      <circle cx="261" cy="140" r="5" fill="#4e8bce" />
-      <text class="lg" x="274" y="144">TypeScript</text>
-      <text class="pc" x="456" y="144" text-anchor="end">8.8%</text>
+      <rect x="250" y="137" width="8" height="8" fill="#4e8bce" />
+      <text class="lg" x="268" y="146">TypeScript</text>
+      <text class="pc" x="436" y="146" text-anchor="end">8.8%</text>
     </g>
     <g class="rise" style="animation-delay:0.67s">
-      <circle cx="35" cy="166" r="5" fill="#b8c2d0" />
-      <text class="lg" x="48" y="170">PowerShell</text>
-      <text class="pc" x="230" y="170" text-anchor="end">0.1%</text>
+      <rect x="40" y="163" width="8" height="8" fill="#b8c2d0" />
+      <text class="lg" x="58" y="172">PowerShell</text>
+      <text class="pc" x="226" y="172" text-anchor="end">0.1%</text>
     </g>
     <g class="rise" style="animation-delay:0.75s">
-      <circle cx="261" cy="166" r="5" fill="#a6afb3" />
-      <text class="lg" x="274" y="170">Dockerfile</text>
-      <text class="pc" x="456" y="170" text-anchor="end">0.0%</text>
+      <rect x="250" y="163" width="8" height="8" fill="#a6afb3" />
+      <text class="lg" x="268" y="172">Dockerfile</text>
+      <text class="pc" x="436" y="172" text-anchor="end">0.0%</text>
     </g>
 </svg>
