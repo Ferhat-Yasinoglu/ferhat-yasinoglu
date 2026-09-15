@@ -2,16 +2,16 @@
   <defs>
     
     <linearGradient id="tbg" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity=".18" />
-      <stop offset="0.16" stop-color="#2472ab" stop-opacity="1" />
-      <stop offset="1" stop-color="#1b968e" stop-opacity="1" />
+      <stop offset="0" stop-color="#f5d76e" stop-opacity=".15" />
+      <stop offset="0.16" stop-color="#15120b" stop-opacity="1" />
+      <stop offset="1" stop-color="#070604" stop-opacity="1" />
     </linearGradient>
     <filter id="h" x="-100%" y="-100%" width="300%" height="300%">
       <feGaussianBlur stdDeviation="9" />
     </filter>
     <style>
-      .kutu { fill: url(#tbg); stroke: #eaf6fb; stroke-opacity: .3; stroke-width: 1; }
-      .etk { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; font-size: 13px; font-weight: 600; fill: #f2f9ff; }
+      .kutu { fill: url(#tbg); stroke: #d4af37; stroke-opacity: .3; stroke-width: 1; }
+      .etk { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; font-size: 13px; font-weight: 600; fill: #f4ecd8; }
       /* Hareket bilincli sekilde hafif: sayfada baska seyler de oynuyor,
          ikonlar dikkati calmadan yasiyor olsun. */
       .bob { animation: bob 5s ease-in-out infinite alternate; }
