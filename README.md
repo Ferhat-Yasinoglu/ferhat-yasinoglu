@@ -19,32 +19,6 @@
 
 ## 🛠️ What I've built
 
-### 🎛️ Sosyal Stüdyo
-
-<sub>*A social media automation studio — flows, contacts, broadcasts and content tools in one app.*</sub>
-
-<a href="https://ferhat-yasinoglu.github.io/sosyal-studyo/">
-  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/sosyal-studyo.jpg" width="100%" alt="The flow editor: a conversation built from numbered steps — condition, comment reply, comment to DM, message, buttons" />
-</a>
-
-A conversation is a list of steps: ask something, branch on a button, tag the person, wait, hand
-over to an AI agent. Sixteen step types, and the runner that executes them is a pure state machine —
-the same file runs in the browser simulator and in the Cloudflare Worker that talks to Telegram,
-Instagram and WhatsApp. Local mode needs no server at all: build a flow, test it, manage contacts,
-write content, take a backup, all from IndexedDB with the network off.
-
-Every channel carries an honest label — *works*, *needs Meta approval*, *the platform doesn't allow
-this* — because the interesting part of this project was learning which promises the APIs actually
-keep. The Worker sends nothing outward until an account is explicitly switched off rehearsal mode.
-
-<sub>**Built with** JavaScript (ES6+) &nbsp;·&nbsp; Cloudflare Workers &nbsp;·&nbsp; D1 &nbsp;·&nbsp; IndexedDB &nbsp;·&nbsp; Service Workers &nbsp;·&nbsp; Vitest</sub><br>
-<sub>**Learned here** pure modules that run in both the browser and the Worker &nbsp;·&nbsp; webhook signature checks &nbsp;·&nbsp; failing closed when a secret is missing</sub>
-
-[![Live](https://img.shields.io/badge/Open-Live%20app-d4af37?style=flat-square&logo=googlechrome&logoColor=070604)](https://ferhat-yasinoglu.github.io/sosyal-studyo/)
-[![Code](https://img.shields.io/badge/Read-Source-070604?style=flat-square&logo=github&logoColor=d4af37)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/sosyal-studyo)
-
-<br>
-
 ### 🤖 botflow-mcp
 
 <sub>*Telegram chatbot funnels, built by talking to a model instead of clicking a dashboard.*</sub>
@@ -109,8 +83,8 @@ straight from the browser. Afghani is supported and the invoice prints.
 The header above, the terminal below, the language chart, the numbers, the contribution graph —
 none of them come from a third-party service. A Node script queries the GitHub API and writes
 animated SVGs into this repo; a workflow reruns it every six hours and commits only the cards
-whose content actually changed. Six more workflows live beside it: they run the tests for both
-projects, publish Sosyal Stüdyo to Pages, deploy and diagnose its Worker, and feed the snake below.
+whose content actually changed. A second workflow feeds the snake below, and the rest run the
+tests for the projects that live in this repository.
 
 [![Code](https://img.shields.io/badge/Read-cards.mjs-070604?style=flat-square&logo=javascript&logoColor=d4af37)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/blob/main/.github/scripts/cards.mjs)
 

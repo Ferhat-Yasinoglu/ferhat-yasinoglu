@@ -902,7 +902,7 @@ await mkdir(OUT, { recursive: true });
       { tip: "komut", metin: "cat stack.txt" },
       { tip: "cikti", metin: "JavaScript - TypeScript - PWA - Node - Workers", renk: T.parlak },
       { tip: "komut", metin: "ls projects/" },
-      { tip: "cikti", metin: "sosyal-studyo/ botflow-mcp/ acik-defter/ netstore/", renk: T.sampanya },
+      { tip: "cikti", metin: "botflow-mcp/   acik-defter/   netstore/", renk: T.sampanya },
       { tip: "komut", metin: "cat learning.md" },
       { tip: "cikti", metin: "Cloudflare D1 - Meta Graph API - MCP", renk: T.altin },
       { tip: "komut", metin: "locale -a" },
