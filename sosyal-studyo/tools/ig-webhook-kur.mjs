@@ -115,9 +115,12 @@ else {
   else {
     const kayitlar = bagDurum.data || [];
     for (const k of kayitlar) console.log(`  hesap bagi: uygulama=${k.id || '?'} "${k.name || ''}" alanlar=[${(k.subscribed_fields || []).join(', ')}]`);
-    const yabanci = kayitlar.filter((k) => k.id && String(k.id) !== String(appId));
-    if (yabanci.length) console.log(`::warning::hesap bagi baska bir uygulamaya yazilmis (${yabanci.map((k) => k.id).join(', ')}); DM gelmeyebilir`);
-    if (!kayitlar.length) console.log('::warning::hesap bagi bos gorunuyor');
+    // graph.instagram.com uygulamayı INSTAGRAM App ID'siyle bildiriyor; bu, Meta App ID'den
+    // ayrı bir numaradır (Instagram Login akışında her uygulamanın iki kimliği var).
+    // Yani buradaki kimliğin META_APP_ID'den farklı olması tek başına sorun değil —
+    // yalnızca hiç kayıt yoksa gerçekten bağ kurulamamış demektir.
+    if (!kayitlar.length) console.log('::warning::hesap bagi bos gorunuyor; DM gelmez');
+    else if (!kayitlar.some((k) => (k.subscribed_fields || []).includes('messages'))) console.log('::warning::hesap baginda messages alani yok');
   }
 }
 
