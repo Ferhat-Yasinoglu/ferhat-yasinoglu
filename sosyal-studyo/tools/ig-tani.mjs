@@ -23,7 +23,17 @@ const kim = await al('me?fields=id,username,account_type');
 if (kim.error) { console.log(`::error::token gecersiz: ${kim.error.message}`); process.exit(1); }
 console.log(`hesap: @${kim.username} (${kim.account_type || '?'})`);
 
-const k = await al('conversations?fields=id,updated_time&limit=10');
+// platform=instagram: Meta'nın kendi örneğinde var ve eksikliği tam da "Unsupported get request
+// ... missing permissions" (kod 100 / alt 33) üretiyor. Parametresiz sorgu izin sorunu gibi
+// görünüyor ama değil; bu yüzden iki biçim de denenir ve hangisinin geçtiği yazılır.
+let k = await al('conversations?platform=instagram&fields=id,updated_time&limit=10');
+if (k.error) {
+  console.log(`  (platform=instagram ile: ${k.error.message} [kod=${k.error.code || '?'} alt=${k.error.error_subcode || '-'}])`);
+  const yedek = await al('conversations?fields=id,updated_time&limit=10');
+  if (!yedek.error) { console.log('  -> platform parametresi OLMADAN gecti; parametreyi kaldirmak gerekiyor.'); k = yedek; }
+} else {
+  console.log('  (platform=instagram ile sorgulandi)');
+}
 if (k.error) {
   const e = k.error;
   console.log(`  konusmalar SORULAMADI: ${e.message} [kod=${e.code || '?'} alt=${e.error_subcode || '-'}]`);
