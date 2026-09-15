@@ -27,7 +27,7 @@ describe('Meta webhook damgası', () => {
     const env = ortam({ META_APP_SECRET: GIZLI, META_VERIFY_TOKEN: 'v' });
     const ham = JSON.stringify(govde);
     const r = await worker.fetch(istek(ham, await imzala('yanlis-gizli', ham)), env, ctx);
-    expect(r.status).toBe(401);
+    expect(r.status).toBe(200); // Meta'ya hata dönmüyoruz: hata dönmek aboneliği kapattırıyor
     const red = await new Veritabani(env.DB).metaAl('meta_webhook_red');
     expect(red).toMatch(/META_APP_SECRET/);
     expect(await new Veritabani(env.DB).metaAl('meta_webhook_kabul')).toBeNull();
@@ -36,7 +36,7 @@ describe('Meta webhook damgası', () => {
   it('imza başlığı hiç yoksa sebep bunu söyler', async () => {
     const env = ortam({ META_APP_SECRET: GIZLI, META_VERIFY_TOKEN: 'v' });
     const r = await worker.fetch(istek(JSON.stringify(govde)), env, ctx);
-    expect(r.status).toBe(401);
+    expect(r.status).toBe(200);
     expect(await new Veritabani(env.DB).metaAl('meta_webhook_red')).toMatch(/imza başlığı yok/);
   });
 
@@ -70,12 +70,28 @@ describe('Meta webhook damgası', () => {
     const ilk = await db.metaAl('meta_webhook_red');
     expect(ilk).toBeTruthy();
     // Aynı env ile 20 rica daha: uç herkese açık, her reddi yazmak yazma kotasını tüketirdi.
-    for (let i = 0; i < 20; i++) expect((await worker.fetch(istek(ham, kotu), env, ctx)).status).toBe(401);
+    for (let i = 0; i < 20; i++) expect((await worker.fetch(istek(ham, kotu), env, ctx)).status).toBe(200);
     expect(await db.metaAl('meta_webhook_red')).toBe(ilk);
     // Yeni env (yeni isolate) kendi sayacıyla başlar: ilk red yine yazılır.
     const env2 = ortam({ META_APP_SECRET: GIZLI, META_VERIFY_TOKEN: 'v' });
     await worker.fetch(istek(ham, kotu), env2, ctx);
     expect(await new Veritabani(env2.DB).metaAl('meta_webhook_red')).toBeTruthy();
+  });
+
+
+  it('imzasız gövde 200 alsa bile hiçbir olaya çevrilmez', async () => {
+    const env = ortam({ META_APP_SECRET: GIZLI, META_VERIFY_TOKEN: 'v' });
+    const db = new Veritabani(env.DB);
+    const ham = JSON.stringify(govde);
+    const r = await worker.fetch(istek(ham, await imzala('yanlis-gizli', ham)), env, ctx);
+    expect(r.status).toBe(200);
+    // Meta'ya 200 dönmek yalnızca aboneliğin düşmesini engelliyor; veri güvenilmez olduğu için
+    // hiçbir kişi, sohbet ya da mesaj kaydı oluşmamalı.
+    for (const kol of ['kisiler', 'sohbetler', 'mesajlar', 'gunluk']) {
+      const kayitlar = await db.listele(kol);
+      expect(kayitlar).toHaveLength(0);
+    }
+    expect(await db.metaAl('meta_webhook_kabul')).toBeNull();
   });
 
   it('doktor son kabul ve son reddi gösterir', async () => {

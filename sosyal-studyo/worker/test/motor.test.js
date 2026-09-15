@@ -94,12 +94,16 @@ describe('Instagram yorumları ve kural motoru', () => {
     expect(f.cagrilar.some((c) => c.url.includes('/c2?') && c.url.includes('hide=true'))).toBe(true);
   });
 
-  it('Meta webhook: imzasız 401, imzalı 200; el sıkışma challenge döner', async () => {
+  // İmzasız gövde İŞLENMEZ ama Meta'ya 200 döner: hata dönmek, bir saat sürerse aboneliği
+  // kapattırıyor (Meta: "your app will be unsubscribed") ve saatlerce sessiz kesinti yaratıyor.
+  // Reddin izi doktordaki damgada duruyor; ayrıntılı kanıt webhook-damga.test.js'te.
+  it('Meta webhook: imzasız işlenmez (200 döner), imzalı 200; el sıkışma challenge döner', async () => {
     const env = ortam(); const ctx2 = { waitUntil: () => {} };
     const el = new Request('https://w.example/meta/webhook?hub.mode=subscribe&hub.verify_token=dogrula&hub.challenge=123', { method: 'GET' });
     expect(await (await worker.fetch(el, env, ctx2)).text()).toBe('123');
     const govde = JSON.stringify({ object: 'instagram', entry: [] });
-    expect((await worker.fetch(new Request('https://w.example/meta/webhook', { method: 'POST', body: govde }), env, ctx2)).status).toBe(401);
+    expect((await worker.fetch(new Request('https://w.example/meta/webhook', { method: 'POST', body: govde }), env, ctx2)).status).toBe(200);
+    expect(await new Veritabani(env.DB).metaAl('meta_webhook_red')).toMatch(/imza/);
     const anahtar = await crypto.subtle.importKey('raw', new TextEncoder().encode(env.META_APP_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
     const imza = 'sha256=' + [...new Uint8Array(await crypto.subtle.sign('HMAC', anahtar, new TextEncoder().encode(govde)))].map((b) => b.toString(16).padStart(2, '0')).join('');
     expect((await worker.fetch(new Request('https://w.example/meta/webhook', { method: 'POST', headers: { 'X-Hub-Signature-256': imza }, body: govde }), env, ctx2)).status).toBe(200);

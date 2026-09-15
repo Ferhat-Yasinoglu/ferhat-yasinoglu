@@ -1,22 +1,34 @@
 // Meta panelindeki "Configure webhooks → Verify and save" düğmesinin API karşılığı.
 //
-// Neden gerekli: Meta, ısrarla hata dönen bir geri çağırma adresini arızalı sayıp teslimatı
-// durduruyor. Abonelik listede "açık" görünmeye devam ediyor (me/subscribed_apps hâlâ
-// "messages" diyor) ama tek bir olay gelmiyor ve bunu hiçbir uç noktada yazmıyor.
-// Hesap aboneliğini tazelemek (me/subscribed_apps) bu durumu açmıyor; açan şey aboneliği
-// UYGULAMA düzeyinde yeniden kurmak: Meta o zaman adresi baştan doğruluyor
-// (GET ...?hub.mode=subscribe&hub.verify_token=...&hub.challenge=...) ve doğrulama geçerse
-// arıza işareti kalkıyor.
+// NEDEN: Meta'nın belgesi açık — "Bir saat boyunca teslimat başarısız olmaya devam ederse
+// Webhooks Disabled uyarısı alırsınız ve uygulamanız o Instagram Profesyonel hesabının
+// webhook'larından ÇIKARILIR. Sorunları düzelttikten sonra yeniden abone olmanız gerekir."
+// Bizde tam bu oldu: iki teslimat yanlış app secret yüzünden reddedildi, Meta bir saat denedi,
+// sonra aboneliği kapattı. Abonelik listede hâlâ "açık" görünüyordu; hiçbir uç bunu söylemedi.
+//
+// ÇARE (yine belgeden): "callback_url, verify_token ve object alanlarıyla POST isteği yapmak
+// aboneliği YENİDEN ETKİNLEŞTİRİR." Meta bu çağrı sırasında adresi baştan doğruluyor
+// (GET ...hub.mode=subscribe&hub.challenge=...) ve sonucu POST'un yanıtında bildiriyor.
+//
+// İki ayrı kayıt var, ikisi de gerekli:
+//   1) UYGULAMA düzeyi: /{app-id}/subscriptions  → adres + alanlar + active bayrağı
+//   2) HESAP düzeyi:    /me/subscribed_apps      → hesabın hangi uygulamaya bağlı olduğu
+// Hesabı tazelemek uygulama aboneliğinin active bayrağını açmıyor; bu yüzden ikisi de yapılır.
 //
 // Gizli değerlerin hiçbiri (app secret, verify token, erişim belirteci) çıktıya yazılmaz.
 const G = 'https://graph.facebook.com/v26.0';
 const IG = 'https://graph.instagram.com/v26.0';
 
+// Panelin Instagram Login akışında öntanımlı olarak abone ettiği alanların tamamı.
+// POST'un birleştirme mi değiştirme mi yaptığı Meta tarafından belgelenmemiş; tam listeyi
+// göndermek iki durumda da doğru sonucu veriyor.
+const ALANLAR = (process.env.IG_ALANLAR
+  || 'comments,live_comments,message_reactions,messages,messaging_optins,messaging_postbacks,messaging_referral,messaging_seen').trim();
+
 const appId = (process.env.META_APP_ID || '').trim();
 const appSecret = (process.env.META_APP_SECRET || '').trim();
 const verifyToken = (process.env.META_VERIFY_TOKEN || '').trim();
 const callback = (process.env.CALLBACK_URL || '').trim();
-const alanlar = (process.env.IG_ALANLAR || 'messages').trim();
 const nesne = (process.env.META_NESNE || 'instagram').trim();
 
 const eksik = [];
@@ -27,71 +39,81 @@ if (!callback) eksik.push('CALLBACK_URL');
 if (eksik.length) { console.log(`::error::eksik: ${eksik.join(', ')}`); process.exit(1); }
 
 const uygulamaBelirteci = `${appId}|${appSecret}`;
+const jsonAl = async (r) => { try { return await r.json(); } catch { return {}; } };
 
-async function cagir(url, method = 'GET') {
-  const r = await fetch(url, { method });
-  const j = await r.json().catch(() => ({}));
-  return { durum: r.status, govde: j };
-}
+// 1) App Secret gerçekten bu uygulamaya mı ait? Değilse sonraki her adım yanıltıcı olur.
+const kim = await jsonAl(await fetch(`${G}/${appId}?fields=id,name&access_token=${encodeURIComponent(uygulamaBelirteci)}`));
+if (kim.error) { console.log(`::error::App ID ile App Secret eslesmiyor: ${kim.error.message}`); process.exit(1); }
+console.log(`uygulama: "${kim.name}" (id ${kim.id})`);
 
-// 1) App Secret gerçekten bu uygulamaya mı ait? Değilse sonraki adımlar yanıltıcı olur.
-const kim = await cagir(`${G}/${appId}?fields=id,name&access_token=${encodeURIComponent(uygulamaBelirteci)}`);
-if (kim.govde?.error) {
-  console.log(`::error::App ID ile App Secret eslesmiyor: ${kim.govde.error.message}`);
-  process.exit(1);
-}
-console.log(`uygulama: "${kim.govde.name}" (id ${kim.govde.id})`);
-
-// 2) Mevcut abonelikler — öncesini görelim ki değişimi okuyabilelim.
-const once = await cagir(`${G}/${appId}/subscriptions?access_token=${encodeURIComponent(uygulamaBelirteci)}`);
-const yaz = (etiket, j) => {
-  if (j?.error) { console.log(`  ${etiket}: sorulamadi — ${j.error.message}`); return; }
-  const kayitlar = j?.data || [];
-  if (!kayitlar.length) { console.log(`  ${etiket}: abonelik yok`); return; }
-  for (const k of kayitlar) {
-    const alan = (k.fields || []).map((f) => (typeof f === 'string' ? f : f.name)).join(', ');
-    console.log(`  ${etiket}: object=${k.object} aktif=${k.active} alanlar=[${alan}] adres=${k.callback_url || '(yok)'}`);
-  }
+const abonelikleriOku = async () => jsonAl(await fetch(`${G}/${appId}/subscriptions?access_token=${encodeURIComponent(uygulamaBelirteci)}`));
+const yazAbonelik = (etiket, j) => {
+  if (j?.error) { console.log(`  ${etiket}: sorulamadi — ${j.error.message}`); return null; }
+  const kayit = (j?.data || []).find((k) => k.object === nesne);
+  if (!kayit) { console.log(`  ${etiket}: ${nesne} aboneligi yok`); return null; }
+  const alan = (kayit.fields || []).map((f) => (typeof f === 'string' ? f : f.name));
+  console.log(`  ${etiket}: active=${kayit.active} alanlar=[${alan.join(', ')}] adres=${kayit.callback_url || '(yok)'}`);
+  return { kayit, alan };
 };
-yaz('once', once.govde);
 
-// 3) Aboneliği yeniden kur. Meta bu çağrıda adresi GET ile doğrular; Worker hub.challenge'ı
-//    META_VERIFY_TOKEN eşleşirse geri döndürüyor, yoksa 403 veriyor ve bu adım hata verir.
-const kurUrl = new URL(`${G}/${appId}/subscriptions`);
-kurUrl.searchParams.set('object', nesne);
-kurUrl.searchParams.set('callback_url', callback);
-kurUrl.searchParams.set('fields', alanlar);
-kurUrl.searchParams.set('verify_token', verifyToken);
-kurUrl.searchParams.set('access_token', uygulamaBelirteci);
+const once = await abonelikleriOku();
+yazAbonelik('once ', once);
 
-const kur = await cagir(kurUrl.toString(), 'POST');
-if (kur.govde?.error) {
-  const e = kur.govde.error;
+// 2) Yeniden kur. Parametreler form gövdesinde gider: "|" ve "://" bir sorgu dizesinde
+//    bazı ara katmanlarca bozulabiliyor ve bu, sahte "callback verification failed" üretiyor.
+const govde = new URLSearchParams({
+  object: nesne,
+  callback_url: callback,
+  fields: ALANLAR,
+  verify_token: verifyToken,
+  access_token: uygulamaBelirteci,
+});
+const kur = await jsonAl(await fetch(`${G}/${appId}/subscriptions`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body: govde,
+}));
+if (kur.error) {
+  const e = kur.error;
   console.log(`::error::abonelik kurulamadi: ${e.message} [tip=${e.type || '?'} kod=${e.code || '?'} alt=${e.error_subcode || '-'}]`);
-  if (String(e.message || '').toLowerCase().includes('verify')) {
-    console.log('  -> Meta adresi dogrulayamadi: META_VERIFY_TOKEN Worker\'daki degerle ayni olmali ve Worker ayakta olmali.');
+  if (/verif|callback|url/i.test(String(e.message || ''))) {
+    console.log('  -> Meta adresi dogrulayamadi. Worker ayakta olmali ve GET /meta/webhook,');
+    console.log('     hub.verify_token META_VERIFY_TOKEN ile esitse hub.challenge\'i ham metin olarak 200 ile dondurmeli.');
   }
   process.exit(1);
 }
-console.log(`POST /subscriptions: ${JSON.stringify(kur.govde)}`);
+console.log(`POST /subscriptions: ${JSON.stringify(kur)}`);
 
-// 4) Sonrasını oku — adres ve alanlar gerçekten yazılmış mı?
-const sonra = await cagir(`${G}/${appId}/subscriptions?access_token=${encodeURIComponent(uygulamaBelirteci)}`);
-yaz('sonra', sonra.govde);
+// 3) Gerçekten yazıldı mı? Asıl bakılacak alan "active".
+const sonra = await abonelikleriOku();
+const s = yazAbonelik('sonra', sonra);
+if (!s) { console.log(`::error::${nesne} aboneligi kayitlarda gorunmuyor`); process.exit(1); }
+if (!s.alan.includes('messages')) { console.log('::error::messages alani abonelikte yok; DM gelmez'); process.exit(1); }
+if (s.kayit.active === false) { console.log('::error::abonelik hala pasif (active=false); teslimat acilmadi'); process.exit(1); }
+if (s.kayit.callback_url && s.kayit.callback_url !== callback) console.log(`::warning::kayitli adres beklenenden farkli: ${s.kayit.callback_url}`);
 
-const ilgili = (sonra.govde?.data || []).find((k) => k.object === nesne);
-if (!ilgili) { console.log(`::error::${nesne} aboneligi kayitlarda gorunmuyor`); process.exit(1); }
-const kayitliAlanlar = (ilgili.fields || []).map((f) => (typeof f === 'string' ? f : f.name));
-if (!kayitliAlanlar.includes('messages')) { console.log('::error::messages alani abonelikte yok; DM gelmez'); process.exit(1); }
-if (ilgili.callback_url && ilgili.callback_url !== callback) console.log(`::warning::kayitli adres beklenenden farkli: ${ilgili.callback_url}`);
-if (ilgili.active === false) console.log('::warning::abonelik pasif gorunuyor');
+// 4) Hesap bağı — ayrı bir kayıt. Hangi uygulamaya yazıldığını da okumak gerekiyor:
+//    POST "success" dönüp bağı başka bir uygulama kimliğine yazan bir platform hatası biliniyor.
+const igToken = process.env.IG_ACCESS_TOKEN;
+if (!igToken) { console.log('  hesap bagi: IG_ACCESS_TOKEN yok, atlandi'); }
+else {
+  const igBasliklar = { Authorization: `Bearer ${igToken}` };
+  const bagOku = async () => jsonAl(await fetch(`${IG}/me/subscribed_apps`, { headers: igBasliklar }));
+  const bagKur = async () => jsonAl(await fetch(`${IG}/me/subscribed_apps?subscribed_fields=${encodeURIComponent(ALANLAR)}`, { method: 'POST', headers: igBasliklar }));
 
-// 5) Hesabı da uygulamaya bağla (ayrı bir kayıt; uygulama aboneliği bunu kapsamıyor).
-if (process.env.IG_ACCESS_TOKEN) {
-  const hesap = await fetch(`${IG}/me/subscribed_apps?subscribed_fields=${encodeURIComponent(alanlar)}`, {
-    method: 'POST', headers: { Authorization: `Bearer ${process.env.IG_ACCESS_TOKEN}` },
-  }).then((r) => r.json()).catch(() => ({}));
-  console.log(hesap?.error ? `  hesap baglama: ${hesap.error.message}` : `  hesap baglama: ${JSON.stringify(hesap)}`);
+  let bag = await bagKur();
+  if (bag.error) console.log(`  hesap bagi kurulamadi: ${bag.error.message}`);
+  else console.log(`  hesap bagi POST: ${JSON.stringify(bag)}`);
+
+  const bagDurum = await bagOku();
+  if (bagDurum.error) { console.log(`  hesap bagi sorulamadi: ${bagDurum.error.message}`); }
+  else {
+    const kayitlar = bagDurum.data || [];
+    for (const k of kayitlar) console.log(`  hesap bagi: uygulama=${k.id || '?'} "${k.name || ''}" alanlar=[${(k.subscribed_fields || []).join(', ')}]`);
+    const yabanci = kayitlar.filter((k) => k.id && String(k.id) !== String(appId));
+    if (yabanci.length) console.log(`::warning::hesap bagi baska bir uygulamaya yazilmis (${yabanci.map((k) => k.id).join(', ')}); DM gelmeyebilir`);
+    if (!kayitlar.length) console.log('::warning::hesap bagi bos gorunuyor');
+  }
 }
 
-console.log('Abonelik uygulama duzeyinde yeniden kuruldu ve adres Meta tarafindan dogrulandi.');
+console.log('Abonelik yeniden etkinlestirildi: adres Meta tarafindan dogrulandi ve active=true.');

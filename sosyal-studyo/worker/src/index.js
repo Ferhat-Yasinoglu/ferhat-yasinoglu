@@ -91,7 +91,14 @@ async function isle(istek, env, ctx) {
         sonRedYazimi.set(env, Date.now());
         await db.metaKaydet('meta_webhook_red', `${simdi()} ${sebep}`).catch((e) => console.error('red damgasi', e));
       }
-      return new Response('imza', { status: 401 });
+      // Gövde İŞLENMEZ — imzası doğrulanmamış veri hiçbir zaman olaya çevrilmez. Ama Meta'ya
+      // 200 dönülür: "Bir saat boyunca teslimat başarısız olmaya devam ederse uygulamanız o
+      // Instagram hesabının webhook'larından çıkarılır" (Meta). Yanlış bir secret yüzünden
+      // 401 dönmek aboneliği kapattırıyor ve saatlerce süren sessiz bir kesintiye yol açıyor —
+      // bu tam olarak başımıza geldi. Hata artık doktordaki damgadan görülüyor, Meta'ya hata
+      // kodu döndürmeye gerek yok. Ödün: Meta bu olayı yeniden denemez; karşılığında kurulum
+      // hatası aboneliği düşürmez. Saldırgan için de fark yok: imzasız istek yine işlenmiyor.
+      return new Response('ok', { status: 200 });
     }
     let govde; try { govde = JSON.parse(ham); } catch { return new Response('json', { status: 400 }); }
     await db.metaKaydet('meta_webhook_kabul', `${simdi()} ${govde.object || '?'}`).catch((e) => console.error('kabul damgasi', e));
