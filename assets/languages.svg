@@ -2,14 +2,14 @@
   <defs>
     
     <linearGradient id="bg" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity=".18" />
-      <stop offset="0.16" stop-color="#2472ab" stop-opacity="1" />
-      <stop offset="1" stop-color="#1b968e" stop-opacity="1" />
+      <stop offset="0" stop-color="#f5d76e" stop-opacity=".15" />
+      <stop offset="0.16" stop-color="#15120b" stop-opacity="1" />
+      <stop offset="1" stop-color="#070604" stop-opacity="1" />
     </linearGradient>
     <clipPath id="barclip"><rect x="28" y="70" width="424" height="12" rx="6" /></clipPath>
     <style>
     text { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; }
-    .card-bg { fill: url(#bg); stroke: #eaf6fb; stroke-opacity: .32; stroke-width: 1.2; }
+    .card-bg { fill: url(#bg); stroke: #d4af37; stroke-opacity: .32; stroke-width: 1.2; }
     /* Her animasyon "backwards" ile kurulur: animasyon hic calismazsa
        ogenin dogal hali gecerli olur, yani icerik yine de gorunur. */
     .rise { animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
@@ -18,9 +18,9 @@
     @media (prefers-reduced-motion: reduce) {
       * { animation-duration: .01ms !important; animation-delay: 0s !important; }
     }
-      .title { font-size: 16px; font-weight: 700; fill: #f2f9ff; }
-      .lg { font-size: 13px; fill: #f2f9ff; }
-      .pc { font-size: 13px; fill: #cbe4ee; font-variant-numeric: tabular-nums; }
+      .title { font-size: 16px; font-weight: 700; fill: #f4ecd8; }
+      .lg { font-size: 13px; fill: #f4ecd8; }
+      .pc { font-size: 13px; fill: #9b8f72; font-variant-numeric: tabular-nums; }
       .seg { transform-box: fill-box; transform-origin: left center; animation: wipe .9s cubic-bezier(.2,.7,.3,1) backwards; }
       @keyframes wipe { from { transform: scaleX(0); } to { transform: scaleX(1); } }
       .spin { animation: spin 6s linear infinite; transform-origin: 30px 34px; }
@@ -28,17 +28,17 @@
     </style>
   </defs>
   <rect class="card-bg" width="480" height="190" rx="14" />
-  <circle class="spin" cx="30" cy="34" r="4.5" fill="none" stroke="#e3c9ff" stroke-width="2"
+  <circle class="spin" cx="30" cy="34" r="4.5" fill="none" stroke="#d4af37" stroke-width="2"
           stroke-dasharray="14 8" />
   <text class="title" x="46" y="39">🎨 Most used languages</text>
   <g clip-path="url(#barclip)">
-    <rect x="28.0" y="70" width="201.0" height="12"
+    <rect x="28.0" y="70" width="200.7" height="12"
           fill="#e34e29" class="seg" style="animation-delay:0.15s" />
-    <rect x="229.0" y="70" width="141.2" height="12"
+    <rect x="228.7" y="70" width="141.5" height="12"
           fill="#f1e05a" class="seg" style="animation-delay:0.26s" />
-    <rect x="370.2" y="70" width="44.1" height="12"
+    <rect x="370.2" y="70" width="44.2" height="12"
           fill="#b79fcf" class="seg" style="animation-delay:0.37s" />
-    <rect x="414.3" y="70" width="37.3" height="12"
+    <rect x="414.4" y="70" width="37.2" height="12"
           fill="#4e8bce" class="seg" style="animation-delay:0.48s" />
     <rect x="451.6" y="70" width="2.0" height="12"
           fill="#b8c2d0" class="seg" style="animation-delay:0.59s" />
@@ -48,12 +48,12 @@
     <g class="rise" style="animation-delay:0.35s">
       <circle cx="35" cy="114" r="5" fill="#e34e29" />
       <text class="lg" x="48" y="118">HTML</text>
-      <text class="pc" x="230" y="118" text-anchor="end">47.4%</text>
+      <text class="pc" x="230" y="118" text-anchor="end">47.3%</text>
     </g>
     <g class="rise" style="animation-delay:0.43s">
       <circle cx="261" cy="114" r="5" fill="#f1e05a" />
       <text class="lg" x="274" y="118">JavaScript</text>
-      <text class="pc" x="456" y="118" text-anchor="end">33.3%</text>
+      <text class="pc" x="456" y="118" text-anchor="end">33.4%</text>
     </g>
     <g class="rise" style="animation-delay:0.51s">
       <circle cx="35" cy="140" r="5" fill="#b79fcf" />
