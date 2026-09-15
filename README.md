@@ -66,15 +66,21 @@ whole thing; Telegram is reached by long polling, so no public URL is needed.
 <sub>*An IT student's open notebook — my personal site and learning journal.*</sub>
 
 <a href="https://ferhat-yasinoglu.github.io/acik-defter/">
-  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/acik-defter.jpg" width="100%" alt="Açık Defter homepage" />
+  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/acik-defter.jpg" width="100%" alt="Açık Defter homepage: a lined notebook page on a desk, with a taped note card counting projects, notes and languages" />
 </a>
 
-Written from scratch — no framework, no build step. Four languages in one interface,
-the whole layout flips when you switch to Persian, and it reads with the network off.
-A check script keeps the hand-written chrome from drifting apart across pages.
+Written from scratch — no framework, no build step, no dependency. The site is a lined school
+notebook lying on a desk: paper grain, a red margin, a stitched spine, bookmark tabs on the cover;
+dark mode is the same notebook under a desk lamp. Four languages share one dictionary, the whole
+layout turns right-to-left in Persian, and it reads with the network off. Nothing is hidden when
+JavaScript is off, and every animation stops when the system asks for less motion.
 
-<sub>**Built with** JavaScript (ES6+) &nbsp;·&nbsp; CSS3 &nbsp;·&nbsp; Service Workers &nbsp;·&nbsp; Web App Manifest</sub><br>
-<sub>**Learned here** RTL through logical CSS properties &nbsp;·&nbsp; cache strategies &nbsp;·&nbsp; applying preferences before the page paints</sub>
+Two scripts guard it: one reads the files and checks that the hand-written header and footer haven't
+drifted apart across pages, the other opens a real browser and measures contrast, touch targets,
+keyboard access and whether the offline cache actually works.
+
+<sub>**Built with** JavaScript (ES6+) &nbsp;·&nbsp; CSS3 &nbsp;·&nbsp; View Transitions &nbsp;·&nbsp; Service Workers &nbsp;·&nbsp; Web App Manifest</sub><br>
+<sub>**Learned here** RTL through logical CSS properties &nbsp;·&nbsp; cache strategies &nbsp;·&nbsp; measuring contrast and touch targets in a real browser</sub>
 
 [![Live](https://img.shields.io/badge/Open-Live%20site-9ece6a?style=flat-square&logo=googlechrome&logoColor=white)](https://ferhat-yasinoglu.github.io/acik-defter/)
 [![Code](https://img.shields.io/badge/Read-Source-70a5fd?style=flat-square&logo=github&logoColor=white)](https://github.com/Ferhat-Yasinoglu/acik-defter)
