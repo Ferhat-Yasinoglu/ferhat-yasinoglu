@@ -98,7 +98,9 @@ async function isle(istek, env, ctx) {
       // bu tam olarak başımıza geldi. Hata artık doktordaki damgadan görülüyor, Meta'ya hata
       // kodu döndürmeye gerek yok. Ödün: Meta bu olayı yeniden denemez; karşılığında kurulum
       // hatası aboneliği düşürmez. Saldırgan için de fark yok: imzasız istek yine işlenmiyor.
-      return new Response('ok', { status: 200 });
+      // Durum kodu Meta için 200 kalmalı; ayrımı BAŞLIK taşıyor. Sonda bunu okuyup
+      // "Cloudflare'deki secret GitHub'dakiyle aynı mı" sorusunu yine cevaplayabiliyor.
+      return new Response('ok', { status: 200, headers: { 'X-SS-Imza': 'gecersiz' } });
     }
     let govde; try { govde = JSON.parse(ham); } catch { return new Response('json', { status: 400 }); }
     await db.metaKaydet('meta_webhook_kabul', `${simdi()} ${govde.object || '?'}`).catch((e) => console.error('kabul damgasi', e));
@@ -118,7 +120,7 @@ async function isle(istek, env, ctx) {
     const olaylar = meta.olaylaraCevir(govde, hesaplar);
     // Meta 200'ü hızlı ister; iş waitUntil'da sürer. Başarısız olay gelen kutusunda 'pending' kalır, cron yeniden dener.
     ctx.waitUntil((async () => { for (const o of olaylar) { try { await olayIsle(env, db, o, { hesaplar }); } catch (e) { console.error('meta olay', e); } } })());
-    return new Response('ok', { status: 200 });
+    return new Response('ok', { status: 200, headers: { 'X-SS-Imza': 'gecerli' } });
   }
   if (url.pathname === '/tg/webhook' && istek.method === 'POST') {
     if (!telegramGizliGecerli(env, istek)) return new Response('gizli', { status: 401 });

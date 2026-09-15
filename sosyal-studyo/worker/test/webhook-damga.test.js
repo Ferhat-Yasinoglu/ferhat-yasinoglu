@@ -94,6 +94,45 @@ describe('Meta webhook damgası', () => {
     expect(await db.metaAl('meta_webhook_kabul')).toBeNull();
   });
 
+
+  // Durum kodu artık iki durumu da 200 gösteriyor (Meta aboneliği düşürmesin diye). Ayrımı
+  // başlık taşıyor; sonda buna bakıyor. Bir süre 401'e bakan sonda, Worker 200 dönmeye
+  // başlayınca koşulsuz "secret'lar aynı" yazar hale gelmişti — bu testler o sessiz
+  // yanlışın tekrarını engelliyor.
+  it('yanıt başlığı geçerli/geçersiz imzayı ayırt eder', async () => {
+    const env = ortam({ META_APP_SECRET: GIZLI, META_VERIFY_TOKEN: 'v' });
+    const ham = JSON.stringify(govde);
+    const iyi = await worker.fetch(istek(ham, await imzala(GIZLI, ham)), env, ctx);
+    expect(iyi.status).toBe(200);
+    expect(iyi.headers.get('X-SS-Imza')).toBe('gecerli');
+
+    const env2 = ortam({ META_APP_SECRET: GIZLI, META_VERIFY_TOKEN: 'v' });
+    const kotu = await worker.fetch(istek(ham, await imzala('yanlis-gizli', ham)), env2, ctx);
+    expect(kotu.status).toBe(200);
+    expect(kotu.headers.get('X-SS-Imza')).toBe('gecersiz');
+  });
+
+  // Instagram Login akışındaki uygulamanın iki secret'ı var (Meta App Secret ve Instagram App
+  // Secret) ve Meta hangisinin imzaladığını belgelememiş. Tahmin etmek bize bir kesinti
+  // yaşattı; ikisini de kabul ediyoruz.
+  it('ikinci secret (IG_APP_SECRET) ile imzalanmış gövde de kabul edilir', async () => {
+    const IG_GIZLI = 'instagram-app-secret-xyz';
+    const env = ortam({ META_APP_SECRET: GIZLI, IG_APP_SECRET: IG_GIZLI, META_VERIFY_TOKEN: 'v' });
+    const ham = JSON.stringify(govde);
+    const r = await worker.fetch(istek(ham, await imzala(IG_GIZLI, ham)), env, ctx);
+    expect(r.status).toBe(200);
+    expect(r.headers.get('X-SS-Imza')).toBe('gecerli');
+    expect(await new Veritabani(env.DB).metaAl('meta_webhook_kabul')).toMatch(/instagram/);
+  });
+
+  it('iki secret de tutmazsa yine reddedilir', async () => {
+    const env = ortam({ META_APP_SECRET: GIZLI, IG_APP_SECRET: 'ikinci', META_VERIFY_TOKEN: 'v' });
+    const ham = JSON.stringify(govde);
+    const r = await worker.fetch(istek(ham, await imzala('ucuncu-yanlis', ham)), env, ctx);
+    expect(r.headers.get('X-SS-Imza')).toBe('gecersiz');
+    expect(await new Veritabani(env.DB).metaAl('meta_webhook_kabul')).toBeNull();
+  });
+
   it('doktor son kabul ve son reddi gösterir', async () => {
     const env = ortam({ META_APP_SECRET: GIZLI, META_VERIFY_TOKEN: 'v' });
     const ham = JSON.stringify(govde);

@@ -28,15 +28,24 @@ const r = await fetch(`${url}/meta/webhook`, {
   body: ham,
 });
 const metin = (await r.text()).slice(0, 100);
+// Durum kodu artık ayırt etmiyor: Worker, Meta'nın aboneliği kapatmaması için yanlış imzaya da
+// 200 dönüyor. Ayrımı X-SS-Imza başlığı taşıyor. (Bu sonda bir süre 401'e bakıyordu ve Worker
+// 200 dönmeye başlayınca koşulsuz "AYNI" yazar hale gelmişti — yani yanlış bilgi veriyordu.)
+const imzaDurumu = r.headers.get('X-SS-Imza');
 
-if (r.status === 200) {
-  console.log('  200 → Cloudflare\'deki META_APP_SECRET, GitHub\'daki degerle AYNI.');
+if (r.status !== 200) {
+  console.log(`  beklenmeyen yanit: ${r.status} ${metin}`);
+  process.exit(1);
+}
+if (imzaDurumu === 'gecerli') {
+  console.log('  gecerli → Cloudflare\'deki secret, GitHub\'daki degerle AYNI.');
   console.log('  Worker dogru imzali istegi kabul ediyor; teslimat gelmiyorsa sorun Meta tarafinda.');
-} else if (r.status === 401) {
-  console.log(`  401 (${metin}) → Cloudflare\'deki deger GitHub\'dakinden FARKLI.`);
+} else if (imzaDurumu === 'gecersiz') {
+  console.log('  gecersiz → Cloudflare\'deki secret GitHub\'dakinden FARKLI.');
   console.log('  Dagitim zinciri secret\'i tasimamis: Worker dagitimini yeniden calistir.');
   process.exit(1);
 } else {
-  console.log(`  beklenmeyen yanit: ${r.status} ${metin}`);
+  console.log(`  X-SS-Imza basligi yok (yanit: ${metin}). Worker eski surumde olabilir —`);
+  console.log('  bu sonda yalnizca yeni surumle anlamli sonuc verir; dagitimi yenile.');
   process.exit(1);
 }

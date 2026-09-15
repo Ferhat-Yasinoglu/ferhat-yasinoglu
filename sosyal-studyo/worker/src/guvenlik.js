@@ -24,13 +24,29 @@ export function yoneticiMi(env, istek) {
   return h.startsWith('Bearer ') && sabitZamanEsit(h.slice(7).trim(), beklenen);
 }
 
-/** Meta webhook: X-Hub-Signature-256 = 'sha256=' + HMAC-SHA256(ham gövde, App Secret). */
+/**
+ * Meta webhook: X-Hub-Signature-256 = 'sha256=' + HMAC-SHA256(ham gövde, App Secret).
+ *
+ * İki secret denenir. Instagram Login akışındaki bir uygulamanın İKİ secret'ı var:
+ * Meta App Secret (App settings → Basic) ve Instagram App Secret (Instagram → API setup
+ * with Instagram login → Business login settings). Meta'nın belgesi imzanın birincisiyle
+ * atıldığını söylüyor; saha raporları ikincisini gösteriyor ve Meta bu ayrımı hiç
+ * belgelememiş. Hangisi olduğunu tahmin etmek bize bir kesinti yaşattı; ikisini de kabul
+ * etmek bu belirsizliği ortadan kaldırıyor. İkisi de HMAC ile doğrulanıyor, yani "her ikisini
+ * kabul et" güvenliği zayıflatmıyor: saldırganın yine birini bilmesi gerekiyor.
+ */
 export async function metaImzaGecerli(env, hamGovde, baslik) {
-  if (!env.META_APP_SECRET || !baslik || !baslik.startsWith('sha256=')) return false;
-  const anahtar = await crypto.subtle.importKey('raw', enc.encode(env.META_APP_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const imza = await crypto.subtle.sign('HMAC', anahtar, enc.encode(hamGovde));
-  const hex = [...new Uint8Array(imza)].map((b) => b.toString(16).padStart(2, '0')).join('');
-  return sabitZamanEsit(hex, baslik.slice(7));
+  if (!baslik || !baslik.startsWith('sha256=')) return false;
+  const gizliler = [env.META_APP_SECRET, env.IG_APP_SECRET].filter(Boolean);
+  if (!gizliler.length) return false;
+  const beklenen = baslik.slice(7);
+  for (const gizli of gizliler) {
+    const anahtar = await crypto.subtle.importKey('raw', enc.encode(gizli), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const imza = await crypto.subtle.sign('HMAC', anahtar, enc.encode(hamGovde));
+    const hex = [...new Uint8Array(imza)].map((b) => b.toString(16).padStart(2, '0')).join('');
+    if (sabitZamanEsit(hex, beklenen)) return true;
+  }
+  return false;
 }
 
 /** Telegram webhook: X-Telegram-Bot-Api-Secret-Token başlığı setWebhook'taki secret_token ile aynı olmalı. */
