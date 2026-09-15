@@ -29,12 +29,13 @@ const FY_LOGO = await readFile(join(HERE, "fy-logo.svg"), "utf8");
 
 // Terminal kartinin solundaki portre. Kaynak fotograf depoda durmuyor; buradaki
 // dosya onun islenmis hali ve su islemlerden gecti (sharp):
-//   extract({ left: 125, top: 258, width: 440, height: 560 })  -- yuze sikica kirpma
-//   greyscale().normalise().linear(1.15, -14)                  -- teni yukari, saci asagi
-//   radyal vinyetle carpma (cx .46, cy .44, r .72)             -- gun batimi gokyuzunu sondur
-//   normalise().linear(1.12, -6).resize(300, 382)
-// Vinyet sart: fotografta arka plan yuzden parlak, duz cevrilirse portre kendi
-// arka plani icinde kayboluyor. Altin duotone ve tarama cizgisi SVG tarafinda.
+//   extract({ left: 200, top: 70, width: 720, height: 900 })   -- bas ve omuz
+//   greyscale().normalise()
+//   radyal vinyetle carpma (cx .49, cy .43, r .62)             -- duvardaki posterleri sondur
+//   normalise().linear(1.22, 8).resize(300, 375)               -- yuzu one cikar
+// Vinyet sart: arka plandaki poster ve duvar yuzle yarisiyor, duz cevrilirse
+// portre kendi arka plani icinde kayboluyor. Kucuk boyda okunsun diye kazanc
+// ve parlaklik bilerek yuksek. Altin duotone ve tarama cizgisi SVG tarafinda.
 const PORTRE = (await readFile(join(HERE, "portre.png"))).toString("base64");
 
 // FY - Yapay Zeka Ajansi paleti. Degerler ajansin kendi tasarim
@@ -243,7 +244,7 @@ function footer() {
 function terminal(satirlar) {
   const on = "t";
   const PW = 300;   // portre paneli
-  const PH = 382;
+  const PH = 375;
   const PX = 28;
   const PY = 66;
   const METX = PX + PW + 32; // metin sutununun sol kenari
