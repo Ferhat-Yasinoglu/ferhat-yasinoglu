@@ -5,8 +5,10 @@
 #   ajan_kur     : AI ajanının brifingini ve bilgi tabanını kurar, test sorularıyla dener
 #   ajan_test    : brifinge dokunmadan yalnız test sorularını sorar
 #   durum        : değişiklik yapmadan mevcut durumu yazar
-#   ig_abone     : Instagram webhook aboneliğini yeniden kurar (Meta ısrarlı hatadan sonra
-#                  göndermeyi kesmişse teslimatı yeniden başlatır; yeni izin istemez)
+#   ig_abone     : Instagram hesabını uygulamaya yeniden bağlar (me/subscribed_apps)
+#   ig_webhook_kur: Aboneliği UYGULAMA düzeyinde yeniden kurar — panelin
+#                  "Configure webhooks → Verify and save" düğmesinin API karşılığı.
+#                  Meta adresi baştan doğrular; arızalı sayılıp durdurulmuş teslimatı açan adım budur.
 name: Sosyal Studyo Yonet
 
 on:
@@ -16,7 +18,7 @@ on:
         description: "Yapılacak işlem"
         type: choice
         default: durum
-        options: [durum, akis_yayinla, canliya_al, provaya_al, ajan_kur, ajan_test, ig_abone]
+        options: [durum, akis_yayinla, canliya_al, provaya_al, ajan_kur, ajan_test, ig_abone, ig_webhook_kur]
       akis_id:
         description: "akis_yayinla için akış id'si (boş = tüm taslaklar)"
         type: string
@@ -45,6 +47,16 @@ jobs:
           alt="$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).result?.subdomain||''))")"
           [ -n "$alt" ] || { echo "::error::workers.dev alt alan adi bulunamadi"; exit 1; }
           echo "url=https://sosyal-studyo.$alt.workers.dev" >> "$GITHUB_OUTPUT"
+      - name: Instagram webhook aboneligi (uygulama duzeyi)
+        if: ${{ inputs.islem == 'ig_webhook_kur' }}
+        env:
+          META_APP_ID: ${{ vars.META_APP_ID }}
+          META_APP_SECRET: ${{ secrets.META_APP_SECRET }}
+          META_VERIFY_TOKEN: ${{ secrets.META_VERIFY_TOKEN }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          CALLBACK_URL: ${{ steps.adres.outputs.url }}/meta/webhook
+        run: node sosyal-studyo/tools/ig-webhook-kur.mjs
+
       - name: Instagram aboneligi
         if: ${{ inputs.islem == 'ig_abone' }}
         env:
@@ -52,7 +64,7 @@ jobs:
         run: node sosyal-studyo/tools/ig-abone.mjs
 
       - name: Islem
-        if: ${{ !startsWith(inputs.islem, 'ajan_') && inputs.islem != 'ig_abone' }}
+        if: ${{ !startsWith(inputs.islem, 'ajan_') && inputs.islem != 'ig_abone' && inputs.islem != 'ig_webhook_kur' }}
         env:
           URL: ${{ steps.adres.outputs.url }}
           ISLEM: ${{ inputs.islem }}
