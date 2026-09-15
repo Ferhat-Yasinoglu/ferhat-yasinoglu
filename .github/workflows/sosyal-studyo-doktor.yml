@@ -101,3 +101,5 @@ jobs:
           node sosyal-studyo/tools/webhook-sonda.mjs || true
           echo "== App Secret hangi uygulamaya ait"
           node sosyal-studyo/tools/meta-uygulama.mjs || true
+          echo "== Instagram'daki konusmalar (mesajlar hesapta var mi?)"
+          node sosyal-studyo/tools/ig-tani.mjs || true
