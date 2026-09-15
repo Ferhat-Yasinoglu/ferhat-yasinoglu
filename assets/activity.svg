@@ -1,22 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="820" height="200" viewBox="0 0 820 200" role="img" aria-label="Contribution graph, last 90 days">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="820" height="200" viewBox="0 0 820 200" role="img" aria-label="Contribution graph, last 90 days">
   <defs>
     
-    <linearGradient id="bg" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#f5d76e" stop-opacity=".15" />
-      <stop offset="0.16" stop-color="#15120b" stop-opacity="1" />
-      <stop offset="1" stop-color="#070604" stop-opacity="1" />
-    </linearGradient>
-    <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#d4af37" stop-opacity=".45" />
+    <pattern id="aizg" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M36 0 H0 V36" fill="none" stroke="#d4af37" stroke-opacity=".06" stroke-width="1" />
+    </pattern>
+    <linearGradient id="aalan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d4af37" stop-opacity=".38" />
       <stop offset="100%" stop-color="#d4af37" stop-opacity="0" />
     </linearGradient>
-    <linearGradient id="stroke" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#f5d76e" />
-      <stop offset="100%" stop-color="#a9821e" />
+    <linearGradient id="ahat" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#a9821e" />
+      <stop offset="100%" stop-color="#f5d76e" />
     </linearGradient>
+    <filter id="apar" x="-20%" y="-60%" width="140%" height="260%">
+      <feGaussianBlur stdDeviation="3" />
+    </filter>
     <style>
     text { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; }
-    .card-bg { fill: url(#bg); stroke: #d4af37; stroke-opacity: .32; stroke-width: 1.2; }
+    .card-bg { fill: #070604; stroke: #d4af37; stroke-opacity: .3; stroke-width: 1; }
     /* Her animasyon "backwards" ile kurulur: animasyon hic calismazsa
        ogenin dogal hali gecerli olur, yani icerik yine de gorunur. */
     .rise { animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
@@ -27,27 +28,40 @@
     }
       .title { font-size: 21px; font-weight: 700; fill: #f4ecd8; }
       .meta { font-size: 16px; fill: #9b8f72; }
-      .line { fill: none; stroke: url(#stroke); stroke-width: 2.5; stroke-linecap: round;
-              animation: draw 2.6s .2s cubic-bezier(.4,0,.2,1) backwards; }
+      .iz { fill: none; stroke: url(#ahat); stroke-width: 2.4; stroke-linecap: round;
+            animation: draw 2.6s .2s cubic-bezier(.4,0,.2,1) backwards; }
       @keyframes draw {
         from { stroke-dasharray: 4000; stroke-dashoffset: 4000; }
         to { stroke-dasharray: 4000; stroke-dashoffset: 0; }
       }
-      .fill { animation: fade 1.2s 1.5s backwards; }
-      .tip { animation: fade .6s 2.6s backwards; }
+      .dolgu { animation: fade 1.2s 1.5s backwards; }
+      .uc { animation: fade .6s 2.6s backwards; }
       .stamp { font-size: 14px; fill: #9b8f72; animation: fade .8s 3s backwards; }
       .ping { animation: ping 2s ease-out infinite; transform-origin: center; }
       @keyframes ping { 0% { r: 4; opacity: .9; } 70%,100% { r: 13; opacity: 0; } }
+      .dugum { animation: dugum 3.4s ease-in-out infinite; }
+      @keyframes dugum { 0%,100% { fill-opacity: .45; } 50% { fill-opacity: 1; } }
     </style>
   </defs>
-  <rect class="card-bg" width="820" height="200" rx="14" />
-  <text class="title" x="30" y="39">📈 Last 90 days</text>
-  <text class="meta" x="790" y="39" text-anchor="end">338 contributions · busiest day 42</text>
-  <path class="fill" d="M34 166C43 166 43 166 51 166C60 166 60 166 69 166C78 166 78 166 86 166C95 166 95 166 103 166C112 166 112 166 121 166C130 166 130 166 138 166C147 166 147 166 155 166C164 166 164 166 173 166C182 166 182 166 190 166C199 166 199 166 207 166C216 166 216 166 224 166C233 166 233 166 242 166C251 166 251 166 259 166C268 166 268 166 276 166C285 166 285 166 294 166C303 166 303 166 311 166C320 166 320 166 328 166C337 166 337 166 346 166C355 166 355 166 363 166C372 166 372 166 380 166C389 166 389 166 398 166C407 166 407 166 415 166C424 166 424 166 432 166C441 166 441 166 450 166C459 166 459 166 467 166C476 166 476 166 484 166C493 166 493 166 502 166C511 166 511 166 519 166C528 166 528 166 536 166C545 166 545 160 554 160C563 160 563 142 571 142C580 142 580 140 588 140C597 140 597 131 606 131C615 131 615 151 623 151C632 151 632 159 640 159C649 159 649 106 657 106C666 106 666 65 675 65C684 65 684 123 692 123C701 123 701 108 709 108C718 108 718 97 727 97C736 97 736 140 744 140C753 140 753 140 761 140C770 140 770 58 779 58C788 58 788 140 796 140L796 166L34 166Z" fill="url(#area)" />
-  <path class="line" d="M34 166C43 166 43 166 51 166C60 166 60 166 69 166C78 166 78 166 86 166C95 166 95 166 103 166C112 166 112 166 121 166C130 166 130 166 138 166C147 166 147 166 155 166C164 166 164 166 173 166C182 166 182 166 190 166C199 166 199 166 207 166C216 166 216 166 224 166C233 166 233 166 242 166C251 166 251 166 259 166C268 166 268 166 276 166C285 166 285 166 294 166C303 166 303 166 311 166C320 166 320 166 328 166C337 166 337 166 346 166C355 166 355 166 363 166C372 166 372 166 380 166C389 166 389 166 398 166C407 166 407 166 415 166C424 166 424 166 432 166C441 166 441 166 450 166C459 166 459 166 467 166C476 166 476 166 484 166C493 166 493 166 502 166C511 166 511 166 519 166C528 166 528 166 536 166C545 166 545 160 554 160C563 160 563 142 571 142C580 142 580 140 588 140C597 140 597 131 606 131C615 131 615 151 623 151C632 151 632 159 640 159C649 159 649 106 657 106C666 106 666 65 675 65C684 65 684 123 692 123C701 123 701 108 709 108C718 108 718 97 727 97C736 97 736 140 744 140C753 140 753 140 761 140C770 140 770 58 779 58C788 58 788 140 796 140" />
-  <g class="tip">
-    <circle class="ping" cx="796.0" cy="140.0" r="4" fill="#f5d76e" />
-    <circle cx="796.0" cy="140.0" r="4" fill="#f4ecd8" />
+  
+  <rect class="card-bg" width="820" height="200" rx="4" />
+  <rect width="820" height="200" rx="4" fill="url(#aizg)" />
+  <path d="M0 38 H22" stroke="#d4af37" stroke-opacity=".32" stroke-width="1.4" fill="none" />
+  <rect class="dugum" x="24" y="33" width="8" height="8" fill="#d4af37" />
+  <text class="title" x="46" y="42">Last 90 days</text>
+  <text class="meta" x="790" y="42" text-anchor="end">338 contributions · busiest day 42</text>
+  <path class="dolgu" d="M34 160C43 160 43 160 51 160C60 160 60 160 69 160C78 160 78 160 86 160C95 160 95 160 103 160C112 160 112 160 121 160C130 160 130 160 138 160C147 160 147 160 155 160C164 160 164 160 173 160C182 160 182 160 190 160C199 160 199 160 207 160C216 160 216 160 224 160C233 160 233 160 242 160C251 160 251 160 259 160C268 160 268 160 276 160C285 160 285 160 294 160C303 160 303 160 311 160C320 160 320 160 328 160C337 160 337 160 346 160C355 160 355 160 363 160C372 160 372 160 380 160C389 160 389 160 398 160C407 160 407 160 415 160C424 160 424 160 432 160C441 160 441 160 450 160C459 160 459 160 467 160C476 160 476 160 484 160C493 160 493 160 502 160C511 160 511 160 519 160C528 160 528 160 536 160C545 160 545 155 554 155C563 155 563 138 571 138C580 138 580 136 588 136C597 136 597 128 606 128C615 128 615 146 623 146C632 146 632 153 640 153C649 153 649 106 657 106C666 106 666 69 675 69C684 69 684 121 692 121C701 121 701 108 709 108C718 108 718 97 727 97C736 97 736 136 744 136C753 136 753 136 761 136C770 136 770 62 779 62C788 62 788 136 796 136L796 160L34 160Z" fill="url(#aalan)" />
+  <path class="iz" id="aegri" d="M34 160C43 160 43 160 51 160C60 160 60 160 69 160C78 160 78 160 86 160C95 160 95 160 103 160C112 160 112 160 121 160C130 160 130 160 138 160C147 160 147 160 155 160C164 160 164 160 173 160C182 160 182 160 190 160C199 160 199 160 207 160C216 160 216 160 224 160C233 160 233 160 242 160C251 160 251 160 259 160C268 160 268 160 276 160C285 160 285 160 294 160C303 160 303 160 311 160C320 160 320 160 328 160C337 160 337 160 346 160C355 160 355 160 363 160C372 160 372 160 380 160C389 160 389 160 398 160C407 160 407 160 415 160C424 160 424 160 432 160C441 160 441 160 450 160C459 160 459 160 467 160C476 160 476 160 484 160C493 160 493 160 502 160C511 160 511 160 519 160C528 160 528 160 536 160C545 160 545 155 554 155C563 155 563 138 571 138C580 138 580 136 588 136C597 136 597 128 606 128C615 128 615 146 623 146C632 146 632 153 640 153C649 153 649 106 657 106C666 106 666 69 675 69C684 69 684 121 692 121C701 121 701 108 709 108C718 108 718 97 727 97C736 97 736 136 744 136C753 136 753 136 761 136C770 136 770 62 779 62C788 62 788 136 796 136" filter="url(#apar)" opacity=".55" />
+  <path class="iz" d="M34 160C43 160 43 160 51 160C60 160 60 160 69 160C78 160 78 160 86 160C95 160 95 160 103 160C112 160 112 160 121 160C130 160 130 160 138 160C147 160 147 160 155 160C164 160 164 160 173 160C182 160 182 160 190 160C199 160 199 160 207 160C216 160 216 160 224 160C233 160 233 160 242 160C251 160 251 160 259 160C268 160 268 160 276 160C285 160 285 160 294 160C303 160 303 160 311 160C320 160 320 160 328 160C337 160 337 160 346 160C355 160 355 160 363 160C372 160 372 160 380 160C389 160 389 160 398 160C407 160 407 160 415 160C424 160 424 160 432 160C441 160 441 160 450 160C459 160 459 160 467 160C476 160 476 160 484 160C493 160 493 160 502 160C511 160 511 160 519 160C528 160 528 160 536 160C545 160 545 155 554 155C563 155 563 138 571 138C580 138 580 136 588 136C597 136 597 128 606 128C615 128 615 146 623 146C632 146 632 153 640 153C649 153 649 106 657 106C666 106 666 69 675 69C684 69 684 121 692 121C701 121 701 108 709 108C718 108 718 97 727 97C736 97 736 136 744 136C753 136 753 136 761 136C770 136 770 62 779 62C788 62 788 136 796 136" />
+  <circle r="3" fill="#f5d76e" opacity="0">
+    <animateMotion dur="9s" repeatCount="indefinite" calcMode="linear">
+      <mpath href="#aegri" xlink:href="#aegri" />
+    </animateMotion>
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.08;.92;1" dur="9s" repeatCount="indefinite" />
+  </circle>
+  <g class="uc">
+    <circle class="ping" cx="796" cy="136" r="4" fill="#f5d76e" />
+    <rect x="792" y="132" width="8" height="8" fill="#f4ecd8" />
   </g>
-  <text class="stamp" x="30" y="188">🔄 updated <tspan class="tarih">15 September at 22:51</tspan> · checked every 6 hours</text>
+  <text class="stamp" x="30" y="188">updated <tspan class="tarih">15 September at 23:04</tspan> · checked every 6 hours</text>
 </svg>
