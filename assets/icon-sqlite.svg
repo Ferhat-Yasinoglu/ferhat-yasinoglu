@@ -1,17 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="92" height="108" viewBox="0 0 92 108" role="img" aria-label="SQLite">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="92" height="108" viewBox="0 0 92 108" role="img" aria-label="SQLite">
   <defs>
     
-    <linearGradient id="tbg" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity=".18" />
-      <stop offset="0.16" stop-color="#2472ab" stop-opacity="1" />
-      <stop offset="1" stop-color="#1b968e" stop-opacity="1" />
-    </linearGradient>
-    <filter id="h" x="-100%" y="-100%" width="300%" height="300%">
+    <pattern id="iizg" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M36 0 H0 V36" fill="none" stroke="#d4af37" stroke-opacity=".06" stroke-width="1" />
+    </pattern>
+    <filter id="ih" x="-100%" y="-100%" width="300%" height="300%">
       <feGaussianBlur stdDeviation="9" />
     </filter>
     <style>
-      .kutu { fill: url(#tbg); stroke: #eaf6fb; stroke-opacity: .3; stroke-width: 1; }
-      .etk { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; font-size: 13px; font-weight: 600; fill: #f2f9ff; }
+    text { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; }
+    .card-bg { fill: #070604; stroke: #d4af37; stroke-opacity: .3; stroke-width: 1; }
+    /* Her animasyon "backwards" ile kurulur: animasyon hic calismazsa
+       ogenin dogal hali gecerli olur, yani icerik yine de gorunur. */
+    .rise { animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: .01ms !important; animation-delay: 0s !important; }
+    }
+      .etk { font-size: 13px; font-weight: 600; fill: #f4ecd8; }
       /* Hareket bilincli sekilde hafif: sayfada baska seyler de oynuyor,
          ikonlar dikkati calmadan yasiyor olsun. */
       .bob { animation: bob 5s ease-in-out infinite alternate; }
@@ -28,15 +35,16 @@
         50% { transform: scale(1.05) rotate(1.5deg); }
       }
       .isik { animation: isik 4.5s ease-in-out infinite; }
-      @keyframes isik { 0%,100% { opacity: .05; } 50% { opacity: .14; } }
-      @media (prefers-reduced-motion: reduce) {
-        * { animation-duration: .01ms !important; }
-      }
+      @keyframes isik { 0%,100% { opacity: .05; } 50% { opacity: .16; } }
     </style>
   </defs>
-  <rect class="kutu" x="3" y="3" width="86" height="102" rx="18" />
+  
+  <rect class="card-bg" width="92" height="108" rx="4" />
+  <rect width="92" height="108" rx="4" fill="url(#iizg)" />
+  <rect x="10" y="10" width="5" height="5" fill="#d4af37" fill-opacity=".45" />
+  <rect x="77" y="93" width="5" height="5" fill="#d4af37" fill-opacity=".45" />
   <g transform="translate(46 40)">
-    <circle class="isik" r="24" fill="#dbe4e7" filter="url(#h)" opacity=".1" />
+    <circle class="isik" r="24" fill="#dbe4e7" filter="url(#ih)" opacity=".1" />
     <g class="bob">
       <g class="nabiz">
         <g transform="translate(-20 -20) scale(1.6667)">

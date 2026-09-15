@@ -27,23 +27,39 @@ const ICONS = JSON.parse(await readFile(join(HERE, "icons.json"), "utf8"));
 // (gezen isik, ag dugumleri, goz) ve reduced-motion kurali dosyanin icinde gelir.
 const FY_LOGO = await readFile(join(HERE, "fy-logo.svg"), "utf8");
 
-const KOYU = {
-  bg: "#2472ab",
-  bg2: "#1b968e",
-  line: "#eaf6fb",
-  text: "#f2f9ff",
-  muted: "#cbe4ee",
-  blue: "#a9d3ff",
-  purple: "#e3c9ff",
-  green: "#c5efa2",
-  pink: "#ffbecb",
-  yellow: "#ffe19a",
-  cyan: "#a3f0ff",
+// Terminal kartinin solundaki portre. Kaynak fotograf depoda durmuyor; buradaki
+// dosya onun islenmis hali ve su islemlerden gecti (sharp):
+//   extract({ left: 125, top: 258, width: 440, height: 560 })  -- yuze sikica kirpma
+//   greyscale().normalise().linear(1.15, -14)                  -- teni yukari, saci asagi
+//   radyal vinyetle carpma (cx .46, cy .44, r .72)             -- gun batimi gokyuzunu sondur
+//   normalise().linear(1.12, -6).resize(300, 382)
+// Vinyet sart: fotografta arka plan yuzden parlak, duz cevrilirse portre kendi
+// arka plani icinde kayboluyor. Altin duotone ve tarama cizgisi SVG tarafinda.
+const PORTRE = (await readFile(join(HERE, "portre.png"))).toString("base64");
+
+// FY - Yapay Zeka Ajansi paleti. Degerler ajansin kendi tasarim
+// sisteminden (fy-ajans/css/style.css tokenlari) birebir aliniyor:
+// sicak siyah zemin, krem metin, altin vurgu.
+// Vurgu tonlari ayri renkler degil, kremden koyu altina inen tek bir
+// merdiven: kartlardaki ogeleri birbirinden ayirmaya yetiyor ama
+// hicbiri markanin disina cikmiyor.
+const FY = {
+  bg: "#15120b", // ink-2, kart gradyaninin ustu
+  bg2: "#070604", // ink-0, dibi
+  line: "#d4af37", // altin hat
+  text: "#f4ecd8", // krem
+  muted: "#9b8f72", // soluk krem
+  krem: "#f4ecd8",
+  sampanya: "#e8d9a8",
+  parlak: "#f5d76e", // parlak altin
+  altin: "#d4af37", // marka altini
+  bronz: "#c08a3e",
+  derin: "#a9821e", // koyu altin
 };
 
 
 // Kart uretilirken gecerli olan palet. Her tema turunde degistirilir.
-let T = KOYU;
+let T = FY;
 let SAYFA_KOYU = true; // ikon tiles saydam: sayfa temasina gore renk uyarlama
 
 const esc = (s) =>
@@ -55,11 +71,14 @@ const short = (n) =>
   n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, "") + "k" : String(n);
 
 const FONT = "'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif";
+const MONO = "'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace";
 
-// Her kartin basinda duran ortak stil: kademeli giris + yumusak hareket.
+// Her kartin basinda duran ortak stil. Kartlar artik cam degil: duz siyah
+// zemin, sac teli altin kenar, uzerinde soluk bir izgara -- bir baski devre
+// karti gibi. Kose yaricapi da buyuk olcude dusuruldu.
 const baseStyle = () => `
     text { font-family: ${FONT}; }
-    .card-bg { fill: url(#bg); stroke: ${T.line}; stroke-opacity: .32; stroke-width: 1.2; }
+    .card-bg { fill: ${T.bg2}; stroke: ${T.altin}; stroke-opacity: .3; stroke-width: 1; }
     /* Her animasyon "backwards" ile kurulur: animasyon hic calismazsa
        ogenin dogal hali gecerli olur, yani icerik yine de gorunur. */
     .rise { animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
@@ -69,85 +88,109 @@ const baseStyle = () => `
       * { animation-duration: .01ms !important; animation-delay: 0s !important; }
     }`;
 
-const defsBg = (id = "bg") => `
-    <linearGradient id="${id}" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity=".18" />
-      <stop offset="0.16" stop-color="${T.bg}" stop-opacity="1" />
-      <stop offset="1" stop-color="${T.bg2}" stop-opacity="1" />
-    </linearGradient>`;
+// Soluk altin izgara. README'de kartlar ayni sayfada yan yana duruyor ve
+// <img> ile gomulse bile id'ler kart icinde benzersiz olmali; her cagri
+// kendi onekini veriyor.
+const izgaraDef = (on) => `
+    <pattern id="${on}izg" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M36 0 H0 V36" fill="none" stroke="${T.altin}" stroke-opacity=".06" stroke-width="1" />
+    </pattern>`;
+
+const zemin = (on, W, H, r = 4) => `
+  <rect class="card-bg" width="${W}" height="${H}" rx="${r}" />
+  <rect width="${W}" height="${H}" rx="${r}" fill="url(#${on}izg)" />`;
+
+// Dik acili bakir izler, donuslerinde lehim pedleri, uzerlerinde gezen isik.
+// mpath hem href hem xlink:href tasiyor; eski WebKit yalnizca ikincisini
+// taniyor. xlink ad alani kartlarin kok <svg> etiketinde tanimli.
+function izler(on, yollar) {
+  const cizgi = yollar
+    .map(
+      (y, i) => `
+  <path id="${on}y${i}" d="${y.d}" fill="none" stroke="${T.altin}" stroke-opacity=".32" stroke-width="1.4" />
+  <circle r="2.8" fill="${T.parlak}" opacity="0">
+    <animateMotion dur="${y.sure}s" begin="${y.gec}s" repeatCount="indefinite" calcMode="linear">
+      <mpath href="#${on}y${i}" xlink:href="#${on}y${i}" />
+    </animateMotion>
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.12;.88;1"
+             dur="${y.sure}s" begin="${y.gec}s" repeatCount="indefinite" />
+  </circle>`
+    )
+    .join("");
+  const ped = yollar
+    .flatMap((y) => y.ped || [])
+    .map(([x, yy]) => `<rect x="${x - 3}" y="${yy - 3}" width="6" height="6" fill="${T.altin}" fill-opacity=".5" />`)
+    .join("");
+  return cizgi + ped;
+}
+
+// Kok <svg> etiketi: xlink ad alani mpath icin gerekli, bildirilmezse
+// tarayici SVG'yi XML olarak ayristirirken hata verir ve kart hic cizilmez.
+const svgKok = (W, H, etiket) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" ` +
+  `width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(etiket)}">`;
 
 // ---------------------------------------------------------------- baslik
 
-// Koyu rozet + FY logosu. Logo dosyasinin kok <svg> etiketi soyulur, viewBox'i korunarak
-// ic ice svg olarak yerlestirilir; id'leri "m" onekli oldugundan kartin id'leriyle cakismaz.
-function fyBadge({ x, y, w, h, delay }) {
+// Baslik karti "devre" dilinin en genis ornegi: kenarlardan giren bakir
+// izler, izler uzerinde gezen isik, sagda altin halka icinde FY logosu.
+// Logo dosyasinin kok <svg> etiketi soyulup viewBox'i korunarak ic ice
+// yerlestiriliyor; id'leri "m" onekli oldugundan kartin id'leriyle cakismaz.
+function fyMark(cx, cy, r, w, h) {
   const vb = /viewBox="([^"]+)"/.exec(FY_LOGO)[1];
   const inner = FY_LOGO.replace(/^[\s\S]*?<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
-  const pad = 14;
   return `
-    <g class="rise" style="animation-delay:${delay}s">
-      <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" fill="#0b0904" stroke="#d4af37" stroke-opacity=".5" stroke-width="1.2" />
-      <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" fill="url(#fyhaze)" />
-      <svg x="${x + pad}" y="${y + pad}" width="${w - 2 * pad}" height="${h - 2 * pad}" viewBox="${vb}" preserveAspectRatio="xMidYMid meet">${inner}</svg>
+    <g class="halka">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${T.altin}" stroke-opacity=".55" stroke-width="1.4" />
+      <circle cx="${cx}" cy="${cy}" r="${r + 8}" fill="none" stroke="${T.altin}" stroke-opacity=".2"
+              stroke-width="1" stroke-dasharray="2 9" />
+      <svg x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" viewBox="${vb}"
+           preserveAspectRatio="xMidYMid meet">${inner}</svg>
     </g>`;
 }
 
 function header({ name, tagline }) {
   const W = 1000;
-  const H = 250;
-  // Arka planda suzulen isik lekeleri: sonsuz donen, yavas hareket.
-  const orbs = [
-    { cx: 160, cy: 60, r: 130, c: T.blue, dur: 19, dx: 60, dy: 24 },
-    { cx: 820, cy: 150, r: 150, c: T.purple, dur: 23, dx: -70, dy: -30 },
-    { cx: 520, cy: 30, r: 110, c: T.cyan, dur: 27, dx: 40, dy: 40 },
-  ]
-    .map(
-      (o, i) => `
-      <circle cx="${o.cx}" cy="${o.cy}" r="${o.r}" fill="${o.c}" opacity=".16" filter="url(#soft)">
-        <animateTransform attributeName="transform" type="translate"
-          values="0 0; ${o.dx} ${o.dy}; 0 0" dur="${o.dur}s" repeatCount="indefinite" />
-        <animate attributeName="opacity" values=".10;.22;.10" dur="${o.dur / 2}s" repeatCount="indefinite" />
-      </circle>`
-    )
-    .join("");
+  const H = 300;
+  const on = "h";
+  const yollar = [
+    { d: "M0 92 H140 V46 H300 V120 H452", sure: 6, gec: 0, ped: [[140, 46], [300, 120]] },
+    { d: "M0 176 H96 V214 H262 V150 H452", sure: 7.7, gec: 0.9, ped: [[96, 214], [262, 150]] },
+    { d: "M0 258 H196 V236 H360 V262 H452", sure: 9.4, gec: 1.8, ped: [[196, 236], [360, 262]] },
+    { d: "M1000 60 H880 V128 H700", sure: 8.1, gec: 2.7, ped: [[880, 128]] },
+    { d: "M1000 246 H842 V186 H700", sure: 6.8, gec: 3.6, ped: [[842, 186]] },
+  ];
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(name)}">
+  return `${svgKok(W, H, name)}
   <defs>
-    ${defsBg()}
-    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="45" />
-    </filter>
-    <linearGradient id="ink" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#eafff9">
-        <animate attributeName="stop-color" values="#eafff9;#ffffff;#d9ecff;#eafff9" dur="9s" repeatCount="indefinite" />
-      </stop>
-      <stop offset="100%" stop-color="#d9ecff">
-        <animate attributeName="stop-color" values="#d9ecff;#eafff9;#ffffff;#d9ecff" dur="9s" repeatCount="indefinite" />
-      </stop>
-    </linearGradient>
-    <clipPath id="round"><rect width="${W}" height="${H}" rx="16" /></clipPath>
-    <radialGradient id="fyhaze" cx=".5" cy=".45" r=".6">
-      <stop offset="0" stop-color="#d4af37" stop-opacity=".16" />
-      <stop offset="1" stop-color="#d4af37" stop-opacity="0" />
+    ${izgaraDef(on)}
+    <radialGradient id="${on}hale" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="${T.altin}" stop-opacity=".30" />
+      <stop offset="1" stop-color="${T.altin}" stop-opacity="0" />
     </radialGradient>
+    <linearGradient id="${on}ad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="${T.krem}" />
+      <stop offset="1" stop-color="${T.parlak}" />
+    </linearGradient>
+    <clipPath id="${on}kirp"><rect width="${W}" height="${H}" rx="4" /></clipPath>
     <style>${baseStyle()}
-      .name { font-size: 60px; font-weight: 800; fill: url(#ink); letter-spacing: -1px; }
-      .tag { font-size: 22px; fill: ${T.muted}; letter-spacing: .2px; }
-      .bar { animation: grow 1.1s .35s cubic-bezier(.2,.7,.3,1) backwards; }
-      @keyframes grow { from { width: 0; } }
+      .gir { animation: gir .8s cubic-bezier(.2,.7,.3,1) backwards; }
+      @keyframes gir { from { opacity: 0; transform: translateX(-14px); } }
+      .halka { animation: nefes 9s ease-in-out infinite; transform-origin: 806px 150px; }
+      @keyframes nefes { 0%,100% { transform: scale(1); opacity: .85; } 50% { transform: scale(1.03); opacity: 1; } }
+      .etiket { font-size: 13px; font-weight: 700; fill: ${T.altin}; letter-spacing: 4.5px; }
+      .ad { font-size: 60px; font-weight: 800; letter-spacing: -1.4px; }
+      .slogan { font-size: 19px; fill: ${T.muted}; }
     </style>
   </defs>
-  <g clip-path="url(#round)">
-    <rect class="card-bg" width="${W}" height="${H}" rx="16" />
-    ${orbs}
-    <g class="rise" style="animation-delay:.05s">
-      <text class="name" x="56" y="118">${esc(name)}</text>
-    </g>
-    <rect class="bar" x="58" y="142" width="150" height="5" rx="2.5" fill="url(#ink)" />
-    <g class="rise" style="animation-delay:.25s">
-      <text class="tag" x="56" y="186">${esc(tagline)}</text>
-    </g>
-    ${fyBadge({ x: 722, y: 40, w: 238, h: 170, delay: 0.45 })}
+  <g clip-path="url(#${on}kirp)">
+    ${zemin(on, W, H)}
+    <circle cx="806" cy="150" r="190" fill="url(#${on}hale)" />
+    ${izler(on, yollar)}
+    <g class="gir"><text class="etiket" x="56" y="98">FY · YAPAY ZEKÂ AJANSI</text></g>
+    <g class="gir" style="animation-delay:.1s"><text class="ad" x="54" y="170" fill="url(#${on}ad)">${esc(name)}</text></g>
+    <g class="gir" style="animation-delay:.2s"><text class="slogan" x="56" y="212">${esc(tagline)}</text></g>
+    ${fyMark(806, 150, 104, 168, 136)}
   </g>
 </svg>
 `;
@@ -155,68 +198,64 @@ function header({ name, tagline }) {
 
 // ------------------------------------------------------------------ dalga
 
-// Kapanis dalgasi. Yol, gorunen alanin iki kati genisliginde ciziliyor ve
-// tam bir periyot kadar kaydiriliyor; boylece dikissiz donuyor.
+// Sayfayi kapatan serit. Eskiden bir deniz dalgasiydi; artik devrenin
+// veri yolu: yatay izler, uzerlerinde akan isik ve iki ucta soluklasan
+// altin bir hat. Zemin saydam, GitHub'in kendi sayfa rengi goruniyor.
 function footer() {
   const W = 1000;
-  const H = 140;
-  const periyot = 500;
+  const H = 120;
+  const on = "f";
+  const yollar = [
+    { d: "M0 30 H300 V58 H620 V30 H1000", sure: 9, gec: 0, ped: [[300, 58], [620, 30]] },
+    { d: "M0 70 H180 V44 H420 V78 H760 V56 H1000", sure: 12, gec: 1.4, ped: [[180, 44], [420, 78], [760, 56]] },
+    { d: "M0 96 H520 V72 H840 V96 H1000", sure: 10.5, gec: 2.8, ped: [[520, 72], [840, 96]] },
+  ];
 
-  const dalga = (genlik, taban, faz) => {
-    const nokta = [];
-    for (let x = 0; x <= W * 2; x += 10) {
-      const y = taban + genlik * Math.sin((2 * Math.PI * x) / periyot + faz);
-      nokta.push(`${x} ${y.toFixed(1)}`);
-    }
-    return `M${nokta.join("L")}L${W * 2} ${H}L0 ${H}Z`;
-  };
-
-  const katman = [
-    { genlik: 14, taban: 62, faz: 0, renk: "#2472ab", op: 0.5, sure: 14 },
-    { genlik: 18, taban: 78, faz: 2.1, renk: "#1f83a0", op: 0.55, sure: 20 },
-    { genlik: 11, taban: 96, faz: 4.2, renk: "#1b968e", op: 0.65, sure: 27 },
-  ]
-    .map(
-      (k, i) => `
-    <g opacity="${k.op}">
-      <animateTransform attributeName="transform" type="translate"
-        values="0 0; -${periyot} 0" dur="${k.sure}s" repeatCount="indefinite" />
-      <path d="${dalga(k.genlik, k.taban, k.faz)}" fill="${k.renk}" />
-    </g>`
-    )
-    .join("");
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="">
+  return `${svgKok(W, H, "")}
   <defs>
-    <linearGradient id="ust" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#2472ab" />
-      <stop offset="100%" stop-color="#1b968e" />
+    <linearGradient id="${on}hat" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="${T.altin}" stop-opacity="0" />
+      <stop offset=".2" stop-color="${T.altin}" stop-opacity=".75" />
+      <stop offset=".8" stop-color="${T.altin}" stop-opacity=".75" />
+      <stop offset="1" stop-color="${T.altin}" stop-opacity="0" />
     </linearGradient>
-    <clipPath id="kutu"><rect width="${W}" height="${H}" /></clipPath>
+    <mask id="${on}sonum">
+      <rect width="${W}" height="${H}" fill="url(#${on}hat)" />
+    </mask>
+    <style>${baseStyle()}</style>
   </defs>
-  <g clip-path="url(#kutu)">
-    ${katman}
-    <path d="${dalga(16, 110, 1.1)}" fill="url(#ust)" opacity=".85">
-      <animateTransform attributeName="transform" type="translate"
-        values="0 0; -${periyot} 0" dur="11s" repeatCount="indefinite" />
-    </path>
-  </g>
+  <g mask="url(#${on}sonum)">${izler(on, yollar)}</g>
+  <rect x="0" y="110" width="${W}" height="1.6" fill="url(#${on}hat)" />
 </svg>
 `;
 }
 
 // ------------------------------------------------------------------ terminal
 
-// Komut satirlari harf harf yazilir, ciktilar beliriverir; tum dizi
-// bitince bastan baslar. Satirlar birikimli: yazilan ekranda kalir.
+// Iki sutun: solda portre, sagda yazilan satirlar. Komut satirlari harf harf
+// yazilir, ciktilar beliriverir; tum dizi bitince bastan baslar.
+// Portre altin duotone (feColorMatrix) ve yatay tarama cizgisi maskesiyle
+// veriliyor; uzerinden asagi dogru surekli bir tarama bandi geciyor.
+//
+// Gercek ASCII (karakter) denendi ve birakildi: SVG icinde karakter hizasi
+// yazi tipine bagli, farkli tarayicida portre dagiliyor. Rect tabanli tarama
+// maskesi her yerde ayni cikiyor.
 function terminal(satirlar) {
-  const W = 570;
+  const on = "t";
+  const PW = 300;   // portre paneli
+  const PH = 382;
+  const PX = 28;
+  const PY = 66;
+  const METX = PX + PW + 32; // metin sutununun sol kenari
   const satirH = 29;
-  const ustBosluk = 62;
-  const H = ustBosluk + satirlar.length * satirH + 22;
+  const ustBosluk = 78;
   const size = 17;
   const charW = size * 0.6;
   const bekle = 4.5; // dizi bitince ekranda kalma suresi
+
+  const enUzun = Math.max(...satirlar.map((s) => [...s.metin].length + 2));
+  const W = METX + Math.round(enUzun * charW) + 28;
+  const H = ustBosluk + satirlar.length * satirH + 34;
 
   // Her satirin baslangic ani: komutlar yazilma suresince, ciktilar kisa.
   let t = 0.5;
@@ -233,22 +272,19 @@ function terminal(satirlar) {
     .map((s, i) => {
       const { bas, sure } = zaman[i];
       const y = ustBosluk + i * satirH;
-      const onek = s.tip === "komut" ? "$ " : "  ";
-      const metin = onek + s.metin;
-      // Metin x=24'ten basliyor, kirpma dikdortgeni x=0'dan: hedef genislige
-      // o kaymayi da eklemezsek satirin sonu kesiliyor.
-      const w = (24 + [...metin].length * charW + 6).toFixed(1);
+      const metin = (s.tip === "komut" ? "$ " : "  ") + s.metin;
+      const w = ([...metin].length * charW + 6).toFixed(1);
       const renk = s.tip === "komut" ? T.text : s.renk || T.muted;
 
       if (s.tip === "komut") {
         return `
-    <clipPath id="k${i}"><rect x="0" y="${y - 16}" width="0" height="22">
-      <animate attributeName="width" values="24;24;${w};${w};24"
+    <clipPath id="${on}k${i}"><rect x="0" y="${y - 16}" width="0" height="22">
+      <animate attributeName="width" values="0;0;${w};${w};0"
                keyTimes="0;${at(bas)};${at(bas + sure)};${at(dongu - 0.05)};1"
                dur="${dongu.toFixed(2)}s" repeatCount="indefinite" />
     </rect></clipPath>
-    <g clip-path="url(#k${i})">
-      <text class="tr" x="24" y="${y}" fill="${renk}">${esc(metin)}</text>
+    <g clip-path="url(#${on}k${i})">
+      <text class="tr" x="0" y="${y}" fill="${renk}">${esc(metin)}</text>
     </g>`;
       }
       return `
@@ -256,7 +292,7 @@ function terminal(satirlar) {
       <animate attributeName="opacity" values="0;0;1;1;0"
                keyTimes="0;${at(bas)};${at(bas + sure)};${at(dongu - 0.05)};1"
                dur="${dongu.toFixed(2)}s" repeatCount="indefinite" calcMode="linear" />
-      <text class="tr" x="24" y="${y}" fill="${renk}">${esc(metin)}</text>
+      <text class="tr" x="0" y="${y}" fill="${renk}">${esc(metin)}</text>
     </g>`;
     })
     .join("");
@@ -266,44 +302,74 @@ function terminal(satirlar) {
     const metin = (s.tip === "komut" ? "$ " : "  ") + s.metin;
     return {
       bitis: at(zaman[i].bas + zaman[i].sure),
-      x: 24 + [...metin].length * charW,
+      x: [...metin].length * charW,
       y: ustBosluk + i * satirH,
     };
   });
   const imlecKey = ["0", ...durak.map((d) => d.bitis.toFixed(4)), "1"].join(";");
-  const imlecX = [24, ...durak.map((d) => d.x.toFixed(1)), durak.at(-1).x.toFixed(1)].join(";");
-  const imlecY = [
-    durak[0].y,
-    ...durak.map((d) => d.y),
-    durak.at(-1).y,
-  ].map((y) => y + 10).join(";");
-  const dots = ["#ff5f57", "#febc2e", "#28c840"]
-    .map((c, i) => `<circle cx="${26 + i * 18}" cy="26" r="5.5" fill="${c}" />`)
+  const imlecX = [0, ...durak.map((d) => d.x.toFixed(1)), durak.at(-1).x.toFixed(1)].join(";");
+  const imlecY = [durak[0].y, ...durak.map((d) => d.y), durak.at(-1).y].map((y) => y + 10).join(";");
+  const pim = [0, 1, 2]
+    .map((i) => `<rect x="${24 + i * 14}" y="22" width="7" height="7" fill="${T.altin}" fill-opacity="${0.75 - i * 0.2}" />`)
     .join("");
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(satirlar.map((s) => s.metin).join(" · "))}">
+  const ozet = `Farhad Yaqoobi · ${satirlar.map((s) => s.metin).join(" · ")}`;
+
+  return `${svgKok(W, H, ozet)}
   <defs>
-    ${defsBg()}
+    ${izgaraDef(on)}
+    <!-- Gri portreyi altina cevirir: kirmizi kanal krem, yesil altin, mavi kisik. -->
+    <filter id="${on}duo" color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix" values="0.96 0 0 0 0.03  0.78 0 0 0 0.02  0.30 0 0 0 0.01  0 0 0 1 0" />
+    </filter>
+    <pattern id="${on}tara" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="2" fill="#ffffff" />
+    </pattern>
+    <mask id="${on}cizgi"><rect width="${PW}" height="${PH}" fill="url(#${on}tara)" /></mask>
+    <linearGradient id="${on}band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${T.parlak}" stop-opacity="0" />
+      <stop offset=".5" stop-color="${T.parlak}" stop-opacity=".5" />
+      <stop offset="1" stop-color="${T.parlak}" stop-opacity="0" />
+    </linearGradient>
+    <clipPath id="${on}pan"><rect x="${PX}" y="${PY}" width="${PW}" height="${PH}" /></clipPath>
     <style>${baseStyle()}
-      .tr { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-            font-size: ${size}px; }
-      .baslik { font-size: 12px; fill: ${T.muted}; font-family: 'SFMono-Regular', Consolas, monospace; }
+      .tr { font-family: ${MONO}; font-size: ${size}px; }
+      .baslik { font-size: 12px; fill: ${T.altin}; fill-opacity: .8; font-family: ${MONO}; letter-spacing: 1.4px; }
+      .ad { font-size: 11px; fill: ${T.altin}; font-family: ${MONO}; letter-spacing: 2.6px; }
       .imlec { animation: blink 1.05s steps(1) infinite; }
       @keyframes blink { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
+      .tarayici { animation: kay 6s linear infinite; }
+      @keyframes kay { from { transform: translateY(${PY - 40}px); } to { transform: translateY(${PY + PH}px); } }
     </style>
   </defs>
-  <rect class="card-bg" width="${W}" height="${H}" rx="14" />
-  ${dots}
-  <text class="baslik" x="${W / 2}" y="30" text-anchor="middle">farhad@github ~</text>
-  <line x1="0" y1="48" x2="${W}" y2="48" stroke="${T.line}" stroke-width="1" />
-  ${govde}
-  <g class="imlec">
-    <rect x="24" y="${durak[0].y + 10}" width="9" height="2.5" fill="${T.green}">
-      <animate attributeName="x" values="${imlecX}" keyTimes="${imlecKey}"
-               dur="${dongu.toFixed(2)}s" repeatCount="indefinite" calcMode="discrete" />
-      <animate attributeName="y" values="${imlecY}" keyTimes="${imlecKey}"
-               dur="${dongu.toFixed(2)}s" repeatCount="indefinite" calcMode="discrete" />
-    </rect>
+  ${zemin(on, W, H)}
+  ${pim}
+  <text class="baslik" x="${W / 2}" y="31" text-anchor="middle">farhad@fy ~</text>
+  <line x1="0" y1="48" x2="${W}" y2="48" stroke="${T.altin}" stroke-opacity=".38" stroke-width="1" />
+
+  <!-- Yalniz href: <image> icin butun guncel tarayicilarda calisiyor ve
+       base64'u iki kez gomersek kart 100 KB birden sisiyor. -->
+  <image x="${PX}" y="${PY}" width="${PW}" height="${PH}" filter="url(#${on}duo)" mask="url(#${on}cizgi)"
+         href="data:image/png;base64,${PORTRE}" />
+  <g clip-path="url(#${on}pan)">
+    <rect class="tarayici" x="${PX}" y="0" width="${PW}" height="40" fill="url(#${on}band)" />
+  </g>
+  <rect x="${PX}" y="${PY}" width="${PW}" height="${PH}" fill="none" stroke="${T.altin}" stroke-opacity=".45" />
+  <rect x="${PX - 3}" y="${PY - 3}" width="6" height="6" fill="${T.altin}" fill-opacity=".6" />
+  <rect x="${PX + PW - 3}" y="${PY + PH - 3}" width="6" height="6" fill="${T.altin}" fill-opacity=".6" />
+  <path d="M${PX + PW} ${PY + PH / 2} H${METX - 16}" stroke="${T.altin}" stroke-opacity=".32" stroke-width="1.4" fill="none" />
+  <text class="ad" x="${PX}" y="${PY + PH + 22}">FARHAD YAQOOBI · NRW</text>
+
+  <g transform="translate(${METX} 0)">
+    ${govde}
+    <g class="imlec">
+      <rect x="0" y="${durak[0].y + 10}" width="9" height="2.5" fill="${T.altin}">
+        <animate attributeName="x" values="${imlecX}" keyTimes="${imlecKey}"
+                 dur="${dongu.toFixed(2)}s" repeatCount="indefinite" calcMode="discrete" />
+        <animate attributeName="y" values="${imlecY}" keyTimes="${imlecKey}"
+                 dur="${dongu.toFixed(2)}s" repeatCount="indefinite" calcMode="discrete" />
+      </rect>
+    </g>
   </g>
 </svg>
 `;
@@ -374,26 +440,24 @@ const KARAKTER = {
 
 // Tek logoluk kucuk kart. Izgara tek parca SVG olsaydi icindeki baglantilar
 // <img> olarak gosterilirken calismazdi; bu yuzden her logo ayri dosya ve
-// README'de <a> ile sariliyor.
+// README'de <a> ile sariliyor. Karo artik bir yonga: duz siyah, altin sac
+// teli kenar, iki kosesinde lehim pedi.
 function iconTile(ic) {
   const W = 92;
   const H = 108;
   const scale = 40 / 24;
   const kar = KARAKTER[ic.ad] || "nabiz";
-  // Ikon artik cam karo (koyu teal) uzerinde: sayfa temasindan bagimsiz,
-  // koyu zemine gore renklendir. Cok koyu logolar acik, gerisi oldugu gibi.
   const renk = fitColor(ic.hex, true);
-  const pad = 3;
   const cx = W / 2;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(ic.ad)}">
+  const on = "i";
+  return `${svgKok(W, H, ic.ad)}
   <defs>
-    ${defsBg("tbg")}
-    <filter id="h" x="-100%" y="-100%" width="300%" height="300%">
+    ${izgaraDef(on)}
+    <filter id="${on}h" x="-100%" y="-100%" width="300%" height="300%">
       <feGaussianBlur stdDeviation="9" />
     </filter>
-    <style>
-      .kutu { fill: url(#tbg); stroke: ${T.line}; stroke-opacity: .3; stroke-width: 1; }
-      .etk { font-family: ${FONT}; font-size: 13px; font-weight: 600; fill: ${T.text}; }
+    <style>${baseStyle()}
+      .etk { font-size: 13px; font-weight: 600; fill: ${T.text}; }
       /* Hareket bilincli sekilde hafif: sayfada baska seyler de oynuyor,
          ikonlar dikkati calmadan yasiyor olsun. */
       .bob { animation: bob 5s ease-in-out infinite alternate; }
@@ -410,15 +474,14 @@ function iconTile(ic) {
         50% { transform: scale(1.05) rotate(1.5deg); }
       }
       .isik { animation: isik 4.5s ease-in-out infinite; }
-      @keyframes isik { 0%,100% { opacity: .05; } 50% { opacity: .14; } }
-      @media (prefers-reduced-motion: reduce) {
-        * { animation-duration: .01ms !important; }
-      }
+      @keyframes isik { 0%,100% { opacity: .05; } 50% { opacity: .16; } }
     </style>
   </defs>
-  <rect class="kutu" x="${pad}" y="${pad}" width="${W - 2 * pad}" height="${H - 2 * pad}" rx="18" />
+  ${zemin(on, W, H)}
+  <rect x="10" y="10" width="5" height="5" fill="${T.altin}" fill-opacity=".45" />
+  <rect x="${W - 15}" y="${H - 15}" width="5" height="5" fill="${T.altin}" fill-opacity=".45" />
   <g transform="translate(${cx} 40)">
-    <circle class="isik" r="24" fill="${renk}" filter="url(#h)" opacity=".1" />
+    <circle class="isik" r="24" fill="${renk}" filter="url(#${on}h)" opacity=".1" />
     <g class="bob">
       <g class="${kar}">
         <g transform="translate(-20 -20) scale(${scale.toFixed(4)})">
@@ -434,21 +497,28 @@ function iconTile(ic) {
 
 // ------------------------------------------------------------------ diller
 
+// Dil cubugu artik bir veri yolu: segmentler arasinda bosluk var, iki
+// ucunda lehim pedi duruyor ve yol kartin kenarlarina kadar uzuyor.
+// Segment renkleri GitHub'in dil renkleri; veri tasidiklari icin altina
+// cevrilmiyorlar, yalnizca koyu zeminde okunacak kadar aciliyorlar.
 function languages(langs) {
   const W = 480;
   const H = 190;
+  const on = "d";
   const total = langs.reduce((s, l) => s + l.size, 0) || 1;
-  const barX = 28;
-  const barW = W - 56;
+  const barX = 40;
+  const barW = W - 80;
+  const ara = 3;
+  const kullanilabilir = barW - ara * Math.max(0, langs.length - 1);
 
   let cursor = barX;
   const segs = langs
     .map((l, i) => {
-      const w = Math.max(2, (l.size / total) * barW);
+      const w = Math.max(2, (l.size / total) * kullanilabilir);
       const seg = `
-    <rect x="${cursor.toFixed(1)}" y="70" width="${w.toFixed(1)}" height="12"
+    <rect x="${cursor.toFixed(1)}" y="72" width="${w.toFixed(1)}" height="10"
           fill="${dilRengi(l.color)}" class="seg" style="animation-delay:${(0.15 + i * 0.11).toFixed(2)}s" />`;
-      cursor += w;
+      cursor += w + ara;
       return seg;
     })
     .join("");
@@ -457,37 +527,39 @@ function languages(langs) {
     .map((l, i) => {
       const col = i % 2;
       const row = Math.floor(i / 2);
-      const x = 30 + col * 226;
-      const y = 118 + row * 26;
+      const x = 40 + col * 210;
+      const y = 120 + row * 26;
       const pct = ((l.size / total) * 100).toFixed(1);
       return `
     <g class="rise" style="animation-delay:${(0.35 + i * 0.08).toFixed(2)}s">
-      <circle cx="${x + 5}" cy="${y - 4}" r="5" fill="${dilRengi(l.color)}" />
+      <rect x="${x}" y="${y - 9}" width="8" height="8" fill="${dilRengi(l.color)}" />
       <text class="lg" x="${x + 18}" y="${y}">${esc(l.name)}</text>
-      <text class="pc" x="${x + 200}" y="${y}" text-anchor="end">${pct}%</text>
+      <text class="pc" x="${x + 186}" y="${y}" text-anchor="end">${pct}%</text>
     </g>`;
     })
     .join("");
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Most used languages">
+  return `${svgKok(W, H, "Most used languages")}
   <defs>
-    ${defsBg()}
-    <clipPath id="barclip"><rect x="${barX}" y="70" width="${barW}" height="12" rx="6" /></clipPath>
+    ${izgaraDef(on)}
     <style>${baseStyle()}
       .title { font-size: 16px; font-weight: 700; fill: ${T.text}; }
       .lg { font-size: 13px; fill: ${T.text}; }
       .pc { font-size: 13px; fill: ${T.muted}; font-variant-numeric: tabular-nums; }
       .seg { transform-box: fill-box; transform-origin: left center; animation: wipe .9s cubic-bezier(.2,.7,.3,1) backwards; }
       @keyframes wipe { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-      .spin { animation: spin 6s linear infinite; transform-origin: 30px 34px; }
-      @keyframes spin { to { transform: rotate(360deg); } }
+      .dugum { animation: dugum 3.4s ease-in-out infinite; }
+      @keyframes dugum { 0%,100% { fill-opacity: .45; } 50% { fill-opacity: 1; } }
     </style>
   </defs>
-  <rect class="card-bg" width="${W}" height="${H}" rx="14" />
-  <circle class="spin" cx="30" cy="34" r="4.5" fill="none" stroke="${T.purple}" stroke-width="2"
-          stroke-dasharray="14 8" />
-  <text class="title" x="46" y="39">🎨 Most used languages</text>
-  <g clip-path="url(#barclip)">${segs}</g>
+  ${zemin(on, W, H)}
+  <path d="M0 34 H22" stroke="${T.altin}" stroke-opacity=".32" stroke-width="1.4" fill="none" />
+  <rect class="dugum" x="24" y="30" width="8" height="8" fill="${T.altin}" />
+  <text class="title" x="44" y="39">Most used languages</text>
+  <path d="M0 77 H${barX - 10} M${W - barX + 10} 77 H${W}" stroke="${T.altin}" stroke-opacity=".3" stroke-width="1.4" fill="none" />
+  <rect x="${barX - 9}" y="73" width="7" height="7" fill="${T.altin}" fill-opacity=".55" />
+  <rect x="${W - barX + 2}" y="73" width="7" height="7" fill="${T.altin}" fill-opacity=".55" />
+  ${segs}
   ${legend}
 </svg>
 `;
@@ -498,60 +570,64 @@ function languages(langs) {
 // Depo, katki ve yildiz sayilari zaten cekiliyordu ama hicbir kartta
 // gorunmuyordu. Alti rakam, ucer ucer iki sira. Genislik ve yukseklik
 // languages.svg ile ayni: README'de yan yana konunca ayni boyda duruyorlar.
+// Her hucre kirik koseli bir yonga govdesi; solundaki pim onu veri yoluna
+// baglıyor.
 function stats(d) {
   const W = 480;
   const H = 190;
-  const kutuW = 136;
-  const kutuH = 52;
+  const kutuW = 132;
+  const kutuH = 54;
   const bosluk = 12;
   const solKenar = (W - (3 * kutuW + 2 * bosluk)) / 2;
 
   // "1y" olanlar GitHub'in son bir yillik katki penceresinden geliyor;
   // digerleri hesabin o anki toplami.
   const hucreler = [
-    { deger: d.totalContributions, etiket: "contributions · 1y", renk: T.green },
-    { deger: d.commits, etiket: "commits · 1y", renk: T.blue },
-    { deger: d.prs, etiket: "pull requests · 1y", renk: T.purple },
-    { deger: d.repos, etiket: "public repos", renk: T.cyan },
-    { deger: d.stars, etiket: "stars earned", renk: T.yellow },
-    { deger: d.followers, etiket: "followers", renk: T.pink },
+    { deger: d.totalContributions, etiket: "contributions · 1y", renk: T.krem },
+    { deger: d.commits, etiket: "commits · 1y", renk: T.sampanya },
+    { deger: d.prs, etiket: "pull requests · 1y", renk: T.altin },
+    { deger: d.repos, etiket: "public repos", renk: T.bronz },
+    { deger: d.stars, etiket: "stars earned", renk: T.parlak },
+    { deger: d.followers, etiket: "followers", renk: T.derin },
   ];
 
   const kutular = hucreler
     .map((h, i) => {
       const x = solKenar + (i % 3) * (kutuW + bosluk);
-      const y = 64 + Math.floor(i / 3) * (kutuH + 10);
+      const y = 62 + Math.floor(i / 3) * (kutuH + 12);
       const gecikme = (0.12 + i * 0.07).toFixed(2);
+      const govde = `M${x + 9} ${y} H${x + kutuW} V${y + kutuH} H${x} V${y + 9} Z`;
       return `
     <g class="rise" style="animation-delay:${gecikme}s">
-      <rect x="${x}" y="${y}" width="${kutuW}" height="${kutuH}" rx="12" fill="${h.renk}" fill-opacity=".09" />
-      <rect class="cizgi" x="${x}" y="${y + 12}" width="3" height="${kutuH - 24}" rx="1.5" fill="${h.renk}"
+      <path d="${govde}" fill="${h.renk}" fill-opacity=".07" stroke="${h.renk}" stroke-opacity=".3" stroke-width="1" />
+      <rect class="pim" x="${x - 4}" y="${y + kutuH / 2 - 4}" width="8" height="8" fill="${h.renk}"
             style="animation-delay:${gecikme}s" />
-      <text class="num" x="${x + 16}" y="${y + 28}" fill="${h.renk}">${short(h.deger)}</text>
-      <text class="etk" x="${x + 16}" y="${y + 44}">${esc(h.etiket)}</text>
+      <text class="num" x="${x + 16}" y="${y + 29}" fill="${h.renk}">${short(h.deger)}</text>
+      <text class="etk" x="${x + 16}" y="${y + 45}">${esc(h.etiket)}</text>
     </g>`;
     })
     .join("");
 
   const ozet = hucreler.map((h) => `${h.deger} ${h.etiket.replace(" · 1y", "")}`).join(", ");
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="By the numbers: ${esc(ozet)}">
+  return `${svgKok(W, H, `By the numbers: ${ozet}`)}
   <defs>
-    ${defsBg()}
+    ${izgaraDef("s")}
     <style>${baseStyle()}
       .title { font-size: 16px; font-weight: 700; fill: ${T.text}; }
       .num { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
       .etk { font-size: 11px; fill: ${T.muted}; letter-spacing: .3px; }
-      .cizgi { transform-box: fill-box; transform-origin: bottom;
-               animation: cikar .6s cubic-bezier(.2,.7,.3,1) backwards; }
-      @keyframes cikar { from { transform: scaleY(0); } to { transform: scaleY(1); } }
-      .puls { animation: puls 3.2s ease-in-out infinite; }
-      @keyframes puls { 0%,100% { r: 4; opacity: .55; } 50% { r: 6.5; opacity: 1; } }
+      .pim { transform-box: fill-box; transform-origin: center;
+             animation: cikar .5s cubic-bezier(.2,.7,.3,1) backwards; }
+      @keyframes cikar { from { transform: scale(0); } to { transform: scale(1); } }
+      .dugum { animation: dugum 3.4s ease-in-out infinite; }
+      @keyframes dugum { 0%,100% { fill-opacity: .45; } 50% { fill-opacity: 1; } }
     </style>
   </defs>
-  <rect class="card-bg" width="${W}" height="${H}" rx="14" />
-  <circle class="puls" cx="30" cy="34" r="4" fill="none" stroke="${T.green}" stroke-width="2" />
-  <text class="title" x="46" y="39">🧮 By the numbers</text>
+  ${zemin("s", W, H)}
+  <path d="M0 34 H22" stroke="${T.altin}" stroke-opacity=".32" stroke-width="1.4" fill="none" />
+  <rect class="dugum" x="24" y="30" width="8" height="8" fill="${T.altin}" />
+  <text class="title" x="44" y="39">By the numbers</text>
   ${kutular}
 </svg>
 `;
@@ -559,13 +635,17 @@ function stats(d) {
 
 // --------------------------------------------------------------- hareket
 
+// Son 90 gunun egrisi artik bir bakir iz: altin, hafif parlayan bir hat ve
+// uzerinde bastan sona akan bir isik noktasi. Egrinin sonundaki ped bugunu
+// isaretliyor.
 function activity(days, updatedAt) {
   const W = 820;
   const H = 200;
   const padL = 34;
   const padR = 24;
-  const top = 58;
-  const bottom = H - 34;
+  const top = 62;
+  const bottom = H - 40;
+  const on = "a";
   // Yeni bir hesapta ya da API bos donerse dizi bos kalabiliyor; kart o
   // durumda cizim yaparken patlamasin diye duz bir cizgiye duserek uretiliyor.
   const son90 = days.length
@@ -599,44 +679,59 @@ function activity(days, updatedAt) {
 
   const busiest = son90.reduce((a, b) => (b.count > a.count ? b : a), son90[0]);
   const sum = son90.reduce((s, d) => s + d.count, 0);
+  const [sx, sy] = xy.at(-1);
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Contribution graph, last 90 days">
+  return `${svgKok(W, H, "Contribution graph, last 90 days")}
   <defs>
-    ${defsBg()}
-    <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${T.purple}" stop-opacity=".45" />
-      <stop offset="100%" stop-color="${T.purple}" stop-opacity="0" />
+    ${izgaraDef(on)}
+    <linearGradient id="${on}alan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${T.altin}" stop-opacity=".38" />
+      <stop offset="100%" stop-color="${T.altin}" stop-opacity="0" />
     </linearGradient>
-    <linearGradient id="stroke" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="${T.blue}" />
-      <stop offset="100%" stop-color="${T.purple}" />
+    <linearGradient id="${on}hat" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="${T.derin}" />
+      <stop offset="100%" stop-color="${T.parlak}" />
     </linearGradient>
+    <filter id="${on}par" x="-20%" y="-60%" width="140%" height="260%">
+      <feGaussianBlur stdDeviation="3" />
+    </filter>
     <style>${baseStyle()}
       .title { font-size: 21px; font-weight: 700; fill: ${T.text}; }
       .meta { font-size: 16px; fill: ${T.muted}; }
-      .line { fill: none; stroke: url(#stroke); stroke-width: 2.5; stroke-linecap: round;
-              animation: draw 2.6s .2s cubic-bezier(.4,0,.2,1) backwards; }
+      .iz { fill: none; stroke: url(#${on}hat); stroke-width: 2.4; stroke-linecap: round;
+            animation: draw 2.6s .2s cubic-bezier(.4,0,.2,1) backwards; }
       @keyframes draw {
         from { stroke-dasharray: 4000; stroke-dashoffset: 4000; }
         to { stroke-dasharray: 4000; stroke-dashoffset: 0; }
       }
-      .fill { animation: fade 1.2s 1.5s backwards; }
-      .tip { animation: fade .6s 2.6s backwards; }
+      .dolgu { animation: fade 1.2s 1.5s backwards; }
+      .uc { animation: fade .6s 2.6s backwards; }
       .stamp { font-size: 14px; fill: ${T.muted}; animation: fade .8s 3s backwards; }
       .ping { animation: ping 2s ease-out infinite; transform-origin: center; }
       @keyframes ping { 0% { r: 4; opacity: .9; } 70%,100% { r: 13; opacity: 0; } }
+      .dugum { animation: dugum 3.4s ease-in-out infinite; }
+      @keyframes dugum { 0%,100% { fill-opacity: .45; } 50% { fill-opacity: 1; } }
     </style>
   </defs>
-  <rect class="card-bg" width="${W}" height="${H}" rx="14" />
-  <text class="title" x="30" y="39">📈 Last 90 days</text>
-  <text class="meta" x="${W - 30}" y="39" text-anchor="end">${sum} contributions · busiest day ${busiest.count}</text>
-  <path class="fill" d="${area}" fill="url(#area)" />
-  <path class="line" d="${path}" />
-  <g class="tip">
-    <circle class="ping" cx="${xy[xy.length - 1][0].toFixed(1)}" cy="${xy[xy.length - 1][1].toFixed(1)}" r="4" fill="${T.purple}" />
-    <circle cx="${xy[xy.length - 1][0].toFixed(1)}" cy="${xy[xy.length - 1][1].toFixed(1)}" r="4" fill="${T.text}" />
+  ${zemin(on, W, H)}
+  <path d="M0 38 H22" stroke="${T.altin}" stroke-opacity=".32" stroke-width="1.4" fill="none" />
+  <rect class="dugum" x="24" y="33" width="8" height="8" fill="${T.altin}" />
+  <text class="title" x="46" y="42">Last 90 days</text>
+  <text class="meta" x="${W - 30}" y="42" text-anchor="end">${sum} contributions · busiest day ${busiest.count}</text>
+  <path class="dolgu" d="${area}" fill="url(#${on}alan)" />
+  <path class="iz" id="${on}egri" d="${path}" filter="url(#${on}par)" opacity=".55" />
+  <path class="iz" d="${path}" />
+  <circle r="3" fill="${T.parlak}" opacity="0">
+    <animateMotion dur="9s" repeatCount="indefinite" calcMode="linear">
+      <mpath href="#${on}egri" xlink:href="#${on}egri" />
+    </animateMotion>
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.08;.92;1" dur="9s" repeatCount="indefinite" />
+  </circle>
+  <g class="uc">
+    <circle class="ping" cx="${sx}" cy="${sy}" r="4" fill="${T.parlak}" />
+    <rect x="${sx - 4}" y="${sy - 4}" width="8" height="8" fill="${T.krem}" />
   </g>
-  <text class="stamp" x="30" y="${H - 12}">🔄 updated <tspan class="tarih">${esc(updatedAt)}</tspan> · checked every 6 hours</text>
+  <text class="stamp" x="30" y="${H - 12}">updated <tspan class="tarih">${esc(updatedAt)}</tspan> · checked every 6 hours</text>
 </svg>
 `;
 }
@@ -795,7 +890,7 @@ await mkdir(OUT, { recursive: true });
 
 // Cam kartlar her iki GitHub temasinda ayni gorundugu icin tek surum uretilir.
 {
-  T = KOYU;
+  T = FY;
   SAYFA_KOYU = true;
   const cards = {
     "header.svg": header({ name: DISPLAY_NAME, tagline: TAGLINE }),
@@ -803,19 +898,19 @@ await mkdir(OUT, { recursive: true });
     "footer.svg": footer(),
     "terminal.svg": terminal([
       { tip: "komut", metin: "whoami" },
-      { tip: "cikti", metin: "Farhad Yaqoobi - developer, NRW", renk: T.blue },
+      { tip: "cikti", metin: "Farhad Yaqoobi - developer, NRW", renk: T.krem },
       { tip: "komut", metin: "cat stack.txt" },
-      { tip: "cikti", metin: "JavaScript - TypeScript - PWA - Node - Workers", renk: T.green },
+      { tip: "cikti", metin: "JavaScript - TypeScript - PWA - Node - Workers", renk: T.parlak },
       { tip: "komut", metin: "ls projects/" },
-      { tip: "cikti", metin: "sosyal-studyo/ botflow-mcp/ acik-defter/ netstore/", renk: T.purple },
+      { tip: "cikti", metin: "sosyal-studyo/ botflow-mcp/ acik-defter/ netstore/", renk: T.sampanya },
       { tip: "komut", metin: "cat learning.md" },
-      { tip: "cikti", metin: "Cloudflare D1 - Meta Graph API - MCP", renk: T.cyan },
+      { tip: "cikti", metin: "Cloudflare D1 - Meta Graph API - MCP", renk: T.altin },
       { tip: "komut", metin: "locale -a" },
-      { tip: "cikti", metin: "de_DE   tr_TR   en_US   fa_AF", renk: T.pink },
+      { tip: "cikti", metin: "de_DE   tr_TR   en_US   fa_AF", renk: T.bronz },
       { tip: "komut", metin: "echo $MOTTO" },
-      { tip: "cikti", metin: "Build it to understand it", renk: T.yellow },
+      { tip: "cikti", metin: "Build it to understand it", renk: T.parlak },
       { tip: "komut", metin: "tail -1 lessons.md" },
-      { tip: "cikti", metin: "Code that never reached the repo is lost", renk: T.blue },
+      { tip: "cikti", metin: "Code that never reached the repo is lost", renk: T.muted },
     ]),
     "languages.svg": languages(data.langs),
     "stats.svg": stats(data),
