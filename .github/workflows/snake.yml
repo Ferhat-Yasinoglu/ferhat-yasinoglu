@@ -20,9 +20,13 @@ jobs:
         id: snake-gif
         with:
           github_user_name: ${{ github.repository_owner }}
+          # Renkler FY paletinden. color_dots bes deger aliyor: bos kare, sonra
+          # dort yogunluk seviyesi. Altin veriyi tasiyor, yilan krem/siyah
+          # kaliyor ki en parlak karelerin uzerinde kaybolmasin.
+          # '#' YAML'de yorum baslatir, bu yuzden %23 olarak yaziliyor.
           outputs: |
-            dist/github-snake.svg
-            dist/github-snake-dark.svg?palette=github-dark
+            dist/github-snake.svg?color_snake=%23070604&color_dots=%23f4ecd8,%23e8d9a8,%23d4af37,%23a9821e,%236b5314
+            dist/github-snake-dark.svg?color_snake=%23f4ecd8&color_dots=%2315120b,%235e553f,%23a9821e,%23d4af37,%23f5d76e
 
       - name: output dalina yayinla
         uses: crazy-max/ghaction-github-pages@v4
