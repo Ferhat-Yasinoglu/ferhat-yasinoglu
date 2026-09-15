@@ -27,6 +27,16 @@ const ICONS = JSON.parse(await readFile(join(HERE, "icons.json"), "utf8"));
 // (gezen isik, ag dugumleri, goz) ve reduced-motion kurali dosyanin icinde gelir.
 const FY_LOGO = await readFile(join(HERE, "fy-logo.svg"), "utf8");
 
+// Terminal kartinin solundaki portre. Kaynak fotograf depoda durmuyor; buradaki
+// dosya onun islenmis hali ve su islemlerden gecti (sharp):
+//   extract({ left: 125, top: 258, width: 440, height: 560 })  -- yuze sikica kirpma
+//   greyscale().normalise().linear(1.15, -14)                  -- teni yukari, saci asagi
+//   radyal vinyetle carpma (cx .46, cy .44, r .72)             -- gun batimi gokyuzunu sondur
+//   normalise().linear(1.12, -6).resize(300, 382)
+// Vinyet sart: fotografta arka plan yuzden parlak, duz cevrilirse portre kendi
+// arka plani icinde kayboluyor. Altin duotone ve tarama cizgisi SVG tarafinda.
+const PORTRE = (await readFile(join(HERE, "portre.png"))).toString("base64");
+
 // FY - Yapay Zeka Ajansi paleti. Degerler ajansin kendi tasarim
 // sisteminden (fy-ajans/css/style.css tokenlari) birebir aliniyor:
 // sicak siyah zemin, krem metin, altin vurgu.
@@ -222,19 +232,30 @@ function footer() {
 
 // ------------------------------------------------------------------ terminal
 
-// Komut satirlari harf harf yazilir, ciktilar beliriverir; tum dizi
-// bitince bastan baslar. Satirlar birikimli: yazilan ekranda kalir.
-// Pencere susu (uc renkli trafik isigi) yerine devre dilinin konnektor
-// pimleri duruyor.
+// Iki sutun: solda portre, sagda yazilan satirlar. Komut satirlari harf harf
+// yazilir, ciktilar beliriverir; tum dizi bitince bastan baslar.
+// Portre altin duotone (feColorMatrix) ve yatay tarama cizgisi maskesiyle
+// veriliyor; uzerinden asagi dogru surekli bir tarama bandi geciyor.
+//
+// Gercek ASCII (karakter) denendi ve birakildi: SVG icinde karakter hizasi
+// yazi tipine bagli, farkli tarayicida portre dagiliyor. Rect tabanli tarama
+// maskesi her yerde ayni cikiyor.
 function terminal(satirlar) {
-  const W = 570;
+  const on = "t";
+  const PW = 300;   // portre paneli
+  const PH = 382;
+  const PX = 28;
+  const PY = 66;
+  const METX = PX + PW + 32; // metin sutununun sol kenari
   const satirH = 29;
-  const ustBosluk = 62;
-  const H = ustBosluk + satirlar.length * satirH + 22;
+  const ustBosluk = 78;
   const size = 17;
   const charW = size * 0.6;
   const bekle = 4.5; // dizi bitince ekranda kalma suresi
-  const on = "t";
+
+  const enUzun = Math.max(...satirlar.map((s) => [...s.metin].length + 2));
+  const W = METX + Math.round(enUzun * charW) + 28;
+  const H = ustBosluk + satirlar.length * satirH + 34;
 
   // Her satirin baslangic ani: komutlar yazilma suresince, ciktilar kisa.
   let t = 0.5;
@@ -251,22 +272,19 @@ function terminal(satirlar) {
     .map((s, i) => {
       const { bas, sure } = zaman[i];
       const y = ustBosluk + i * satirH;
-      const onek = s.tip === "komut" ? "$ " : "  ";
-      const metin = onek + s.metin;
-      // Metin x=24'ten basliyor, kirpma dikdortgeni x=0'dan: hedef genislige
-      // o kaymayi da eklemezsek satirin sonu kesiliyor.
-      const w = (24 + [...metin].length * charW + 6).toFixed(1);
+      const metin = (s.tip === "komut" ? "$ " : "  ") + s.metin;
+      const w = ([...metin].length * charW + 6).toFixed(1);
       const renk = s.tip === "komut" ? T.text : s.renk || T.muted;
 
       if (s.tip === "komut") {
         return `
     <clipPath id="${on}k${i}"><rect x="0" y="${y - 16}" width="0" height="22">
-      <animate attributeName="width" values="24;24;${w};${w};24"
+      <animate attributeName="width" values="0;0;${w};${w};0"
                keyTimes="0;${at(bas)};${at(bas + sure)};${at(dongu - 0.05)};1"
                dur="${dongu.toFixed(2)}s" repeatCount="indefinite" />
     </rect></clipPath>
     <g clip-path="url(#${on}k${i})">
-      <text class="tr" x="24" y="${y}" fill="${renk}">${esc(metin)}</text>
+      <text class="tr" x="0" y="${y}" fill="${renk}">${esc(metin)}</text>
     </g>`;
       }
       return `
@@ -274,7 +292,7 @@ function terminal(satirlar) {
       <animate attributeName="opacity" values="0;0;1;1;0"
                keyTimes="0;${at(bas)};${at(bas + sure)};${at(dongu - 0.05)};1"
                dur="${dongu.toFixed(2)}s" repeatCount="indefinite" calcMode="linear" />
-      <text class="tr" x="24" y="${y}" fill="${renk}">${esc(metin)}</text>
+      <text class="tr" x="0" y="${y}" fill="${renk}">${esc(metin)}</text>
     </g>`;
     })
     .join("");
@@ -284,39 +302,74 @@ function terminal(satirlar) {
     const metin = (s.tip === "komut" ? "$ " : "  ") + s.metin;
     return {
       bitis: at(zaman[i].bas + zaman[i].sure),
-      x: 24 + [...metin].length * charW,
+      x: [...metin].length * charW,
       y: ustBosluk + i * satirH,
     };
   });
   const imlecKey = ["0", ...durak.map((d) => d.bitis.toFixed(4)), "1"].join(";");
-  const imlecX = [24, ...durak.map((d) => d.x.toFixed(1)), durak.at(-1).x.toFixed(1)].join(";");
+  const imlecX = [0, ...durak.map((d) => d.x.toFixed(1)), durak.at(-1).x.toFixed(1)].join(";");
   const imlecY = [durak[0].y, ...durak.map((d) => d.y), durak.at(-1).y].map((y) => y + 10).join(";");
   const pim = [0, 1, 2]
     .map((i) => `<rect x="${24 + i * 14}" y="22" width="7" height="7" fill="${T.altin}" fill-opacity="${0.75 - i * 0.2}" />`)
     .join("");
 
-  return `${svgKok(W, H, satirlar.map((s) => s.metin).join(" · "))}
+  const ozet = `Farhad Yaqoobi · ${satirlar.map((s) => s.metin).join(" · ")}`;
+
+  return `${svgKok(W, H, ozet)}
   <defs>
     ${izgaraDef(on)}
+    <!-- Gri portreyi altina cevirir: kirmizi kanal krem, yesil altin, mavi kisik. -->
+    <filter id="${on}duo" color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix" values="0.96 0 0 0 0.03  0.78 0 0 0 0.02  0.30 0 0 0 0.01  0 0 0 1 0" />
+    </filter>
+    <pattern id="${on}tara" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="2" fill="#ffffff" />
+    </pattern>
+    <mask id="${on}cizgi"><rect width="${PW}" height="${PH}" fill="url(#${on}tara)" /></mask>
+    <linearGradient id="${on}band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${T.parlak}" stop-opacity="0" />
+      <stop offset=".5" stop-color="${T.parlak}" stop-opacity=".5" />
+      <stop offset="1" stop-color="${T.parlak}" stop-opacity="0" />
+    </linearGradient>
+    <clipPath id="${on}pan"><rect x="${PX}" y="${PY}" width="${PW}" height="${PH}" /></clipPath>
     <style>${baseStyle()}
       .tr { font-family: ${MONO}; font-size: ${size}px; }
       .baslik { font-size: 12px; fill: ${T.altin}; fill-opacity: .8; font-family: ${MONO}; letter-spacing: 1.4px; }
+      .ad { font-size: 11px; fill: ${T.altin}; font-family: ${MONO}; letter-spacing: 2.6px; }
       .imlec { animation: blink 1.05s steps(1) infinite; }
       @keyframes blink { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
+      .tarayici { animation: kay 6s linear infinite; }
+      @keyframes kay { from { transform: translateY(${PY - 40}px); } to { transform: translateY(${PY + PH}px); } }
     </style>
   </defs>
   ${zemin(on, W, H)}
   ${pim}
   <text class="baslik" x="${W / 2}" y="31" text-anchor="middle">farhad@fy ~</text>
   <line x1="0" y1="48" x2="${W}" y2="48" stroke="${T.altin}" stroke-opacity=".38" stroke-width="1" />
-  ${govde}
-  <g class="imlec">
-    <rect x="24" y="${durak[0].y + 10}" width="9" height="2.5" fill="${T.altin}">
-      <animate attributeName="x" values="${imlecX}" keyTimes="${imlecKey}"
-               dur="${dongu.toFixed(2)}s" repeatCount="indefinite" calcMode="discrete" />
-      <animate attributeName="y" values="${imlecY}" keyTimes="${imlecKey}"
-               dur="${dongu.toFixed(2)}s" repeatCount="indefinite" calcMode="discrete" />
-    </rect>
+
+  <!-- Yalniz href: <image> icin butun guncel tarayicilarda calisiyor ve
+       base64'u iki kez gomersek kart 100 KB birden sisiyor. -->
+  <image x="${PX}" y="${PY}" width="${PW}" height="${PH}" filter="url(#${on}duo)" mask="url(#${on}cizgi)"
+         href="data:image/png;base64,${PORTRE}" />
+  <g clip-path="url(#${on}pan)">
+    <rect class="tarayici" x="${PX}" y="0" width="${PW}" height="40" fill="url(#${on}band)" />
+  </g>
+  <rect x="${PX}" y="${PY}" width="${PW}" height="${PH}" fill="none" stroke="${T.altin}" stroke-opacity=".45" />
+  <rect x="${PX - 3}" y="${PY - 3}" width="6" height="6" fill="${T.altin}" fill-opacity=".6" />
+  <rect x="${PX + PW - 3}" y="${PY + PH - 3}" width="6" height="6" fill="${T.altin}" fill-opacity=".6" />
+  <path d="M${PX + PW} ${PY + PH / 2} H${METX - 16}" stroke="${T.altin}" stroke-opacity=".32" stroke-width="1.4" fill="none" />
+  <text class="ad" x="${PX}" y="${PY + PH + 22}">FARHAD YAQOOBI · NRW</text>
+
+  <g transform="translate(${METX} 0)">
+    ${govde}
+    <g class="imlec">
+      <rect x="0" y="${durak[0].y + 10}" width="9" height="2.5" fill="${T.altin}">
+        <animate attributeName="x" values="${imlecX}" keyTimes="${imlecKey}"
+                 dur="${dongu.toFixed(2)}s" repeatCount="indefinite" calcMode="discrete" />
+        <animate attributeName="y" values="${imlecY}" keyTimes="${imlecKey}"
+                 dur="${dongu.toFixed(2)}s" repeatCount="indefinite" calcMode="discrete" />
+      </rect>
+    </g>
   </g>
 </svg>
 `;
