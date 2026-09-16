@@ -37,38 +37,11 @@ if (k.error) {
 if (k.error) {
   const e = k.error;
   console.log(`  konusmalar SORULAMADI: ${e.message} [kod=${e.code || '?'} alt=${e.error_subcode || '-'}]`);
-  if (String(e.code) === '10' || /permission|scope/i.test(String(e.message))) {
-    console.log('  -> Bu bir IZIN sorunu: uygulamanin mesaj kapsami verilmemis ya da dusurulmus.');
-  }
-  process.exit(1);
-}
-const konusmalar = k.data || [];
-console.log(`  konusma sayisi: ${konusmalar.length}`);
-if (!konusmalar.length) {
-  console.log('  -> Hesapta hic konusma gorunmuyor. Mesajlar Instagram tarafinda da yok sayiliyor:');
-  console.log('     hesabin "Baglantili araclar > Mesajlara erisime izin ver" ayari kapali olabilir.');
-  process.exit(0);
-}
-
-let enSonMesaj = null;
-for (const c of konusmalar.slice(0, 3)) {
-  const m = await al(`${c.id}?fields=messages.limit(5){id,created_time,from}`);
-  if (m.error) { console.log(`  ${c.id}: mesajlar sorulamadi — ${m.error.message}`); continue; }
-  const mesajlar = m.messages?.data || [];
-  const zamanlar = mesajlar.map((x) => (x.created_time || '').slice(0, 19)).join(', ');
-  console.log(`  konusma ${c.id}: ${mesajlar.length} mesaj  son guncelleme=${(c.updated_time || '').slice(0, 19)}`);
-  if (zamanlar) console.log(`    mesaj zamanlari: ${zamanlar}`);
-  for (const x of mesajlar) {
-    const g = x.from?.id ? String(x.from.id) : '';
-    if (g && g !== String(kim.id) && !enSonMesaj) enSonMesaj = { konusma: c.id, gonderen: g, zaman: x.created_time };
-  }
-}
-
-if (enSonMesaj) {
-  console.log(`  -> Mesajlar Instagram tarafinda VAR (son karsi taraf ${enSonMesaj.gonderen}, ${String(enSonMesaj.zaman).slice(0, 19)}).`);
-  console.log('     Demek ki hesap ve izinler calisiyor; sorun yalnizca webhook TESLIMATINDA.');
+  console.log('  -> DM okuma izinli degil. Yorum yolu bunun yedegi; asagida olculuyor.');
 } else {
-  console.log('  -> Konusma var ama karsi taraftan mesaj gorunmuyor.');
+  const konusmalar = k.data || [];
+  console.log(`  konusma sayisi: ${konusmalar.length}`);
+  if (!konusmalar.length) console.log('  -> Hesapta hic konusma gorunmuyor.');
 }
 
 // --- YORUM YOLU ---
