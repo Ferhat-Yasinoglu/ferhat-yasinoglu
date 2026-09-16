@@ -319,12 +319,16 @@ function terminal(satirlar) {
   return `${svgKok(W, H, ozet)}
   <defs>
     ${izgaraDef(on)}
-    <!-- Gri portreyi altina cevirir: kirmizi kanal krem, yesil altin, mavi kisik. -->
+    <!-- Gri portreyi altina cevirir: kirmizi kanal krem, yesil altin, mavi kisik.
+         Sabit terimler siyah noktayi kartin zemininin (#070604) uzerine kaldiriyor;
+         yoksa golgeler zemine karisip yuzun yarisi yokmus gibi duruyor. -->
     <filter id="${on}duo" color-interpolation-filters="sRGB">
-      <feColorMatrix type="matrix" values="0.96 0 0 0 0.03  0.78 0 0 0 0.02  0.30 0 0 0 0.01  0 0 0 1 0" />
+      <feColorMatrix type="matrix" values="0.90 0 0 0 0.10  0.72 0 0 0 0.07  0.26 0 0 0 0.03  0 0 0 1 0" />
     </filter>
+    <!-- 4 birimlik adimda 2.5 birim gorunur: fotografin %62.5'i ciziliyor.
+         2'de kalirsa tam yarisi maskeleniyor ve yuz kartta kopuk duruyor. -->
     <pattern id="${on}tara" width="4" height="4" patternUnits="userSpaceOnUse">
-      <rect width="4" height="2" fill="#ffffff" />
+      <rect width="4" height="2.5" fill="#ffffff" />
     </pattern>
     <mask id="${on}cizgi"><rect width="${PW}" height="${PH}" fill="url(#${on}tara)" /></mask>
     <linearGradient id="${on}band" x1="0" y1="0" x2="0" y2="1">
