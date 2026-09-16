@@ -29,13 +29,14 @@ const FY_LOGO = await readFile(join(HERE, "fy-logo.svg"), "utf8");
 
 // Terminal kartinin solundaki portre. Kaynak fotograf depoda durmuyor; buradaki
 // dosya onun islenmis hali ve su islemlerden gecti (sharp):
-//   extract({ left: 200, top: 70, width: 720, height: 900 })   -- bas ve omuz
-//   greyscale().normalise()
-//   radyal vinyetle carpma (cx .49, cy .43, r .62)             -- duvardaki posterleri sondur
-//   normalise().linear(1.22, 8).resize(300, 375)               -- yuzu one cikar
-// Vinyet sart: arka plandaki poster ve duvar yuzle yarisiyor, duz cevrilirse
-// portre kendi arka plani icinde kayboluyor. Kucuk boyda okunsun diye kazanc
-// ve parlaklik bilerek yuksek. Altin duotone ve tarama cizgisi SVG tarafinda.
+//   greyscale().normalise()                                    -- kirpma YOK, fotografin tamami
+//   radyal vinyetle carpma (cx .5, cy .46, r .95)              -- yalniz kenar yumusatma
+//   normalise().linear(1.14, 4).resize(300, 400)
+// Panelin orani fotografin oraniyla ayni (3:4): boylece hicbir yeri kirpilmiyor
+// ve cerceve icinde bos alan kalmiyor. Onceki surumlerde yuze sikica kirpiliyor
+// ve arka plani sondurmek icin dar bir vinyet uygulaniyordu; kirpma kaldirilinca
+// vinyetin isi de yalnizca kenarlari kartin zeminine baglamak oldu.
+// Altin duotone ve tarama cizgisi SVG tarafinda.
 const PORTRE = (await readFile(join(HERE, "portre.png"))).toString("base64");
 
 // FY - Yapay Zeka Ajansi paleti. Degerler ajansin kendi tasarim
@@ -244,7 +245,7 @@ function footer() {
 function terminal(satirlar) {
   const on = "t";
   const PW = 300;   // portre paneli
-  const PH = 375;
+  const PH = 400; // fotografin orani (3:4) ile ayni; kirpma ya da bosluk yok
   const PX = 28;
   const PY = 66;
   const METX = PX + PW + 32; // metin sutununun sol kenari
@@ -330,7 +331,10 @@ function terminal(satirlar) {
     <pattern id="${on}tara" width="4" height="4" patternUnits="userSpaceOnUse">
       <rect width="4" height="2.5" fill="#ffffff" />
     </pattern>
-    <mask id="${on}cizgi"><rect width="${PW}" height="${PH}" fill="url(#${on}tara)" /></mask>
+    <!-- Maskenin icerigi kullanici uzayinda (maskeContentUnits varsayilani):
+         dikdortgen fotografin durdugu yere konmali. (0,0)'da kalirsa sagdan PX,
+         alttan PY kadarlik serit maskenin disinda kalip hic cizilmiyor. -->
+    <mask id="${on}cizgi"><rect x="${PX}" y="${PY}" width="${PW}" height="${PH}" fill="url(#${on}tara)" /></mask>
     <linearGradient id="${on}band" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="${T.parlak}" stop-opacity="0" />
       <stop offset=".5" stop-color="${T.parlak}" stop-opacity=".5" />
