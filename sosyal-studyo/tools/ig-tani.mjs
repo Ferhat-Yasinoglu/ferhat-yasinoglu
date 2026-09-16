@@ -70,3 +70,29 @@ if (enSonMesaj) {
 } else {
   console.log('  -> Konusma var ama karsi taraftan mesaj gorunmuyor.');
 }
+
+// --- YORUM YOLU ---
+// DM'ler yalnızca webhook ile geliyor; yorumlar için ikinci bir yol var: gönderileri ve
+// altlarındaki yorumları BİZ soruyoruz (cron, 5 dk). Bu yol webhook'a hiç bağlı değil —
+// yayınlama, abonelik, imza, Meta'nın teslimatı hiçbiri devreye girmiyor. Okuma çalışıyorsa
+// yorum otomasyonu bugün açılabilir.
+console.log('--- yorum yolu (webhook gerektirmez) ---');
+const medya = await al('me/media?fields=id,caption,timestamp,comments.limit(5){id,text,username,timestamp}&limit=5');
+if (medya.error) {
+  const e = medya.error;
+  console.log(`  gonderiler SORULAMADI: ${e.message} [kod=${e.code || '?'} alt=${e.error_subcode || '-'}]`);
+  console.log('  -> Yorum okuma da izinli degil; yorum yolu da ayni kapiya takiliyor.');
+} else {
+  const gonderiler = medya.data || [];
+  console.log(`  gonderi sayisi: ${gonderiler.length}`);
+  let toplamYorum = 0;
+  for (const g of gonderiler) {
+    const y = g.comments?.data || [];
+    toplamYorum += y.length;
+    console.log(`    gonderi ${g.id}  yorum=${y.length}  tarih=${(g.timestamp || '').slice(0, 10)}`);
+  }
+  console.log(`  toplam gorunen yorum: ${toplamYorum}`);
+  if (toplamYorum > 0) console.log('  -> YORUM YOLU ACIK: yorumlar okunabiliyor, otomasyon webhook olmadan calisabilir.');
+  else if (gonderiler.length) console.log('  -> Gonderiler okunuyor ama yorum gorunmuyor (henuz yorum yok ya da yorum alani izinsiz).');
+  else console.log('  -> Hesapta gonderi gorunmuyor.');
+}
