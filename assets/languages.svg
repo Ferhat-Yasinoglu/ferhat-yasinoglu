@@ -34,13 +34,13 @@
   <rect x="31" y="73" width="7" height="7" fill="#d4af37" fill-opacity=".55" />
   <rect x="442" y="73" width="7" height="7" fill="#d4af37" fill-opacity=".55" />
   
-    <rect x="40.0" y="72" width="179.5" height="10"
+    <rect x="40.0" y="72" width="178.4" height="10"
           fill="#e34e29" class="seg" style="animation-delay:0.15s" />
-    <rect x="222.5" y="72" width="132.8" height="10"
+    <rect x="221.4" y="72" width="134.0" height="10"
           fill="#f1e05a" class="seg" style="animation-delay:0.26s" />
-    <rect x="358.3" y="72" width="39.4" height="10"
+    <rect x="358.4" y="72" width="39.4" height="10"
           fill="#b79fcf" class="seg" style="animation-delay:0.37s" />
-    <rect x="400.7" y="72" width="32.9" height="10"
+    <rect x="400.9" y="72" width="32.7" height="10"
           fill="#4e8bce" class="seg" style="animation-delay:0.48s" />
     <rect x="436.6" y="72" width="2.0" height="10"
           fill="#b8c2d0" class="seg" style="animation-delay:0.59s" />
@@ -50,12 +50,12 @@
     <g class="rise" style="animation-delay:0.35s">
       <rect x="40" y="111" width="8" height="8" fill="#e34e29" />
       <text class="lg" x="58" y="120">HTML</text>
-      <text class="pc" x="226" y="120" text-anchor="end">46.6%</text>
+      <text class="pc" x="226" y="120" text-anchor="end">46.3%</text>
     </g>
     <g class="rise" style="animation-delay:0.43s">
       <rect x="250" y="111" width="8" height="8" fill="#f1e05a" />
       <text class="lg" x="268" y="120">JavaScript</text>
-      <text class="pc" x="436" y="120" text-anchor="end">34.5%</text>
+      <text class="pc" x="436" y="120" text-anchor="end">34.8%</text>
     </g>
     <g class="rise" style="animation-delay:0.51s">
       <rect x="40" y="137" width="8" height="8" fill="#b79fcf" />
@@ -65,7 +65,7 @@
     <g class="rise" style="animation-delay:0.59s">
       <rect x="250" y="137" width="8" height="8" fill="#4e8bce" />
       <text class="lg" x="268" y="146">TypeScript</text>
-      <text class="pc" x="436" y="146" text-anchor="end">8.6%</text>
+      <text class="pc" x="436" y="146" text-anchor="end">8.5%</text>
     </g>
     <g class="rise" style="animation-delay:0.67s">
       <rect x="40" y="163" width="8" height="8" fill="#b8c2d0" />
