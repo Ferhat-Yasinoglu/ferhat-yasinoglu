@@ -34,13 +34,13 @@
   <rect x="31" y="73" width="7" height="7" fill="#d4af37" fill-opacity=".55" />
   <rect x="442" y="73" width="7" height="7" fill="#d4af37" fill-opacity=".55" />
   
-    <rect x="40.0" y="72" width="222.2" height="10"
+    <rect x="40.0" y="72" width="221.9" height="10"
           fill="#e34e29" class="seg" style="animation-delay:0.15s" />
-    <rect x="265.2" y="72" width="103.7" height="10"
+    <rect x="264.9" y="72" width="104.1" height="10"
           fill="#f1e05a" class="seg" style="animation-delay:0.26s" />
-    <rect x="371.8" y="72" width="34.4" height="10"
+    <rect x="371.9" y="72" width="34.3" height="10"
           fill="#b79fcf" class="seg" style="animation-delay:0.37s" />
-    <rect x="409.2" y="72" width="24.5" height="10"
+    <rect x="409.3" y="72" width="24.5" height="10"
           fill="#4e8bce" class="seg" style="animation-delay:0.48s" />
     <rect x="436.7" y="72" width="2.0" height="10"
           fill="#b8c2d0" class="seg" style="animation-delay:0.59s" />
@@ -50,12 +50,12 @@
     <g class="rise" style="animation-delay:0.35s">
       <rect x="40" y="111" width="8" height="8" fill="#e34e29" />
       <text class="lg" x="58" y="120">HTML</text>
-      <text class="pc" x="226" y="120" text-anchor="end">57.7%</text>
+      <text class="pc" x="226" y="120" text-anchor="end">57.6%</text>
     </g>
     <g class="rise" style="animation-delay:0.43s">
       <rect x="250" y="111" width="8" height="8" fill="#f1e05a" />
       <text class="lg" x="268" y="120">JavaScript</text>
-      <text class="pc" x="436" y="120" text-anchor="end">26.9%</text>
+      <text class="pc" x="436" y="120" text-anchor="end">27.0%</text>
     </g>
     <g class="rise" style="animation-delay:0.51s">
       <rect x="40" y="137" width="8" height="8" fill="#b79fcf" />
