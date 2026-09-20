@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="tr" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="theme-color" content="#0b7a5a">
+<meta name="description" content="Eczane Yönetim — ilaç stoğu, hasta kayıtları, reçete yazma ve karşılama. Veriler yalnız bu cihazda durur.">
+<title>Eczane Yönetim</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./img/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./img/logo.svg">
+<link rel="stylesheet" href="./css/tokenlar.css">
+<link rel="stylesheet" href="./css/bilesenler.css">
+<link rel="stylesheet" href="./css/uygulama.css">
+<link rel="stylesheet" href="./css/yazdirma.css">
+<script src="./js/cekirdek/tema.js"></script>
+</head>
+<body>
+<header class="ust">
+  <a class="ust__logo" href="#/panel">
+    <img src="./img/logo.svg" alt="" width="30" height="30">
+    <span class="ust__ad"><b>Eczane</b><span>Yönetim</span></span>
+  </a>
+  <div class="ust__ara" id="ust-ara"></div>
+  <div class="ust__sag" id="ust-sag"></div>
+</header>
+<div class="govde">
+  <aside class="kenar" aria-label="Menü"><nav class="menu" id="kenar-menu"></nav></aside>
+  <main class="icerik" id="icerik">
+    <div class="bantlar" id="bantlar"></div>
+    <div id="sayfa">
+      <p class="js-gerekli">Bu uygulama JavaScript ile çalışır. Tarayıcında JavaScript kapalıysa aç ve sayfayı yenile.</p>
+    </div>
+  </main>
+</div>
+<nav class="alt" id="alt-cubuk" aria-label="Ana gezinme"></nav>
+<script type="module" src="./js/uygulama.js"></script>
+</body>
+</html>
