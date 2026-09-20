@@ -1,0 +1,14 @@
+/* Yazdırma: ekranda gezinme olan her şey kâğıda çıkmaz.
+   Reçete çıktısı bu kurallarla A4/A5 kâğıda sığar. */
+@media print {
+  .ust, .kenar, .alt, .bantlar, .sayfa-bas__eylem, .bildirimler, .sekmeler, .yazdirma-disi { display: none !important; }
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .govde, .icerik { display: block; padding: 0; margin: 0; max-inline-size: none; }
+  .kart { box-shadow: none; border: 1px solid #999; break-inside: avoid; margin-block-end: 8mm; }
+  .tablo-kap { border: none; overflow: visible; }
+  .tablo th { background: #eee !important; color: #000; }
+  .tablo th, .tablo td { border-block-end: 1px solid #bbb; padding: 3mm 2mm; }
+  a { color: #000; text-decoration: none; }
+  .rozet { border: 1px solid #999; background: none !important; color: #000 !important; }
+  @page { size: A4; margin: 14mm; }
+}
