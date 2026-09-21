@@ -1,16 +1,18 @@
 // Reçeteler: liste, süzme ve arama. Bekleyenler en üstte durur —
 // tezgâhta önce onlar lazım.
 import { el, temizle, btnS, girdi, secim, rozet, sayfaBas, bosDurum, sirala } from '../cekirdek/dom.js';
-import { receteOzet, DURUM_ADLARI, receteTuruAdi } from '../paylasilan/recete.js';
+import { receteOzet, DURUM_ADLARI, RECETE_TURLERI } from '../paylasilan/recete.js';
 import { tamAd } from '../paylasilan/hasta.js';
 import { eslesir, paraMetni } from '../paylasilan/metin.js';
 import { trTarih, bugun } from '../paylasilan/tarih.js';
+import { t, secenekleriCevir, secenekAdi } from '../i18n.js';
 
 const DURUM_RENGI = { bekliyor: 'sari', kismi: 'mavi', tamamlandi: 'yesil', bos: 'gri' };
 const SUZGECLER = [
   ['', 'Tümü'], ['acik', 'Bekleyen ve kısmi'], ['bekliyor', 'Bekleyenler'],
   ['kismi', 'Kısmen verilenler'], ['tamamlandi', 'Tamamlananlar'], ['bugun', 'Bugün yazılanlar'],
 ];
+const suzgecler = () => secenekleriCevir(SUZGECLER, 'recete.suzgec');
 
 export default {
   baslik: 'Reçeteler',
@@ -18,14 +20,14 @@ export default {
     const { depo, git } = ctx;
     temizle(kok);
 
-    const arama = girdi({ type: 'search', placeholder: 'Reçete no, hasta adı, tanı…', style: { flex: '2', minWidth: '200px', inlineSize: 'auto' } });
-    const suzgec = secim(SUZGECLER, { value: ctx.sorgu?.suzgec || '', style: { flex: '1', minWidth: '180px', inlineSize: 'auto' } });
+    const arama = girdi({ type: 'search', placeholder: t('recete.ara', 'Reçete no, hasta adı, tanı…'), style: { flex: '2', minWidth: '200px', inlineSize: 'auto' } });
+    const suzgec = secim(suzgecler(), { value: ctx.sorgu?.suzgec || '', style: { flex: '1', minWidth: '180px', inlineSize: 'auto' } });
     const govde = el('div', {});
 
     kok.append(
-      sayfaBas('Reçeteler', {
-        alt: 'Yazılan reçeteler ve karşılama durumları.',
-        eylemler: [btnS('arti', 'Yeni reçete', { class: 'btn btn--birincil', onclick: () => git('/recete/yeni') })],
+      sayfaBas(t('nav.receteler', 'Reçeteler'), {
+        alt: t('recete.sayfa_alt', 'Yazılan reçeteler ve karşılama durumları.'),
+        eylemler: [btnS('arti', t('recete.yeni', 'Yeni reçete'), { class: 'btn btn--birincil', onclick: () => git('/recete/yeni') })],
       }),
       el('div', { class: 'satir', style: { marginBlockEnd: 'var(--b-4)' } }, arama, suzgec),
       govde);
@@ -56,35 +58,35 @@ export default {
 
       if (!hepsi.length) {
         govde.appendChild(bosDurum({
-          simge: 'recete', baslik: 'Henüz reçete yok',
-          alt: 'Hasta seçip ilaçları ekleyerek ilk reçeteyi yaz.',
-          eylem: btnS('arti', 'Yeni reçete', { class: 'btn btn--birincil', onclick: () => git('/recete/yeni') }),
+          simge: 'recete', baslik: t('recete.bos', 'Henüz reçete yok'),
+          alt: t('recete.bos_alt', 'Hasta seçip ilaçları ekleyerek ilk reçeteyi yaz.'),
+          eylem: btnS('arti', t('recete.yeni', 'Yeni reçete'), { class: 'btn btn--birincil', onclick: () => git('/recete/yeni') }),
         }));
         return;
       }
-      if (!liste.length) { govde.appendChild(bosDurum({ simge: 'ara', baslik: 'Eşleşen reçete yok', alt: 'Aramayı ya da süzgeci değiştir.' })); return; }
+      if (!liste.length) { govde.appendChild(bosDurum({ simge: 'ara', baslik: t('recete.eslesme_yok', 'Eşleşen reçete yok'), alt: t('genel.suzgec_degistir', 'Aramayı ya da süzgeci değiştir.') })); return; }
 
       const tbody = el('tbody', {});
       for (const { r, o, hasta } of liste) {
         tbody.appendChild(el('tr', { style: { cursor: 'pointer' }, onclick: () => git(`/recete/${r.id}`) },
           el('td', {},
             el('div', { class: 'liste__baslik' }, r.receteNo || '—'),
-            el('div', { class: 'liste__alt' }, receteTuruAdi(r.tur))),
+            el('div', { class: 'liste__alt' }, secenekAdi(RECETE_TURLERI, r.tur, 'recete.tur'))),
           el('td', {}, trTarih(r.tarih)),
           el('td', {},
             el('div', { class: 'liste__baslik' }, hasta),
             r.tani ? el('div', { class: 'liste__alt' }, [r.tani, r.taniKodu].filter(Boolean).join(' · ')) : null),
           el('td', { class: 'sayi' }, `${o.verilen}/${o.toplam}`),
           el('td', { class: 'sayi' }, paraMetni(o.tutar)),
-          el('td', {}, rozet(DURUM_ADLARI[o.durum] || o.durum, DURUM_RENGI[o.durum] || 'gri'))));
+          el('td', {}, rozet(t('durum.' + o.durum, DURUM_ADLARI[o.durum] || o.durum), DURUM_RENGI[o.durum] || 'gri'))));
       }
 
       govde.append(
-        el('p', { class: 'kart__alt' }, `${liste.length} reçete${liste.length !== hepsi.length ? ` (toplam ${hepsi.length})` : ''}`),
+        el('p', { class: 'kart__alt' }, t('recete.sayim', '{n} reçete', { n: liste.length }) + (liste.length !== hepsi.length ? ' ' + t('genel.toplam', '(toplam {n})', { n: hepsi.length }) : '')),
         el('div', { class: 'tablo-kap' }, el('table', { class: 'tablo' },
           el('thead', {}, el('tr', {},
-            el('th', {}, 'Reçete'), el('th', {}, 'Tarih'), el('th', {}, 'Hasta'),
-            el('th', { class: 'sayi' }, 'Verilen'), el('th', { class: 'sayi' }, 'Tutar'), el('th', {}, 'Durum'))),
+            el('th', {}, t('nav.recete', 'Reçete')), el('th', {}, t('genel.tarih', 'Tarih')), el('th', {}, t('nav.hasta', 'Hasta')),
+            el('th', { class: 'sayi' }, t('recete.verilen', 'Verilen')), el('th', { class: 'sayi' }, t('genel.tutar', 'Tutar')), el('th', {}, t('genel.durum', 'Durum')))),
           tbody)));
       sirala(tbody);
     }

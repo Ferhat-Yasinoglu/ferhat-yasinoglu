@@ -85,10 +85,10 @@ ok('etken madde araması 2 muadili buldu');
 await sayfa.fill('input[type=search][placeholder*="barkod"]', '');
 
 // --- Süzgeç
-await sayfa.selectOption('select', { label: 'Son kullanması geçmişler' });
+await sayfa.selectOption('#sayfa select', { label: 'Son kullanması geçmişler' });
 await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 1);
 ok('SKT geçmişler süzgeci 1 ilaç bıraktı');
-await sayfa.selectOption('select', { label: 'Tümü' });
+await sayfa.selectOption('#sayfa select', { label: 'Tümü' });
 await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 8);
 
 await resim(sayfa, '1-ilaclar.png');
@@ -165,14 +165,20 @@ await resim(sayfa, '3-hasta-karti.png');
 
 // --- Eczane ve doktor bilgileri (reçete antedine düşecek)
 await sayfa.click('#kenar-menu a[href="#/ayarlar"]');
-await sayfa.fill('input[name=eczaneAdi]', 'Deneme Eczanesi');
+await sayfa.waitForSelector('input[name=klinikAdi]');
+await sayfa.fill('input[name=klinikAdi]', 'Deneme Eczanesi');
+await sayfa.fill('input[name=klinikAdiAlt]', 'Sample Pharmacy');
 await sayfa.fill('input[name=doktorUnvan]', 'Dr.');
 await sayfa.fill('input[name=doktorAd]', 'Ahmet Yılmaz');
+await sayfa.fill('input[name=doktorAdAlt]', 'د. احمد یلماز');
+await sayfa.fill('input[name=uzmanlik]', 'Dahiliye');
 await sayfa.fill('input[name=diplomaNo]', '123456');
-await sayfa.fill('input[name=telefon]', '0212 000 00 00');
-await sayfa.click('button:has-text("Bilgileri kaydet")');
-await sayfa.waitForSelector('.bildirim--basari:has-text("Bilgiler kaydedildi")');
-ok('eczane ve doktor bilgileri kaydedildi');
+await sayfa.fill('input[name=telefon]', '0700000000');
+await sayfa.fill('input[name=ulkeKodu]', '93');
+await sayfa.fill('input[name=adres]', 'Kabil, Afganistan');
+await sayfa.click('button:has-text("Antet bilgilerini kaydet")');
+await sayfa.waitForSelector('.bildirim--basari');
+ok('reçete anteti (klinik, doktor, iletişim) kaydedildi');
 
 // --- Hasta kartından reçete yazma (Zeynep'in ibuprofen alerjisi var)
 await sayfa.click('#kenar-menu a[href="#/hastalar"]');
@@ -207,7 +213,9 @@ await sayfa.click('.modal button:has-text("Ekle")');
 await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 2);
 await sayfa.fill('input[name=tani]', 'Üst solunum yolu enfeksiyonu');
 await sayfa.fill('input[name=taniKodu]', 'J06.9');
-ok('ikinci ilaç ve tanı eklendi');
+await sayfa.fill('input[name=olcum_bp]', '110/70');
+await sayfa.fill('input[name=olcum_temp]', '38.2');
+ok('ikinci ilaç, tanı ve klinik ölçümler eklendi');
 await resim(sayfa, '7-recete-yaz.png', { fullPage: true });
 
 // --- Kaydet
@@ -276,11 +284,61 @@ ok(`geri alma stoğu iade etti: ${nurofenSonra} → ${nurofenGeri}`);
 
 // --- Yazdırma alanı: ekranda gizli, içeriği eksiksiz
 const yazdirMetni = await sayfa.textContent('.yazdir-alan');
-for (const beklenen of ['Deneme Eczanesi', 'Dr. Ahmet Yılmaz', '123456', 'Zeynep Kaya', 'J06.9', 'Nurofen', 'ALERJİ']) {
+for (const beklenen of ['Deneme Eczanesi', 'Sample Pharmacy', 'Dr. Ahmet Yılmaz', '123456', 'Zeynep Kaya', 'J06.9', 'Nurofen', 'ALERJİ']) {
   if (!yazdirMetni.includes(beklenen)) throw new Error(`reçete çıktısında "${beklenen}" yok`);
 }
 if (await sayfa.isVisible('.yazdir-alan')) throw new Error('yazdırma alanı ekranda görünüyor');
 ok('reçete çıktısı antet, hasta, tanı ve alerjiyle hazır (ekranda gizli)');
+
+// --- QR ve klinik ölçüm sütunu kâğıtta yerinde mi?
+const qrModulSayisi = await sayfa.locator('.kagit__qr path').count();
+if (!qrModulSayisi) throw new Error('kâğıtta QR yok');
+const qrYolu = await sayfa.getAttribute('.kagit__qr path', 'd');
+if (!qrYolu || qrYolu.length < 200) throw new Error('QR yolu beklenenden kısa: ' + (qrYolu || '').length);
+const olcumSayisi = await sayfa.locator('.kagit__olcum').count();
+if (olcumSayisi !== 5) throw new Error(`klinik sütunda 5 ölçüm bekleniyordu, ${olcumSayisi} var`);
+const olcumMetni = await sayfa.textContent('.kagit__klinik-sutun');
+if (!olcumMetni.includes('110/70 mmHg') || !olcumMetni.includes('38.2 °C')) {
+  throw new Error('girilen ölçümler kâğıda basılmamış: ' + olcumMetni.replace(/\s+/g, ' '));
+}
+// Girilmeyen ölçümler elle yazılsın diye çizgi olarak basılır.
+const bosOlcum = await sayfa.locator('.kagit__olcum .kagit__cizgi').count();
+if (bosOlcum !== 3) throw new Error(`boş ölçümlerde 3 çizgi bekleniyordu, ${bosOlcum} var`);
+ok(`kâğıtta QR (${qrYolu.length} karakterlik yol), dolu ölçümler yazılı, boş 3 ölçüm elle doldurulmak üzere çizgili`);
+
+// --- Boş kâğıt: aynı antet, elle doldurulacak satırlar
+const bosKagit = await sayfa.evaluate(async () => {
+  const { kagitCiz } = await import('./js/kagit.js');
+  const { yerelDepoAc } = await import('./js/depo/idb.js');
+  const depo = await yerelDepoAc();
+  const kagit = kagitCiz({ ayar: await depo.ayarlar(), bos: true });
+  return {
+    metin: kagit.textContent,
+    bosSatir: kagit.querySelectorAll('.kagit__bos-satir').length,
+    cizgi: kagit.querySelectorAll('.kagit__cizgi').length,
+    qr: kagit.querySelectorAll('.kagit__qr').length,
+  };
+});
+if (bosKagit.bosSatir < 5) throw new Error('boş kâğıtta yazı satırı yok');
+if (!bosKagit.cizgi) throw new Error('boş kâğıtta doldurulacak çizgiler yok');
+if (!bosKagit.metin.includes('Deneme Eczanesi')) throw new Error('boş kâğıtta antet yok');
+if (bosKagit.metin.includes('Zeynep')) throw new Error('boş kâğıtta hasta bilgisi sızmış');
+ok(`boş kâğıt hazır: antet duruyor, ${bosKagit.bosSatir} yazı satırı + ${bosKagit.cizgi} doldurma çizgisi, hasta bilgisi yok`);
+
+// --- Gönder: WhatsApp bağlantısı ve metin
+await sayfa.evaluate(() => { window.__acilan = null; window.open = (u) => { window.__acilan = u; return null; }; });
+await sayfa.click('button:has-text("Gönder")');
+await sayfa.waitForSelector('.modal textarea');
+const gonderilecek = await sayfa.inputValue('.modal textarea');
+for (const beklenen of ['Deneme Eczanesi', 'Zeynep Kaya', 'Nurofen', 'İbuprofen']) {
+  if (!gonderilecek.includes(beklenen)) throw new Error(`gönderilecek metinde "${beklenen}" yok`);
+}
+await sayfa.click('.modal button:has-text("WhatsApp")');
+const acilan = await sayfa.evaluate(() => window.__acilan);
+if (!acilan?.startsWith('https://wa.me/93535')) throw new Error('WhatsApp bağlantısı beklenen numarayla açılmadı: ' + acilan);
+if (!decodeURIComponent(acilan).includes('Nurofen')) throw new Error('WhatsApp bağlantısında reçete metni yok');
+ok('gönder: WhatsApp bağlantısı hastanın numarasıyla ve reçete metniyle kuruldu');
+await sayfa.click('.modal button:has-text("Kapat")');
 await sayfa.emulateMedia({ media: 'print' });
 await resim(sayfa, '9-recete-cikti.png', { fullPage: true });
 await sayfa.emulateMedia({ media: 'screen' });
@@ -289,7 +347,7 @@ await sayfa.emulateMedia({ media: 'screen' });
 await sayfa.click('#kenar-menu a[href="#/receteler"]');
 await sayfa.waitForSelector('h1:has-text("Reçeteler")');
 await sayfa.waitForSelector('.tablo tbody tr:has-text("Zeynep Kaya")');
-await sayfa.selectOption('select', { label: 'Bekleyen ve kısmi' });
+await sayfa.selectOption('#sayfa select', { label: 'Bekleyen ve kısmi' });
 await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 1);
 ok('reçete listede göründü, "bekleyen ve kısmi" süzgeci onu buldu');
 
@@ -319,6 +377,31 @@ if (belge.bicim !== 'eczane-yedek' || belge.koleksiyonlar.ilaclar.length !== 9) 
   throw new Error('yedek içeriği beklenmedik: ' + JSON.stringify(Object.keys(belge)));
 }
 ok(`yedek indirildi (${dosya.suggestedFilename()}): 9 ilaç, ${belge.koleksiyonlar.hastalar.length} hasta, ${belge.koleksiyonlar.hareketler.length} hareket`);
+
+// --- Dil: Dari (sağdan sola)
+await sayfa.selectOption('.ust__dil', 'fa');
+await sayfa.waitForFunction(() => document.documentElement.dir === 'rtl');
+await sayfa.waitForSelector('#kenar-menu a[href="#/ilaclar"]:has-text("دواها")');
+const dariMenu = (await sayfa.textContent('#kenar-menu')).replace(/\s+/g, ' ').trim();
+for (const beklenen of ['داشبورد', 'دواها', 'مریضان', 'نسخه‌ها', 'تنظیمات']) {
+  if (!dariMenu.includes(beklenen)) throw new Error(`Dari menüde "${beklenen}" yok: ${dariMenu}`);
+}
+await sayfa.click('#kenar-menu a[href="#/receteler"]');
+await sayfa.waitForSelector('h1:has-text("نسخه‌ها")');
+const dariSatir = await sayfa.textContent('.tablo tbody tr');
+if (!/قسمی داده شد|تکمیل شد|در انتظار/.test(dariSatir)) {
+  throw new Error('reçete durumu Dari\'ye çevrilmedi: ' + dariSatir);
+}
+ok('Dari arayüz açıldı: sayfa sağdan sola döndü, menü ve durum rozetleri çevrildi');
+await resim(sayfa, '10-dari.png', { fullPage: true });
+
+await sayfa.selectOption('.ust__dil', 'en');
+await sayfa.waitForFunction(() => document.documentElement.dir === 'ltr' && document.documentElement.lang === 'en');
+await sayfa.waitForSelector('#kenar-menu a[href="#/ilaclar"]:has-text("Medicines")');
+ok('İngilizce arayüz açıldı, yazı yönü soldan sağa döndü');
+
+await sayfa.selectOption('.ust__dil', 'tr');
+await sayfa.waitForSelector('#kenar-menu a[href="#/ilaclar"]:has-text("İlaçlar")');
 
 // --- Karanlık tema + dar ekran
 await sayfa.click('button[aria-label="Temayı değiştir"]');

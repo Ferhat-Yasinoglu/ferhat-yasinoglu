@@ -30,5 +30,23 @@ for (const f of await dosyalar(join(KOK, 'js'), '.js')) {
   if (f.includes('/paylasilan/') && /from ['"]node:/.test(s)) hataVer(`${f}: paylasilan/ içinde node: bağımlılığı`);
   if (f.includes('/sayfalar/') && !/export default/.test(s)) hataVer(`${f}: sayfa modülü default export vermiyor`);
 }
-console.log(hata ? `${hata} sorun` : '✓ statik denetimler geçti');
+// (5) Sözlük eksiği: koddaki her t('anahtar', …) fa ve en sözlüklerinde var mı?
+// Dinamik anahtarlar (t('durum.' + x)) nokta ile bittiği için atlanır.
+const sozlukler = {};
+for (const dil of ['fa', 'en']) {
+  sozlukler[dil] = JSON.parse(await readFile(new URL(`../app/i18n/${dil}.json`, import.meta.url), 'utf8'));
+}
+const kullanilan = new Set();
+for (const f of await dosyalar(join(KOK, 'js'), '.js')) {
+  const s = await readFile(f, 'utf8');
+  for (const m of s.matchAll(/\bt\('([A-Za-z0-9_.]+)'/g)) {
+    if (!m[1].endsWith('.')) kullanilan.add(m[1]);
+  }
+}
+for (const [dil, sozluk] of Object.entries(sozlukler)) {
+  const eksik = [...kullanilan].filter((a) => !(a in sozluk)).sort();
+  if (eksik.length) hataVer(`i18n/${dil}.json: ${eksik.length} anahtar eksik → ${eksik.slice(0, 8).join(', ')}${eksik.length > 8 ? '…' : ''}`);
+}
+
+console.log(hata ? `${hata} sorun` : `✓ statik denetimler geçti (${kullanilan.size} çeviri anahtarı yerinde)`);
 process.exit(hata ? 1 : 0);

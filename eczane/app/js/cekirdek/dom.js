@@ -1,6 +1,7 @@
 // DOM yardımcıları. `innerHTML` bilerek yok: her metin textContent üzerinden
 // yazılır, hasta adından gelen bir tırnak işareti hiçbir zaman kod olmaz.
 import { simge } from './simge.js';
+import { qrYolu } from '../paylasilan/qr.js';
 
 export function el(tag, attrs = {}, ...cocuklar) {
   const e = document.createElement(tag);
@@ -124,3 +125,31 @@ export const uyariSeridi = (uyarilar) =>
     ? el('div', { class: 'uyarilar' }, ...uyarilar.map((u) =>
       el('div', { class: `uyari uyari--${u.tur || 'uyari'}` }, simge(u.tur === 'hata' ? 'hata' : 'uyari', { boy: 16 }), el('span', {}, u.metin))))
     : null;
+
+/* ---------- SVG ve QR ---------- */
+const SVG_AD_ALANI = 'http://www.w3.org/2000/svg';
+
+export function svgEl(tag, attrs = {}, ...cocuklar) {
+  const e = document.createElementNS(SVG_AD_ALANI, tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === null || v === undefined || v === false) continue;
+    e.setAttribute(k, String(v));
+  }
+  for (const c of cocuklar.flat(Infinity)) if (c) e.appendChild(c);
+  return e;
+}
+
+/** Metinden QR görseli. İçerik sığmazsa ya da boşsa null döner — çağıran karar verir. */
+export function qrGorsel(metin, { boy = 96, sinif = 'qr' } = {}) {
+  if (!String(metin || '').trim()) return null;
+  try {
+    const { yol, boy: kutu } = qrYolu(metin);
+    return svgEl('svg', {
+      class: sinif, width: boy, height: boy, viewBox: `0 0 ${kutu} ${kutu}`,
+      role: 'img', 'aria-label': 'QR',
+    }, svgEl('rect', { width: kutu, height: kutu, fill: '#fff' }), svgEl('path', { d: yol, fill: '#000' }));
+  } catch (e) {
+    console.warn('QR üretilemedi', e);
+    return null;
+  }
+}

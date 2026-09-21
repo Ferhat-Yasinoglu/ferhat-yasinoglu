@@ -13,33 +13,80 @@
   @page { size: A4; margin: 14mm; }
 }
 
-/* Reçete çıktısı. Ekranda gizlidir; yazdırılırken sayfadaki tek görünen şeydir. */
+/* Reçete kâğıdı. Ekranda gizlidir; yazdırılırken sayfadaki tek görünen şeydir.
+   Düzen: üstte antet, altında hasta şeridi, sonra iki sütun — solda klinik
+   ölçümler ve QR, sağda ℞ alanı. Altta iletişim şeridi ve imza kutusu.
+   Boş kâğıt da aynı düzeni kullanır, yalnız alanlar çizgi olarak basılır. */
 .yazdir-alan { display: none; }
 
 @media print {
   #sayfa:has(.yazdir-alan) > *:not(.yazdir-alan) { display: none !important; }
-  .yazdir-alan { display: block; color: #000; font-size: 11pt; }
+  .yazdir-alan { display: flex; }
 
-  .yaz__antet { display: flex; justify-content: space-between; gap: 8mm; border-block-end: 1.5pt solid #000; padding-block-end: 3mm; }
-  .yaz__sag { text-align: end; }
-  .yaz__kurum { font-weight: 700; font-size: 12pt; }
-  .yaz__ince { font-size: 9pt; }
+  .kagit {
+    flex-direction: column; min-block-size: 100%;
+    color: #000; font-size: 10pt; line-height: 1.35;
+  }
 
-  .yaz__baslik { text-align: center; font-size: 13pt; letter-spacing: .12em; margin-block: 5mm 3mm; }
-  .yaz__ust { display: flex; flex-wrap: wrap; gap: 8mm; font-size: 10pt; margin-block-end: 3mm; }
-  .yaz__kutu { border: 1pt solid #000; padding: 3mm; display: grid; grid-template-columns: 1fr 1fr; gap: 1mm 6mm; font-size: 10pt; }
-  .yaz__cift { break-inside: avoid; }
-  .yaz__alerji { margin-block-start: 3mm; border: 1.5pt solid #000; padding: 2mm 3mm; font-size: 10pt; }
+  /* Antet */
+  .kagit__antet {
+    display: flex; justify-content: space-between; gap: 6mm;
+    border-block-end: 2pt solid #000; padding-block-end: 2.5mm;
+  }
+  .kagit__sag { text-align: end; }
+  .kagit__klinik, .kagit__doktor { font-weight: 700; font-size: 13pt; line-height: 1.2; }
+  .kagit__klinik-alt, .kagit__doktor-alt { font-weight: 600; font-size: 10.5pt; }
+  .kagit__ince { font-size: 8.5pt; }
 
-  .yaz__tablo { inline-size: 100%; border-collapse: collapse; margin-block-start: 4mm; font-size: 10pt; }
-  .yaz__tablo th, .yaz__tablo td { border: 1pt solid #000; padding: 2mm; text-align: start; vertical-align: top; }
-  .yaz__tablo th { background: #eee; }
-  .yaz__tablo tr { break-inside: avoid; }
+  /* Hasta şeridi */
+  .kagit__serit {
+    display: flex; flex-wrap: wrap; gap: 2mm 6mm;
+    border-block-end: 1pt solid #000; padding-block: 2mm;
+    font-size: 9.5pt;
+  }
+  .kagit__alan { display: inline-flex; align-items: flex-end; gap: 1.5mm; }
+  .kagit__cizgi { border-block-end: 0.6pt solid #666; min-inline-size: 22mm; display: inline-block; }
 
-  .yaz__not { font-size: 10pt; margin-block-start: 3mm; }
-  .yaz__imza { display: flex; justify-content: flex-end; margin-block-start: 12mm; }
-  .yaz__imza-kutu {
-    inline-size: 55mm; block-size: 22mm; border: 1pt dashed #666;
-    display: flex; align-items: flex-end; justify-content: center; font-size: 9pt; padding-block-end: 2mm;
+  .kagit__tani { padding-block: 1.5mm; font-size: 9.5pt; border-block-end: 1pt solid #000; }
+
+  /* Gövde: iki sütun */
+  .kagit__govde { display: flex; flex: 1; min-block-size: 110mm; }
+  .kagit__klinik-sutun {
+    inline-size: 38mm; flex-shrink: 0; border-inline-end: 1pt solid #000;
+    padding: 2.5mm 2.5mm 2.5mm 0; display: flex; flex-direction: column; gap: 2.5mm;
+  }
+  .kagit__sutun-bas { font-weight: 700; font-size: 10.5pt; letter-spacing: .04em; }
+  /* Uzun değer (110/70 mmHg) dar sütunda ortadan bölünmesin: satır sarar,
+     ama etiket ve değer kendi içinde bütün kalır. */
+  .kagit__olcum { display: flex; flex-wrap: wrap; gap: 0 1.5mm; align-items: flex-end; font-size: 9pt; }
+  .kagit__olcum b, .kagit__olcum span:not(.kagit__cizgi) { white-space: nowrap; }
+  .kagit__olcum .kagit__cizgi { flex: 1; min-inline-size: 0; }
+  .kagit__qr-kutu { margin-block-start: auto; padding-block-start: 3mm; }
+  .kagit__qr { inline-size: 24mm; block-size: 24mm; }
+
+  /* ℞ alanı */
+  .kagit__rx { flex: 1; padding: 2.5mm 0 2.5mm 4mm; padding-inline: 4mm 0; }
+  .kagit__rx-isaret { font-size: 20pt; font-weight: 700; line-height: 1; margin-block-end: 3mm; }
+  .kagit__ilaclar { margin: 0; padding-inline-start: 6mm; }
+  .kagit__ilaclar li { margin-block-end: 3.5mm; break-inside: avoid; }
+  .kagit__ilac-ad { display: flex; gap: 2mm; align-items: baseline; font-size: 10.5pt; }
+  .kagit__adet { font-size: 9.5pt; }
+  .kagit__kullanim { font-size: 9pt; padding-inline-start: 1mm; }
+  .kagit__bos-satirlar { display: flex; flex-direction: column; gap: 7mm; padding-block-start: 2mm; }
+  .kagit__bos-satir { border-block-end: 0.6pt solid #999; }
+
+  .kagit__alerji { border: 1.5pt solid #000; padding: 1.5mm 2.5mm; margin-block-start: 2mm; font-size: 9.5pt; }
+  .kagit__not { font-size: 9pt; margin-block-start: 2mm; }
+
+  /* Ayak */
+  .kagit__ayak {
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 6mm;
+    border-block-start: 2pt solid #000; margin-block-start: 3mm; padding-block-start: 2mm;
+  }
+  .kagit__iletisim { font-size: 8.5pt; }
+  .kagit__imza {
+    inline-size: 45mm; block-size: 16mm; border: 0.6pt dashed #666;
+    display: flex; align-items: flex-end; justify-content: center;
+    font-size: 8pt; padding-block-end: 1mm;
   }
 }

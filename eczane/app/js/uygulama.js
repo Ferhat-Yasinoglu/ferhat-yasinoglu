@@ -1,30 +1,31 @@
-// Giriş noktası: depoyu aç, menüyü çiz, yönlendiriciyi başlat.
+// Giriş noktası: depoyu aç, dili yükle, menüyü çiz, yönlendiriciyi başlat.
 // Sayfa sözleşmesi: export default { baslik, cizim(kok, ctx) → temizleyici|void }
-// ctx: { depo, git, bildir, basari, uyar, hata, modal, onayla, sor, param, sorgu, yenileBantlar }
+// ctx: { depo, t, git, bildir, basari, uyar, hata, modal, onayla, sor, param, sorgu, … }
 import { yerelDepoAc } from './depo/idb.js';
 import { hatirlatmaGerekli, yedekOlustur, indir } from './depo/yedek.js';
 import { Yonlendirici } from './cekirdek/yonlendirici.js';
-import { el, temizle, btn, girdi, sirala } from './cekirdek/dom.js';
+import { el, temizle, btn, girdi, secim, sirala } from './cekirdek/dom.js';
 import { simge } from './cekirdek/simge.js';
 import { bildir, basari, uyar, hata } from './cekirdek/bildirim.js';
 import { modal, onayla, sor } from './cekirdek/modal.js';
 import { ilacAra, ilacEtiketi } from './paylasilan/ilac.js';
 import { hastaAra, tamAd } from './paylasilan/hasta.js';
-import { eslesir } from './paylasilan/metin.js';
+import { eslesir, bicimAyarla } from './paylasilan/metin.js';
 import { trTarih } from './paylasilan/tarih.js';
+import { t, yukle as dilYukle, uygula as dilUygula, DILLER, suankiDil, kayitliDil } from './i18n.js';
 
-export const UYGULAMA_SURUMU = '0.1.0';
+export const UYGULAMA_SURUMU = '0.2.0';
 globalThis.UYGULAMA_SURUMU = UYGULAMA_SURUMU;
 
 const MENU = [
-  { grup: 'Eczane', ogeler: [
-    { yol: '/panel', ad: 'Panel', simge: 'panel', alt: true },
-    { yol: '/ilaclar', ad: 'İlaçlar', simge: 'ilac', alt: true, sayac: 'ilaclar' },
-    { yol: '/hastalar', ad: 'Hastalar', simge: 'hasta', alt: true, sayac: 'hastalar' },
-    { yol: '/receteler', ad: 'Reçeteler', simge: 'recete', alt: true, sayac: 'receteler' },
+  { grup: 'Eczane', anahtar: 'nav.grup.eczane', ogeler: [
+    { yol: '/panel', ad: 'Panel', anahtar: 'nav.panel', simge: 'panel', alt: true },
+    { yol: '/ilaclar', ad: 'İlaçlar', anahtar: 'nav.ilaclar', simge: 'ilac', alt: true, sayac: 'ilaclar' },
+    { yol: '/hastalar', ad: 'Hastalar', anahtar: 'nav.hastalar', simge: 'hasta', alt: true, sayac: 'hastalar' },
+    { yol: '/receteler', ad: 'Reçeteler', anahtar: 'nav.receteler', simge: 'recete', alt: true, sayac: 'receteler' },
   ] },
-  { grup: 'Sistem', ogeler: [
-    { yol: '/ayarlar', ad: 'Ayarlar', simge: 'ayarlar', alt: true },
+  { grup: 'Sistem', anahtar: 'nav.grup.sistem', ogeler: [
+    { yol: '/ayarlar', ad: 'Ayarlar', anahtar: 'nav.ayarlar', simge: 'ayarlar', alt: true },
   ] },
 ];
 
@@ -55,16 +56,17 @@ async function menuCiz(depo) {
   };
   temizle(kok);
   for (const g of MENU) {
-    kok.appendChild(el('div', { class: 'menu__grup' }, g.grup));
+    kok.appendChild(el('div', { class: 'menu__grup' }, t(g.anahtar, g.grup)));
     for (const o of g.ogeler) {
       kok.appendChild(el('a', { href: '#' + o.yol, dataset: { yol: o.yol } },
-        simge(o.simge), el('span', {}, o.ad),
+        simge(o.simge), el('span', {}, t(o.anahtar, o.ad)),
         o.sayac ? el('span', { class: 'menu__sayi' }, String(sayilar[o.sayac] ?? '')) : null));
     }
   }
   temizle(alt);
   for (const o of TUM_OGELER.filter((x) => x.alt)) {
-    alt.appendChild(el('a', { href: '#' + o.yol, dataset: { yol: o.yol } }, simge(o.simge, { boy: 21 }), el('span', {}, o.ad)));
+    alt.appendChild(el('a', { href: '#' + o.yol, dataset: { yol: o.yol } },
+      simge(o.simge, { boy: 21 }), el('span', {}, t(o.anahtar, o.ad))));
   }
 }
 
@@ -81,25 +83,32 @@ function aktifIsaretle(yol) {
   }
 }
 
-/** Ctrl+K araması: ilaç ve hastaları birlikte arar. */
+/** Ctrl+K araması: ilaç, hasta ve reçeteleri birlikte arar. */
 async function aramaAc(ctx, ilk = '') {
   const { depo } = ctx;
-  const kutu = girdi({ type: 'search', placeholder: 'İlaç, barkod, hasta adı…', value: ilk });
+  const kutu = girdi({ type: 'search', placeholder: t('ara.yer_uzun', 'İlaç, barkod, hasta adı…'), value: ilk });
   const sonuc = el('div', { class: 'liste', style: { marginBlockStart: 'var(--b-3)' } });
-  const [ilaclar, hastalar, receteler] = await Promise.all([depo.listele('ilaclar'), depo.listele('hastalar'), depo.listele('receteler')]);
+  const [ilaclar, hastalar, receteler] = await Promise.all([
+    depo.listele('ilaclar'), depo.listele('hastalar'), depo.listele('receteler'),
+  ]);
   const kapat = () => document.querySelector('.ortu')?.remove();
 
   function ciz() {
     temizle(sonuc);
     const q = kutu.value.trim();
-    if (!q) { sonuc.appendChild(el('div', { class: 'liste__satir sessiz' }, 'Aramak için yazmaya başla.')); return; }
+    if (!q) { sonuc.appendChild(el('div', { class: 'liste__satir sessiz' }, t('ara.basla', 'Aramak için yazmaya başla.'))); return; }
     const bulunan = [
-      ...ilacAra(ilaclar, q).slice(0, 6).map((i) => ({ ad: ilacEtiketi(i), alt: `İlaç · stok ${i.stok ?? 0}`, s: 'ilac', yol: `/ilac/${i.id}` })),
-      ...hastaAra(hastalar, q).slice(0, 6).map((h) => ({ ad: tamAd(h), alt: `Hasta · ${h.telefon || h.kimlikNo || '—'}`, s: 'hasta', yol: `/hasta/${h.id}` })),
-      ...receteler.filter((r) => eslesir(`${r.receteNo || ''} ${r.tani || ''}`, q)).slice(0, 4)
-        .map((r) => ({ ad: r.receteNo || 'Reçete', alt: `Reçete · ${trTarih(r.tarih)}`, s: 'recete', yol: `/recete/${r.id}` })),
+      ...ilacAra(ilaclar, q).slice(0, 6).map((i) => ({
+        ad: ilacEtiketi(i), alt: t('ara.ilac', 'İlaç · stok {n}', { n: i.stok ?? 0 }), s: 'ilac', yol: `/ilac/${i.id}`,
+      })),
+      ...hastaAra(hastalar, q).slice(0, 6).map((h) => ({
+        ad: tamAd(h), alt: t('ara.hasta', 'Hasta · {b}', { b: h.telefon || h.kimlikNo || '—' }), s: 'hasta', yol: `/hasta/${h.id}`,
+      })),
+      ...receteler.filter((r) => eslesir(`${r.receteNo || ''} ${r.tani || ''}`, q)).slice(0, 4).map((r) => ({
+        ad: r.receteNo || t('nav.recete', 'Reçete'), alt: t('ara.recete', 'Reçete · {g}', { g: trTarih(r.tarih) }), s: 'recete', yol: `/recete/${r.id}`,
+      })),
     ];
-    if (!bulunan.length) { sonuc.appendChild(el('div', { class: 'liste__satir sessiz' }, 'Sonuç yok.')); return; }
+    if (!bulunan.length) { sonuc.appendChild(el('div', { class: 'liste__satir sessiz' }, t('ara.yok', 'Sonuç yok.'))); return; }
     for (const x of bulunan) {
       sonuc.appendChild(el('a', { class: 'liste__satir', href: '#' + x.yol, onclick: kapat },
         el('span', { class: 'avatar' }, simge(x.s, { boy: 18 })),
@@ -110,7 +119,7 @@ async function aramaAc(ctx, ilk = '') {
   kutu.oninput = ciz;
   kutu.onkeydown = (e) => { if (e.key === 'Enter') sonuc.querySelector('a')?.click(); };
   ciz();
-  modal({ baslik: 'Ara', govde: el('div', {}, kutu, sonuc) });
+  modal({ baslik: t('ara.etiket', 'Ara'), govde: el('div', {}, kutu, sonuc) });
   setTimeout(() => kutu.focus(), 30);
 }
 
@@ -119,18 +128,24 @@ async function bantlariYenile(ctx) {
   temizle(kap);
   if (!ctx.depo.kalici) {
     kap.appendChild(el('div', { class: 'bant bant--hata' }, simge('uyari', { boy: 18 }),
-      el('span', {}, 'Tarayıcı depolaması açılamadı: kayıtlar bu sekme kapanınca silinir. Yedek al ve başka bir tarayıcı dene.')));
+      el('span', {}, t('bant.kalici_degil', 'Tarayıcı depolaması açılamadı: kayıtlar bu sekme kapanınca silinir. Yedek al ve başka bir tarayıcı dene.'))));
   }
   const h = hatirlatmaGerekli(await ctx.depo.meta());
   if (h.gerekli) {
     kap.appendChild(el('div', { class: 'bant' }, simge('kaydet', { boy: 18 }),
-      el('span', {}, h.sebep === 'hic' ? 'Henüz hiç yedek almadın. Veriler yalnız bu cihazda duruyor.' : `Son yedekten bu yana ${h.sayac} değişiklik var.`),
-      btn('Yedek indir', { class: 'btn btn--kucuk', onclick: async () => { indir(await yedekOlustur(ctx.depo)); basari('Yedek indirildi'); bantlariYenile(ctx); } })));
+      el('span', {}, h.sebep === 'hic'
+        ? t('bant.yedek_hic', 'Henüz hiç yedek almadın. Veriler yalnız bu cihazda duruyor.')
+        : t('bant.yedek_eski', 'Son yedekten bu yana {n} değişiklik var.', { n: h.sayac })),
+      btn(t('yedek.indir', 'Yedek indir'), { class: 'btn btn--kucuk', onclick: async () => {
+        indir(await yedekOlustur(ctx.depo));
+        basari(t('yedek.indirildi', 'Yedek indirildi'));
+        bantlariYenile(ctx);
+      } })));
   }
 }
 
 function temaDugmesi() {
-  const b = btn('', { class: 'btn btn--ikon btn--sade', 'aria-label': 'Temayı değiştir', title: 'Tema' });
+  const b = btn('', { class: 'btn btn--ikon btn--sade', 'aria-label': t('ayar.tema_degistir', 'Temayı değiştir'), title: t('ayar.tema', 'Tema') });
   const ciz = () => { temizle(b); b.appendChild(simge(document.documentElement.dataset.tema === 'karanlik' ? 'gunduz' : 'gece')); };
   b.onclick = () => {
     const y = document.documentElement.dataset.tema === 'karanlik' ? 'aydinlik' : 'karanlik';
@@ -146,17 +161,32 @@ async function baslat() {
   const depo = await yerelDepoAc();
   if (depo.kaliciYap) depo.kaliciYap();
 
+  const ayar = await depo.ayarlar();
+  await dilYukle(ayar.dil || kayitliDil());
+  bicimAyarla({ dil: suankiDil(), kur: ayar.paraBirimi || 'AFN' });
+
   const ctx = {
-    depo, bildir, basari, uyar, hata, modal, onayla, sor, uygulamaSurumu: UYGULAMA_SURUMU,
+    depo, t, bildir, basari, uyar, hata, modal, onayla, sor, uygulamaSurumu: UYGULAMA_SURUMU,
     git: (yol) => { location.hash = '#' + yol; },
     yenileBantlar: () => bantlariYenile(ctx),
     yenileMenu: () => menuCiz(depo),
+    dilDegistir: async (d) => {
+      await dilYukle(d);
+      await depo.ayarKaydet('dil', d);
+      bicimAyarla({ dil: d, kur: (await depo.ayarlar()).paraBirimi || 'AFN' });
+      await menuCiz(depo);
+      dilUygula(document);
+      dilKutusu.value = suankiDil();
+      aramaKutusu.placeholder = t('ara.yer', 'Ara…  (Ctrl+K)');
+      yonlendirici.calistir();
+    },
   };
 
   await menuCiz(depo);
+  dilUygula(document);
 
   const ustAra = document.getElementById('ust-ara');
-  const aramaKutusu = girdi({ type: 'search', placeholder: 'Ara…  (Ctrl+K)', 'aria-label': 'Ara', style: { minHeight: '36px' } });
+  const aramaKutusu = girdi({ type: 'search', placeholder: t('ara.yer', 'Ara…  (Ctrl+K)'), 'aria-label': t('ara.etiket', 'Ara'), style: { minHeight: '36px' } });
   aramaKutusu.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); aramaAc(ctx, aramaKutusu.value); aramaKutusu.value = ''; }
   });
@@ -166,8 +196,13 @@ async function baslat() {
   });
 
   const ustSag = document.getElementById('ust-sag');
-  ustSag.appendChild(btn(simge('ara'), { class: 'btn btn--ikon btn--sade ust__ara-btn', 'aria-label': 'Ara', onclick: () => aramaAc(ctx, '') }));
+  ustSag.appendChild(btn(simge('ara'), { class: 'btn btn--ikon btn--sade ust__ara-btn', 'aria-label': t('ara.etiket', 'Ara'), onclick: () => aramaAc(ctx, '') }));
   ustSag.appendChild(temaDugmesi());
+  const dilKutusu = secim(DILLER, {
+    class: 'input ust__dil', 'aria-label': t('ayar.dil', 'Dil'), value: suankiDil(),
+    onchange: (e) => ctx.dilDegistir(e.target.value),
+  });
+  ustSag.appendChild(dilKutusu);
 
   const yonlendirici = new Yonlendirici(ROTALAR, {
     kok: document.getElementById('sayfa'),
@@ -175,7 +210,6 @@ async function baslat() {
   });
   yonlendirici.ctx = ctx;
   ctx.git = (yol) => yonlendirici.git(yol);
-  // Kayıt değişince kenar menüdeki sayılar tazelenir.
   depo.dinle('*', ({ kol }) => { if (['ilaclar', 'hastalar', 'receteler'].includes(kol)) menuCiz(depo); });
 
   // replaceState kullanılır: `location.hash = …` bir hashchange kuyruğa alır ve
@@ -185,7 +219,7 @@ async function baslat() {
 
   window.addEventListener('unhandledrejection', (e) => {
     console.error(e.reason);
-    hata('Beklenmeyen bir hata oldu: ' + (e.reason?.message || e.reason));
+    hata(t('hata.beklenmeyen', 'Beklenmeyen bir hata oldu: {m}', { m: e.reason?.message || e.reason }));
   });
 
   if ('serviceWorker' in navigator && !location.search.includes('nosw') && location.protocol.startsWith('http')) {
@@ -195,7 +229,7 @@ async function baslat() {
         const y = kayit.installing;
         y?.addEventListener('statechange', () => {
           if (y.state === 'installed' && navigator.serviceWorker.controller) {
-            bildir('Yeni sürüm hazır.', { sure: 0, eylem: { metin: 'Yenile', cb: () => { y.postMessage('atla'); location.reload(); } } });
+            bildir(t('sw.yeni', 'Yeni sürüm hazır.'), { sure: 0, eylem: { metin: t('genel.yenile', 'Yenile'), cb: () => { y.postMessage('atla'); location.reload(); } } });
           }
         });
       });

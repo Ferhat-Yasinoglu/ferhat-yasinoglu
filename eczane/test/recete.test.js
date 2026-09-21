@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   satirDurumu, satirKapali, durumHesapla, receteOzet, receteNoUret,
-  satirKalan, receteDogrula, bosRecete, receteUyarilari,
+  satirKalan, receteDogrula, bosRecete, receteUyarilari, receteMetni, doluOlcumler, OLCUMLER,
 } from '../app/js/paylasilan/recete.js';
 
 const satir = (o) => ({ adet: 2, verilenAdet: 0, sebep: '', birimFiyat: 10, ...o });
@@ -112,5 +112,59 @@ describe('receteUyarilari', () => {
   });
   it('kayıtta olmayan ilacı atlar', () => {
     expect(receteUyarilari([{ ilacId: 'yok', adet: 1 }], hasta, ilaclar, { alerjiBul })).toEqual([]);
+  });
+});
+
+describe('receteMetni', () => {
+  const recete = {
+    receteNo: '2026-09-21-01', tarih: '2026-09-21',
+    tani: 'Üst solunum yolu enfeksiyonu', taniKodu: 'J06.9',
+    doktorUnvan: 'Dr.', doktorAd: 'Nemuna Ahmadi', notlar: 'Bol sıvı',
+    satirlar: [
+      { ilacAdi: 'Nurofen 400 mg', adet: 2, kullanim: 'Günde 2×1', sure: '5 gün', not: '' },
+      { ilacAdi: 'Parol 500 mg', adet: 1, kullanim: '', sure: '', not: 'tok karnına' },
+    ],
+  };
+  const hasta = { ad: 'Zeynep', soyad: 'Kaya', alerjiler: ['İbuprofen'] };
+  const ayar = { klinikAdi: 'Deneme Eczanesi', telefon: '0700000000' };
+
+  it('reçeteyi okunur düz metne çevirir', () => {
+    const m = receteMetni(recete, hasta, ayar, { hastaAdi: 'Zeynep Kaya' });
+    expect(m).toContain('Deneme Eczanesi');
+    expect(m).toContain('Dr. Nemuna Ahmadi');
+    expect(m).toContain('Reçete: 2026-09-21-01');
+    expect(m).toContain('Hasta: Zeynep Kaya');
+    expect(m).toContain('Tanı: Üst solunum yolu enfeksiyonu · J06.9');
+    expect(m).toContain('1) Nurofen 400 mg — 2 kutu · Günde 2×1 · 5 gün');
+    expect(m).toContain('2) Parol 500 mg — 1 kutu (tok karnına)');
+    expect(m).toContain('0700000000');
+  });
+  it('alerjiyi metne taşır', () => {
+    expect(receteMetni(recete, hasta, ayar)).toContain('Alerji: İbuprofen');
+  });
+  it('alerji yoksa o satırı yazmaz', () => {
+    expect(receteMetni(recete, { ad: 'A' }, ayar)).not.toContain('Alerji');
+  });
+  it('etiketleri çeviri sözlüğünden alabilir', () => {
+    const m = receteMetni(recete, hasta, ayar, { recete: 'نسخه', hasta: 'مریض', hastaAdi: 'زینب' });
+    expect(m).toContain('نسخه: 2026-09-21-01');
+    expect(m).toContain('مریض: زینب');
+  });
+  it('boş reçetede çökmez', () => {
+    expect(receteMetni({ satirlar: [] }, null, {})).toBeTypeOf('string');
+  });
+});
+
+describe('doluOlcumler', () => {
+  it('yalnız girilmiş ölçümleri verir', () => {
+    const d = doluOlcumler({ olcumler: { bp: '120/80', pr: '', bw: '31' } });
+    expect(d.map(([k]) => k)).toEqual(['bp', 'bw']);
+  });
+  it('ölçüm yoksa boş liste verir', () => {
+    expect(doluOlcumler({})).toEqual([]);
+    expect(doluOlcumler(null)).toEqual([]);
+  });
+  it('OLCUMLER kısaltmaları sabittir (çıktıda değişmez)', () => {
+    expect(OLCUMLER.map(([, , k]) => k)).toEqual(['BP', 'PR', 'RR', 'BW', 'T']);
   });
 });
