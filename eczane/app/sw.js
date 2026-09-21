@@ -1,7 +1,9 @@
 /* Service worker: uygulama kabuğunu önbelleğe alır, internetsiz çalıştırır.
    Veri IndexedDB'de durduğu için çevrimdışı hiçbir işlev kapanmaz —
    önbellek yalnız dosyalar içindir. Sürüm değişince eski önbellek silinir. */
-const SURUM = 'v3';
+// Yayında dağıtımın kısa SHA'sı buraya yazılır (site.yml); yerelde yer tutucu kalır,
+// zaten geliştirirken ?nosw=1 ile service worker devre dışı.
+const SURUM = '__SURUM__';
 const ONBELLEK = 'ecz-' + SURUM;
 const KABUK = [
   './', './index.html', './manifest.webmanifest',

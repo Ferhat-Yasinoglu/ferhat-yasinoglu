@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ferhat Yasinoğlu — projeler</title>
+<meta name="description" content="Bu depoda yaşayan uygulamalar: Sosyal Stüdyo ve Eczane Yönetim.">
+<meta name="color-scheme" content="dark">
+<style>
+  :root { --kagit: #0a0a0c; --murekkep: #f4f1eb; --altin: #d4af37; --sessiz: #9a958c; --cizgi: #24232a; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; padding: 48px 16px;
+    background: var(--kagit); color: var(--murekkep);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 32px;
+  }
+  header { text-align: center; max-width: 34rem; }
+  h1 { margin: 0 0 8px; font-size: clamp(1.5rem, 5vw, 2rem); letter-spacing: -0.01em; }
+  header p { margin: 0; color: var(--sessiz); }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; width: 100%; max-width: 34rem; }
+  a.proje {
+    display: block; padding: 20px; border: 1px solid var(--cizgi); border-radius: 14px;
+    background: #101016; color: inherit; text-decoration: none;
+    transition: border-color .15s, transform .15s;
+  }
+  a.proje:hover, a.proje:focus-visible { border-color: var(--altin); transform: translateY(-2px); }
+  a.proje:focus-visible { outline: 2px solid var(--altin); outline-offset: 3px; }
+  .ad { display: flex; align-items: baseline; gap: 8px; font-size: 1.15rem; font-weight: 600; }
+  .ad .ok { color: var(--altin); }
+  .proje p { margin: 6px 0 0; color: var(--sessiz); font-size: .95rem; }
+  footer { color: var(--sessiz); font-size: .85rem; text-align: center; }
+  footer a { color: var(--altin); }
+  @media (prefers-reduced-motion: reduce) { a.proje { transition: none; } a.proje:hover { transform: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Ferhat Yasinoğlu</h1>
+  <p>Bu depoda yaşayan uygulamalar. İkisi de çerçevesiz, derleme adımsız; tarayıcıda çalışır.</p>
+</header>
+
+<ul>
+  <li>
+    <a class="proje" href="./eczane/">
+      <span class="ad">Eczane Yönetim <span class="ok" aria-hidden="true">→</span></span>
+      <p>İlaç stoğu, hasta kayıtları, reçete yazma ve karşılama. Arayüz Farsça, sayfa sağdan sola.
+         Veriler yalnız açıldığı cihazda durur; sunucuya hiçbir kayıt gitmez.</p>
+    </a>
+  </li>
+  <li>
+    <a class="proje" href="./sosyal-studyo/">
+      <span class="ad">Sosyal Stüdyo <span class="ok" aria-hidden="true">→</span></span>
+      <p>Sosyal medya otomasyon stüdyosu: akışlar, kurallar, toplu mesaj, analitik.
+         Yerel modda tarayıcıda, bağlı modda Cloudflare Worker ile çalışır.</p>
+    </a>
+  </li>
+</ul>
+
+<footer>
+  Kaynak kodu: <a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu">github.com/Ferhat-Yasinoglu</a>
+</footer>
+</body>
+</html>
