@@ -52,15 +52,16 @@ export function muadiller(liste, ilac) {
   return liste.filter((x) => x.id !== ilac.id && normalize(x.etkenMadde) === e && Number(x.stok ?? 0) > 0);
 }
 
-/** Bir ilacın dikkat çeken halleri — listede rozet, reçetede uyarı olur. */
+/** Bir ilacın dikkat çeken halleri — listede rozet, reçetede uyarı olur.
+ *  Metin değil kod ve değişken döner; cümleyi arayüz kurar. */
 export function ilacUyarilari(ilac, referans = buGun()) {
   const u = [];
   const s = stokDurumu(ilac);
-  if (s === 'yok') u.push({ tur: 'hata', kod: 'stok_yok', metin: 'Stokta yok' });
-  else if (s === 'kritik') u.push({ tur: 'uyari', kod: 'stok_kritik', metin: `Stok azaldı (${ilac.stok} adet)` });
+  if (s === 'yok') u.push({ tur: 'hata', kod: 'stok_yok', veri: {} });
+  else if (s === 'kritik') u.push({ tur: 'uyari', kod: 'stok_kritik', veri: { n: ilac.stok } });
   const k = sktDurumu(ilac, referans);
-  if (k === 'gecti') u.push({ tur: 'hata', kod: 'skt_gecti', metin: 'Son kullanma tarihi geçmiş' });
-  else if (k === 'yaklasiyor') u.push({ tur: 'uyari', kod: 'skt_yakin', metin: `Son kullanmaya ${gunFarki(referans, ilac.sonKullanma)} gün kaldı` });
+  if (k === 'gecti') u.push({ tur: 'hata', kod: 'skt_gecti', veri: {} });
+  else if (k === 'yaklasiyor') u.push({ tur: 'uyari', kod: 'skt_yakin', veri: { n: gunFarki(referans, ilac.sonKullanma) } });
   return u;
 }
 
@@ -73,17 +74,18 @@ export function bosIlac() {
   };
 }
 
-/** Kaydetmeden önceki denetim. Dönen nesne alan → hata metni. */
+/** Kaydetmeden önceki denetim. Dönen nesne alan → hata kodu.
+ *  Kod döner, metin değil: bu modül saf kalır, metni arayüz çevirir. */
 export function ilacDogrula(ilac) {
   const h = {};
-  if (!String(ilac.ad ?? '').trim()) h.ad = 'İlaç adı gerekli.';
-  if (ilac.barkod && !/^\d{6,14}$/.test(String(ilac.barkod).trim())) h.barkod = 'Barkod 6–14 rakam olmalı.';
+  if (!String(ilac.ad ?? '').trim()) h.ad = 'ad_gerekli';
+  if (ilac.barkod && !/^\d{6,14}$/.test(String(ilac.barkod).trim())) h.barkod = 'barkod_bicim';
   const sayi = (v) => v === '' || v === null || v === undefined || Number.isFinite(Number(v));
-  if (!sayi(ilac.stok) || Number(ilac.stok ?? 0) < 0) h.stok = 'Stok negatif olamaz.';
-  if (!sayi(ilac.kritikStok) || Number(ilac.kritikStok ?? 0) < 0) h.kritikStok = 'Kritik stok negatif olamaz.';
-  if (!sayi(ilac.alisFiyati)) h.alisFiyati = 'Fiyat sayı olmalı.';
-  if (!sayi(ilac.satisFiyati)) h.satisFiyati = 'Fiyat sayı olmalı.';
-  if (ilac.sonKullanma && !/^\d{4}-\d{2}-\d{2}$/.test(String(ilac.sonKullanma).slice(0, 10))) h.sonKullanma = 'Tarih geçersiz.';
+  if (!sayi(ilac.stok) || Number(ilac.stok ?? 0) < 0) h.stok = 'stok_negatif';
+  if (!sayi(ilac.kritikStok) || Number(ilac.kritikStok ?? 0) < 0) h.kritikStok = 'stok_negatif';
+  if (!sayi(ilac.alisFiyati)) h.alisFiyati = 'fiyat_sayi';
+  if (!sayi(ilac.satisFiyati)) h.satisFiyati = 'fiyat_sayi';
+  if (ilac.sonKullanma && !/^\d{4}-\d{2}-\d{2}$/.test(String(ilac.sonKullanma).slice(0, 10))) h.sonKullanma = 'tarih_gecersiz';
   return h;
 }
 

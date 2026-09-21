@@ -1,30 +1,27 @@
-// Diller: Türkçe (kodun içindeki varsayılan), Dari/Farsça ve İngilizce.
-// Sözlükte anahtar yoksa koddaki Türkçe metin kullanılır — çeviri eksik kalsa
-// bile arayüz hiçbir zaman boş görünmez.
-// Farsça sağdan sola yazılır; CSS baştan beri yalnız mantıksal yön özellikleri
-// kullandığı için düzen kendiliğinden döner.
-export const DILLER = [['tr', 'Türkçe'], ['fa', 'دری'], ['en', 'English']];
+// Arayüz dili: فارسی. Uygulamayı kullanan doktor Farsça okuyor, o yüzden tek dil
+// yeterli — çoklu dil kaldırıldı ama altyapı duruyor: yeni bir dil eklemek
+// DILLER'e bir satır ve i18n/<kod>.json dosyası eklemekten ibaret.
+//
+// Metinler kodda t(anahtar, 'Türkçe karşılık') biçiminde yazılır. Türkçe metin
+// çeviri değil yedektir: sözlükte anahtar bulunamazsa ekran boş kalmasın diye
+// durur. `npm run kontrol` her anahtarın sözlükte karşılığı olduğunu denetler.
+export const DILLER = [['fa', 'فارسی']];
 const SAGDAN_SOLA = ['fa'];
+const VARSAYILAN = 'fa';
 
 let sozluk = {};
-let dil = 'tr';
+let dil = VARSAYILAN;
 
-export function kayitliDil() {
-  try { return localStorage.getItem('ecz-dil') || 'tr'; } catch { return 'tr'; }
-}
-
-export async function yukle(istenen) {
-  dil = DILLER.some(([k]) => k === istenen) ? istenen : 'tr';
+export async function yukle(istenen = VARSAYILAN) {
+  dil = DILLER.some(([k]) => k === istenen) ? istenen : VARSAYILAN;
   sozluk = {};
-  if (dil !== 'tr') {
-    try {
-      const yanit = await fetch(`./i18n/${dil}.json`);
-      if (yanit.ok) sozluk = await yanit.json();
-    } catch (e) {
-      console.warn('sözlük yüklenemedi, Türkçeye düşüldü', e);
-    }
+  try {
+    const yanit = await fetch(`./i18n/${dil}.json`);
+    if (yanit.ok) sozluk = await yanit.json();
+    else console.warn('sözlük bulunamadı:', dil);
+  } catch (e) {
+    console.warn('sözlük yüklenemedi', e);
   }
-  try { localStorage.setItem('ecz-dil', dil); } catch { /* özel pencerede yazılamaz */ }
   document.documentElement.lang = dil;
   document.documentElement.dir = SAGDAN_SOLA.includes(dil) ? 'rtl' : 'ltr';
   return dil;
@@ -50,8 +47,7 @@ export function uygula(kok = document) {
   }
 }
 
-/** Saf modüllerdeki seçenek listelerini çevirir: FORMLAR → [['tablet','قرص'], …]
- *  Liste ['anahtar', 'Türkçe ad'] çiftlerinden oluşur; sözlük anahtarı `onek.anahtar`. */
+/** Saf modüllerdeki seçenek listelerini çevirir: FORMLAR → [['tablet','قرص'], …] */
 export const secenekleriCevir = (liste, onek) => liste.map(([k, ad]) => [k, t(`${onek}.${k}`, ad)]);
 
 /** Tek bir seçeneğin çevrilmiş adı. */

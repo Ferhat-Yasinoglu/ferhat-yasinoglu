@@ -15,6 +15,7 @@ import { basHarfler, paraMetni, telefonNormalize } from '../paylasilan/metin.js'
 import { trTarih, trTarihSaat } from '../paylasilan/tarih.js';
 import { t, secenekleriCevir, secenekAdi } from '../i18n.js';
 import { kagitCiz, kagidiYazdir } from '../kagit.js';
+import { hataMetni, uyariMetni } from '../hatalar.js';
 
 const DURUM_RENGI = { bekliyor: 'sari', kismi: 'mavi', tamamlandi: 'yesil', bos: 'gri' };
 const SATIR_RENGI = { bekliyor: 'gri', kismi: 'mavi', verildi: 'yesil', verilmedi: 'kirmizi' };
@@ -240,7 +241,7 @@ export default {
             el('div', { class: 'liste__baslik' }, s.ilacAdi),
             el('div', { class: 'liste__alt' }, [s.kullanim, s.sure].filter(Boolean).join(' · ') || '—'),
             s.sebep ? el('div', { class: 'liste__alt' }, `${t('recete.sebep', 'Sebep')}: ${secenekAdi(VERILMEME_SEBEPLERI, s.sebep, 'sebep')}${s.not ? ' · ' + s.not : ''}`) : null,
-            ...satirUyarilari.map((u) => el('div', { class: 'alan__hata', style: u.tur === 'uyari' ? { color: 'rgb(var(--sari))' } : null }, u.metin))),
+            ...satirUyarilari.map((u) => el('div', { class: 'alan__hata', style: u.tur === 'uyari' ? { color: 'rgb(var(--sari))' } : null }, uyariMetni(u)))),
           el('td', { class: 'sayi' }, String(s.adet)),
           el('td', { class: 'sayi' }, `${s.verilenAdet || 0}`),
           el('td', {}, ilac
@@ -260,9 +261,9 @@ export default {
               try {
                 const r = await hepsiniVer(depo, recete.id);
                 if (r.verilen) basari(t('recete.satir_verildi', '{n} satır verildi', { n: r.verilen }));
-                for (const a of r.atlanan) uyar(`${a.ad}: ${a.sebep}`);
+                for (const a of r.atlanan) uyar(`${a.ad}: ${hataMetni(a.hata)}`);
                 if (!r.verilen && !r.atlanan.length) uyar(t('recete.verilecek_yok', 'Verilecek satır kalmadı'));
-              } catch (e) { hata(e.message || t('genel.islem_olmadi', 'İşlem yapılamadı')); }
+              } catch (e) { hata(hataMetni(e)); }
               ciz();
             } })
             : rozet(t('recete.karsilama_tamam', 'Karşılama tamam'), 'yesil')),
@@ -288,7 +289,7 @@ export default {
         await is();
         basari(basariMetni);
       } catch (e) {
-        hata(e.message || t('genel.islem_olmadi', 'İşlem yapılamadı'));
+        hata(hataMetni(e));
       }
       ciz();
     }

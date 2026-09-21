@@ -10,6 +10,7 @@ import { tamAd, hastaAra, hastaYasi, alerjiCakismasi } from '../paylasilan/hasta
 import { basHarfler, paraMetni } from '../paylasilan/metin.js';
 import { bugun } from '../paylasilan/tarih.js';
 import { t, secenekleriCevir } from '../i18n.js';
+import { dogrulaMetni, hataMetni, uyariMetni } from '../hatalar.js';
 
 /** Hasta seçme kutusu: arar, yoksa yeni hasta eklemeye gönderir. */
 async function hastaSec(ctx, hastalar) {
@@ -69,9 +70,9 @@ async function satirKutusu(ctx, ilaclar, hasta, mevcut = null) {
   function secileniCiz() {
     temizle(secilenKutusu);
     if (!ilac) return;
-    const uyarilar = [...ilacUyarilari(ilac)];
+    const uyarilar = ilacUyarilari(ilac).map((u) => ({ tur: u.tur, metin: uyariMetni(u) }));
     const a = hasta ? alerjiCakismasi(hasta, ilac) : null;
-    if (a) uyarilar.unshift({ tur: 'hata', metin: t('recete.alerji_uyarisi', 'Hastanın "{a}" alerjisi var', { a }) });
+    if (a) uyarilar.unshift({ tur: 'hata', metin: uyariMetni({ kod: 'alerji', veri: { a } }) });
     secilenKutusu.append(
       el('div', { class: 'liste' },
         el('div', { class: 'liste__satir' },
@@ -176,7 +177,7 @@ export default {
             : null)
         : el('div', {},
           btnS('hasta', t('recete.hasta_sec', 'Hasta seç'), { class: 'btn btn--birincil', onclick: hastaDegistir }),
-          hatalar.hastaId ? el('span', { class: 'alan__hata', style: { marginInlineStart: 'var(--b-3)' } }, hatalar.hastaId) : null);
+          hatalar.hastaId ? el('span', { class: 'alan__hata', style: { marginInlineStart: 'var(--b-3)' } }, dogrulaMetni(hatalar.hastaId)) : null);
       kok.appendChild(kart({}, el('div', { class: 'kart__bas' }, el('h2', {}, t('nav.hasta', 'Hasta'))), hastaGovdesi));
 
       /* --- Reçete bilgileri --- */
@@ -191,7 +192,7 @@ export default {
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' }, el('h2', {}, t('recete.bilgiler', 'Reçete bilgileri'))),
         el('div', { class: 'izgara izgara--form' },
-          alan(t('genel.tarih', 'Tarih'), g.tarih, { gerekli: true, hata: hatalar.tarih }),
+          alan(t('genel.tarih', 'Tarih'), g.tarih, { gerekli: true, hata: dogrulaMetni(hatalar.tarih) }),
           alan(t('recete.turu', 'Reçete türü'), g.tur),
           alan(t('recete.no', 'Reçete no'), g.receteNo),
           alan(t('recete.tani', 'Tanı'), g.tani),
@@ -220,7 +221,7 @@ export default {
             return el('tr', {},
               el('td', {},
                 el('div', { class: 'liste__baslik' }, s.ilacAdi),
-                ...satirUyarilari.map((u) => el('div', { class: 'alan__hata', style: u.tur === 'uyari' ? { color: 'rgb(var(--sari))' } : null }, u.metin)),
+                ...satirUyarilari.map((u) => el('div', { class: 'alan__hata', style: u.tur === 'uyari' ? { color: 'rgb(var(--sari))' } : null }, uyariMetni(u))),
                 s.not ? el('div', { class: 'liste__alt' }, s.not) : null),
               el('td', { class: 'sayi' }, String(s.adet)),
               el('td', {}, s.kullanim || '—'),
@@ -245,9 +246,9 @@ export default {
             const y = await satirKutusu(ctx, ilaclar, hasta);
             if (y) { recete.satirlar = [...recete.satirlar, y]; ciz(); }
           } })),
-        hatalar.satirlar ? el('div', { class: 'alan__hata', style: { marginBlockEnd: 'var(--b-2)' } }, hatalar.satirlar) : null,
+        hatalar.satirlar ? el('div', { class: 'alan__hata', style: { marginBlockEnd: 'var(--b-2)' } }, dogrulaMetni(hatalar.satirlar)) : null,
         satirGovdesi,
-        ...genelUyarilar.map((u) => el('div', { class: `uyari uyari--${u.tur}`, style: { marginBlockStart: 'var(--b-2)' } }, simge('uyari', { boy: 16 }), el('span', {}, u.metin)))));
+        ...genelUyarilar.map((u) => el('div', { class: `uyari uyari--${u.tur}`, style: { marginBlockStart: 'var(--b-2)' } }, simge('uyari', { boy: 16 }), el('span', {}, uyariMetni(u))))));
 
       /* --- Not ve kaydet --- */
       kok.appendChild(kart({},
@@ -274,12 +275,12 @@ export default {
 
     async function kaydet(karsilamayaGit) {
       hatalar = receteDogrula(recete);
-      if (Object.keys(hatalar).length) { ciz(); hata(Object.values(hatalar)[0]); return; }
+      if (Object.keys(hatalar).length) { ciz(); hata(dogrulaMetni(Object.values(hatalar)[0])); return; }
       try {
         const y = await receteKaydet(depo, recete);
         basari(duzenleme ? t('recete.guncellendi', 'Reçete güncellendi') : t('recete.kaydedildi', 'Reçete kaydedildi: {no}', { no: y.receteNo }));
         git(`/recete/${y.id}`);
-      } catch (e) { hata(e.message || t('genel.kaydedilemedi', 'Kaydedilemedi')); }
+      } catch (e) { hata(hataMetni(e, t('genel.kaydedilemedi', 'Kaydedilemedi'))); }
     }
 
     ciz();

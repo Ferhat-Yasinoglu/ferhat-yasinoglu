@@ -4,7 +4,7 @@
 import { yerelDepoAc } from './depo/idb.js';
 import { hatirlatmaGerekli, yedekOlustur, indir } from './depo/yedek.js';
 import { Yonlendirici } from './cekirdek/yonlendirici.js';
-import { el, temizle, btn, girdi, secim, sirala } from './cekirdek/dom.js';
+import { el, temizle, btn, girdi, sirala } from './cekirdek/dom.js';
 import { simge } from './cekirdek/simge.js';
 import { bildir, basari, uyar, hata } from './cekirdek/bildirim.js';
 import { modal, onayla, sor } from './cekirdek/modal.js';
@@ -12,7 +12,7 @@ import { ilacAra, ilacEtiketi } from './paylasilan/ilac.js';
 import { hastaAra, tamAd } from './paylasilan/hasta.js';
 import { eslesir, bicimAyarla } from './paylasilan/metin.js';
 import { trTarih } from './paylasilan/tarih.js';
-import { t, yukle as dilYukle, uygula as dilUygula, DILLER, suankiDil, kayitliDil } from './i18n.js';
+import { t, yukle as dilYukle, uygula as dilUygula, suankiDil } from './i18n.js';
 
 export const UYGULAMA_SURUMU = '0.2.0';
 globalThis.UYGULAMA_SURUMU = UYGULAMA_SURUMU;
@@ -145,7 +145,7 @@ async function bantlariYenile(ctx) {
 }
 
 function temaDugmesi() {
-  const b = btn('', { class: 'btn btn--ikon btn--sade', 'aria-label': t('ayar.tema_degistir', 'Temayı değiştir'), title: t('ayar.tema', 'Tema') });
+  const b = btn('', { class: 'btn btn--ikon btn--sade ust__tema', 'aria-label': t('ayar.tema_degistir', 'Temayı değiştir'), title: t('ayar.tema', 'Tema') });
   const ciz = () => { temizle(b); b.appendChild(simge(document.documentElement.dataset.tema === 'karanlik' ? 'gunduz' : 'gece')); };
   b.onclick = () => {
     const y = document.documentElement.dataset.tema === 'karanlik' ? 'aydinlik' : 'karanlik';
@@ -162,7 +162,7 @@ async function baslat() {
   if (depo.kaliciYap) depo.kaliciYap();
 
   const ayar = await depo.ayarlar();
-  await dilYukle(ayar.dil || kayitliDil());
+  await dilYukle();
   bicimAyarla({ dil: suankiDil(), kur: ayar.paraBirimi || 'AFN' });
 
   const ctx = {
@@ -170,16 +170,6 @@ async function baslat() {
     git: (yol) => { location.hash = '#' + yol; },
     yenileBantlar: () => bantlariYenile(ctx),
     yenileMenu: () => menuCiz(depo),
-    dilDegistir: async (d) => {
-      await dilYukle(d);
-      await depo.ayarKaydet('dil', d);
-      bicimAyarla({ dil: d, kur: (await depo.ayarlar()).paraBirimi || 'AFN' });
-      await menuCiz(depo);
-      dilUygula(document);
-      dilKutusu.value = suankiDil();
-      aramaKutusu.placeholder = t('ara.yer', 'Ara…  (Ctrl+K)');
-      yonlendirici.calistir();
-    },
   };
 
   await menuCiz(depo);
@@ -198,11 +188,6 @@ async function baslat() {
   const ustSag = document.getElementById('ust-sag');
   ustSag.appendChild(btn(simge('ara'), { class: 'btn btn--ikon btn--sade ust__ara-btn', 'aria-label': t('ara.etiket', 'Ara'), onclick: () => aramaAc(ctx, '') }));
   ustSag.appendChild(temaDugmesi());
-  const dilKutusu = secim(DILLER, {
-    class: 'input ust__dil', 'aria-label': t('ayar.dil', 'Dil'), value: suankiDil(),
-    onchange: (e) => ctx.dilDegistir(e.target.value),
-  });
-  ustSag.appendChild(dilKutusu);
 
   const yonlendirici = new Yonlendirici(ROTALAR, {
     kok: document.getElementById('sayfa'),

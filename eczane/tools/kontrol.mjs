@@ -30,10 +30,10 @@ for (const f of await dosyalar(join(KOK, 'js'), '.js')) {
   if (f.includes('/paylasilan/') && /from ['"]node:/.test(s)) hataVer(`${f}: paylasilan/ içinde node: bağımlılığı`);
   if (f.includes('/sayfalar/') && !/export default/.test(s)) hataVer(`${f}: sayfa modülü default export vermiyor`);
 }
-// (5) Sözlük eksiği: koddaki her t('anahtar', …) fa ve en sözlüklerinde var mı?
+// (5) Sözlük eksiği: koddaki her t('anahtar', …) sözlükte var mı?
 // Dinamik anahtarlar (t('durum.' + x)) nokta ile bittiği için atlanır.
 const sozlukler = {};
-for (const dil of ['fa', 'en']) {
+for (const dil of ['fa']) {
   sozlukler[dil] = JSON.parse(await readFile(new URL(`../app/i18n/${dil}.json`, import.meta.url), 'utf8'));
 }
 const kullanilan = new Set();

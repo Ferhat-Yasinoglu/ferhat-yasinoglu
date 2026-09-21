@@ -51,6 +51,13 @@ describe('ilacUyarilari', () => {
     const u = ilacUyarilari(ilac({ stok: 0, sonKullanma: '2026-09-01' }), '2026-09-20');
     expect(u.map((x) => x.kod)).toEqual(['stok_yok', 'skt_gecti']);
   });
+  it('cümle değil kod ve değişken döner', () => {
+    const u = ilacUyarilari(ilac({ stok: 3, kritikStok: 5, sonKullanma: '2026-10-01' }), '2026-09-20');
+    expect(u).toEqual([
+      { tur: 'uyari', kod: 'stok_kritik', veri: { n: 3 } },
+      { tur: 'uyari', kod: 'skt_yakin', veri: { n: 11 } },
+    ]);
+  });
   it('sorun yoksa boş döner', () => {
     expect(ilacUyarilari(ilac({ stok: 50, sonKullanma: '2030-01-01' }), '2026-09-20')).toEqual([]);
   });
