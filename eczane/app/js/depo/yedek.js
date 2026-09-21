@@ -64,7 +64,13 @@ export async function iceAktar(depo, belge, { strateji = 'birlestir', prova = fa
         if ((eski.guncellendi || '') >= (k.guncellendi || '')) { r.atlandi++; continue; }
         r.guncellendi++;
       } else r.eklendi++;
-      if (!prova) await depo._yaz(ad, { ...k, rev: Math.max(eski?.rev || 0, k.rev || 0) + 1 });
+      // Ayarlar tek bir kayıt ve içinde reçete doğrulama anahtarı da duruyor.
+      // Yalnız bir kısmını taşıyan bir yedek (ör. sadece antet) kaydı olduğu
+      // gibi değiştirseydi anahtar silinir, o güne kadar yazılmış bütün
+      // reçetelerin kodu doğrulanamaz hale gelirdi. Bu yüzden ayarlarda
+      // dosyadaki alanlar mevcudun üstüne yazılır, geri kalanı korunur.
+      const yazilacak = ad === 'ayarlar' && eski ? { ...eski, ...k } : k;
+      if (!prova) await depo._yaz(ad, { ...yazilacak, rev: Math.max(eski?.rev || 0, k.rev || 0) + 1 });
     }
     rapor[ad] = r;
     if (!prova) depo._yay(ad, { tur: 'temizle' });

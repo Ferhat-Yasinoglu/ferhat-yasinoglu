@@ -180,3 +180,24 @@ describe('düşmüş koleksiyon taşıyan eski yedek', () => {
     expect(yedekDogrula(b).gecerli).toBe(false);
   });
 });
+
+describe('ayarların kısmi yedekten geri yüklenmesi', () => {
+  // Ayarlar tek kayıt ve içinde doğrulama anahtarı var. Yalnız anteti taşıyan
+  // bir yedek anahtarı silseydi eski reçetelerin kodları doğrulanamazdı.
+  it('dosyada olmayan ayar alanları korunur', async () => {
+    await depo.ayarKaydet({ dogrulamaAnahtari: 'gizli-anahtar', paraBirimi: 'AFN', doktorAd: 'Eski' });
+    const belge = {
+      bicim: 'shafa-yedek', semaSurumu: 2, olusturuldu: '2099-01-01T00:00:00.000Z',
+      koleksiyonlar: {
+        ayarlar: [{ id: 'genel', doktorAd: 'Yeni', adres: 'Kabil', rev: 1, guncellendi: '2099-01-01T00:00:00.000Z' }],
+      },
+    };
+    const sonuc = await iceAktar(depo, belge);
+    expect(sonuc.ok).toBe(true);
+    const ayar = await depo.ayarlar();
+    expect(ayar.doktorAd).toBe('Yeni');        // dosyadaki yazıldı
+    expect(ayar.adres).toBe('Kabil');          // yeni alan eklendi
+    expect(ayar.dogrulamaAnahtari).toBe('gizli-anahtar'); // dokunulmadı
+    expect(ayar.paraBirimi).toBe('AFN');       // dokunulmadı
+  });
+});
