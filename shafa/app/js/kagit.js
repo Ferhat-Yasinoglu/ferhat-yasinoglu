@@ -49,6 +49,43 @@ const VECIZE = 'طبیب حقیقی خداوند (ج) است';
 
 const KLINIK_ADLARI = { bp: 'BP', pr: 'PR', rr: 'RR', bw: 'BW', temp: 'Temperature', spo2: 'SpO2', ht: 'Height' };
 
+/* Her ölçümün yanında kendi simgesi duruyor: sütun bir etiket listesi değil,
+   bakışta taranabilen bir pano olsun. */
+const OLCUM_SIMGELERI = {
+  bp: 'kalp', pr: 'ekg', rr: 'akciger', bw: 'tarti',
+  temp: 'termometre', spo2: 'oksijen', ht: 'boy',
+};
+
+/* Hasta şeridindeki alanların simgeleri, şeritteki sırayla. */
+const SERIT_SIMGELERI = ['hasta', 'takvim', 'takvim', 'recete'];
+
+/** Köşe süsü ve ayak bandı için akan dalga çizimleri.
+ *
+ *  CSS zemini değil SVG ÖĞESİ: zemin dolguları yazdırmada tarayıcının
+ *  "arka plan grafikleri" seçeneğine bağlı, SVG içeriği ise her zaman basılır.
+ *  (print-color-adjust yine de duruyor, bu ikinci emniyet.) */
+function dalga(yer) {
+  if (yer === 'ust') {
+    // Üst köşe süsü: şekli korunsun diye esnetilmiyor.
+    // Dolu köşe değil akan ŞERİTLER: dolgu denendi ve kâğıda yapıştırılmış
+    // renkli bir dikdörtgen gibi duruyordu, üstelik sloganı okunmaz yapıyordu.
+    return svgEl('svg', {
+      class: 'kagit__dalga kagit__dalga--ust', viewBox: '0 0 200 92',
+      preserveAspectRatio: 'none', 'aria-hidden': 'true',
+    },
+    svgEl('path', { class: 'kagit__dalga-1', d: 'M0 4C46 4 84 26 112 46 140 66 170 84 200 88' }),
+    svgEl('path', { class: 'kagit__dalga-2', d: 'M0 22C42 22 76 42 102 60 128 78 160 90 200 92' }),
+    svgEl('path', { class: 'kagit__dalga-3', d: 'M0 44C34 44 62 58 84 72 106 86 134 92 168 92' }));
+  }
+  // Ayak bandının üst kenarı: kâğıt renginde kesip banda kıvrım veriyor.
+  return svgEl('svg', {
+    class: 'kagit__dalga kagit__dalga--alt', viewBox: '0 0 1000 110',
+    preserveAspectRatio: 'none', 'aria-hidden': 'true',
+  },
+  svgEl('path', { class: 'kagit__dalga-kesim', d: 'M0 0H1000V52C874 96 742 30 606 52 470 74 352 18 214 40 140 52 68 70 0 58Z' }),
+  svgEl('path', { class: 'kagit__dalga-2', d: 'M0 44C82 72 168 26 268 40 386 56 470 96 592 82 704 69 812 24 1000 62V0H0Z' }));
+}
+
 const doluMu = (v) => String(v ?? '').trim() !== '';
 const satirlara = (metin) => String(metin ?? '').split('\n').map((x) => x.trim()).filter(Boolean);
 
@@ -134,19 +171,26 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
      Hekimin basılı reçetesinde bu satır var ve kalması istendi. Bilerek
      ayarlardan gelmiyor ve bilerek koşulsuz basılıyor: kâğıdın parçası,
      doldurulan bir alan değil. Boş kâğıtta da çıkar. */
-  const vecize = el('div', { class: 'kagit__vecize' }, VECIZE);
+  // Süslü çerçeve: basılı kâğıtta bu satır bir kartuş içinde duruyor.
+  // Süsler aria-hidden değil, metin düğümü olmadıkları için okuyucuya düşmez.
+  const vecize = el('div', { class: 'kagit__vecize' },
+    el('span', { class: 'kagit__vecize-cerceve' },
+      el('span', { class: 'kagit__vecize-sus' }, '❖'),
+      el('span', { class: 'kagit__vecize-metin' }, VECIZE),
+      el('span', { class: 'kagit__vecize-sus' }, '❖')));
 
   /* ---- Hasta şeridi: Name / Age / Date / No ---- */
-  const alan = (etiket, deger, genislik) => el('span', { class: 'kagit__alan' },
+  const alan = (etiket, deger, genislik, simgeAdi) => el('span', { class: 'kagit__alan' },
+    simgeAdi ? simge(simgeAdi, { boy: 15 }) : null,
     el('b', {}, etiket + ':'), bos ? cizgi(genislik) : el('span', { dir: 'auto' }, deger || '—'));
 
   // Şerit ve klinik sütun soldan sağa: etiketleri İngilizce ve basılı kâğıtta
   // da bu yönde. Sayfanın kalanı sağdan sola kalır.
   const serit = el('div', { class: 'kagit__serit', dir: 'ltr' },
-    alan('Name', tamAd(hasta), '52mm'),
-    alan('Age', yas !== null ? String(yas) : '', '18mm'),
-    alan('Date', bos ? '' : trTarih(recete.tarih), '30mm'),
-    alan('No', bos ? '' : recete.receteNo, '28mm'));
+    alan('Name', tamAd(hasta), '52mm', SERIT_SIMGELERI[0]),
+    alan('Age', yas !== null ? String(yas) : '', '18mm', SERIT_SIMGELERI[1]),
+    alan('Date', bos ? '' : trTarih(recete.tarih), '30mm', SERIT_SIMGELERI[2]),
+    alan('No', bos ? '' : recete.receteNo, '28mm', SERIT_SIMGELERI[3]));
 
   /* ---- Clinical sütunu: ölçümler, altta stetoskop ve QR ---- */
   const qr = qrGorsel(qrIcerigi(ayar, recete, hasta, { bos }), { boy: 76, sinif: 'kagit__qr' });
@@ -158,12 +202,15 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
       // Girilmemiş ölçüm tire değil çizgi basılır: doktor çıktının üstüne
       // kalemle yazabilsin. Kâğıt hem dolu hem elle tamamlanabilir olsun diye.
       ...OLCUMLER.map(([anahtar, , , birim]) => el('div', { class: 'kagit__olcum' },
+        el('span', { class: 'kagit__olcum-simge' }, simge(OLCUM_SIMGELERI[anahtar] || 'kalp', { boy: 19 })),
         el('b', {}, `${KLINIK_ADLARI[anahtar]} :`),
         !bos && doluMu(recete.olcumler?.[anahtar])
           ? el('span', { dir: 'ltr' }, `${recete.olcumler[anahtar]} ${birim}`)
           : cizgi()))),
     !bos && doluMu(recete.dogrulamaKodu)
-      ? el('div', { class: 'kagit__kod' }, el('b', {}, t('kagit.kod', 'کد تأیید') + ': '), el('span', { dir: 'ltr' }, recete.dogrulamaKodu))
+      ? el('div', { class: 'kagit__kod' },
+        el('span', { class: 'kagit__olcum-simge' }, simge('kilit', { boy: 15 })),
+        el('b', {}, t('kagit.kod', 'کد تأیید') + ': '), el('span', { dir: 'ltr' }, recete.dogrulamaKodu))
       : null,
     el('div', { class: 'kagit__sutun-ayak' },
       qr,
@@ -241,6 +288,7 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
       el('span', { dir: 'ltr' }, no)));
 
   const ayak = el('footer', { class: 'kagit__ayak' },
+    dalga('alt'),
     el('div', { class: 'kagit__iletisim' },
       doluMu(ayar.adres) ? el('div', { class: 'kagit__iletisim-satir' }, simge('konum', { boy: 16 }), el('span', {}, `${t('kagit.adres', 'آدرس')} : ${ayar.adres}`)) : null,
       ...telefonSatirlari),
@@ -250,6 +298,7 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
       : null);
 
   return el('div', { class: `yazdir-alan kagit${stilSinifi}` }, stil,
+    dalga('ust'),
     antet, unvan, hizmet, deneyim, vecize, serit,
     el('div', { class: 'kagit__govde' }, rx, sutun),
     ayak);
