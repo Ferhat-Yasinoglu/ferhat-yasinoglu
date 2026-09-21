@@ -54,9 +54,19 @@ export class Yonlendirici {
     } catch (err) {
       if (benim !== this.sira) return;
       console.error('sayfa çizilemedi', yol, err);
+      // Modül yükleme hatası genelde önbellekteki eski/yeni karışımından
+      // geliyor; kullanıcıya ölü bir ekran göstermeden önce temizleyip
+      // bir kez yeniden deniyoruz.
+      const { modulHatasiMi, kurtar } = await import('./kurtarma.js');
+      if (modulHatasiMi(err) && await kurtar()) return;
       this.kok.replaceChildren();
       const { bosDurum } = await import('./dom.js');
-      this.kok.appendChild(bosDurum({ hata: true, simge: 'hata', baslik: 'Sayfa yüklenemedi', alt: err?.message || String(err) }));
+      const { t } = await import('../i18n.js');
+      this.kok.appendChild(bosDurum({
+        hata: true, simge: 'hata',
+        baslik: t('hata.sayfa_yuklenemedi', 'Sayfa yüklenemedi'),
+        alt: err?.message || String(err),
+      }));
     }
   }
 }
