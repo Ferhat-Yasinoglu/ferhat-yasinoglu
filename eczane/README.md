@@ -43,6 +43,7 @@ kurulu değilse betik kendini atlar:
 | **Reçete kâğıdı** | Doktorun kullandığı basılı kâğıdın aynısı: mavi antet (ad, ünvan şeridi), hizmet satırları, sabıka şeridi, Name/Age/Date şeridi, solda Clinical sütunu (BP · PR · RR · BW · Temperature), sağda ℞ alanı, altta rozetler ve iletişim |
 | **Boş kâğıt** | Aynı kâğıdı boş bastırıp elle doldurma — tomar halinde çıkar, alanlar çizgili gelir |
 | **Gönderme** | WhatsApp, e-posta, panoya kopyalama ve cihazın kendi paylaşma penceresi |
+| **Doğrulama** | Her reçete kâğıda basılan sekiz harflik bir kod taşır; kâğıtta oynanmışsa kod tutmaz |
 | **Ayarlar** | Reçete anteti, para birimi, kâğıt boyutu, QR içeriği, yedek al/geri yükle, örnek veri, depolama durumu, tema |
 
 **Reçete ile stok tek elden yürür.** Karşılamada verilen her kutu bir stok
@@ -68,6 +69,33 @@ bütün dolguları atıyor ve kâğıt bembeyaz iniyor.
 yok, çevrimdışı çalışır. İçeriği ayarlardan seçilir: doktorun WhatsApp bağlantısı
 (hasta okutup yazar) ya da reçetenin metni (okutunca telefonda açılır).
 Doğruluğu bağımsız bir QR çözücüyle test ediliyor.
+
+## Sahteciliğe karşı
+
+Her reçete kaydedilirken bir **doğrulama kodu** alır: reçetenin kanonik özetinin,
+cihaza özel gizli bir anahtarla üretilmiş HMAC-SHA256'sının ilk beş baytı,
+karıştırılması kolay harfler (0/O, 1/I) atılarak sekiz harfe indirilmiş hali —
+`249M-8Z5G`. Kod hem kâğıda basılır hem QR'a girer.
+
+Eczane QR'ı okutup metni Ayarlar'daki **"نسخه را بررسی کن"** kutusuna yapıştırır.
+Kâğıtta ilaç, adet, doz ya da hasta adı değiştirilmişse kod tutmaz.
+
+Ne yakalar, ne yakalamaz — dürüst sınırlar:
+
+| Tehdit | Durum |
+|---|---|
+| Kâğıtta adedi/dozu/ilacı değiştirmek | **Yakalanır** — özet değişir, kod tutmaz |
+| Sıfırdan sahte reçete uydurmak | **Yakalanır** — gizli anahtar olmadan geçerli kod üretilemez |
+| Geçerli bir reçeteyi fotokopiyle çoğaltmak | **Yakalanmaz** — kod da kopyalanır. Ancak reçete numarası eczanede not edilirse görülür |
+| Başka bir eczanenin doğrulaması | Doğrulama doktorun kendi cihazında yapılır. Eczane şüphelenirse metni doktora gönderir, doktor beş saniyede bakar |
+
+Anahtar cihazda üretilir, ayarlarda durur ve **yedeğe girer** — doktor cihaz
+değiştirirse yedekten gelen anahtarla eski reçeteler doğrulanmaya devam eder.
+Anahtar yedekten de kaybolursa eski kodlar bir daha doğrulanamaz; yedek dosyası
+bu yüzden hasta bilgisi kadar bu anahtarı da korur.
+
+Karşılama (verilen adet) koda girmez: ilaç verildikçe kâğıttaki kodun
+geçersizleşmemesi gerekir.
 
 **Stok yalnız hareketle değişir.** İlaç kartındaki stok alanı elle düzenlenmez;
 mal girişi, sayım, fire ya da reçete karşılama üzerinden değişir ve her işlem
@@ -120,8 +148,9 @@ app/                      PWA (statik olarak olduğu gibi sunulur)
     hatalar.js            hata, doğrulama ve uyarı kodlarının arayüz metni
     kagit.js              reçete kâğıdı (dolu ve boş hali) + yazdırma
     cekirdek/             dom · yonlendirici · modal · bildirim · simge · tema
-    depo/                 sema · depo · idb · stok · recete · yedek · ornek
-    paylasilan/           saf alan mantığı: ilac · hasta · recete · qr · tarih · metin · kimlik
+    depo/                 sema · depo · idb · stok · recete · dogrulama · yedek · ornek
+    paylasilan/           saf alan mantığı: ilac · hasta · recete · qr · dogrulama ·
+                          tarih · metin · kimlik
     sayfalar/             panel · ilaclar · ilac · hastalar · hasta ·
                           receteler · recete-yeni · recete · ayarlar · bulunamadi
 test/                     vitest

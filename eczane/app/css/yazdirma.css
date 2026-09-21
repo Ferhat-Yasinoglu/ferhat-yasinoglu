@@ -141,6 +141,8 @@
   .kagit__olcum { display: flex; flex-wrap: wrap; gap: 0 1.5mm; align-items: flex-end; font-size: 10pt; font-weight: 700; }
   .kagit__olcum b, .kagit__olcum span:not(.kagit__cizgi) { white-space: nowrap; }
   .kagit__olcum .kagit__cizgi { flex: 1; min-inline-size: 12mm; }
+  .kagit__kod { margin-block-start: 3mm; font-size: 8.5pt; line-height: 1.3; }
+  .kagit__kod span { letter-spacing: .06em; font-weight: 700; }
   .kagit__sutun-ayak { margin-block-start: auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 2mm; padding-block-start: 4mm; }
   .kagit__qr { inline-size: 20mm; block-size: 20mm; }
   .kagit__sutun-resim { display: flex; align-items: flex-end; gap: 1mm; color: var(--mavi-acik); }

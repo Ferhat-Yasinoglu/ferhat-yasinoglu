@@ -10,6 +10,7 @@ import { sayiMetni, bicimAyarla, PARA_BIRIMLERI } from '../paylasilan/metin.js';
 import { t } from '../i18n.js';
 import { kagidiYazdir } from '../kagit.js';
 import { hataMetni } from '../hatalar.js';
+import { metniDogrula } from '../depo/dogrulama.js';
 
 const KOL_ANAHTARI = { ilaclar: 'nav.ilaclar', hastalar: 'nav.hastalar', receteler: 'nav.receteler', hareketler: 'stok.hareketler', ayarlar: 'nav.ayarlar' };
 const KOL_ADI = { ilaclar: 'İlaç', hastalar: 'Hasta', receteler: 'Reçete', hareketler: 'Stok hareketi', ayarlar: 'Ayar' };
@@ -121,7 +122,7 @@ export default {
         ['renkli', t('ayar.stil_renkli', 'Renkli (basılı kâğıdın aynısı)')],
         ['sade', t('ayar.stil_sade', 'Sade (siyah-beyaz, az mürekkep)')],
       ], { name: 'kagitStili', value: ayar.kagitStili || 'renkli' });
-      const qr = secim(QR_SECENEKLERI.map(([k, ad]) => [k, t('ayar.qr.' + k, ad)]), { name: 'qrIcerik', value: ayar.qrIcerik || 'whatsapp' });
+      const qr = secim(QR_SECENEKLERI.map(([k, ad]) => [k, t('ayar.qr.' + k, ad)]), { name: 'qrIcerik', value: ayar.qrIcerik || 'recete' });
       const para = secim(PARA_BIRIMLERI, { name: 'paraBirimi', value: ayar.paraBirimi || 'AFN' });
 
       kok.appendChild(kart({},
@@ -148,6 +149,29 @@ export default {
             title: t('ayar.bos_kagit_ipucu', 'Elle doldurmak için tomar halinde bastır'),
             onclick: () => kagidiYazdir({ ayar, bos: true }),
           }))));
+
+      /* --- Reçete doğrulama --- */
+      const kutu = metinAlani({ rows: 6, placeholder: t('dogrula.yer', 'QR\'dan okunan metni buraya yapıştır') });
+      const sonuc = el('div', { style: { marginBlockStart: 'var(--b-3)' } });
+      kok.appendChild(kart({},
+        el('div', { class: 'kart__bas' }, el('h2', {}, t('dogrula.baslik', 'Reçete doğrula'))),
+        el('p', { class: 'kart__alt' }, t('dogrula.alt', 'Kâğıttaki QR okutulup metni buraya yapıştırılır. Kod tutuyorsa reçete bu cihazdan çıkmıştır ve üzerinde oynanmamıştır. Kâğıtta ilaç, adet ya da doz değiştirilmişse kod tutmaz.')),
+        alan('', kutu),
+        btnS('onay', t('dogrula.dugme', 'Denetle'), { class: 'btn btn--birincil', onclick: async () => {
+          temizle(sonuc);
+          const metin = kutu.value.trim();
+          if (!metin) { sonuc.appendChild(el('div', { class: 'uyari uyari--bilgi' }, simge('bilgi', { boy: 16 }), el('span', {}, t('dogrula.bos', 'Önce metni yapıştır.')))); return; }
+          try {
+            const r = await metniDogrula(depo, metin);
+            const bicim = {
+              gecerli: ['uyari--bilgi', 'basari', t('dogrula.gecerli', 'Geçerli — bu reçete bu cihazdan çıkmış ve değiştirilmemiş.')],
+              gecersiz: ['uyari--hata', 'hata', t('dogrula.gecersiz', 'TUTMUYOR — metin değiştirilmiş ya da kod başka bir cihazdan. Beklenen kod: {k}', { k: r.beklenen })],
+              kodsuz: ['uyari', 'uyari', t('dogrula.kodsuz', 'Metinde doğrulama kodu yok. Bu metnin kodu şu olmalıydı: {k}', { k: r.beklenen || '—' })],
+            }[r.durum];
+            sonuc.appendChild(el('div', { class: `uyari ${bicim[0]}` }, simge(bicim[1], { boy: 16 }), el('span', {}, bicim[2])));
+          } catch (e) { hata(hataMetni(e)); }
+        } }),
+        sonuc));
 
       /* --- Yedek --- */
       const dosyaGirdisi = el('input', {

@@ -16,6 +16,7 @@ import { trTarih, trTarihSaat } from '../paylasilan/tarih.js';
 import { t, secenekleriCevir, secenekAdi } from '../i18n.js';
 import { kagitCiz, kagidiYazdir } from '../kagit.js';
 import { hataMetni, uyariMetni } from '../hatalar.js';
+import { kodSatiri } from '../paylasilan/dogrulama.js';
 
 const DURUM_RENGI = { bekliyor: 'sari', kismi: 'mavi', tamamlandi: 'yesil', bos: 'gri' };
 const SATIR_RENGI = { bekliyor: 'gri', kismi: 'mavi', verildi: 'yesil', verilmedi: 'kirmizi' };
@@ -59,11 +60,12 @@ async function sebepKutusu(ctx, satir) {
 
 /** Reçeteyi düz metne çevirir: WhatsApp, e-posta ve panoya kopyalama aynı metni kullanır. */
 function metneCevir(recete, hasta, ayar) {
+  const kod = recete.dogrulamaKodu ? `\n\n${kodSatiri(recete.dogrulamaKodu)}` : '';
   return receteMetni(recete, hasta, ayar, {
     recete: t('nav.recete', 'Reçete'), tarih: t('genel.tarih', 'Tarih'), hasta: t('nav.hasta', 'Hasta'),
     tani: t('recete.tani', 'Tanı'), ilaclar: t('nav.ilaclar', 'İlaçlar'), not: t('genel.not', 'Not'),
     alerji: t('hasta.alerji', 'Alerji'), adet: t('recete.kutu', 'kutu'), hastaAdi: tamAd(hasta),
-  });
+  }) + kod;
 }
 
 /** Paylaşma kutusu: WhatsApp, e-posta, pano ve cihazın kendi paylaşma penceresi. */
