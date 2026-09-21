@@ -1,6 +1,6 @@
 // Panel: reçete odaklı özet. İşin merkezi reçete yazmak; sayaçlar ve listeler
 // de onu anlatıyor — bugün kaç reçete yazıldı, son reçeteler, son hastalar.
-import { el, temizle, btnS, kart, sayacKutusu, sayfaBas, bosDurum, sirala, sutunGrafik } from '../cekirdek/dom.js';
+import { el, temizle, btn, btnS, kart, sayacKutusu, sayfaBas, bosDurum, sirala, sutunGrafik, yatayGrafik } from '../cekirdek/dom.js';
 import { simge } from '../cekirdek/simge.js';
 import { trTarih, bugun, isoGun, goreliGun } from '../paylasilan/tarih.js';
 import { tamAd } from '../paylasilan/hasta.js';
@@ -36,8 +36,9 @@ export default {
     let sira = 0;
     async function ciz() {
       const benim = ++sira;
-      const [ilaclar, hastalar, receteler] = await Promise.all([
-        depo.listele('ilaclar'), depo.listele('hastalar'), depo.listele('receteler', { sirala: 'tarih', azalan: true }),
+      const [ilaclar, hastalar, receteler, ayar] = await Promise.all([
+        depo.listele('ilaclar'), depo.listele('hastalar'),
+        depo.listele('receteler', { sirala: 'tarih', azalan: true }), depo.ayarlar(),
       ]);
       if (benim !== sira) return;
       temizle(kok);
@@ -70,6 +71,18 @@ export default {
         ],
       }));
 
+      // Antet boşsa reçete boş antetle basılır ve ilk izlenim mahvolur.
+      // Bu yüzden uyarı panelin en üstünde, sayaçlardan önce duruyor.
+      if (!String(ayar.doktorAd ?? '').trim()) {
+        kok.appendChild(kart({ style: { borderColor: 'rgb(var(--sari) / .45)', background: 'rgb(var(--sari) / .05)' } },
+          el('div', { class: 'satir', style: { gap: 'var(--b-3)', flexWrap: 'nowrap', alignItems: 'flex-start' } },
+            el('span', { class: 'avatar', style: { background: 'rgb(var(--sari) / .15)', color: 'rgb(var(--sari))' } }, simge('uyari', { boy: 18 })),
+            el('div', { style: { flex: '1', minInlineSize: '0' } },
+              el('div', { class: 'liste__baslik' }, t('panel.antet_eksik', 'Reçete anteti boş')),
+              el('div', { class: 'liste__alt' }, t('panel.antet_eksik_alt', 'Adın, ünvanın ve iletişim bilgilerin kâğıda basılmıyor. Bir kez girmen yeterli.'))),
+            btn(t('panel.antet_gir', 'Anteti gir'), { class: 'btn btn--birincil btn--kucuk', onclick: () => git('/ayarlar') }))));
+      }
+
       kok.appendChild(el('div', { class: 'izgara izgara--sayac', style: { marginBlockEnd: 'var(--b-5)' } },
         sayacKutusu({ baslik: t('panel.bugun_recete', 'Bugün yazılan'), deger: bugunku.length, alt: t('panel.recete_toplam', '{n} reçete toplam', { n: receteler.length }), simge: 'recete', tur: 'vurgu', yol: '/receteler?suzgec=bugun' }),
         sayacKutusu({ baslik: t('nav.receteler', 'Reçeteler'), deger: receteler.length, alt: t('panel.kayitli', 'kayıtlı'), simge: 'recete', tur: 'notr', yol: '/receteler' }),
@@ -81,6 +94,19 @@ export default {
           el('h2', {}, t('panel.son_gunler', 'Son 14 gün')),
           el('span', { class: 'kart__alt' }, t('recete.sayim', '{n} reçete', { n: ikiHaftalik }))),
         sutunGrafik(gunler, { etiket: t('panel.grafik_etiket', 'Son 14 günde yazılan reçete sayısı') })));
+
+      // En çok yazılan ilaçlar: hekimin kendi pratiğini görmesi için.
+      // Reçete satırlarındaki ilaç adları sayılır; ilaç kaydı silinse bile
+      // ad reçetede durduğu için sayım bozulmaz.
+      const sayim = new Map();
+      for (const r of receteler) {
+        for (const satir of r.satirlar || []) {
+          const ad = String(satir.ilacAdi ?? '').trim();
+          if (ad) sayim.set(ad, (sayim.get(ad) || 0) + 1);
+        }
+      }
+      const enCok = [...sayim.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6)
+        .map(([etiket, deger]) => ({ etiket, deger }));
 
       // Panel kartları geniş ekranda iki sütuna dizilir (bkz. .panel-izgara):
       // tek sütunda her kart bin piksele geniyor ve içindeki üç satırın
@@ -95,6 +121,14 @@ export default {
           bos: t('recete.bos', 'Henüz reçete yok'), tumuYol: '/receteler',
         }),
       ];
+
+      if (enCok.length) {
+        kartlar.push(kart({},
+          el('div', { class: 'kart__bas' },
+            el('h2', {}, t('panel.en_cok_ilac', 'En çok yazdığın ilaçlar')),
+            el('span', { class: 'kart__alt' }, t('panel.en_cok_alt', 'bütün reçetelerde'))),
+          yatayGrafik(enCok)));
+      }
 
       if (hastalar.length) {
         const son = [...hastalar].sort((a, b) => String(b.olusturuldu).localeCompare(String(a.olusturuldu))).slice(0, 6);

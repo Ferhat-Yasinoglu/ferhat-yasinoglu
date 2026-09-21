@@ -68,16 +68,23 @@ async function paylasKutusu(ctx, recete, hasta, ayar) {
   });
 }
 
+// Gezinme sırası. Sayfa ilk çizimden önce veriyi bekliyor; o sırada başka
+// bir sayfaya geçilirse eski çizim geri dönüp yeni sayfanın üstüne yazıyordu
+// (düzenlemeden "yeni reçete"ye geçince eski hasta ekranda kalıyordu).
+// Her çizim sırasını alır, beklerken yenisi başladıysa sessizce çekilir.
+let cizimSirasi = 0;
+
 export default {
   baslik: 'Reçete',
   async cizim(kok, ctx) {
+    const benimSira = ++cizimSirasi;
     const { depo, git, basari, onayla } = ctx;
     let sira = 0;
 
     async function ciz() {
       const benim = ++sira;
       const recete = await depo.al('receteler', ctx.param.id);
-      if (benim !== sira) return;
+      if (benim !== sira || benimSira !== cizimSirasi) return;
       if (!recete) {
         temizle(kok);
         kok.appendChild(bosDurum({
@@ -92,7 +99,7 @@ export default {
         depo.listele('ilaclar'),
         depo.ayarlar(),
       ]);
-      if (benim !== sira) return;
+      if (benim !== sira || benimSira !== cizimSirasi) return;
 
       const uyarilar = receteUyarilari(recete.satirlar, hasta, ilaclar, { alerjiBul: alerjiCakismasi });
 

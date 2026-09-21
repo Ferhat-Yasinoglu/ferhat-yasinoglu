@@ -214,6 +214,8 @@ await sayfa.click(`button:has-text("${T('recete.kaydet')}")`);
 // yazma ekranında da var, tek başına geçişi kanıtlamıyor.
 await sayfa.waitForURL(/#\/recete\/rec_/);
 await sayfa.waitForSelector(`.kart:has(h2:text-is("${T('nav.ilaclar')}")) .tablo tbody tr`);
+const receteId = (new URL(sayfa.url()).hash.match(/#\/recete\/(rec_[^/?]+)/) || [])[1];
+if (!receteId) throw new Error('reçete kimliği adresten okunamadı: ' + sayfa.url());
 const receteNo = (await sayfa.textContent('h1')).trim();
 if (!/^\d{4}-\d{2}-\d{2}-\d{2}$/.test(receteNo)) throw new Error('reçete numarası beklenen biçimde değil: ' + receteNo);
 ok('reçete kaydedildi, numara kendiliğinden verildi: ' + receteNo);
@@ -235,6 +237,54 @@ for (const anahtar of ['recete.ver', 'recete.verilemedi', 'recete.geri_al', 'sto
 }
 ok('karşılama yok: satır tablosunda düğme, sözlükte stok anahtarı kalmamış');
 await resim(sayfa, '8-recete-karti.png', { fullPage: true });
+
+// --- Şablon: reçeteyi kaydet, yeni reçetede uygula
+// Hekim aynı kombinasyonu gün boyu tekrar yazıyor; bu akış kırılırsa
+// günlük kullanımın en çok zaman kazandıran parçası gider.
+await sayfa.goto(KOK + `#/recete/${receteId}/duzenle`);
+await sayfa.waitForSelector(`button:has-text("${T('sablon.kaydet')}")`);
+await sayfa.click(`button:has-text("${T('sablon.kaydet')}")`);
+await sayfa.waitForSelector('.modal input[name=ad]');
+const onerilen = await sayfa.inputValue('.modal input[name=ad]');
+if (!onerilen.includes('Üst solunum')) throw new Error('şablon adı tanıdan önerilmedi: ' + onerilen);
+await sayfa.fill('.modal input[name=ad]', 'ÜSYE denemesi');
+await sayfa.click(`.modal button:has-text("${T('genel.kaydet')}")`);
+await sayfa.waitForSelector('.bildirim--basari');
+ok('reçete şablon olarak kaydedildi, ad tanıdan önerildi');
+
+// Şablonu temiz bir sekmede uygula: aynı sekmede gezinince önceki sayfanın
+// yeniden çizimiyle yarışıyor. Hekim de gerçekte yeni reçeteye sıfırdan
+// başlıyor, bu yüzden denenen yol da bu.
+const yeniSekme = await baglam.newPage();
+await yeniSekme.goto(KOK + '#/recete/yeni', { waitUntil: 'networkidle' });
+await yeniSekme.waitForSelector(`button:has-text("${T('recete.hasta_sec')}")`);
+await yeniSekme.click(`button:has-text("${T('sablon.doldur')}")`);
+await yeniSekme.waitForSelector('.modal .liste__satir--tiklanir');
+await yeniSekme.click('.modal .liste__satir--tiklanir:has-text("ÜSYE denemesi")');
+await yeniSekme.click(`.modal button:has-text("${T('sablon.uygula')}")`);
+await yeniSekme.waitForSelector('.tablo tbody tr:has-text("Nurofen")');
+const sablonSatir = await yeniSekme.locator('#sayfa .tablo tbody tr').count();
+const sablonTani = await yeniSekme.inputValue('input[name=tani]');
+if (sablonSatir !== 2) throw new Error(`şablondan 2 satır beklenirdi, ${sablonSatir} geldi`);
+if (!sablonTani.includes('Üst solunum')) throw new Error('şablon tanıyı getirmedi: ' + sablonTani);
+// Hasta seçilmemiş olmalı: şablon hastaya ait değil.
+const hastaKarti = await yeniSekme.textContent(`.kart:has(h2:text-is("${T('nav.hasta')}"))`);
+if (/Zeynep|Ayşe|Mehmet/.test(hastaKarti)) {
+  throw new Error('şablon uygulanınca hasta da geldi — şablon hastaya ait olmamalı: ' + hastaKarti.trim());
+}
+await yeniSekme.close();
+ok('şablon uygulandı: 2 ilaç ve tanı geldi, hasta gelmedi');
+
+// Ayarlarda görünüyor ve silinebiliyor
+await sayfa.click('#kenar-menu a[href="#/ayarlar"]');
+await sayfa.waitForSelector(`h2:has-text("${T('sablon.baslik')}")`);
+const sablonKarti = await sayfa.textContent(`.kart:has(h2:text-is("${T('sablon.baslik')}"))`);
+if (!sablonKarti.includes('ÜSYE denemesi')) throw new Error('şablon ayarlarda listelenmedi');
+ok('şablon ayarlarda listelendi');
+
+// Kaldığımız yere dön: sonraki adımlar kaydedilmiş reçetenin sayfasında.
+await sayfa.goto(KOK + `#/recete/${receteId}`);
+await sayfa.waitForSelector('.yazdir-alan', { state: 'attached' });
 
 // --- Yazdırma alanı: ekranda gizli, içeriği eksiksiz
 const yazdirMetni = await sayfa.textContent('.yazdir-alan');
@@ -463,6 +513,51 @@ await sayfa.setViewportSize({ width: 1280, height: 900 });
 await sayfa.goto(KOK + '#/ilaclar', { waitUntil: 'networkidle' });
 await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 9);
 ok('sayfa yenilendi, 9 ilaç IndexedDB\'den geri geldi');
+
+// --- Hazır ilaç listesi (en sonda: ilaç sayısını değiştirdiği için)
+// Satır saymak yerine sayfanın kendi yazdığı sayıyı okuyoruz: satırlar
+// belirirken saymak yarı çizilmiş listeyi ölçüyordu.
+const ilacSayisiniOku = async () => {
+  await sayfa.waitForSelector('#sayfa p.kart__alt');
+  const metin = await sayfa.textContent('#sayfa p.kart__alt');
+  const n = Number((metin.match(/\d+/) || [])[0]);
+  if (!Number.isFinite(n)) throw new Error('ilaç sayısı okunamadı: ' + metin);
+  return n;
+};
+await sayfa.click('#kenar-menu a[href="#/ayarlar"]');
+await sayfa.waitForSelector(`h2:has-text("${T('ayar.hazir_liste')}")`);
+await sayfa.click(`button:has-text("${T('ayar.hazir_yukle')}")`);
+// Ekrandaki eski bir bildirim kutusunu beklemek yükleme bitmeden devam
+// etmeye yol açıyordu. "Yüklendi" rozeti yalnız iş bitince çiziliyor.
+// Bildirimler üst üste biniyor; kendi mesajımızı metninden seçiyoruz, yoksa
+// ekranda kalan alakasız bir bildirimi okuyup yanıltıcı satır basıyorduk.
+const eklendiKalibi = T('ayar.hazir_eklendi').replace('{n}', '').trim();
+const eklendiKutusu = `.bildirim--basari:has-text("${eklendiKalibi}")`;
+await sayfa.waitForSelector(eklendiKutusu);
+const eklendiMetni = (await sayfa.textContent(eklendiKutusu)).trim();
+await sayfa.waitForSelector(`.kart:has(h2:text-is("${T('ayar.hazir_liste')}")) .rozet`);
+await sayfa.goto(KOK + '#/ilaclar', { waitUntil: 'networkidle' });
+// Satır sayısı yerleşene kadar bekle: tek satır belirir belirmez saymak
+// yarı çizilmiş listeyi ölçüyordu.
+const listeSonrasi = await ilacSayisiniOku();
+if (listeSonrasi <= 9) throw new Error(`hazır liste yüklenmedi, hâlâ ${listeSonrasi} ilaç var`);
+ok(`hazır ilaç listesi yüklendi (${eklendiMetni}), liste ${listeSonrasi} satır`);
+
+// Aranabiliyor mu?
+await sayfa.fill('#sayfa input[type=search]', 'amoxicillin');
+await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length > 0);
+const amoks = await ilacSayisiniOku();
+ok(`listeden gelen ilaç aranabiliyor: "amoxicillin" ${amoks} sonuç`);
+await sayfa.fill('#sayfa input[type=search]', '');
+
+// İkinci kez yüklemek kopya oluşturmamalı
+await sayfa.click('#kenar-menu a[href="#/ayarlar"]');
+await sayfa.click(`button:has-text("${T('ayar.hazir_yukle')}")`);
+await sayfa.waitForSelector(`.bildirim--uyari:has-text("${T('ayar.hazir_zaten')}")`);
+await sayfa.goto(KOK + '#/ilaclar', { waitUntil: 'networkidle' });
+const ikinciSayim = await ilacSayisiniOku();
+if (ikinciSayim !== listeSonrasi) throw new Error(`ikinci yükleme kopya oluşturdu: ${listeSonrasi} → ${ikinciSayim}`);
+ok('ikinci kez yüklemek kopya oluşturmadı');
 
 await tarayici.close();
 kapat();

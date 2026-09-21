@@ -165,6 +165,25 @@ a.sayac:hover { border-color: rgb(var(--vurgu) / .4); box-shadow: var(--golge-2)
 .grafik__sutun--bugun .grafik__etiket { color: rgb(var(--vurgu)); font-weight: 700; }
 @keyframes cubuk-bit { from { transform: scaleY(0); opacity: 0; } }
 
+/* ---------- Yatay çubuk listesi ---------- */
+.yatay-grafik { display: flex; flex-direction: column; gap: var(--b-2); }
+.yatay-grafik__satir { display: flex; align-items: center; gap: var(--b-3); }
+.yatay-grafik__etiket {
+  inline-size: 40%; max-inline-size: 220px; flex-shrink: 0;
+  font-size: var(--f-s); font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.yatay-grafik__yol { flex: 1; min-inline-size: 0; block-size: 10px; border-radius: var(--r-tam); background: rgb(var(--metin-3) / .13); overflow: hidden; }
+.yatay-grafik__cubuk {
+  block-size: 100%; border-radius: var(--r-tam);
+  background: linear-gradient(90deg, rgb(var(--vurgu-3)), rgb(var(--vurgu)));
+  transform-origin: inline-start;
+  animation: yatay-bit var(--hiz-3) var(--egri) backwards;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+@keyframes yatay-bit { from { transform: scaleX(0); } }
+.yatay-grafik__deger { inline-size: 2.5ch; text-align: end; font-size: var(--f-s); font-weight: 700; font-variant-numeric: tabular-nums; color: rgb(var(--metin-2)); }
+
 /* ---------- Liste ---------- */
 .liste { display: flex; flex-direction: column; border: var(--kenarlik); border-radius: var(--r); overflow: hidden; background: rgb(var(--yuzey)); }
 /* Kartın içindeki liste kendi kenarlığını taşımaz — kutu içinde kutu oluyor

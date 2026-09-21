@@ -186,11 +186,18 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
         ? el('div', { class: 'kagit__kullanim' }, [s.kullanim, s.sure, s.not].filter(doluMu).join(' · '))
         : null)));
 
+  // İmza yeri: gerçek reçetede hekimin imzası olur. Dolu kâğıtta da boş
+  // kâğıtta da basılıyor — imza her hâlükârda elle atılıyor.
+  const imza = el('div', { class: 'kagit__imza' },
+    el('span', { class: 'kagit__imza-cizgi' }, ' '),
+    el('span', { class: 'kagit__imza-etiket' }, t('kagit.imza', 'امضا')));
+
   const rx = el('section', { class: 'kagit__rx' },
     filigran(),
     el('div', { class: 'kagit__rx-isaret', dir: 'ltr' }, '℞'),
     el('div', { class: 'kagit__rx-govde' }, tani, alerji, ilacGovdesi,
-      !bos && doluMu(recete.notlar) ? el('div', { class: 'kagit__not' }, recete.notlar) : null));
+      !bos && doluMu(recete.notlar) ? el('div', { class: 'kagit__not' }, recete.notlar) : null),
+    imza);
 
   /* ---- Ayak: rozetler ve iletişim ---- */
   const rozetler = String(ayar.ayakEtiketleri ?? t('kagit.ayak_etiketleri', 'قلب, شش, معده, اطفال'))
