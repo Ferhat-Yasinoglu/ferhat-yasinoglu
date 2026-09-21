@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bulunamadı — Ferhat Yasinoğlu</title>
+<meta name="color-scheme" content="dark">
+<style>
+  :root { --kagit: #0a0a0c; --murekkep: #f4f1eb; --altin: #d4af37; --sessiz: #9a958c; --cizgi: #24232a; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; padding: 48px 16px;
+    background: var(--kagit); color: var(--murekkep);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
+  }
+  header { text-align: center; max-width: 34rem; }
+  .kod { font-size: 3rem; font-weight: 700; color: var(--altin); line-height: 1; margin: 0 0 12px; }
+  h1 { margin: 0 0 8px; font-size: 1.25rem; }
+  header p { margin: 0; color: var(--sessiz); }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; width: 100%; max-width: 30rem; }
+  a.proje {
+    display: flex; align-items: baseline; gap: 8px; padding: 16px 20px;
+    border: 1px solid var(--cizgi); border-radius: 14px; background: #101016;
+    color: inherit; text-decoration: none; font-weight: 600;
+  }
+  a.proje:hover, a.proje:focus-visible { border-color: var(--altin); }
+  a.proje:focus-visible { outline: 2px solid var(--altin); outline-offset: 3px; }
+  a.proje .ok { color: var(--altin); font-weight: 400; }
+  footer { color: var(--sessiz); font-size: .85rem; }
+  footer a { color: var(--altin); }
+</style>
+</head>
+<body>
+<header>
+  <p class="kod">404</p>
+  <h1>Bu adreste bir şey yok</h1>
+  <p>Adres yanlış yazılmış ya da sayfa taşınmış olabilir. Aradığın muhtemelen bunlardan biri:</p>
+</header>
+
+<ul>
+  <li><a class="proje" href="/ferhat-yasinoglu/eczane/">Eczane Yönetim <span class="ok" aria-hidden="true">→</span></a></li>
+  <li><a class="proje" href="/ferhat-yasinoglu/sosyal-studyo/">Sosyal Stüdyo <span class="ok" aria-hidden="true">→</span></a></li>
+</ul>
+
+<footer><a href="/ferhat-yasinoglu/">Bütün projeler</a></footer>
+</body>
+</html>
