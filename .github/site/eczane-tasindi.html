@@ -1,0 +1,72 @@
+<!doctype html>
+<!--
+  Uygulama /eczane/ adresinden /shafa/app/ adresine taşındı.
+
+  Bu sayfa eski adreste duruyor çünkü hekimin telefonundaki kurulu uygulama
+  ve tarayıcı yer imi hâlâ buraya bakıyor. Doğrudan silseydik 404 görürlerdi.
+
+  Veriler kaybolmuyor: IndexedDB yola değil KAYNAĞA (origin) bağlı, ikisi de
+  aynı alan adında. Yeni adreste bütün hastalar ve reçeteler yerinde.
+
+  Yanındaki sw.js eski service worker'ı kapatıyor; o olmasa eski uygulama
+  önbellekten açılmaya devam eder ve bu sayfa hiç görünmezdi.
+-->
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="3; url=../shafa/app/">
+<title>شفا — آدرس تغییر کرد</title>
+<link rel="canonical" href="../shafa/app/">
+<style>
+  :root {
+    --zemin: 246 249 249; --yuzey: 255 255 255; --metin: 17 30 32;
+    --metin-2: 74 94 97; --vurgu: 15 118 110; --kenar: 226 234 234;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --zemin: 8 17 18; --yuzey: 15 27 29; --metin: 232 241 241;
+      --metin-2: 158 178 180; --vurgu: 45 212 191; --kenar: 31 48 51;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-block-size: 100vh; display: grid; place-items: center;
+    padding-inline: 16px; background: rgb(var(--zemin)); color: rgb(var(--metin));
+    font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+    line-height: 1.65;
+  }
+  .kutu {
+    inline-size: 100%; max-inline-size: 30rem; text-align: center;
+    background: rgb(var(--yuzey)); border: 1px solid rgb(var(--kenar));
+    border-radius: 18px; padding: 32px 24px;
+  }
+  h1 { margin: 0 0 8px; font-size: 1.35rem; }
+  p { margin: 0 0 20px; color: rgb(var(--metin-2)); }
+  .dugme {
+    display: inline-block; padding: 12px 28px; border-radius: 999px;
+    background: rgb(var(--vurgu)); color: #fff; text-decoration: none; font-weight: 600;
+  }
+  .kucuk { font-size: .85rem; margin-block-start: 20px; margin-block-end: 0; }
+  code { font-family: ui-monospace, monospace; direction: ltr; unicode-bidi: isolate; }
+</style>
+</head>
+<body>
+  <main class="kutu">
+    <h1>آدرس برنامه تغییر کرد</h1>
+    <p>شفا حالا در <code>/shafa/app/</code> است. تا چند لحظه دیگر خودکار منتقل می‌شوید.</p>
+    <a class="dugme" href="../shafa/app/">رفتن به برنامه</a>
+    <p class="kucuk">
+      معلومات مریضان و نسخه‌ها همه محفوظ است؛ در آدرس جدید سر جای خود می‌باشد.
+      لطفاً برنامه را یک بار دیگر به صفحه اصلی تلفن اضافه کنید.
+    </p>
+  </main>
+<script>
+  // Yönlendirmeyi geçmişe yazmıyoruz: "geri" tuşu hekimi buraya geri
+  // getirip sonsuz döngüye sokardı.
+  addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => location.replace('../shafa/app/'), 1200);
+  });
+</script>
+</body>
+</html>

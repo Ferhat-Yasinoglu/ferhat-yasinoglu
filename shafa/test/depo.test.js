@@ -137,7 +137,7 @@ describe('örnek veri', () => {
 
 describe('IndexedDB deposu', () => {
   it('şemayı kurar, yazar ve okur', async () => {
-    const idb = await new IdbDepo('eczane-test-' + Math.random().toString(36).slice(2)).ac();
+    const idb = await new IdbDepo('shafa-test-' + Math.random().toString(36).slice(2)).ac();
     const i = await idb.kaydet('ilaclar', { ad: 'Parol', stok: 3, barkod: '8699514013059' });
     expect((await idb.al('ilaclar', i.id)).ad).toBe('Parol');
     expect(idb.db.objectStoreNames.contains('receteler')).toBe(true);
