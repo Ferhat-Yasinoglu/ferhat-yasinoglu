@@ -52,7 +52,7 @@ export function qrIcerigi(ayar, recete, hasta, { bos = false } = {}) {
   const secim = ayar.qrIcerik || 'whatsapp';
   if (secim === 'yok') return '';
   if (secim === 'recete' && !bos && recete) {
-    // Doğrulanabilir içerik: kanonik özet + kod. Eczane QR'ı okutup kâğıttaki
+    // Doğrulanabilir içerik: kanonik özet + kod. Eczaneci QR'ı okutup kâğıttaki
     // yazıyla karşılaştırır; ikisi tutmuyorsa kâğıt üzerinde oynanmıştır.
     const ozet = ozetMetni(recete, tamAd(hasta));
     return recete.dogrulamaKodu ? `${ozet}\n${kodSatiri(recete.dogrulamaKodu)}` : ozet;
@@ -84,7 +84,13 @@ function filigran() {
  */
 export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } = {}) {
   const boyut = ayar.yazdirmaBoyutu === 'A5' ? 'A5' : 'A4';
-  const sade = ayar.kagitStili === 'sade';
+  // Kâğıt stili. 'klasik' hekimin hâlihazırda kullandığı basılı kâğıdın
+  // aynısı; eski sürüm bunu 'renkli' diye kaydediyordu, o değer korunuyor.
+  // Yeni kurulumlarda varsayılan 'modern'.
+  const stilAdi = ayar.kagitStili === 'sade' ? 'sade'
+    : (ayar.kagitStili === 'klasik' || ayar.kagitStili === 'renkli') ? 'klasik'
+      : 'modern';
+  const stilSinifi = stilAdi === 'klasik' ? '' : ` kagit--${stilAdi}`;
   const stil = el('style', {});
   // ℞ alanı sayfanın kalanını doldursun: boş kâğıtta yazmaya bol yer kalır.
   stil.textContent = `@page { size: ${boyut}; margin: ${boyut === 'A5' ? '6mm' : '8mm'}; }`
@@ -189,7 +195,7 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
         el('div', { class: 'kagit__rozet' }, el('span', { class: 'kagit__rozet-daire' }, simge(ROZET_SIMGE[i] || 'kalp', { boy: 20 })), el('span', {}, etiket))))
       : null);
 
-  return el('div', { class: `yazdir-alan kagit${sade ? ' kagit--sade' : ''}` }, stil,
+  return el('div', { class: `yazdir-alan kagit${stilSinifi}` }, stil,
     antet, unvan, hizmet, deneyim, serit,
     el('div', { class: 'kagit__govde' }, rx, sutun),
     ayak);

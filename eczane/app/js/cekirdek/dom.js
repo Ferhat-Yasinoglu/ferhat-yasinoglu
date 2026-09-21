@@ -9,7 +9,14 @@ export function el(tag, attrs = {}, ...cocuklar) {
     if (v === undefined || v === null || v === false) continue;
     if (k === 'class') e.className = v;
     else if (k === 'dataset') Object.assign(e.dataset, v);
-    else if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
+    else if (k === 'style' && typeof v === 'object') {
+      // Özel özellikler (--i gibi) Object.assign ile yazılmıyor, setProperty ister.
+      for (const [ad, deger] of Object.entries(v)) {
+        if (deger === null || deger === undefined) continue;
+        if (ad.startsWith('--')) e.style.setProperty(ad, String(deger));
+        else e.style[ad] = deger;
+      }
+    }
     else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2).toLowerCase(), v);
     else if (['value', 'checked', 'disabled', 'selected', 'hidden'].includes(k)) e[k] = v;
     else e.setAttribute(k, v === true ? '' : String(v));
@@ -82,11 +89,30 @@ export function sayfaBas(baslik, { alt, eylemler = [], geri } = {}) {
     eylemler.filter(Boolean).length ? el('div', { class: 'sayfa-bas__eylem' }, ...eylemler.filter(Boolean)) : null);
 }
 
+/** Sayıyı sıfırdan hedefe sayar. Küçük bir şey ama panel "canlı" hissettiriyor.
+ *  Azaltılmış hareket isteyen cihazda ve büyük sayılarda doğrudan yazılır —
+ *  dört haneli bir sayıyı saymak gösteriş olur, bilgiyi geciktirir. */
+function sayiCanlandir(kutu, hedef) {
+  const azalt = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  if (azalt || !Number.isFinite(hedef) || hedef <= 0 || hedef > 999) { kutu.textContent = String(hedef); return; }
+  const sure = Math.min(680, 240 + hedef * 16);
+  const bas = performance.now();
+  kutu.textContent = '0';
+  const adim = (t) => {
+    const o = Math.min(1, (t - bas) / sure);
+    kutu.textContent = String(Math.round(hedef * (1 - (1 - o) ** 3)));
+    if (o < 1) requestAnimationFrame(adim);
+  };
+  requestAnimationFrame(adim);
+}
+
 /** Panelde kullanılan sayaç kutusu. `tur` rengi belirler: vurgu/uyari/hata/notr. */
 export function sayacKutusu({ baslik, deger, alt, simge: s, tur = 'notr', yol }) {
+  const sayi = el('strong', { class: 'sayac__deger' }, String(deger));
+  sayiCanlandir(sayi, Number(deger));
   const icerik = [
     el('div', { class: 'sayac__ust' }, s ? simge(s, { boy: 18 }) : null, el('span', {}, baslik)),
-    el('strong', { class: 'sayac__deger' }, String(deger)),
+    sayi,
     alt ? el('span', { class: 'sayac__alt' }, alt) : null,
   ];
   return yol
@@ -110,6 +136,26 @@ export function tablo(basliklar, satirlar, { bos = 'Kayıt yok' } = {}) {
     el('table', { class: 'tablo' },
       el('thead', {}, el('tr', {}, ...basliklar.map((b) => el('th', { class: b?.sinif }, b?.ad ?? b)))),
       el('tbody', {}, ...satirlar.map((s) => el('tr', s.attrs || {}, ...(s.hucreler || s).map((h) => el('td', {}, h)))))));
+}
+
+/** Sütun grafiği — dışarıdan kütüphane yok, yalnız div'ler ve CSS.
+ *  veri: [{ etiket, deger, bugun }]. En büyük sütun tam yüksekliği alır;
+ *  sıfır olan gün ince bir çizgi olarak durur ki "veri yok" ile "o gün
+ *  yazılmamış" birbirine karışmasın. */
+export function sutunGrafik(veri, { etiket = '' } = {}) {
+  const enBuyuk = Math.max(1, ...veri.map((v) => Number(v.deger) || 0));
+  return el('div', { class: 'grafik', role: 'img', 'aria-label': etiket },
+    ...veri.map((v, i) => {
+      const d = Number(v.deger) || 0;
+      const oran = d ? 10 + (d / enBuyuk) * 90 : 3;
+      return el('div', {
+        class: 'grafik__sutun' + (d ? '' : ' grafik__sutun--bos') + (v.bugun ? ' grafik__sutun--bugun' : ''),
+        style: { '--i': i },
+        title: `${v.etiket}: ${d}`,
+      },
+        el('div', { class: 'grafik__cubuk', style: { blockSize: oran + '%' } }),
+        el('div', { class: 'grafik__etiket' }, v.etiket));
+    }));
 }
 
 /** Liste/ızgara öğelerine sırayla açılma gecikmesi verir. */
