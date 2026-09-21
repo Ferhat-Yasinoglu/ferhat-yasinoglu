@@ -5,6 +5,8 @@ import { el, temizle, btn, btnS, girdi, secim, metinAlani, alan, kart, rozet, sa
 import { simge } from '../cekirdek/simge.js';
 import { RECETE_TURLERI, KULLANIM_ONERILERI, OLCUMLER, bosRecete, bosSatir, receteDogrula, receteUyarilari } from '../paylasilan/recete.js';
 import { receteKaydet } from '../depo/recete.js';
+import { sablonuUygula } from '../paylasilan/sablon.js';
+import { sablonSecKutusu, sablonKaydetKutusu } from '../sablon-arayuz.js';
 import { ilacAra, ilacEtiketi } from '../paylasilan/ilac.js';
 import { tamAd, hastaAra, hastaYasi, alerjiCakismasi } from '../paylasilan/hasta.js';
 import { basHarfler } from '../paylasilan/metin.js';
@@ -20,6 +22,14 @@ async function hastaSec(ctx, hastalar) {
   let secilen = null;
 
   function ciz() {
+
+    // Sayfadan ayrıldıysak çizme: bu işlev modal kapandıktan sonra da
+
+    // çağrılıyor ve o sırada başka bir sayfa açılmış olabilir. Koruma
+
+    // olmadan eski form yeni sayfanın üstüne yazılıyordu.
+
+    if (benimSira !== cizimSirasi) return;
     temizle(liste);
     const bulunan = hastaAra(hastalar, kutu.value).slice(0, 20);
     if (!bulunan.length) {
@@ -131,17 +141,29 @@ async function satirKutusu(ctx, ilaclar, hasta, mevcut = null) {
   return sonuc && typeof sonuc === 'object' ? sonuc : null;
 }
 
+// Gezinme sırası. Sayfa ilk çizimden önce veriyi bekliyor; o sırada başka
+// bir sayfaya geçilirse eski çizim geri dönüp yeni sayfanın üstüne yazıyordu
+// (düzenlemeden "yeni reçete"ye geçince eski hasta ekranda kalıyordu).
+// Her çizim sırasını alır, beklerken yenisi başladıysa sessizce çekilir.
+let cizimSirasi = 0;
+
 export default {
   baslik: 'Reçete yaz',
   async cizim(kok, ctx) {
+    const benimSira = ++cizimSirasi;
     const { depo, git, basari, hata, onayla } = ctx;
-    const [ilaclar, hastalar, ayar] = await Promise.all([
+    const [ilaclar, hastalar, ayar, ilkSablonlar] = await Promise.all([
       depo.listele('ilaclar', { sirala: 'ad' }),
       depo.listele('hastalar', { sirala: 'soyad' }),
       depo.ayarlar(),
+      depo.listele('sablonlar', { sirala: 'ad' }),
     ]);
+    if (benimSira !== cizimSirasi) return;
+    // Şablon listesi yeni bir şablon kaydedilince tazelenir.
+    let sablonlar = ilkSablonlar;
 
     const duzenleme = ctx.param.id ? await depo.al('receteler', ctx.param.id) : null;
+    if (benimSira !== cizimSirasi) return;
     let recete = duzenleme ? { ...duzenleme } : bosRecete(ayar, bugun());
     let hasta = recete.hastaId ? hastalar.find((h) => h.id === recete.hastaId) : null;
     if (!duzenleme && ctx.sorgu?.hasta) {
@@ -237,10 +259,20 @@ export default {
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' },
           el('h2', {}, t('nav.ilaclar', 'İlaçlar')),
-          btnS('arti', t('recete.ilac_ekle', 'İlaç ekle'), { class: 'btn btn--kucuk btn--birincil', onclick: async () => {
-            const y = await satirKutusu(ctx, ilaclar, hasta);
-            if (y) { recete.satirlar = [...recete.satirlar, y]; ciz(); }
-          } })),
+          el('div', { class: 'satir', style: { gap: 'var(--b-2)' } },
+            sablonlar.length
+              ? btnS('recete', t('sablon.doldur', 'Şablondan doldur'), { class: 'btn btn--kucuk', onclick: async () => {
+                const s = await sablonSecKutusu(ctx, sablonlar);
+                if (!s) return;
+                Object.assign(recete, sablonuUygula(recete, s));
+                basari(t('sablon.uygulandi', '"{ad}" uygulandı', { ad: s.ad }));
+                ciz();
+              } })
+              : null,
+            btnS('arti', t('recete.ilac_ekle', 'İlaç ekle'), { class: 'btn btn--kucuk btn--birincil', onclick: async () => {
+              const y = await satirKutusu(ctx, ilaclar, hasta);
+              if (y) { recete.satirlar = [...recete.satirlar, y]; ciz(); }
+            } }))),
         hatalar.satirlar ? el('div', { class: 'alan__hata', style: { marginBlockEnd: 'var(--b-2)' } }, dogrulaMetni(hatalar.satirlar)) : null,
         satirGovdesi,
         ...genelUyarilar.map((u) => el('div', { class: `uyari uyari--${u.tur}`, style: { marginBlockStart: 'var(--b-2)' } }, simge('uyari', { boy: 16 }), el('span', {}, uyariMetni(u))))));
@@ -250,6 +282,11 @@ export default {
         alan(t('recete.not', 'Reçete notu'), metinAlani({ name: 'notlar', value: recete.notlar, rows: 2, onchange: (e) => { recete.notlar = e.target.value.trim(); } })),
         el('div', { class: 'satir' },
           btnS('kaydet', duzenleme ? t('recete.kaydet_degisiklik', 'Değişiklikleri kaydet') : t('recete.kaydet', 'Reçeteyi kaydet'), { class: 'btn btn--birincil', onclick: () => kaydet() }),
+          recete.satirlar.length
+            ? btnS('kaydet', t('sablon.kaydet', 'Şablon olarak kaydet'), { class: 'btn', onclick: async () => {
+              if (await sablonKaydetKutusu(ctx, recete)) { sablonlar = await depo.listele('sablonlar', { sirala: 'ad' }); ciz(); }
+            } })
+            : null,
           btn(t('genel.vazgec', 'Vazgeç'), { class: 'btn btn--sade', onclick: async () => {
             if (!recete.satirlar.length || await onayla(t('recete.kapat_onay', 'Bu reçete kaydedilmeden kapatılsın mı?'), { evet: t('genel.kapat', 'Kapat') })) {
               git(duzenleme ? `/recete/${duzenleme.id}` : '/receteler');
