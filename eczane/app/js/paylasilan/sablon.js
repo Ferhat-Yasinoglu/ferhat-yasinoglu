@@ -10,31 +10,37 @@ import { normalize, eslesir } from './metin.js';
 
 /** Yeni şablon iskeleti. */
 export function bosSablon() {
-  return { ad: '', tani: '', taniKodu: '', notlar: '', satirlar: [] };
+  return { ad: '', tani: '', taniKodu: '', laboratuvar: '', notlar: '', satirlar: [] };
 }
 
 /**
  * Açık bir reçeteden şablon çıkarır. Hastaya ve o güne ait olan hiçbir şey
  * taşınmaz: tarih, numara, ölçümler, hasta ve doğrulama kodu dışarıda kalır.
  * Şablon "ne yazdım"ı taşır, "kime yazdım"ı değil.
+ *
+ * BELİRTİLER de dışarıda: hastanın o gün anlattığı şey, duruma değil kişiye
+ * ait. LABORATUVAR içeride: "bu tanıda şu tetkikleri isterim" tekrar eden bir
+ * karar, her hastada yeniden seçilmesi gereksiz.
  */
 export function receteyiSablonaCevir(recete, ad) {
   return {
     ad: String(ad ?? '').trim(),
     tani: recete?.tani ?? '',
     taniKodu: recete?.taniKodu ?? '',
+    laboratuvar: recete?.laboratuvar ?? '',
     notlar: recete?.notlar ?? '',
     satirlar: (recete?.satirlar || []).map((s) => ({
       ilacId: s.ilacId ?? '', ilacAdi: s.ilacAdi ?? '',
       adet: Number(s.adet) > 0 ? Number(s.adet) : 1,
-      kullanim: s.kullanim ?? '', sure: s.sure ?? '', not: s.not ?? '',
+      form: s.form ?? '',
+      kullanim: s.kullanim ?? '', sure: s.sure ?? '', yol: s.yol ?? '', not: s.not ?? '',
     })),
   };
 }
 
 /**
  * Şablonu açık reçetenin üstüne uygular.
- * Hasta, tarih, numara ve ölçümler korunur — onlar o muayeneye ait.
+ * Hasta, tarih, numara, ölçümler ve belirtiler korunur — onlar o muayeneye ait.
  * Zaten yazılmış satırlar silinmez, şablonunkiler eklenir: hekim iki şablonu
  * üst üste kullanabilsin ve elle eklediği satır kaybolmasın.
  * Aynı ilaç iki kez girmez.
@@ -47,6 +53,7 @@ export function sablonuUygula(recete, sablon) {
     ...recete,
     tani: recete?.tani?.trim() ? recete.tani : (sablon?.tani ?? ''),
     taniKodu: recete?.taniKodu?.trim() ? recete.taniKodu : (sablon?.taniKodu ?? ''),
+    laboratuvar: recete?.laboratuvar?.trim() ? recete.laboratuvar : (sablon?.laboratuvar ?? ''),
     notlar: recete?.notlar?.trim() ? recete.notlar : (sablon?.notlar ?? ''),
     satirlar: [...mevcut, ...gelen.map((s) => ({ ...s }))],
   };

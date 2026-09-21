@@ -206,6 +206,12 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 .liste__govde { flex: 1; min-inline-size: 0; }
 .liste__baslik { font-weight: 600; overflow-wrap: anywhere; }
 .liste__alt { font-size: var(--f-s); color: rgb(var(--metin-2)); overflow-wrap: anywhere; }
+/* Liste içi bölüm başlığı: "senin sık yazdıkların" / "diğerleri". */
+.liste__ayrac {
+  padding-block: var(--b-2) 4px; padding-inline: var(--b-3);
+  font-size: var(--f-xs); font-weight: 600; color: rgb(var(--metin-3));
+  background: rgb(var(--yuzey-2)); position: sticky; inset-block-start: 0; z-index: 1;
+}
 .liste__son { display: flex; align-items: center; gap: var(--b-2); flex-shrink: 0; }
 
 .avatar {
@@ -313,6 +319,31 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 
 /* ---------- Küçükler ---------- */
 .cip { display: inline-flex; align-items: center; gap: 4px; padding-block: 3px; padding-inline: var(--b-2); border-radius: var(--r-tam); background: rgb(var(--yuzey-2)); border: var(--kenarlik); font-size: var(--f-xs); }
+
+/* Dokunulabilir çip. Reçetedeki tanı, kullanım ve süre alanları buradan
+   seçiliyor: hekimin klavyeye gitmesi gereken yerleri tek dokunuşa indiriyor.
+   En az 32px yükseklik — telefonda parmakla basılacak. */
+.cip--secilir {
+  min-block-size: 32px; padding-block: 5px; cursor: pointer;
+  color: rgb(var(--metin)); font: inherit; font-size: var(--f-xs);
+  transition: background var(--hiz-1) var(--egri), border-color var(--hiz-1) var(--egri), transform var(--hiz-1) var(--egri);
+}
+.cip--secilir:hover { background: rgb(var(--yuzey-3)); border-color: rgb(var(--vurgu) / .45); }
+.cip--secilir:active { transform: scale(.96); }
+.cip--secilir:focus-visible { outline: none; box-shadow: var(--halka); }
+.cip--secili {
+  background: rgb(var(--vurgu) / .13); border-color: rgb(var(--vurgu) / .55);
+  color: rgb(var(--vurgu)); font-weight: 600;
+}
+.cip--secili:hover { background: rgb(var(--vurgu) / .2); }
+
+/* Başlıklı çip kümesi: "Yaygın", "Senin sık yazdıkların" gibi. */
+.cip-kume { display: flex; flex-wrap: wrap; align-items: center; gap: var(--b-2); margin-block-start: var(--b-2); }
+.cip-kume__etiket {
+  font-size: var(--f-xs); font-weight: 600; color: rgb(var(--metin-3));
+  inline-size: 100%; margin-block-end: -2px;
+}
+
 .sessiz { color: rgb(var(--metin-3)); }
 .sayi-yazi { font-variant-numeric: tabular-nums; }
 .simge { flex-shrink: 0; }

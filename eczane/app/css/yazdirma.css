@@ -131,6 +131,7 @@
     font-size: 22pt; font-weight: 700; line-height: 1; color: var(--mavi-koyu);
   }
   .kagit__rx-govde { position: relative; margin-block-start: 11mm; }
+  .kagit__belirti { font-size: 9.5pt; margin-block-end: 1.5mm; }
   .kagit__tani { font-size: 9.5pt; margin-block-end: 1.5mm; }
   .kagit__alerji {
     border: 1.2pt solid #b3321f; color: #8f2517;
@@ -139,8 +140,19 @@
   .kagit__ilaclar { margin: 0; padding-inline-start: 6mm; }
   .kagit__ilaclar li { margin-block-end: 3.5mm; break-inside: avoid; }
   .kagit__ilac-ad { display: flex; gap: 2mm; align-items: baseline; font-size: 10.5pt; }
-  .kagit__adet { font-size: 9.5pt; }
+  /* "Cap:" öneki adın önünde, adetten ("N=12") ayrı dursun: satır
+     soldan sağa okunuyor, adet en sonda. */
+  .kagit__form { font-weight: 600; color: var(--mavi-koyu); }
+  .kagit__adet { font-size: 9.5pt; margin-inline-start: auto; }
   .kagit__kullanim { font-size: 9pt; }
+
+  /* Tetkik istemi ilaçlardan sonra, ince çizgiyle ayrı bir blok. */
+  .kagit__lab {
+    margin-block-start: 3mm; padding-block-start: 2mm;
+    border-block-start: 0.6pt solid var(--mavi-acik); font-size: 9.5pt;
+  }
+  .kagit__lab-bas { font-weight: 700; color: var(--mavi-koyu); font-size: 9pt; }
+
   .kagit__not { font-size: 9pt; margin-block-start: 2mm; }
 
   .kagit__klinik-sutun {
@@ -279,6 +291,10 @@
   .kagit--modern .kagit__filigran { display: none; }
   .kagit--modern .kagit__rx-isaret { color: var(--m-vurgu); font-size: 20pt; }
   .kagit--modern .kagit__tani { color: var(--m-sessiz); }
+  .kagit--modern .kagit__belirti { color: var(--m-sessiz); }
+  .kagit--modern .kagit__form { color: var(--m-vurgu); }
+  .kagit--modern .kagit__lab { border-block-start-color: var(--m-vurgu-acik); }
+  .kagit--modern .kagit__lab-bas { color: var(--m-vurgu); }
   .kagit--modern .kagit__alerji {
     border: none; border-inline-start: 1.2mm solid #b3321f;
     background: #fdeceb; border-radius: 0 1mm 1mm 0;

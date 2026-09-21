@@ -11,6 +11,7 @@ import { simge } from './cekirdek/simge.js';
 import { t } from './i18n.js';
 import { tamAd, hastaYasi } from './paylasilan/hasta.js';
 import { OLCUMLER } from './paylasilan/recete.js';
+import { formKisa, ilacAdiFormsuz } from './paylasilan/ilac.js';
 import { ozetMetni, kodSatiri } from './paylasilan/dogrulama.js';
 import { trTarih } from './paylasilan/tarih.js';
 import { telefonNormalize } from './paylasilan/metin.js';
@@ -46,7 +47,7 @@ function amblemCiz() {
  *  ya da değiştirmek için bu dosyayı düzenlemek gerekir — öyle istendi. */
 const VECIZE = 'طبیب حقیقی خداوند (ج) است';
 
-const KLINIK_ADLARI = { bp: 'BP', pr: 'PR', rr: 'RR', bw: 'BW', temp: 'Temperature' };
+const KLINIK_ADLARI = { bp: 'BP', pr: 'PR', rr: 'RR', bw: 'BW', temp: 'Temperature', spo2: 'SpO2', ht: 'Height' };
 
 const doluMu = (v) => String(v ?? '').trim() !== '';
 const satirlara = (metin) => String(metin ?? '').split('\n').map((x) => x.trim()).filter(Boolean);
@@ -178,13 +179,38 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
     ? el('div', { class: 'kagit__alerji' }, el('b', {}, t('hasta.alerji', 'Alerji') + ': '), alerjiler.join(', '))
     : null;
 
+  // İlaç satırı hekimin ve eczacının alışık olduğu biçimde:
+  // "1- Cap: Amoxicillin 500 mg" … "N=12". Numarayı <ol> veriyor.
+  // Şekli bilinmeyen (eski) satırda önek basılmaz, ad tek başına kalır.
   const ilacGovdesi = bos
     ? null
-    : el('ol', { class: 'kagit__ilaclar' }, ...(recete.satirlar || []).map((s) => el('li', {},
-      el('div', { class: 'kagit__ilac-ad' }, el('b', {}, s.ilacAdi), el('span', { class: 'kagit__adet' }, `× ${s.adet}`)),
-      doluMu(s.kullanim) || doluMu(s.sure) || doluMu(s.not)
-        ? el('div', { class: 'kagit__kullanim' }, [s.kullanim, s.sure, s.not].filter(doluMu).join(' · '))
-        : null)));
+    // Liste soldan sağa: sıra numarası adın SOLUNDA dursun ("1. Tab: …").
+    // RTL'de numara sağa geçiyor ve ".1" diye ters basılıyordu.
+    : el('ol', { class: 'kagit__ilaclar', dir: 'ltr' }, ...(recete.satirlar || []).map((s) => {
+      const kisa = formKisa(s.form);
+      return el('li', {},
+        el('div', { class: 'kagit__ilac-ad', dir: 'ltr' },
+          kisa ? el('span', { class: 'kagit__form' }, kisa + ':') : null,
+          el('b', {}, ilacAdiFormsuz(s.ilacAdi, s.form)),
+          el('span', { class: 'kagit__adet' }, `N=${s.adet}`)),
+        doluMu(s.kullanim) || doluMu(s.sure) || doluMu(s.yol) || doluMu(s.not)
+          // Kullanım satırı Farsça: yönünü içeriğinden alsın, liste LTR olsa da.
+          ? el('div', { class: 'kagit__kullanim', dir: 'auto' }, [s.kullanim, s.sure, s.yol, s.not].filter(doluMu).join(' · '))
+          : null);
+    }));
+
+  // Hastanın anlattıkları tanının üstünde: kâğıt muayenenin sırasını izlesin.
+  const belirtiler = !bos && doluMu(recete.belirtiler)
+    ? el('div', { class: 'kagit__belirti' }, el('b', {}, t('kagit.belirtiler', 'Belirtiler') + ': '), recete.belirtiler)
+    : null;
+
+  // Tetkik istemi ilaçlardan sonra, kendi bloğunda: gerçek reçetede de
+  // ayrı bir istem, ilaç listesinin parçası değil.
+  const laboratuvar = !bos && doluMu(recete.laboratuvar)
+    ? el('div', { class: 'kagit__lab' },
+      el('div', { class: 'kagit__lab-bas' }, t('kagit.laboratuvar', 'Laboratuvar')),
+      el('div', {}, recete.laboratuvar))
+    : null;
 
   // İmza yeri: gerçek reçetede hekimin imzası olur. Dolu kâğıtta da boş
   // kâğıtta da basılıyor — imza her hâlükârda elle atılıyor.
@@ -195,7 +221,7 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
   const rx = el('section', { class: 'kagit__rx' },
     filigran(),
     el('div', { class: 'kagit__rx-isaret', dir: 'ltr' }, '℞'),
-    el('div', { class: 'kagit__rx-govde' }, tani, alerji, ilacGovdesi,
+    el('div', { class: 'kagit__rx-govde' }, belirtiler, tani, alerji, ilacGovdesi, laboratuvar,
       !bos && doluMu(recete.notlar) ? el('div', { class: 'kagit__not' }, recete.notlar) : null),
     imza);
 
