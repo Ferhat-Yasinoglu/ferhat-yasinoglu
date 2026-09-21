@@ -12,10 +12,10 @@
 <meta property="og:type" content="website">
 <style>
 /* Yazı tipi uygulamanın kopyasından gelir: iki yerde aynı dosyayı taşımayalım.
-   Yayında site/shafa/ ile site/eczane/ yan yana durduğu için yol geçerli. */
+   Yayında uygulama site/shafa/app/ altında; yazı oradan alınıyor. */
 @font-face {
   font-family: 'Vazirmatn';
-  src: url('../eczane/yazi/vazirmatn.woff2') format('woff2');
+  src: url('./app/yazi/vazirmatn.woff2') format('woff2');
   font-weight: 100 900; font-style: normal; font-display: swap;
 }
 
@@ -200,7 +200,7 @@ footer a:hover { color: var(--vurgu); }
       <a class="baglanti" href="#ozellikler">امکانات</a>
       <a class="baglanti" href="#kagit">کاغذ نسخه</a>
       <a class="baglanti" href="#تایید">کد تأیید</a>
-      <a class="dugme dugme--asil dugme--kucuk" href="../eczane/">باز کردن برنامه</a>
+      <a class="dugme dugme--asil dugme--kucuk" href="./app/">باز کردن برنامه</a>
     </nav>
   </div>
 </header>
@@ -215,7 +215,7 @@ footer a:hover { color: var(--vurgu); }
         معلومات مریضان از دستگاه بیرون نمی‌رود و برنامه بدون انترنت هم کار می‌کند.
       </p>
       <div class="eylemler">
-        <a class="dugme dugme--asil" href="../eczane/">باز کردن برنامه</a>
+        <a class="dugme dugme--asil" href="./app/">باز کردن برنامه</a>
         <a class="dugme" href="#kagit">دیدن نمونه نسخه</a>
       </div>
       <p class="not">نصب نمی‌خواهد؛ در مرورگر باز می‌شود و می‌توانید به صفحه اصلی گوشی اضافه کنید.</p>
@@ -372,7 +372,7 @@ footer a:hover { color: var(--vurgu); }
         مریض نمونه می‌توانید یک نسخه بنویسید و چاپ آن را ببینید. با یک کلیک هم پاک می‌شود.
       </p>
       <div class="eylemler">
-        <a class="dugme dugme--asil" href="../eczane/">باز کردن برنامه</a>
+        <a class="dugme dugme--asil" href="./app/">باز کردن برنامه</a>
         <a class="dugme" href="#ozellikler">مرور دوباره امکانات</a>
       </div>
     </div>
@@ -385,7 +385,7 @@ footer a:hover { color: var(--vurgu); }
     <nav>
       <a href="#ozellikler">امکانات</a>
       <a href="#kagit">کاغذ نسخه</a>
-      <a href="../eczane/">برنامه</a>
+      <a href="./app/">برنامه</a>
     </nav>
   </div>
 </footer>

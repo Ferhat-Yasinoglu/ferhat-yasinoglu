@@ -1,20 +1,20 @@
-# eczane'nin testleri. GitHub yalniz depo kokundeki .github/workflows'u okudugu
+# Shafa'nin testleri. GitHub yalniz depo kokundeki .github/workflows'u okudugu
 # icin bu dosya projenin yaninda degil burada duruyor.
 #
 # Push tetikleyicisi yok: main'e giren kod site.yml icindeki `dogrula` isinde
 # zaten test ediliyor (yayindan once). Ayni testi iki kez kosmanin anlami yok.
-name: Eczane testleri
+name: Shafa testleri
 
 on:
   pull_request:
     paths:
-      - "eczane/**"
-      - ".github/workflows/eczane.yml"
+      - "shafa/**"
+      - ".github/workflows/shafa.yml"
   workflow_dispatch:
 
 defaults:
   run:
-    working-directory: eczane
+    working-directory: shafa
 
 jobs:
   dogrula:
@@ -27,7 +27,7 @@ jobs:
           node-version: "22"
           cache: npm
           # Lockfile kokte degil, projenin kendi klasorunde.
-          cache-dependency-path: eczane/package-lock.json
+          cache-dependency-path: shafa/package-lock.json
       - run: npm ci
       - run: npm run kontrol
       - run: npm test

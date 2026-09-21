@@ -1,5 +1,5 @@
 {
-  "name": "eczane",
+  "name": "shafa",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,8 @@
     "test": "vitest run",
     "test:izle": "vitest",
     "kontrol": "node tools/kontrol.mjs",
-    "deneme": "node tools/tarayici.mjs"
+    "deneme": "node tools/tarayici.mjs",
+    "site": "node tools/site-denemesi.mjs"
   },
   "engines": {
     "node": ">=22"
