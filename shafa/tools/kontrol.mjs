@@ -48,5 +48,77 @@ for (const [dil, sozluk] of Object.entries(sozlukler)) {
   if (eksik.length) hataVer(`i18n/${dil}.json: ${eksik.length} anahtar eksik → ${eksik.slice(0, 8).join(', ')}${eksik.length > 8 ? '…' : ''}`);
 }
 
+// (6) DİNAMİK kurulan anahtarlar. Yukarıdaki tarama yalnız düz `t('a.b')`
+// yazımını görüyor; `t(HARITA[x] || x)` ya da `t(`onek.${k}`)` gözünden kaçıyor.
+// Şablonlar eklendiğinde tam buradan sızdı: koleksiyon → etiket haritasına
+// eklenmeyen `sablonlar`, Ayarlar'daki "Veriler" kartında ham anahtarıyla,
+// yani Türkçe basıldı ve öyle yayına gitti. Denetim artık bu iki üreteci de
+// çözüp karşılıklarını arıyor.
+const oku = (yol) => readFile(join(KOK, yol), 'utf8');
+const listeAnahtarlari = (kaynak, ad) => {
+  const m = kaynak.match(new RegExp(`const ${ad}\\s*=\\s*\\[(.*?)\\];`, 's'));
+  return m ? [...m[1].matchAll(/\[\s*'([^']*)'/g)].map((x) => x[1]) : null;
+};
+const dinamik = [];
+
+// 6a. Seçenek listeleri: secenekleriCevir(LISTE, 'onek') → 'onek.<anahtar>'
+for (const [yol, ad, onek] of [
+  ['js/paylasilan/hasta.js', 'CINSIYETLER', 'cinsiyet'],
+  ['js/paylasilan/hasta.js', 'SIGORTALAR', 'sigorta'],
+  ['js/paylasilan/ilac.js', 'FORMLAR', 'form'],
+  ['js/paylasilan/recete.js', 'RECETE_TURLERI', 'recete.tur'],
+  ['js/sayfalar/ilaclar.js', 'SUZGECLER', 'suzgec'],
+  ['js/sayfalar/receteler.js', 'SUZGECLER', 'recete.suzgec'],
+  ['js/paylasilan/recete.js', 'KULLANIM_ONERILERI', 'kullanim'],
+  ['js/paylasilan/recete.js', 'SURE_ONERILERI', 'sure'],
+  ['js/paylasilan/recete.js', 'YOLLAR', 'yol'],
+]) {
+  const liste = listeAnahtarlari(await oku(yol), ad);
+  if (!liste) { hataVer(`${yol}: ${ad} listesi okunamadı — denetim bu listeyi doğrulayamıyor`); continue; }
+  // Öneri listeleri düz dizi: anahtar yerine dizin kullanılıyor (kullanim.0…).
+  const duzDizi = liste.length === 0;
+  const kaynak = duzDizi ? await oku(yol) : null;
+  const n = duzDizi
+    ? (kaynak.match(new RegExp(`const ${ad}\\s*=\\s*\\[(.*?)\\];`, 's'))[1].match(/'[^']*'/g) || []).length
+    : 0;
+  const anahtarlar = duzDizi ? [...Array(n).keys()] : liste;
+  for (const a of anahtarlar) dinamik.push([`${onek}.${a}`, `${ad} (${yol})`]);
+}
+
+// 6b. Koleksiyon → etiket: SAYILAN her koleksiyonun haritada karşılığı olmalı.
+const sema = await oku('js/depo/sema.js');
+const ayarlarKaynak = await oku('js/sayfalar/ayarlar.js');
+const semaGovde = sema.match(/export const KOLEKSIYONLAR\s*=\s*\{(.*?)\n\};/s);
+const haritaGovde = ayarlarKaynak.match(/const KOL_ANAHTARI\s*=\s*\{(.*?)\};/s);
+if (!semaGovde || !haritaGovde) {
+  hataVer('KOLEKSIYONLAR ya da KOL_ANAHTARI okunamadı — koleksiyon etiketleri doğrulanamıyor');
+} else {
+  const harita = Object.fromEntries([...haritaGovde[1].matchAll(/(\w+):\s*'([^']+)'/g)].map((m) => [m[1], m[2]]));
+  for (const m of semaGovde[1].matchAll(/^\s*(\w+):/gm)) {
+    const kol = m[1];
+    if (kol === 'meta') continue;          // sayılmıyor, yedeklenmiyor
+    if (!harita[kol]) hataVer(`ayarlar.js: '${kol}' koleksiyonu KOL_ANAHTARI haritasında yok — etiketi Türkçe basılır`);
+    else dinamik.push([harita[kol], `KOL_ANAHTARI[${kol}]`]);
+  }
+}
+
+// 6c. HTML'deki data-i18n / data-i18n-label
+for (const f of await dosyalar(KOK, '.html')) {
+  for (const m of (await readFile(f, 'utf8')).matchAll(/data-i18n(?:-label)?="([^"]+)"/g)) {
+    dinamik.push([m[1], f]);
+  }
+}
+
+// 6d. Menü başlıkları (uygulama.js içindeki `anahtar: '…'`)
+for (const m of (await oku('js/uygulama.js')).matchAll(/anahtar:\s*'([^']+)'/g)) {
+  dinamik.push([m[1], 'uygulama.js MENU']);
+}
+
+for (const [dil, sozluk] of Object.entries(sozlukler)) {
+  const eksik = dinamik.filter(([a]) => !(a in sozluk));
+  for (const [a, nereden] of eksik) hataVer(`i18n/${dil}.json: dinamik anahtar eksik → ${a} (${nereden})`);
+}
+dinamik.forEach(([a]) => kullanilan.add(a));
+
 console.log(hata ? `${hata} sorun` : `✓ statik denetimler geçti (${kullanilan.size} çeviri anahtarı yerinde)`);
 process.exit(hata ? 1 : 0);
