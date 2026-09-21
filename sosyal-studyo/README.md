@@ -53,7 +53,7 @@ app/                      PWA (GitHub Pages'e olduğu gibi kopyalanır)
   i18n/                   de/en/fa sözlükleri (TR kaynak kodda)
 worker/                   Cloudflare Worker (webhook'lar, D1, AI proxy)
 test/birim/               vitest
-tools/                    sun.mjs (statik sunucu), kontrol.mjs, site-index.html
+tools/                    sun.mjs (statik sunucu), kontrol.mjs
 ```
 
 ## Kanal gerçekliği
