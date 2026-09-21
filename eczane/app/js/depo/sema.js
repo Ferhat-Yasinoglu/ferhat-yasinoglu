@@ -1,15 +1,18 @@
 // Şema: koleksiyonlar, sürüm ve IndexedDB yükseltmesi.
 // Sürüm artınca idbYukselt her eski sürümden yeniye taşır; veri silinmez.
-export const SEMA_SURUMU = 1;
+export const SEMA_SURUMU = 2;
 
 export const KOLEKSIYONLAR = {
   ilaclar: { onek: 'ila', yedek: true, indeksler: { barkod: 'barkod', ad: 'ad' } },
   hastalar: { onek: 'has', yedek: true, indeksler: { kimlikNo: 'kimlikNo', soyad: 'soyad' } },
   receteler: { onek: 'rec', yedek: true, indeksler: { hastaId: 'hastaId', tarih: 'tarih' } },
-  hareketler: { onek: 'hrk', yedek: true, indeksler: { ilacId: 'ilacId', tarih: 'tarih' } },
   ayarlar: { onek: 'ayr', yedek: true },
   meta: { onek: 'met', yedek: false },
 };
+
+/** 2. sürümde düşen mağazalar. Yükseltme bunları siler; eski yedeklerde
+ *  bu koleksiyonlar çıkarsa geri yükleme sessizce atlar. */
+export const DUSEN_KOLEKSIYONLAR = ['hareketler'];
 
 export function idbYukselt(db, tx, eskiSurum) {
   if (eskiSurum < 1) {
@@ -20,7 +23,16 @@ export function idbYukselt(db, tx, eskiSurum) {
       }
     }
   }
-  // Sonraki sürümler buraya eklenir: if (eskiSurum < 2) { … }
+  // 2: stok takibi kalktı — hasta ilacını dışarıdaki eczaneden kendi alıyor.
+  // Stok hareketleri mağazası siliniyor; ilaç kayıtlarındaki ölü alanlar
+  // (stok, sonKullanma, raf…) yerinde duruyor, kimse okumuyor ve ilaç
+  // düzenlenince kendiliğinden gidiyorlar. Veri silmemek için tercih edildi:
+  // kullanıcı yanlışlıkla stok kaydı tutuyorsa yedekte hâlâ bulunur.
+  if (eskiSurum < 2) {
+    for (const ad of DUSEN_KOLEKSIYONLAR) {
+      if (db.objectStoreNames.contains(ad)) db.deleteObjectStore(ad);
+    }
+  }
 }
 
 /** Yedek belgesinde taşınan koleksiyonlar. */

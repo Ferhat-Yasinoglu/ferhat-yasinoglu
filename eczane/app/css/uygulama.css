@@ -3,12 +3,13 @@
 html, body { margin: 0; padding: 0; }
 body {
   background: rgb(var(--bg)); color: rgb(var(--metin));
-  font-family: var(--yazi); font-size: var(--f-m); line-height: 1.55;
+  font-family: var(--yazi); font-size: var(--f-m); line-height: var(--satir-yazi);
   -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
 }
-h1, h2, h3 { line-height: 1.25; }
-h1 { font-size: var(--f-xl); margin-block: 0 var(--b-1); }
-h2 { font-size: var(--f-l); margin-block: var(--b-5) var(--b-2); }
+h1, h2, h3 { line-height: var(--satir-baslik); letter-spacing: -.005em; }
+h1 { font-size: var(--f-xl); margin-block: 0 var(--b-1); font-weight: 700; }
+h2 { font-size: var(--f-l); margin-block: var(--b-5) var(--b-2); font-weight: 700; }
 a { color: rgb(var(--vurgu)); }
 :focus-visible { outline: 2px solid rgb(var(--vurgu)); outline-offset: 2px; }
 .js-gerekli { padding: var(--b-5); text-align: center; color: rgb(var(--metin-2)); }
@@ -18,15 +19,17 @@ a { color: rgb(var(--vurgu)); }
   position: sticky; inset-block-start: 0; z-index: 40;
   display: flex; align-items: center; gap: var(--b-3);
   block-size: var(--ust-cubuk); padding-inline: var(--b-4);
-  background: rgb(var(--yuzey)); border-block-end: var(--kenarlik);
+  background: rgb(var(--yuzey) / .88); backdrop-filter: blur(10px);
+  border-block-end: var(--kenarlik);
 }
 .ust__logo { display: flex; align-items: center; gap: var(--b-2); text-decoration: none; color: inherit; flex-shrink: 0; }
 .ust__logo img { inline-size: 30px; block-size: 30px; }
 .ust__ad { display: flex; flex-direction: column; line-height: 1.15; }
-.ust__ad b { font-size: var(--f-m); }
+.ust__ad b { font-size: var(--f-m); letter-spacing: -.01em; }
 .ust__ad span { font-size: var(--f-xs); color: rgb(var(--metin-3)); }
-.ust__ara { flex: 1; max-inline-size: 420px; }
-.ust__sag { margin-inline-start: auto; display: flex; align-items: center; gap: var(--b-2); }
+/* Arama kutusu ortada yüzmesin: sınırlı genişlikte, başlıktan sonra. */
+.ust__ara { flex: 1; max-inline-size: 360px; }
+.ust__sag { margin-inline-start: auto; display: flex; align-items: center; gap: var(--b-1); }
 
 /* ---------- Gövde ---------- */
 .govde { display: flex; min-block-size: calc(100vh - var(--ust-cubuk)); }
@@ -37,24 +40,37 @@ a { color: rgb(var(--vurgu)); }
   overflow-y: auto;
 }
 .menu { display: flex; flex-direction: column; gap: 2px; }
-.menu__grup { font-size: var(--f-xs); text-transform: uppercase; letter-spacing: .08em; color: rgb(var(--metin-3)); font-weight: 700; margin-block: var(--b-3) var(--b-1); padding-inline: var(--b-2); }
+.menu__grup {
+  font-size: var(--f-xs); text-transform: uppercase; letter-spacing: .1em;
+  color: rgb(var(--metin-3)); font-weight: 700;
+  margin-block: var(--b-4) var(--b-2); padding-inline: var(--b-3);
+}
+.menu__grup:first-child { margin-block-start: 0; }
 .menu a {
   display: flex; align-items: center; gap: var(--b-3);
   padding: var(--b-2) var(--b-3); border-radius: var(--r-kucuk);
   color: rgb(var(--metin-2)); text-decoration: none; font-weight: 600; font-size: var(--f-m);
+  transition: background var(--gecis), color var(--gecis);
 }
 .menu a:hover { background: rgb(var(--yuzey-2)); color: rgb(var(--metin)); }
-.menu a[aria-current="page"] { background: rgb(var(--vurgu) / .12); color: rgb(var(--vurgu)); }
-.menu__sayi { margin-inline-start: auto; font-size: var(--f-xs); font-weight: 700; color: rgb(var(--metin-3)); }
+.menu a[aria-current="page"] { background: rgb(var(--vurgu) / .12); color: rgb(var(--vurgu)); font-weight: 700; }
+/* Sayı etiketi menünün bitiş kenarında, okunur bir hap olarak durur. */
+.menu__sayi {
+  margin-inline-start: auto; min-inline-size: 22px; text-align: center;
+  padding-block: 1px; padding-inline: 6px; border-radius: var(--r-tam);
+  background: rgb(var(--metin-3) / .14); color: rgb(var(--metin-2));
+  font-size: var(--f-xs); font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.menu a[aria-current="page"] .menu__sayi { background: rgb(var(--vurgu) / .18); color: rgb(var(--vurgu)); }
 
-.icerik { flex: 1; min-inline-size: 0; padding: var(--b-5); padding-block-end: var(--b-8); max-inline-size: 1180px; }
-.bantlar { display: flex; flex-direction: column; gap: var(--b-2); margin-block-end: var(--b-3); }
+.icerik { flex: 1; min-inline-size: 0; padding: var(--b-5) var(--b-6); padding-block-end: var(--b-8); max-inline-size: var(--icerik-en); }
+.bantlar { display: flex; flex-direction: column; gap: var(--b-2); margin-block-end: var(--b-4); }
 .bant {
   display: flex; align-items: center; gap: var(--b-2); flex-wrap: wrap;
   padding: var(--b-3) var(--b-4); border-radius: var(--r); font-size: var(--f-s); font-weight: 600;
-  background: rgb(var(--sari) / .12); color: rgb(var(--sari)); border: 1px solid rgb(var(--sari) / .3);
+  background: rgb(var(--sari) / .1); color: rgb(var(--sari)); border: 1px solid rgb(var(--sari) / .26);
 }
-.bant--hata { background: rgb(var(--kirmizi) / .12); color: rgb(var(--kirmizi)); border-color: rgb(var(--kirmizi) / .3); }
+.bant--hata { background: rgb(var(--kirmizi) / .1); color: rgb(var(--kirmizi)); border-color: rgb(var(--kirmizi) / .26); }
 .bant .btn { margin-inline-start: auto; }
 
 /* ---------- Sayfa başlığı ---------- */
@@ -69,8 +85,10 @@ a { color: rgb(var(--vurgu)); }
 /* ---------- Hareket ---------- */
 .sayfa-giris { animation: sayfa-gir 200ms cubic-bezier(.2, .6, .2, 1); }
 @keyframes sayfa-gir { from { opacity: 0; transform: translateY(6px); } }
-.sirali > * { animation: sira-gir 240ms cubic-bezier(.2, .6, .2, 1) backwards; animation-delay: calc(var(--i, 0) * 26ms); }
-@keyframes sira-gir { from { opacity: 0; transform: translateY(5px); } }
+/* Sıra gecikmesi kısa: uzun listede satırlar tek tek belirince sayfa
+   yavaş açılıyormuş gibi oluyordu. */
+.sirali > * { animation: sira-gir 200ms cubic-bezier(.2, .6, .2, 1) backwards; animation-delay: calc(var(--i, 0) * 14ms); }
+@keyframes sira-gir { from { opacity: 0; transform: translateY(4px); } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
@@ -80,20 +98,38 @@ a { color: rgb(var(--vurgu)); }
 @media (max-width: 860px) {
   .kenar { display: none; }
   .icerik { padding: var(--b-4); padding-block-end: calc(var(--alt-cubuk) + var(--b-5)); }
+  .ust { padding-inline: var(--b-3); gap: var(--b-2); }
   .ust__ad span { display: none; }
+  /* Telefonda başlık yerine arama önemli: ad kısalır, kutu genişler. */
+  .ust__ara { max-inline-size: none; }
   .alt {
     display: flex; position: fixed; inset-block-end: 0; inset-inline: 0; z-index: 40;
-    block-size: var(--alt-cubuk); background: rgb(var(--yuzey)); border-block-start: var(--kenarlik);
+    block-size: var(--alt-cubuk); background: rgb(var(--yuzey) / .94); backdrop-filter: blur(10px);
+    border-block-start: var(--kenarlik);
     padding-block-end: env(safe-area-inset-bottom);
   }
   .alt a, .alt button {
-    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    position: relative;
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
     border: none; background: none; color: rgb(var(--metin-3)); text-decoration: none;
     font: inherit; font-size: var(--f-xs); font-weight: 600; cursor: pointer;
   }
   .alt a[aria-current="page"] { color: rgb(var(--vurgu)); }
-  .sayfa-bas__eylem { margin-inline-start: 0; inline-size: 100%; }
-  .sayfa-bas__eylem .btn { flex: 1; justify-content: center; }
+  /* Seçili sekmenin üstünde ince bir çizgi: renk tek başına, özellikle
+     karanlık temada ve küçük simgelerde yeterince belli olmuyordu. */
+  .alt a[aria-current="page"]::before {
+    content: ''; position: absolute; inset-block-start: 0; inset-inline: 22%;
+    block-size: 2px; border-radius: var(--r-tam); background: rgb(var(--vurgu));
+  }
+  /* Eylem düğmeleri ikili ızgara; asıl eylem tam satır. flex ile
+     dizildiğinde üçüncü düğme tek başına alt satıra düşüp boydan boya
+     uzuyordu — ikincil bir düğme asıl düğmeden iri görünüyordu. */
+  .sayfa-bas__eylem {
+    margin-inline-start: 0; inline-size: 100%;
+    display: grid; grid-template-columns: 1fr 1fr; gap: var(--b-2);
+  }
+  .sayfa-bas__eylem > .btn { justify-content: center; }
+  .sayfa-bas__eylem > .btn--birincil { grid-column: 1 / -1; }
   /* Bildirimler alt gezinme çubuğunun üstünde durur; yoksa düğmeleri örtüyordu. */
   .bildirimler { inset-block-end: calc(var(--alt-cubuk) + var(--b-2)); inset-inline: var(--b-3) var(--b-3); }
   .bildirim { max-inline-size: none; }

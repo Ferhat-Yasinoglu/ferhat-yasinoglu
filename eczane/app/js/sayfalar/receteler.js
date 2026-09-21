@@ -1,17 +1,12 @@
-// Reçeteler: liste, süzme ve arama. Bekleyenler en üstte durur —
-// tezgâhta önce onlar lazım.
-import { el, temizle, btnS, girdi, secim, rozet, sayfaBas, bosDurum, sirala } from '../cekirdek/dom.js';
-import { receteOzet, DURUM_ADLARI, RECETE_TURLERI } from '../paylasilan/recete.js';
+// Reçeteler: liste, süzme ve arama. En yeni reçete en üstte.
+import { el, temizle, btnS, girdi, secim, sayfaBas, bosDurum, sirala } from '../cekirdek/dom.js';
+import { receteOzet, RECETE_TURLERI } from '../paylasilan/recete.js';
 import { tamAd } from '../paylasilan/hasta.js';
-import { eslesir, paraMetni } from '../paylasilan/metin.js';
+import { eslesir } from '../paylasilan/metin.js';
 import { trTarih, bugun } from '../paylasilan/tarih.js';
 import { t, secenekleriCevir, secenekAdi } from '../i18n.js';
 
-const DURUM_RENGI = { bekliyor: 'sari', kismi: 'mavi', tamamlandi: 'yesil', bos: 'gri' };
-const SUZGECLER = [
-  ['', 'Tümü'], ['acik', 'Bekleyen ve kısmi'], ['bekliyor', 'Bekleyenler'],
-  ['kismi', 'Kısmen verilenler'], ['tamamlandi', 'Tamamlananlar'], ['bugun', 'Bugün yazılanlar'],
-];
+const SUZGECLER = [['', 'Tümü'], ['bugun', 'Bugün yazılanlar']];
 const suzgecler = () => secenekleriCevir(SUZGECLER, 'recete.suzgec');
 
 export default {
@@ -26,7 +21,7 @@ export default {
 
     kok.append(
       sayfaBas(t('nav.receteler', 'Reçeteler'), {
-        alt: t('recete.sayfa_alt', 'Yazılan reçeteler ve karşılama durumları.'),
+        alt: t('recete.sayfa_alt', 'Yazılan reçeteler.'),
         eylemler: [btnS('arti', t('recete.yeni', 'Yeni reçete'), { class: 'btn btn--birincil', onclick: () => git('/recete/yeni') })],
       }),
       el('div', { class: 'satir', style: { marginBlockEnd: 'var(--b-4)' } }, arama, suzgec),
@@ -48,13 +43,9 @@ export default {
 
       let liste = hepsi.map((r) => ({ r, o: receteOzet(r), hasta: hastaAdi(r.hastaId) }));
       if (q) liste = liste.filter(({ r, hasta }) => eslesir(`${r.receteNo || ''} ${hasta} ${r.tani || ''} ${r.taniKodu || ''}`, q));
-      if (s === 'acik') liste = liste.filter(({ o }) => o.durum === 'bekliyor' || o.durum === 'kismi');
-      else if (s === 'bugun') liste = liste.filter(({ r }) => String(r.tarih).slice(0, 10) === bugun());
-      else if (s) liste = liste.filter(({ o }) => o.durum === s);
+      if (s === 'bugun') liste = liste.filter(({ r }) => String(r.tarih).slice(0, 10) === bugun());
 
-      // Açık reçeteler öne alınır, sonra tarihe göre yeniden eskiye.
-      const oncelik = { bekliyor: 0, kismi: 0, bos: 1, tamamlandi: 2 };
-      liste.sort((a, b) => (oncelik[a.o.durum] - oncelik[b.o.durum]) || String(b.r.tarih).localeCompare(String(a.r.tarih)));
+      liste.sort((a, b) => String(b.r.tarih).localeCompare(String(a.r.tarih)));
 
       if (!hepsi.length) {
         govde.appendChild(bosDurum({
@@ -76,9 +67,7 @@ export default {
           el('td', {},
             el('div', { class: 'liste__baslik' }, hasta),
             r.tani ? el('div', { class: 'liste__alt' }, [r.tani, r.taniKodu].filter(Boolean).join(' · ')) : null),
-          el('td', { class: 'sayi' }, `${o.verilen}/${o.toplam}`),
-          el('td', { class: 'sayi' }, paraMetni(o.tutar)),
-          el('td', {}, rozet(t('durum.' + o.durum, DURUM_ADLARI[o.durum] || o.durum), DURUM_RENGI[o.durum] || 'gri'))));
+          el('td', { class: 'sayi' }, String(o.toplam))));
       }
 
       govde.append(
@@ -86,7 +75,7 @@ export default {
         el('div', { class: 'tablo-kap' }, el('table', { class: 'tablo' },
           el('thead', {}, el('tr', {},
             el('th', {}, t('nav.recete', 'Reçete')), el('th', {}, t('genel.tarih', 'Tarih')), el('th', {}, t('nav.hasta', 'Hasta')),
-            el('th', { class: 'sayi' }, t('recete.verilen', 'Verilen')), el('th', { class: 'sayi' }, t('genel.tutar', 'Tutar')), el('th', {}, t('genel.durum', 'Durum')))),
+            el('th', { class: 'sayi' }, t('nav.ilaclar', 'İlaçlar')))),
           tbody)));
       sirala(tbody);
     }

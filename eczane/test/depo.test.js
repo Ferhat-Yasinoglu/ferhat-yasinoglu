@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { BellekDepo, DepoHatasi } from '../app/js/depo/depo.js';
 import { IdbDepo } from '../app/js/depo/idb.js';
-import { hareketUygula, ilacHareketleri } from '../app/js/depo/stok.js';
 import { yedekOlustur, iceAktar, yedekDogrula, hatirlatmaGerekli } from '../app/js/depo/yedek.js';
 import { ornekYukle } from '../app/js/depo/ornek.js';
 
@@ -59,43 +58,6 @@ describe('listele', () => {
   });
   it('limit uygular', async () => {
     expect(await depo.listele('hastalar', { limit: 2 })).toHaveLength(2);
-  });
-});
-
-describe('stok hareketleri', () => {
-  let ilac;
-  beforeEach(async () => { ilac = await depo.kaydet('ilaclar', { ad: 'Parol', stok: 10 }); });
-
-  it('giriş stoğu artırır', async () => {
-    await hareketUygula(depo, { ilacId: ilac.id, tur: 'giris', adet: 5 });
-    expect((await depo.al('ilaclar', ilac.id)).stok).toBe(15);
-  });
-  it('reçete çıkışı stoğu azaltır', async () => {
-    await hareketUygula(depo, { ilacId: ilac.id, tur: 'recete', adet: 4, receteId: 'rec_1' });
-    expect((await depo.al('ilaclar', ilac.id)).stok).toBe(6);
-  });
-  it('stoğu eksiye düşüren hareketi reddeder', async () => {
-    await expect(hareketUygula(depo, { ilacId: ilac.id, tur: 'recete', adet: 11 })).rejects.toThrow(/Stok yetersiz/);
-    expect((await depo.al('ilaclar', ilac.id)).stok).toBe(10);
-  });
-  it('sayım stoğu mutlak değere eşitler', async () => {
-    await hareketUygula(depo, { ilacId: ilac.id, tur: 'sayim', adet: 3 });
-    expect((await depo.al('ilaclar', ilac.id)).stok).toBe(3);
-  });
-  it('hareket öncesi ve sonrası stoğu kaydeder', async () => {
-    await hareketUygula(depo, { ilacId: ilac.id, tur: 'fire', adet: 2, aciklama: 'kırıldı' });
-    const [h] = await ilacHareketleri(depo, ilac.id);
-    expect(h).toMatchObject({ oncesi: 10, sonrasi: 8, adet: -2, aciklama: 'kırıldı' });
-  });
-  it('olmayan ilaçta hata verir', async () => {
-    await expect(hareketUygula(depo, { ilacId: 'yok', tur: 'giris', adet: 1 })).rejects.toThrow(/bulunamadı/);
-  });
-  it('geçmişi yeniden eskiye sıralar', async () => {
-    await hareketUygula(depo, { ilacId: ilac.id, tur: 'giris', adet: 1, aciklama: 'ilk' });
-    await new Promise((r) => setTimeout(r, 2));
-    await hareketUygula(depo, { ilacId: ilac.id, tur: 'giris', adet: 1, aciklama: 'son' });
-    const g = await ilacHareketleri(depo, ilac.id);
-    expect(g[0].aciklama).toBe('son');
   });
 });
 
@@ -181,5 +143,33 @@ describe('IndexedDB deposu', () => {
     expect(idb.db.objectStoreNames.contains('receteler')).toBe(true);
     expect(idb.db.transaction('ilaclar').objectStore('ilaclar').indexNames.contains('barkod')).toBe(true);
     expect((await idb.meta()).degisiklikSayaci).toBe(1);
+  });
+});
+
+describe('düşmüş koleksiyon taşıyan eski yedek', () => {
+  // Stok takibi kalkınca 'hareketler' koleksiyonu düştü. Doktorun elindeki
+  // eski yedek dosyası hâlâ onu taşıyor: reddedilmemeli, sessizce atlanmalı.
+  const eskiYedek = () => ({
+    bicim: 'eczane-yedek', semaSurumu: 1, olusturuldu: '2026-01-01T00:00:00.000Z',
+    koleksiyonlar: {
+      ilaclar: [{ id: 'ila_1', ad: 'Parol', rev: 1, guncellendi: '2026-01-01T00:00:00.000Z' }],
+      hastalar: [], receteler: [], ayarlar: [],
+      hareketler: [{ id: 'hrk_1', ilacId: 'ila_1', adet: 5, rev: 1 }],
+    },
+  });
+
+  it('geçerli sayılır', () => expect(yedekDogrula(eskiYedek()).gecerli).toBe(true));
+
+  it('ilaçlar gelir, hareketler atlanır', async () => {
+    const r = await iceAktar(depo, eskiYedek());
+    expect(r.ok).toBe(true);
+    expect(r.rapor.hareketler).toBeUndefined();
+    expect((await depo.listele('ilaclar')).map((i) => i.ad)).toEqual(['Parol']);
+  });
+
+  it('bilinmeyen bir koleksiyon hâlâ reddedilir', () => {
+    const b = eskiYedek();
+    b.koleksiyonlar.kediler = [];
+    expect(yedekDogrula(b).gecerli).toBe(false);
   });
 });

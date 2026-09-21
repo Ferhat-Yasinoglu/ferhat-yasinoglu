@@ -1,13 +1,13 @@
 // Reçete yazma. Hasta seç → ilaç satırlarını ekle → kaydet.
-// Uyarılar (alerji, stok, son kullanma, çift etken madde) satır eklenir eklenmez
+// Uyarılar (alerji, çift etken madde) satır eklenir eklenmez
 // çıkar; hiçbiri kaydetmeyi engellemez, karar hekimindir — ama görmeden geçilmez.
 import { el, temizle, btn, btnS, girdi, secim, metinAlani, alan, kart, rozet, sayfaBas, bosDurum, sirala } from '../cekirdek/dom.js';
 import { simge } from '../cekirdek/simge.js';
 import { RECETE_TURLERI, KULLANIM_ONERILERI, OLCUMLER, bosRecete, bosSatir, receteDogrula, receteUyarilari } from '../paylasilan/recete.js';
 import { receteKaydet } from '../depo/recete.js';
-import { ilacAra, ilacEtiketi, ilacUyarilari, stokDurumu } from '../paylasilan/ilac.js';
+import { ilacAra, ilacEtiketi } from '../paylasilan/ilac.js';
 import { tamAd, hastaAra, hastaYasi, alerjiCakismasi } from '../paylasilan/hasta.js';
-import { basHarfler, paraMetni } from '../paylasilan/metin.js';
+import { basHarfler } from '../paylasilan/metin.js';
 import { bugun } from '../paylasilan/tarih.js';
 import { t, secenekleriCevir } from '../i18n.js';
 import { dogrulaMetni, hataMetni, uyariMetni } from '../hatalar.js';
@@ -70,16 +70,16 @@ async function satirKutusu(ctx, ilaclar, hasta, mevcut = null) {
   function secileniCiz() {
     temizle(secilenKutusu);
     if (!ilac) return;
-    const uyarilar = ilacUyarilari(ilac).map((u) => ({ tur: u.tur, metin: uyariMetni(u) }));
+    const uyarilar = [];
     const a = hasta ? alerjiCakismasi(hasta, ilac) : null;
-    if (a) uyarilar.unshift({ tur: 'hata', metin: uyariMetni({ kod: 'alerji', veri: { a } }) });
+    if (a) uyarilar.push({ tur: 'hata', metin: uyariMetni({ kod: 'alerji', veri: { a } }) });
     secilenKutusu.append(
       el('div', { class: 'liste' },
         el('div', { class: 'liste__satir' },
           el('span', { class: 'avatar' }, simge('ilac', { boy: 18 })),
           el('div', { class: 'liste__govde' },
             el('div', { class: 'liste__baslik' }, ilacEtiketi(ilac)),
-            el('div', { class: 'liste__alt' }, [ilac.etkenMadde, `${t('ilac.stok', 'Stok')} ${ilac.stok ?? 0}`, paraMetni(ilac.satisFiyati)].filter(Boolean).join(' · '))))),
+            el('div', { class: 'liste__alt' }, ilac.etkenMadde || '—')))),
       ...uyarilar.map((u) => el('div', { class: `uyari uyari--${u.tur}`, style: { marginBlockStart: 'var(--b-2)' } }, simge(u.tur === 'hata' ? 'hata' : 'uyari', { boy: 16 }), el('span', {}, u.metin))));
   }
 
@@ -90,7 +90,6 @@ async function satirKutusu(ctx, ilaclar, hasta, mevcut = null) {
     const bulunan = ilacAra(ilaclar, q).slice(0, 8);
     if (!bulunan.length) { sonuclar.appendChild(el('div', { class: 'liste__satir sessiz' }, t('ilac.eslesme_yok', 'Eşleşen ilaç yok'))); return; }
     for (const i of bulunan) {
-      const durum = stokDurumu(i);
       sonuclar.appendChild(el('button', {
         class: 'liste__satir liste__satir--tiklanir', type: 'button',
         style: { border: 'none', background: 'none', textAlign: 'start', font: 'inherit', cursor: 'pointer', inlineSize: '100%' },
@@ -98,9 +97,7 @@ async function satirKutusu(ctx, ilaclar, hasta, mevcut = null) {
       },
         el('div', { class: 'liste__govde' },
           el('div', { class: 'liste__baslik' }, ilacEtiketi(i)),
-          el('div', { class: 'liste__alt' }, i.etkenMadde || '—')),
-        el('div', { class: 'liste__son' },
-          rozet(`${t('ilac.stok', 'Stok')} ${i.stok ?? 0}`, durum === 'yok' ? 'kirmizi' : durum === 'kritik' ? 'sari' : 'gri'))));
+          el('div', { class: 'liste__alt' }, i.etkenMadde || '—'))));
     }
   }
   kutu.oninput = aramaCiz;
@@ -127,7 +124,6 @@ async function satirKutusu(ctx, ilaclar, hasta, mevcut = null) {
           ...bosSatir(), ...(mevcut || {}),
           ilacId: ilac.id, ilacAdi: ilacEtiketi(ilac), etkenMadde: ilac.etkenMadde || '',
           adet: n, kullanim: kullanim.value.trim(), sure: sure.value.trim(), not: not.value.trim(),
-          birimFiyat: Number(ilac.satisFiyati) || 0,
         };
       } },
     ],
@@ -202,7 +198,7 @@ export default {
       /* --- Klinik ölçümler --- */
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' }, el('h2', {}, t('recete.olcumler', 'Klinik ölçümler')), el('span', { class: 'kart__alt' }, t('genel.zorunlu_degil', 'Zorunlu değil'))),
-        el('div', { class: 'izgara izgara--form' }, ...OLCUMLER.map(([anahtar, ad, kisa, birim]) =>
+        el('div', { class: 'izgara izgara--dar' }, ...OLCUMLER.map(([anahtar, ad, kisa, birim]) =>
           alan(`${t('olcum.' + anahtar, ad)} (${kisa})`, girdi({
             name: 'olcum_' + anahtar, value: recete.olcumler?.[anahtar] ?? '', placeholder: birim,
             onchange: (e) => { recete.olcumler = { ...recete.olcumler, [anahtar]: e.target.value.trim() }; },
@@ -211,7 +207,6 @@ export default {
       /* --- İlaç satırları --- */
       const uyarilar = receteUyarilari(recete.satirlar, hasta, ilaclar, {
         alerjiBul: alerjiCakismasi,
-        ilacUyarilariBul: (i) => ilacUyarilari(i),
       });
       const satirGovdesi = recete.satirlar.length
         ? el('div', { class: 'tablo-kap' }, el('table', { class: 'tablo' },
@@ -254,8 +249,7 @@ export default {
       kok.appendChild(kart({},
         alan(t('recete.not', 'Reçete notu'), metinAlani({ name: 'notlar', value: recete.notlar, rows: 2, onchange: (e) => { recete.notlar = e.target.value.trim(); } })),
         el('div', { class: 'satir' },
-          btnS('kaydet', duzenleme ? t('recete.kaydet_degisiklik', 'Değişiklikleri kaydet') : t('recete.kaydet', 'Reçeteyi kaydet'), { class: 'btn btn--birincil', onclick: () => kaydet(false) }),
-          !duzenleme ? btnS('onay', t('recete.kaydet_karsila', 'Kaydet ve karşıla'), { class: 'btn', onclick: () => kaydet(true) }) : null,
+          btnS('kaydet', duzenleme ? t('recete.kaydet_degisiklik', 'Değişiklikleri kaydet') : t('recete.kaydet', 'Reçeteyi kaydet'), { class: 'btn btn--birincil', onclick: () => kaydet() }),
           btn(t('genel.vazgec', 'Vazgeç'), { class: 'btn btn--sade', onclick: async () => {
             if (!recete.satirlar.length || await onayla(t('recete.kapat_onay', 'Bu reçete kaydedilmeden kapatılsın mı?'), { evet: t('genel.kapat', 'Kapat') })) {
               git(duzenleme ? `/recete/${duzenleme.id}` : '/receteler');
@@ -273,7 +267,7 @@ export default {
       if (h) { hasta = h; recete.hastaId = h.id; hatalar = { ...hatalar, hastaId: '' }; ciz(); }
     }
 
-    async function kaydet(karsilamayaGit) {
+    async function kaydet() {
       hatalar = receteDogrula(recete);
       if (Object.keys(hatalar).length) { ciz(); hata(dogrulaMetni(Object.values(hatalar)[0])); return; }
       try {

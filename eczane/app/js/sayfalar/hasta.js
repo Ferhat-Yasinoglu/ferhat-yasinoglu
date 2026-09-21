@@ -3,11 +3,9 @@ import { el, temizle, btn, btnS, kart, rozet, sayfaBas, bosDurum, uyariSeridi } 
 import { simge } from '../cekirdek/simge.js';
 import { CINSIYETLER, SIGORTALAR, tamAd, hastaYasi } from '../paylasilan/hasta.js';
 import { trTarih, trTarihSaat } from '../paylasilan/tarih.js';
-import { DURUM_ADLARI, receteOzet } from '../paylasilan/recete.js';
+import { receteOzet } from '../paylasilan/recete.js';
 import { hastaKutusu } from './hastalar.js';
 import { t, secenekAdi } from '../i18n.js';
-
-const DURUM_RENGI = { bekliyor: 'sari', kismi: 'mavi', tamamlandi: 'yesil', bos: 'gri' };
 
 export default {
   baslik: 'Hasta',
@@ -84,8 +82,7 @@ export default {
             el('span', { class: 'avatar' }, simge('recete', { boy: 18 })),
             el('div', { class: 'liste__govde' },
               el('div', { class: 'liste__baslik' }, r.receteNo || trTarih(r.tarih)),
-              el('div', { class: 'liste__alt' }, `${trTarih(r.tarih)} · ${t('recete.ilac_sayisi', '{n} ilaç', { n: o.toplam })} · ${t('recete.verilen_sayisi', '{n} verildi', { n: o.verilen })}`)),
-            el('div', { class: 'liste__son' }, rozet(t('durum.' + o.durum, DURUM_ADLARI[o.durum] || o.durum), DURUM_RENGI[o.durum] || 'gri')));
+              el('div', { class: 'liste__alt' }, `${trTarih(r.tarih)} · ${t('recete.ilac_sayisi', '{n} ilaç', { n: o.toplam })}`)));
         }))
         : bosDurum({ simge: 'recete', baslik: t('recete.yok', 'Reçete yok'), alt: t('recete.hasta_bos', 'Bu hastaya henüz reçete yazılmamış.') });
 

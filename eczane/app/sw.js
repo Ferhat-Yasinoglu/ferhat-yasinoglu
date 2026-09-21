@@ -9,7 +9,7 @@ const KABUK = [
   './', './index.html', './manifest.webmanifest',
   './css/tokenlar.css', './css/bilesenler.css', './css/uygulama.css', './css/yazdirma.css',
   './js/cekirdek/tema.js', './js/uygulama.js', './js/i18n.js',
-  './i18n/fa.json', './img/logo.svg',
+  './i18n/fa.json', './img/logo.svg', './yazi/vazirmatn.woff2',
 ];
 
 self.addEventListener('install', (e) => {
