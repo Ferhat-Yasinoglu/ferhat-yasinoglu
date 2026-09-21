@@ -33,14 +33,17 @@ const T = (anahtar) => {
   return metin;
 };
 
-// Tanı çipleri Farsça yazıyor; denemede Türkçe karşılığından buluyoruz ki
-// bir tanı yeniden adlandırılınca burası da kendiliğinden güncellensin.
-const taniListesi = JSON.parse(await readFile(new URL('../app/veri/tanilar.json', import.meta.url), 'utf8'));
-const taniAdi = (tr) => {
-  const x = taniListesi.tanilar.find((y) => y.tr === tr);
-  if (!x) throw new Error(`tanı listesinde yok: ${tr}`);
+// Klinik çipler Farsça yazıyor; denemede Türkçe karşılığından buluyoruz ki
+// bir kayıt yeniden adlandırılınca burası da kendiliğinden güncellensin.
+const klinik = JSON.parse(await readFile(new URL('../app/veri/klinik.json', import.meta.url), 'utf8'));
+const klinikAdi = (liste, tr) => {
+  const x = klinik[liste].find((y) => y.tr === tr);
+  if (!x) throw new Error(`${liste} listesinde yok: ${tr}`);
   return x;
 };
+const taniAdi = (tr) => klinikAdi('tanilar', tr);
+const belirtiAdi = (tr) => klinikAdi('belirtiler', tr);
+const labAdi = (tr) => klinikAdi('laboratuvar', tr);
 
 const PORT = 8799;
 const KOK = `http://localhost:${PORT}/?nosw=1`;
@@ -219,39 +222,64 @@ await sayfa.fill('.modal input[name=adet]', '1');
 const cipSec = async (metin) => sayfa.click(`.modal .cip--secilir:has(span:text-is("${metin}"))`);
 await cipSec(T('kullanim.2'));
 await cipSec(T('sure.0'));
+await cipSec(T('yol.0'));
 const cipKullanim = await sayfa.inputValue('.modal input[name=kullanim]');
 const cipSure = await sayfa.inputValue('.modal input[name=sure]');
+const cipYol = await sayfa.inputValue('.modal input[name=yol]');
 if (cipKullanim !== T('kullanim.2')) throw new Error(`kullanım çipi yazmadı: "${cipKullanim}"`);
 if (cipSure !== T('sure.0')) throw new Error(`süre çipi yazmadı: "${cipSure}"`);
-ok(`kullanım ve süre çiple dolduruldu: ${cipKullanim} · ${cipSure}`);
+if (cipYol !== T('yol.0')) throw new Error(`veriliş yolu çipi yazmadı: "${cipYol}"`);
+ok(`kullanım, süre ve veriliş yolu çiple dolduruldu: ${cipKullanim} · ${cipSure} · ${cipYol}`);
 await sayfa.click(`.modal button:has-text("${T('genel.ekle')}")`);
 await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 2);
 await sayfa.fill('input[name=olcum_bp]', '110/70');
 await sayfa.fill('input[name=olcum_temp]', '38.2');
 ok('ikinci ilaç ve klinik ölçümler eklendi');
 
-// --- Tanı ÇİPLE seçiliyor: hekim elle yazmıyor, dokunuyor.
+// --- Belirti, tanı ve laboratuvar ÇİPLE seçiliyor: hekim elle yazmıyor.
+// Aynı ad hem belirti hem tanı olabiliyor (سردردی), ve "tüm liste" düğmesi
+// üç kartta da var — seçiciler karta göre daraltılıyor.
+const kart = (baslik) => `.kart:has(h2:text-is("${baslik}"))`;
+const KART_BELIRTI = kart(T('recete.belirtiler'));
+const KART_TANI = kart(T('recete.tani'));
+const KART_LAB = kart(T('recete.laboratuvar'));
+const cipTikla = (kapsayici, ad) => sayfa.click(`${kapsayici} .cip--secilir:has(span:text-is("${ad}"))`);
+
+// Belirti: kart açılır açılmaz çipler duruyor, ikinci dokunuş geri alıyor.
+const sarfa = belirtiAdi('Öksürük');
+const tabB = belirtiAdi('Ateş');
+await cipTikla(KART_BELIRTI, sarfa.ad);
+await cipTikla(KART_BELIRTI, tabB.ad);
+const belirtiMetni = await sayfa.inputValue('input[name=belirtiler]');
+if (!belirtiMetni.includes(sarfa.ad) || !belirtiMetni.includes(tabB.ad)) {
+  throw new Error(`belirti çipleri yazmadı: "${belirtiMetni}"`);
+}
+await cipTikla(KART_BELIRTI, tabB.ad);
+const belirtiTek = await sayfa.inputValue('input[name=belirtiler]');
+if (belirtiTek !== sarfa.ad) throw new Error(`belirti geri alınmadı: "${belirtiTek}"`);
+ok(`belirti çiple seçildi ve geri alındı: ${belirtiTek}`);
+
+// Tanı: ad ve ICD kodu birlikte geliyor.
 const usye = taniAdi('Üst solunum yolu enfeksiyonu');
-await sayfa.click(`.cip--secilir:has-text("${usye.ad}")`);
+await cipTikla(KART_TANI, usye.ad);
 const secilenTani = await sayfa.inputValue('input[name=tani]');
 const secilenKod = await sayfa.inputValue('input[name=taniKodu]');
 if (secilenTani !== usye.ad) throw new Error(`çip tanıyı yazmadı: "${secilenTani}"`);
 if (secilenKod !== usye.kod) throw new Error(`çip ICD kodunu yazmadı: "${secilenKod}"`);
 ok(`tanı tek dokunuşla yazıldı: ${usye.ad} (${usye.kod}), elle yazılmadı`);
 
-// İkinci dokunuş geri almalı — yanlış basan hekim klavyeye gitmesin.
-await sayfa.click(`.cip--secilir:has-text("${usye.ad}")`);
+await cipTikla(KART_TANI, usye.ad);
 if (await sayfa.inputValue('input[name=tani]') !== '') throw new Error('ikinci dokunuş tanıyı geri almadı');
 if (await sayfa.inputValue('input[name=taniKodu]') !== '') throw new Error('tanı geri alınınca kod kaldı');
-await sayfa.click(`.cip--secilir:has-text("${usye.ad}")`);
+await cipTikla(KART_TANI, usye.ad);
 ok('çipe ikinci dokunuş tanıyı ve kodunu geri aldı');
 
 // Tam liste kutusu: arayıp ikinci bir tanı ekle, sonra çıkar.
 const dis = taniAdi('Diş ağrısı');
-await sayfa.click(`button:has-text("${T('tani.hepsi').replace(' ({n})', '')}")`);
-await sayfa.waitForSelector(`.modal h2, .modal [role=dialog], .modal input[name=taniArama]`);
-await sayfa.fill('.modal input[name=taniArama]', 'diş');
-await sayfa.click(`.modal .cip--secilir:has-text("${dis.ad}")`);
+await sayfa.click(`${KART_TANI} button:has-text("${T('klinik.hepsi').replace(' ({n})', '')}")`);
+await sayfa.waitForSelector('.modal input[name=klinikArama]');
+await sayfa.fill('.modal input[name=klinikArama]', 'diş');
+await sayfa.click(`.modal .cip--secilir:has(span:text-is("${dis.ad}"))`);
 await sayfa.click(`.modal button:has-text("${T('genel.sec')}")`);
 const ikiTani = await sayfa.inputValue('input[name=tani]');
 const ikiKod = await sayfa.inputValue('input[name=taniKodu]');
@@ -260,11 +288,33 @@ if (!ikiKod.includes(usye.kod) || !ikiKod.includes(dis.kod)) throw new Error('ik
 ok(`tam listeden ikinci tanı eklendi, ikisi birleşti: ${ikiTani} / ${ikiKod}`);
 
 // İkinciyi geri al: reçetede yalnız ÜSYE kalsın (sonraki adımlar buna dayanıyor).
-await sayfa.click(`.cip--secilir:has-text("${dis.ad}")`);
+await cipTikla(KART_TANI, dis.ad);
 const tekTani = await sayfa.inputValue('input[name=tani]');
 const tekKod = await sayfa.inputValue('input[name=taniKodu]');
 if (tekTani !== usye.ad || tekKod !== usye.kod) throw new Error(`tanı çıkarılınca kalan yanlış: "${tekTani}" / "${tekKod}"`);
 ok('ikinci tanı çıkarıldı, kalanın kodu bozulmadı');
+
+// Laboratuvar: tam liste kutusunda bölüm başlıkları (هماتولوژی…) altında.
+const cbc = labAdi('Tam kan sayımı');
+const xray = labAdi('Akciğer röntgeni');
+await cipTikla(KART_LAB, cbc.ad);
+await sayfa.click(`${KART_LAB} button:has-text("${T('klinik.hepsi').replace(' ({n})', '')}")`);
+await sayfa.waitForSelector('.modal input[name=klinikArama]');
+const labGruplari = await sayfa.locator('.modal .cip-kume__etiket').count();
+if (labGruplari < 4) throw new Error(`laboratuvar bölüm başlıkları gelmedi, ${labGruplari} başlık`);
+await sayfa.fill('.modal input[name=klinikArama]', 'röntgen');
+await sayfa.click(`.modal .cip--secilir:has(span:text-is("${xray.ad}"))`);
+await sayfa.click(`.modal button:has-text("${T('genel.sec')}")`);
+const labMetni = await sayfa.inputValue('input[name=laboratuvar]');
+if (!labMetni.includes(cbc.ad) || !labMetni.includes(xray.ad)) throw new Error('laboratuvar birleşmedi: ' + labMetni);
+ok(`laboratuvar seçildi (${labGruplari} bölüm başlığı): ${labMetni}`);
+
+// Boş çip şeridi ekranda "null" yazıyordu: append() null'u metne çeviriyor.
+// Formun hiçbir yerinde kaçak "null"/"undefined" kalmasın.
+const formMetni = await sayfa.textContent('#sayfa');
+const kacak = ['null', 'undefined', 'NaN', '[object Object]'].filter((x) => formMetni.includes(x));
+if (kacak.length) throw new Error('formda kaçak değer görünüyor: ' + kacak.join(', '));
+ok('formda kaçak "null"/"undefined" yok');
 await resim(sayfa, '7-recete-yaz.png', { fullPage: true });
 
 // --- Kaydet
@@ -372,16 +422,39 @@ const qrModulSayisi = await sayfa.locator('.kagit__qr path').count();
 if (!qrModulSayisi) throw new Error('kâğıtta QR yok');
 const qrYolu = await sayfa.getAttribute('.kagit__qr path', 'd');
 if (!qrYolu || qrYolu.length < 200) throw new Error('QR yolu beklenenden kısa: ' + (qrYolu || '').length);
+// Ölçüm sayısını sabit yazmıyoruz: listeye yeni ölçüm eklenince deneme
+// kendiliğinden uyum sağlasın, ama "hepsi basıldı mı" yine denetlensin.
+const olcumBekleneni = await sayfa.evaluate(async () => {
+  const { OLCUMLER } = await import('./js/paylasilan/recete.js');
+  return OLCUMLER.length;
+});
 const olcumSayisi = await sayfa.locator('.kagit__olcum').count();
-if (olcumSayisi !== 5) throw new Error(`klinik sütunda 5 ölçüm bekleniyordu, ${olcumSayisi} var`);
+if (olcumSayisi !== olcumBekleneni) throw new Error(`klinik sütunda ${olcumBekleneni} ölçüm bekleniyordu, ${olcumSayisi} var`);
 const olcumMetni = await sayfa.textContent('.kagit__klinik-sutun');
 if (!olcumMetni.includes('110/70 mmHg') || !olcumMetni.includes('38.2 °C')) {
   throw new Error('girilen ölçümler kâğıda basılmamış: ' + olcumMetni.replace(/\s+/g, ' '));
 }
-// Girilmeyen ölçümler elle yazılsın diye çizgi olarak basılır.
+// Girilmeyen ölçümler elle yazılsın diye çizgi olarak basılır: 2 tanesi dolu.
 const bosOlcum = await sayfa.locator('.kagit__olcum .kagit__cizgi').count();
-if (bosOlcum !== 3) throw new Error(`boş ölçümlerde 3 çizgi bekleniyordu, ${bosOlcum} var`);
-ok(`kâğıtta QR (${qrYolu.length} karakterlik yol), dolu ölçümler yazılı, boş 3 ölçüm elle doldurulmak üzere çizgili`);
+if (bosOlcum !== olcumBekleneni - 2) throw new Error(`boş ölçümlerde ${olcumBekleneni - 2} çizgi bekleniyordu, ${bosOlcum} var`);
+ok(`kâğıtta QR (${qrYolu.length} karakterlik yol), ${olcumBekleneni} ölçümün 2'si yazılı, ${bosOlcum}'ü elle doldurulmak üzere çizgili`);
+
+// --- Kâğıtta belirti, laboratuvar ve yeni ilaç satırı biçimi
+const rxMetni = (await sayfa.textContent('.kagit__rx-govde')).replace(/\s+/g, ' ');
+if (!rxMetni.includes(sarfa.ad)) throw new Error('belirtiler kâğıda basılmamış: ' + rxMetni);
+if (!rxMetni.includes(cbc.ad) || !rxMetni.includes(xray.ad)) throw new Error('laboratuvar kâğıda basılmamış: ' + rxMetni);
+const ilkIlacSatiri = (await sayfa.textContent('.kagit__ilaclar li:first-child')).replace(/\s+/g, ' ').trim();
+// Referanstaki biçim: "Cap: Amoxicillin 500 mg … N=12"
+if (!/\b(Tab|Cap|Syr|Amp|Oint|Drop|Spray|Supp|Sach):/.test(ilkIlacSatiri)) {
+  throw new Error('ilaç satırında şekil kısaltması yok: ' + ilkIlacSatiri);
+}
+if (!/N=\d+/.test(ilkIlacSatiri)) throw new Error('ilaç satırında N= adedi yok: ' + ilkIlacSatiri);
+// Şekil önek olarak basıldığı için adın sonunda tekrar etmemeli.
+if (/Tab:.*Tablet/.test(ilkIlacSatiri)) throw new Error('şekil iki kez yazılmış: ' + ilkIlacSatiri);
+// Veriliş yolu ikinci ilaca girildi; blokta olması yeter.
+const ilaclarMetni = (await sayfa.textContent('.kagit__ilaclar')).replace(/\s+/g, ' ');
+if (!ilaclarMetni.includes(T('yol.0'))) throw new Error('veriliş yolu kâğıda basılmamış: ' + ilaclarMetni);
+ok(`kâğıtta belirti ve laboratuvar var; ilaç satırı referans biçiminde: ${ilkIlacSatiri}`);
 
 // --- Boş kâğıt: aynı antet, elle doldurulacak satırlar
 const bosKagit = await sayfa.evaluate(async () => {

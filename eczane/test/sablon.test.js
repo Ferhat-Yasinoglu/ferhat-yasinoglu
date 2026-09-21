@@ -104,5 +104,45 @@ describe('sablonDogrula', () => {
 });
 
 describe('bosSablon', () => {
-  it('boş ve satırsız başlar', () => expect(bosSablon()).toEqual({ ad: '', tani: '', taniKodu: '', notlar: '', satirlar: [] }));
+  it('boş ve satırsız başlar', () => expect(bosSablon()).toEqual({ ad: '', tani: '', taniKodu: '', laboratuvar: '', notlar: '', satirlar: [] }));
+});
+
+describe('şablon ve klinik alanlar', () => {
+  const dolu = {
+    hastaId: 'has_1', tarih: '2026-09-21', olcumler: { bp: '110/70' },
+    belirtiler: 'سرفه، تب', tani: 'ÜSYE', taniKodu: 'J06.9',
+    laboratuvar: 'CBC، ESR', notlar: 'Bol sıvı',
+    satirlar: [{ ilacId: 'ila_1', ilacAdi: 'Parol', form: 'tablet', adet: 2, kullanim: 'Günde 2×1', sure: '5 gün', yol: 'Ağızdan' }],
+  };
+
+  // Laboratuvar duruma ait: "bu tanıda şu tetkikleri isterim" tekrar eden karar.
+  it('laboratuvarı şablona taşır', () => {
+    expect(receteyiSablonaCevir(dolu, 'ÜSYE').laboratuvar).toBe('CBC، ESR');
+  });
+
+  // Belirtiler hastaya ait: o gün ne anlattığı başka hastaya taşınmamalı.
+  it('belirtileri şablona TAŞIMAZ', () => {
+    expect(receteyiSablonaCevir(dolu, 'ÜSYE').belirtiler).toBeUndefined();
+  });
+
+  it('satırın şeklini ve veriliş yolunu taşır', () => {
+    const s = receteyiSablonaCevir(dolu, 'ÜSYE').satirlar[0];
+    expect(s.form).toBe('tablet');
+    expect(s.yol).toBe('Ağızdan');
+  });
+
+  it('uygularken hastanın belirtilerine dokunmaz', () => {
+    const acik = { belirtiler: 'سردردی', satirlar: [], tani: '', taniKodu: '', laboratuvar: '', notlar: '' };
+    expect(sablonuUygula(acik, receteyiSablonaCevir(dolu, 'ÜSYE')).belirtiler).toBe('سردردی');
+  });
+
+  it('reçetede zaten laboratuvar varsa üstüne yazmaz', () => {
+    const acik = { satirlar: [], tani: '', taniKodu: '', laboratuvar: 'X-ray', notlar: '' };
+    expect(sablonuUygula(acik, receteyiSablonaCevir(dolu, 'ÜSYE')).laboratuvar).toBe('X-ray');
+  });
+
+  it('boş laboratuvarı şablondan doldurur', () => {
+    const acik = { satirlar: [], tani: '', taniKodu: '', laboratuvar: '', notlar: '' };
+    expect(sablonuUygula(acik, receteyiSablonaCevir(dolu, 'ÜSYE')).laboratuvar).toBe('CBC، ESR');
+  });
 });

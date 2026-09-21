@@ -120,7 +120,7 @@ describe('doluOlcumler', () => {
     expect(doluOlcumler(null)).toEqual([]);
   });
   it('OLCUMLER kısaltmaları sabittir (çıktıda değişmez)', () => {
-    expect(OLCUMLER.map(([, , k]) => k)).toEqual(['BP', 'PR', 'RR', 'BW', 'T']);
+    expect(OLCUMLER.map(([, , k]) => k)).toEqual(['BP', 'PR', 'RR', 'BW', 'T', 'SpO₂', 'Ht']);
   });
 });
 
