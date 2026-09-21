@@ -7,6 +7,7 @@ import { tamAd } from '../paylasilan/hasta.js';
 import { basHarfler } from '../paylasilan/metin.js';
 import { receteOzet, DURUM_ADLARI } from '../paylasilan/recete.js';
 import { t } from '../i18n.js';
+import { goreliMetni } from '../hatalar.js';
 
 const DURUM_RENGI = { bekliyor: 'sari', kismi: 'mavi', tamamlandi: 'yesil', bos: 'gri' };
 
@@ -73,7 +74,7 @@ export default {
       }));
       const sktSatirlari = [...sktGecti, ...sktYakin].map((i) => ({
         yol: `/ilac/${i.id}`, baslik: ilacEtiketi(i),
-        alt: `${trTarih(i.sonKullanma)} · ${goreliGun(i.sonKullanma)}`,
+        alt: `${trTarih(i.sonKullanma)} · ${goreliMetni(goreliGun(i.sonKullanma))}`,
         rozet: rozet(sktDurumu(i) === 'gecti' ? t('panel.gecti', 'Geçti') : t('panel.yakin', 'Yakın'), sktDurumu(i) === 'gecti' ? 'kirmizi' : 'sari'),
       }));
 

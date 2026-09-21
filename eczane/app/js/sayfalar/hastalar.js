@@ -3,6 +3,7 @@ import { el, temizle, btn, btnS, girdi, secim, metinAlani, alan, rozet, sayfaBas
 import { CINSIYETLER, KAN_GRUPLARI, SIGORTALAR, tamAd, hastaYasi, hastaAra, bosHasta, hastaDogrula, listeyeCevir, tcGecerli } from '../paylasilan/hasta.js';
 import { basHarfler } from '../paylasilan/metin.js';
 import { t, secenekleriCevir } from '../i18n.js';
+import { dogrulaMetni, hataMetni } from '../hatalar.js';
 
 /** Hasta rozetleri: alerji ve kronik hastalık tek bakışta görünsün. */
 export function hastaRozetleri(h) {
@@ -38,13 +39,13 @@ export async function hastaKutusu(ctx, mevcut = null) {
     };
     govde.append(
       el('div', { class: 'izgara izgara--form' },
-        alan(t('hasta.ad', 'Ad'), g.ad, { gerekli: true, hata: hatalar.ad }),
-        alan(t('hasta.soyad', 'Soyad'), g.soyad, { gerekli: true, hata: hatalar.soyad }),
-        alan(t('hasta.kimlik_no', 'Kimlik no'), g.kimlikNo, { hata: hatalar.kimlikNo, ipucu: t('genel.zorunlu_degil', 'Zorunlu değil') }),
-        alan(t('hasta.dogum', 'Doğum tarihi'), g.dogumTarihi, { hata: hatalar.dogumTarihi }),
+        alan(t('hasta.ad', 'Ad'), g.ad, { gerekli: true, hata: dogrulaMetni(hatalar.ad) }),
+        alan(t('hasta.soyad', 'Soyad'), g.soyad, { gerekli: true, hata: dogrulaMetni(hatalar.soyad) }),
+        alan(t('hasta.kimlik_no', 'Kimlik no'), g.kimlikNo, { hata: dogrulaMetni(hatalar.kimlikNo), ipucu: t('genel.zorunlu_degil', 'Zorunlu değil') }),
+        alan(t('hasta.dogum', 'Doğum tarihi'), g.dogumTarihi, { hata: dogrulaMetni(hatalar.dogumTarihi) }),
         alan(t('hasta.cinsiyet', 'Cinsiyet'), g.cinsiyet),
         alan(t('genel.telefon', 'Telefon'), g.telefon),
-        alan(t('genel.eposta', 'E-posta'), g.eposta, { hata: hatalar.eposta }),
+        alan(t('genel.eposta', 'E-posta'), g.eposta, { hata: dogrulaMetni(hatalar.eposta) }),
         alan(t('hasta.kan_grubu', 'Kan grubu'), g.kanGrubu),
         alan(t('hasta.sigorta', 'Sigorta'), g.sigorta)),
       alan(t('genel.adres', 'Adres'), g.adres),
@@ -86,7 +87,7 @@ export async function hastaKutusu(ctx, mevcut = null) {
     const y = await depo.kaydet('hastalar', { ...(mevcut || {}), ...sonuc });
     basari(mevcut ? t('hasta.guncellendi', 'Hasta güncellendi') : t('hasta.eklendi', 'Hasta eklendi'));
     return y;
-  } catch (e) { hata(e.message || t('genel.kaydedilemedi', 'Kaydedilemedi')); return null; }
+  } catch (e) { hata(hataMetni(e, t('genel.kaydedilemedi', 'Kaydedilemedi'))); return null; }
 }
 
 export default {

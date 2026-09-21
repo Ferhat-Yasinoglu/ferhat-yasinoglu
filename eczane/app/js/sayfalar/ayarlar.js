@@ -7,8 +7,9 @@ import { ornekYukle } from '../depo/ornek.js';
 import { KOLEKSIYONLAR } from '../depo/sema.js';
 import { trTarihSaat } from '../paylasilan/tarih.js';
 import { sayiMetni, bicimAyarla, PARA_BIRIMLERI } from '../paylasilan/metin.js';
-import { t, DILLER, suankiDil } from '../i18n.js';
+import { t } from '../i18n.js';
 import { kagidiYazdir } from '../kagit.js';
+import { hataMetni } from '../hatalar.js';
 
 const KOL_ANAHTARI = { ilaclar: 'nav.ilaclar', hastalar: 'nav.hastalar', receteler: 'nav.receteler', hareketler: 'stok.hareketler', ayarlar: 'nav.ayarlar' };
 const KOL_ADI = { ilaclar: 'İlaç', hastalar: 'Hasta', receteler: 'Reçete', hareketler: 'Stok hareketi', ayarlar: 'Ayar' };
@@ -207,12 +208,9 @@ export default {
           try { localStorage.setItem('ecz-tema', e.target.value); } catch { uyar(t('ayar.tema_kaydedilemedi', 'Tema seçimi kaydedilemedi.')); }
         },
       });
-      const dilSecimi = secim(DILLER, { value: suankiDil(), onchange: (e) => ctx.dilDegistir(e.target.value) });
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' }, el('h2', {}, t('ayar.gorunum', 'Görünüm'))),
-        el('div', { class: 'izgara izgara--form' },
-          alan(t('ayar.dil', 'Dil'), dilSecimi),
-          alan(t('ayar.tema', 'Tema'), temaSecimi))));
+        el('div', { class: 'izgara izgara--form' }, alan(t('ayar.tema', 'Tema'), temaSecimi))));
 
       /* --- Tehlikeli bölge --- */
       kok.appendChild(kart({ style: { borderColor: 'rgb(var(--kirmizi) / .4)' } },
@@ -241,7 +239,7 @@ export default {
             basari(t('ayar.hepsi_silindi', 'Bütün veriler silindi'));
             ctx.yenileMenu?.();
             ciz();
-          } catch (e) { hata(e.message || t('genel.silinemedi', 'Silinemedi')); }
+          } catch (e) { hata(hataMetni(e, t('genel.silinemedi', 'Silinemedi'))); }
         } })));
 
       /* --- Hakkında --- */

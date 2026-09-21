@@ -21,9 +21,9 @@ export async function receteKaydet(depo, recete) {
 
 async function satirAl(depo, receteId, indeks) {
   const recete = await depo.al('receteler', receteId);
-  if (!recete) throw new DepoHatasi('bulunamadi', 'Reçete bulunamadı.');
+  if (!recete) throw new DepoHatasi('recete_bulunamadi', 'Reçete bulunamadı.');
   const satir = recete.satirlar?.[indeks];
-  if (!satir) throw new DepoHatasi('bulunamadi', 'Reçete satırı bulunamadı.');
+  if (!satir) throw new DepoHatasi('satir_bulunamadi', 'Reçete satırı bulunamadı.');
   return { recete, satir };
 }
 
@@ -40,7 +40,7 @@ async function satirYaz(depo, recete, indeks, yeniSatir) {
 export async function satirVer(depo, receteId, indeks, adet) {
   const { recete, satir } = await satirAl(depo, receteId, indeks);
   const kalan = satirKalan(satir);
-  if (kalan <= 0) throw new DepoHatasi('kapali', 'Bu satırın tamamı zaten verilmiş.');
+  if (kalan <= 0) throw new DepoHatasi('satir_kapali', 'Bu satırın tamamı zaten verilmiş.');
 
   const verilecek = Math.min(Math.max(1, Math.floor(Number(adet) || kalan)), kalan);
   if (satir.ilacId) {
@@ -60,7 +60,7 @@ export async function satirVer(depo, receteId, indeks, adet) {
 /** Satırı "verilmedi" diye kapatır: stoğa dokunmaz, sebebi kaydeder. */
 export async function satirVerilmedi(depo, receteId, indeks, sebep, not = '') {
   const { recete, satir } = await satirAl(depo, receteId, indeks);
-  if (!sebep) throw new DepoHatasi('sebep', 'Sebep seçilmeli.');
+  if (!sebep) throw new DepoHatasi('sebep_gerekli', 'Sebep seçilmeli.');
   return satirYaz(depo, recete, indeks, { ...satir, sebep, not: not || satir.not || '', verilmeTarihi: simdi() });
 }
 
@@ -83,7 +83,7 @@ export async function satirGeriAl(depo, receteId, indeks) {
  *  hangilerinin atlandığı geri döner — tezgâhta tek tuşla karşılamak için. */
 export async function hepsiniVer(depo, receteId) {
   const recete = await depo.al('receteler', receteId);
-  if (!recete) throw new DepoHatasi('bulunamadi', 'Reçete bulunamadı.');
+  if (!recete) throw new DepoHatasi('recete_bulunamadi', 'Reçete bulunamadı.');
   const rapor = { verilen: 0, atlanan: [] };
   for (let i = 0; i < (recete.satirlar || []).length; i++) {
     const satir = recete.satirlar[i];
@@ -92,7 +92,7 @@ export async function hepsiniVer(depo, receteId) {
       await satirVer(depo, receteId, i);
       rapor.verilen++;
     } catch (e) {
-      rapor.atlanan.push({ indeks: i, ad: satir.ilacAdi, sebep: e.message });
+      rapor.atlanan.push({ indeks: i, ad: satir.ilacAdi, hata: e, sebep: e.message });
     }
   }
   return rapor;

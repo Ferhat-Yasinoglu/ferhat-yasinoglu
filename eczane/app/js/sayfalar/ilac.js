@@ -8,6 +8,7 @@ import { trTarih, trTarihSaat } from '../paylasilan/tarih.js';
 import { hareketUygula, ilacHareketleri } from '../depo/stok.js';
 import { ilacKutusu, ilacRozetleri } from './ilaclar.js';
 import { t, secenekleriCevir, secenekAdi } from '../i18n.js';
+import { hataMetni, uyariMetni } from '../hatalar.js';
 
 /** Stok işlemi kutusu: tür, miktar ve açıklama. */
 async function stokKutusu(ctx, ilac) {
@@ -46,7 +47,7 @@ async function stokKutusu(ctx, ilac) {
     await hareketUygula(depo, { ilacId: ilac.id, ...sonuc });
     basari(t('stok.guncellendi', 'Stok güncellendi'));
     return true;
-  } catch (e) { hata(e.message || t('genel.islem_olmadi', 'İşlem yapılamadı')); return false; }
+  } catch (e) { hata(hataMetni(e)); return false; }
 }
 
 export default {
@@ -88,7 +89,7 @@ export default {
         ],
       }));
 
-      const seridi = uyariSeridi(uyarilar);
+      const seridi = uyariSeridi(uyarilar.map((u) => ({ tur: u.tur, metin: uyariMetni(u) })));
       if (seridi) kok.appendChild(seridi);
 
       const kunye = [

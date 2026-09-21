@@ -105,18 +105,20 @@ export const OLCUMLER = [
 export const doluOlcumler = (recete) =>
   OLCUMLER.filter(([k]) => String(recete?.olcumler?.[k] ?? '').trim() !== '');
 
+/** Alan → hata kodu. Metni arayüz çevirir (bkz. hatalar.js). */
 export function receteDogrula(recete) {
   const h = {};
-  if (!recete.hastaId) h.hastaId = 'Hasta seçilmeli.';
-  if (!String(recete.tarih ?? '').match(/^\d{4}-\d{2}-\d{2}$/)) h.tarih = 'Tarih geçersiz.';
-  if (!recete.satirlar?.length) h.satirlar = 'En az bir ilaç eklenmeli.';
-  else if (recete.satirlar.some((s) => !(Number(s.adet) > 0))) h.satirlar = 'Her satırın adedi sıfırdan büyük olmalı.';
+  if (!recete.hastaId) h.hastaId = 'hasta_gerekli';
+  if (!String(recete.tarih ?? '').match(/^\d{4}-\d{2}-\d{2}$/)) h.tarih = 'tarih_gecersiz';
+  if (!recete.satirlar?.length) h.satirlar = 'ilac_gerekli';
+  else if (recete.satirlar.some((s) => !(Number(s.adet) > 0))) h.satirlar = 'adet_gecersiz';
   return h;
 }
 
 /**
- * Reçetenin klinik uyarıları. Saf: hasta ve ilaç kayıtlarını dışarıdan alır.
- * Döndürdüğü her uyarı hangi satıra ait olduğunu `satir` alanında taşır
+ * Reçetenin klinik uyarıları. Saf: hasta ve ilaç kayıtlarını dışarıdan alır,
+ * metin değil kod ve değişken döndürür — cümleyi arayüz kurar.
+ * Her uyarı hangi satıra ait olduğunu `satir` alanında taşır
  * (reçetenin tamamına ait uyarılarda -1).
  */
 export function receteUyarilari(satirlar, hasta, ilaclar, sec = {}) {
@@ -131,7 +133,7 @@ export function receteUyarilari(satirlar, hasta, ilaclar, sec = {}) {
 
     if (alerjiBul && hasta) {
       const a = alerjiBul(hasta, ilac);
-      if (a) u.push({ satir: i, tur: 'hata', kod: 'alerji', metin: `${ilac.ad}: hastanın "${a}" alerjisi var` });
+      if (a) u.push({ satir: i, tur: 'hata', kod: 'alerji', veri: { ad: ilac.ad, a } });
     }
 
     if (ilacUyarilariBul) {
@@ -139,14 +141,14 @@ export function receteUyarilari(satirlar, hasta, ilaclar, sec = {}) {
         // Stok uyarısı istenen adede göre yeniden değerlendirilir: 3 kutu
         // isteniyor ve 2 kutu varsa bu "stok az" değil, karşılanamayan satırdır.
         if (x.kod === 'stok_kritik') continue;
-        u.push({ satir: i, tur: x.tur, kod: x.kod, metin: `${ilac.ad}: ${x.metin}` });
+        u.push({ satir: i, tur: x.tur, kod: x.kod, veri: { ...x.veri, ad: ilac.ad } });
       }
     }
 
     const istenen = Number(s.adet ?? 0);
     const stok = Number(ilac.stok ?? 0);
     if (stok > 0 && istenen > stok) {
-      u.push({ satir: i, tur: 'uyari', kod: 'stok_yetersiz', metin: `${ilac.ad}: ${istenen} isteniyor, stokta ${stok} var` });
+      u.push({ satir: i, tur: 'uyari', kod: 'stok_yetersiz', veri: { ad: ilac.ad, istenen, mevcut: stok } });
     }
 
     const etken = String(ilac.etkenMadde || '').trim().toLocaleLowerCase('tr');
@@ -158,7 +160,7 @@ export function receteUyarilari(satirlar, hasta, ilaclar, sec = {}) {
     if (satirlarDizisi.length > 1) {
       u.push({
         satir: satirlarDizisi[1].i, tur: 'uyari', kod: 'cift_etken',
-        metin: `Aynı etken madde birden fazla satırda: ${satirlarDizisi.map((x) => x.ad).join(', ')}`,
+        veri: { liste: satirlarDizisi.map((x) => x.ad).join(', ') },
       });
     }
   }

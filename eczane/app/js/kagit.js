@@ -71,8 +71,10 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
     // kalemle yazabilsin. Kâğıt hem dolu hem elle tamamlanabilir olsun diye.
     ...OLCUMLER.map(([anahtar, ad, , birim]) => el('div', { class: 'kagit__olcum' },
       el('b', {}, `${t('olcum.' + anahtar, ad)}:`),
+      // Değer ve birim soldan sağa yalıtılır: sağdan sola sayfada "110/70 mmHg"
+      // yoksa "mmHg 110/70" diye ters okunuyordu.
       !bos && doluMu(recete.olcumler?.[anahtar])
-        ? el('span', {}, `${recete.olcumler[anahtar]} ${birim}`)
+        ? el('span', { dir: 'ltr' }, `${recete.olcumler[anahtar]} ${birim}`)
         : bosCizgi())),
     qr ? el('div', { class: 'kagit__qr-kutu' }, qr) : null);
 

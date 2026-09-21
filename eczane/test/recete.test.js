@@ -88,11 +88,11 @@ describe('receteUyarilari', () => {
 
   it('alerjiyi satırına bağlar', () => {
     const u = receteUyarilari([{ ilacId: 'a', adet: 1 }], hasta, ilaclar, { alerjiBul });
-    expect(u).toEqual([{ satir: 0, tur: 'hata', kod: 'alerji', metin: 'Largopen: hastanın "Penisilin" alerjisi var' }]);
+    expect(u).toEqual([{ satir: 0, tur: 'hata', kod: 'alerji', veri: { ad: 'Largopen', a: 'Penisilin' } }]);
   });
   it('istenen adet stoktan fazlaysa uyarır', () => {
     const u = receteUyarilari([{ ilacId: 'c', adet: 5 }], null, ilaclar, {});
-    expect(u).toEqual([{ satir: 0, tur: 'uyari', kod: 'stok_yetersiz', metin: 'Parol: 5 isteniyor, stokta 2 var' }]);
+    expect(u).toEqual([{ satir: 0, tur: 'uyari', kod: 'stok_yetersiz', veri: { ad: 'Parol', istenen: 5, mevcut: 2 } }]);
   });
   it('stok yetiyorsa susar', () => {
     expect(receteUyarilari([{ ilacId: 'c', adet: 2 }], null, ilaclar, {})).toEqual([]);
@@ -100,12 +100,12 @@ describe('receteUyarilari', () => {
   it('aynı etken maddeyi iki satırda yakalar', () => {
     const u = receteUyarilari([{ ilacId: 'a', adet: 1 }, { ilacId: 'b', adet: 1 }], null, ilaclar, {});
     expect(u.map((x) => x.kod)).toEqual(['cift_etken']);
-    expect(u[0].metin).toContain('Largopen, Amoklavin');
+    expect(u[0].veri.liste).toBe('Largopen, Amoklavin');
   });
   it('ilaç uyarılarını devralır ama stok eşiğini kendi hesaplar', () => {
     const ilacUyarilariBul = () => [
-      { tur: 'uyari', kod: 'stok_kritik', metin: 'Stok azaldı' },
-      { tur: 'hata', kod: 'skt_gecti', metin: 'Son kullanma tarihi geçmiş' },
+      { tur: 'uyari', kod: 'stok_kritik', veri: { n: 2 } },
+      { tur: 'hata', kod: 'skt_gecti', veri: {} },
     ];
     const u = receteUyarilari([{ ilacId: 'c', adet: 1 }], null, ilaclar, { ilacUyarilariBul });
     expect(u.map((x) => x.kod)).toEqual(['skt_gecti']);

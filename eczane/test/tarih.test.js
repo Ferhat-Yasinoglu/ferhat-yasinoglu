@@ -37,9 +37,14 @@ describe('trTarih / goreliGun', () => {
     expect(trTarih('2026-09-20')).toBe('20.09.2026');
     expect(trTarih('')).toBe('—');
   });
-  it('bugünü ve dünü adıyla söyler', () => {
-    expect(goreliGun('2026-09-20', '2026-09-20')).toBe('bugün');
-    expect(goreliGun('2026-09-19', '2026-09-20')).toBe('dün');
-    expect(goreliGun('2026-09-25', '2026-09-20')).toBe('5 gün sonra');
+  it('uzaklığı kod olarak verir (cümleyi arayüz kurar)', () => {
+    expect(goreliGun('2026-09-20', '2026-09-20')).toEqual({ kod: 'bugun', gun: 0 });
+    expect(goreliGun('2026-09-21', '2026-09-20')).toEqual({ kod: 'yarin', gun: 1 });
+    expect(goreliGun('2026-09-19', '2026-09-20')).toEqual({ kod: 'dun', gun: 1 });
+    expect(goreliGun('2026-09-25', '2026-09-20')).toEqual({ kod: 'sonra', gun: 5 });
+    expect(goreliGun('2026-09-10', '2026-09-20')).toEqual({ kod: 'once', gun: 10 });
+  });
+  it('geçersiz tarihte kod yok döner', () => {
+    expect(goreliGun('', '2026-09-20')).toEqual({ kod: 'yok', gun: 0 });
   });
 });

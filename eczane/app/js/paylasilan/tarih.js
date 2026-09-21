@@ -48,12 +48,15 @@ export function yasHesapla(dogum, referans = bugun()) {
   return yas;
 }
 
-/** "3 gün önce", "bugün", "2 gün sonra" — panelde ve listelerde. */
+/**
+ * Bugüne göre uzaklık. Metin değil kod döner — bu modül saf kalır, cümleyi
+ * arayüz kurar: { kod: 'bugun'|'yarin'|'dun'|'sonra'|'once'|'yok', gun }
+ */
 export function goreliGun(iso, referans = bugun()) {
   const f = gunFarki(referans, String(iso ?? '').slice(0, 10));
-  if (f === null) return '—';
-  if (f === 0) return 'bugün';
-  if (f === 1) return 'yarın';
-  if (f === -1) return 'dün';
-  return f > 0 ? `${f} gün sonra` : `${-f} gün önce`;
+  if (f === null) return { kod: 'yok', gun: 0 };
+  if (f === 0) return { kod: 'bugun', gun: 0 };
+  if (f === 1) return { kod: 'yarin', gun: 1 };
+  if (f === -1) return { kod: 'dun', gun: 1 };
+  return f > 0 ? { kod: 'sonra', gun: f } : { kod: 'once', gun: -f };
 }

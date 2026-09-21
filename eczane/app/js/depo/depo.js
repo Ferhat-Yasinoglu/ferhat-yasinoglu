@@ -7,8 +7,10 @@
 import { KOLEKSIYONLAR, SEMA_SURUMU } from './sema.js';
 import { yeniId, simdi } from '../paylasilan/kimlik.js';
 
+/** Depo hatası. `kod` arayüzde çevrilir, `veri` çeviriye geçen değişkenlerdir;
+ *  `message` Türkçe karşılığıdır ve çeviri bulunamazsa yedek olarak kullanılır. */
 export class DepoHatasi extends Error {
-  constructor(kod, mesaj) { super(mesaj || kod); this.kod = kod; }
+  constructor(kod, mesaj, veri = null) { super(mesaj || kod); this.kod = kod; this.veri = veri; }
 }
 
 export class TemelDepo {
@@ -53,7 +55,7 @@ export class TemelDepo {
 
   async kaydet(kol, kayit, { rev } = {}) {
     const eski = kayit.id ? await this._oku(kol, kayit.id) : null;
-    if (rev !== undefined && eski && eski.rev !== rev) throw new DepoHatasi('cakisma', 'kayıt başka bir yerde değiştirildi');
+    if (rev !== undefined && eski && eski.rev !== rev) throw new DepoHatasi('cakisma', 'Kayıt başka bir yerde değiştirildi.');
     const yeni = this.zarfla(kol, kayit, eski);
     await this._yaz(kol, yeni);
     this._yay(kol, { tur: 'kaydet', kayit: yeni });

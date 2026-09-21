@@ -8,6 +8,7 @@ import { paraMetni } from '../paylasilan/metin.js';
 import { trTarih } from '../paylasilan/tarih.js';
 import { hareketUygula } from '../depo/stok.js';
 import { t, secenekleriCevir } from '../i18n.js';
+import { dogrulaMetni, hataMetni } from '../hatalar.js';
 
 const SUZGECLER = [
   ['', 'Tümü'],
@@ -59,20 +60,20 @@ export async function ilacKutusu(ctx, mevcut = null) {
     };
     govde.append(
       el('div', { class: 'izgara izgara--form' },
-        alan(t('ilac.ad', 'İlaç adı'), g.ad, { gerekli: true, hata: hatalar.ad }),
+        alan(t('ilac.ad', 'İlaç adı'), g.ad, { gerekli: true, hata: dogrulaMetni(hatalar.ad) }),
         alan(t('ilac.etken_madde', 'Etken madde'), g.etkenMadde, { ipucu: t('ilac.etken_ipucu', 'Muadil bulmakta kullanılır') }),
         alan(t('ilac.form', 'Form'), g.form),
         alan(t('ilac.doz', 'Doz'), g.doz),
         alan(t('ilac.kutu_adedi', 'Kutudaki adet'), g.kutuAdedi),
-        alan(t('ilac.barkod', 'Barkod'), g.barkod, { hata: hatalar.barkod }),
+        alan(t('ilac.barkod', 'Barkod'), g.barkod, { hata: dogrulaMetni(hatalar.barkod) }),
         alan(mevcut ? t('ilac.stok_kilitli', 'Stok (yalnız hareketlerle değişir)') : t('ilac.baslangic_stogu', 'Başlangıç stoğu'), g.stok, {
-          hata: hatalar.stok,
+          hata: dogrulaMetni(hatalar.stok),
           ipucu: mevcut ? t('ilac.stok_ipucu', 'Mal girişi, sayım ve fire için ilaç kartını aç.') : t('ilac.baslangic_ipucu', 'Mal girişi olarak kaydedilir.'),
         }),
-        alan(t('ilac.kritik_stok', 'Kritik stok eşiği'), g.kritikStok, { hata: hatalar.kritikStok, ipucu: t('ilac.kritik_ipucu', 'Bu sayıya düşünce uyarır') }),
-        alan(t('ilac.alis', 'Alış fiyatı'), g.alisFiyati, { hata: hatalar.alisFiyati }),
-        alan(t('ilac.satis', 'Satış fiyatı'), g.satisFiyati, { hata: hatalar.satisFiyati }),
-        alan(t('ilac.son_kullanma', 'Son kullanma tarihi'), g.sonKullanma, { hata: hatalar.sonKullanma }),
+        alan(t('ilac.kritik_stok', 'Kritik stok eşiği'), g.kritikStok, { hata: dogrulaMetni(hatalar.kritikStok), ipucu: t('ilac.kritik_ipucu', 'Bu sayıya düşünce uyarır') }),
+        alan(t('ilac.alis', 'Alış fiyatı'), g.alisFiyati, { hata: dogrulaMetni(hatalar.alisFiyati) }),
+        alan(t('ilac.satis', 'Satış fiyatı'), g.satisFiyati, { hata: dogrulaMetni(hatalar.satisFiyati) }),
+        alan(t('ilac.son_kullanma', 'Son kullanma tarihi'), g.sonKullanma, { hata: dogrulaMetni(hatalar.sonKullanma) }),
         alan(t('ilac.uretici', 'Üretici'), g.uretici),
         alan(t('ilac.raf', 'Raf'), g.raf)),
       alan(t('genel.not', 'Not'), g.notlar),
@@ -117,7 +118,7 @@ export async function ilacKutusu(ctx, mevcut = null) {
     basari(t('ilac.eklendi', 'İlaç eklendi'));
     return depo.al('ilaclar', y.id);
   } catch (e) {
-    hata(e.message || t('genel.kaydedilemedi', 'Kaydedilemedi'));
+    hata(hataMetni(e, t('genel.kaydedilemedi', 'Kaydedilemedi')));
     return null;
   }
 }

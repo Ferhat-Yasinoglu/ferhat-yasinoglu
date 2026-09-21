@@ -49,14 +49,15 @@ export function bosHasta() {
   };
 }
 
+/** Alan → hata kodu. Metni arayüz çevirir (bkz. hatalar.js). */
 export function hastaDogrula(hasta) {
   const h = {};
-  if (!String(hasta.ad ?? '').trim()) h.ad = 'Ad gerekli.';
-  if (!String(hasta.soyad ?? '').trim()) h.soyad = 'Soyad gerekli.';
-  if (hasta.kimlikNo && !/^\d{5,20}$/.test(String(hasta.kimlikNo).trim())) h.kimlikNo = 'Kimlik numarası yalnız rakamlardan oluşmalı.';
-  if (hasta.dogumTarihi && !/^\d{4}-\d{2}-\d{2}$/.test(String(hasta.dogumTarihi).slice(0, 10))) h.dogumTarihi = 'Tarih geçersiz.';
-  if (hasta.dogumTarihi && yasHesapla(hasta.dogumTarihi) === null) h.dogumTarihi = 'Doğum tarihi gelecekte olamaz.';
-  if (hasta.eposta && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(hasta.eposta).trim())) h.eposta = 'E-posta geçersiz.';
+  if (!String(hasta.ad ?? '').trim()) h.ad = 'ad_gerekli';
+  if (!String(hasta.soyad ?? '').trim()) h.soyad = 'soyad_gerekli';
+  if (hasta.kimlikNo && !/^\d{5,20}$/.test(String(hasta.kimlikNo).trim())) h.kimlikNo = 'kimlik_bicim';
+  if (hasta.dogumTarihi && !/^\d{4}-\d{2}-\d{2}$/.test(String(hasta.dogumTarihi).slice(0, 10))) h.dogumTarihi = 'tarih_gecersiz';
+  if (hasta.dogumTarihi && yasHesapla(hasta.dogumTarihi) === null) h.dogumTarihi = 'dogum_gelecek';
+  if (hasta.eposta && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(hasta.eposta).trim())) h.eposta = 'eposta_gecersiz';
   return h;
 }
 
