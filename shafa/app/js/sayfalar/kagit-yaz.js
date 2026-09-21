@@ -9,7 +9,7 @@
 // kopyası yok — basılan neyse düzenlenen de o.
 import { el, temizle, btn, btnS, girdi, sayfaBas } from '../cekirdek/dom.js';
 import { kagitCiz } from '../kagit.js';
-import { OLCUMLER, bosRecete, receteDogrula } from '../paylasilan/recete.js';
+import { OLCUMLER, KAN_GRUPLARI, bosRecete, receteDogrula } from '../paylasilan/recete.js';
 import { gecmisler } from '../paylasilan/klinik.js';
 import { klinigiOku } from '../depo/klinik.js';
 import { secimKutusu } from '../klinik-arayuz.js';
@@ -100,7 +100,12 @@ export default {
           baslik: t('recete.hasta_sec', 'Hasta seç'), kayitlar: hastalar, ara: hastaAra,
           etiket: tamAd, alt: (x) => [x.telefon, x.kanGrubu].filter(Boolean).join(' · '),
         });
-        if (h) { hasta = h; recete.hastaId = h.id; }
+        if (h) {
+          hasta = h; recete.hastaId = h.id;
+          // Hastanın kaydındaki kan grubu reçeteye mühürleniyor; kâğıtta
+          // yine değiştirilebiliyor.
+          if (!recete.kanGrubu) recete.kanGrubu = h.kanGrubu || '';
+        }
       },
       tarih: async () => {
         const d = await degerKutusu(ctx, { baslik: t('genel.tarih', 'Tarih'), deger: recete.tarih, tur: 'date' });
@@ -120,6 +125,15 @@ export default {
             adet: 1, kullanim: '', sure: '', yol: '', not: '',
           }];
         }
+      },
+      kanGrubu: async () => {
+        const g = await listeKutusu(ctx, {
+          baslik: t('recete.kan_sec', 'Kan grubu seç'),
+          kayitlar: KAN_GRUPLARI.map((x) => ({ ad: x })),
+          ara: (liste, q) => liste.filter((x) => x.ad.toLowerCase().includes(String(q || '').toLowerCase())),
+          etiket: (x) => x.ad, alt: () => t('kagit.kan', 'Kan grubu'),
+        });
+        if (g) recete.kanGrubu = g.ad;
       },
       notlar: async () => {
         const n = await degerKutusu(ctx, { baslik: t('recete.not', 'Reçete notu'), deger: recete.notlar });

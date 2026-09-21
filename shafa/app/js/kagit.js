@@ -232,7 +232,16 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
         el('b', {}, `${KLINIK_ADLARI[anahtar]} :`),
         !bos && doluMu(recete.olcumler?.[anahtar])
           ? el('span', { dir: 'ltr' }, `${recete.olcumler[anahtar]} ${birim}`)
-          : cizgi())))),
+          : cizgi()))),
+      // Kan grubu ölçüm değil, hastanın künyesi — ama hekim onu da burada
+      // arıyor. Ölçümlerle aynı satır düzeninde, en altta. Ayırt edici
+      // sınıfı var: deneme ölçüm sayarken bunu saymasın.
+      duz('kanGrubu', el('div', { class: 'kagit__olcum kagit__olcum--kan' },
+        el('span', { class: 'kagit__olcum-simge' }, simge('kan', { boy: 19 })),
+        el('b', {}, 'Blood Gr. :'),
+        !bos && doluMu(recete.kanGrubu)
+          ? el('span', { dir: 'ltr' }, recete.kanGrubu)
+          : cizgi()))),
     !bos && doluMu(recete.dogrulamaKodu)
       ? el('div', { class: 'kagit__kod' },
         el('span', { class: 'kagit__olcum-simge' }, simge('kilit', { boy: 15 })),

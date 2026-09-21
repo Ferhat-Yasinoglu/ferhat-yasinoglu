@@ -469,7 +469,10 @@
     color: var(--m-vurgu); opacity: .18;
   }
   .kagit--modern .kagit__qr { inline-size: 23mm; block-size: 23mm; }
-  .kagit__qr-kutu { display: flex; flex-direction: column; align-items: center; gap: 1mm; }
+  /* flex-shrink: 0 — sütun uzayınca (kan grubu satırı eklendi) QR
+     ince bir şeride sıkışıyordu. */
+  .kagit__qr-kutu { display: flex; flex-direction: column; align-items: center; gap: 1mm; flex-shrink: 0; }
+  .kagit__qr { flex-shrink: 0; }
   .kagit--modern .kagit__qr-alt {
     font-size: 7.5pt; font-weight: 700; letter-spacing: .03em;
     color: var(--m-sessiz); text-transform: uppercase;

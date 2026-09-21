@@ -24,6 +24,9 @@ const MENU = [
     { yol: '/ilaclar', ad: 'İlaçlar', anahtar: 'nav.ilaclar', simge: 'ilac', alt: true, sayac: 'ilaclar' },
     { yol: '/hastalar', ad: 'Hastalar', anahtar: 'nav.hastalar', simge: 'hasta', alt: true, sayac: 'hastalar' },
     { yol: '/receteler', ad: 'Reçeteler', anahtar: 'nav.receteler', simge: 'recete', alt: true, sayac: 'receteler' },
+    // Alt çubukta DEĞİL (alt: false): telefonda beş sekme var, altıncı
+    // hepsini sıkıştırıyor. Reçeteler sayfasındaki düğmeden de açılıyor.
+    { yol: '/recete/kagit', ad: 'Reçete yaz', anahtar: 'nav.kagit', simge: 'kalem', alt: false },
   ] },
   { grup: 'Sistem', anahtar: 'nav.grup.sistem', ogeler: [
     { yol: '/ayarlar', ad: 'Ayarlar', anahtar: 'nav.ayarlar', simge: 'ayarlar', alt: true },

@@ -22,7 +22,10 @@ export default {
     kok.append(
       sayfaBas(t('nav.receteler', 'Reçeteler'), {
         alt: t('recete.sayfa_alt', 'Yazılan reçeteler.'),
-        eylemler: [btnS('arti', t('recete.yeni', 'Yeni reçete'), { class: 'btn btn--birincil', onclick: () => git('/recete/yeni') })],
+        eylemler: [
+          btnS('kalem', t('nav.kagit', 'Reçete yaz'), { class: 'btn btn--birincil', onclick: () => git('/recete/kagit') }),
+          btnS('arti', t('recete.yeni', 'Yeni reçete'), { class: 'btn', onclick: () => git('/recete/yeni') }),
+        ],
       }),
       el('div', { class: 'satir', style: { marginBlockEnd: 'var(--b-4)' } }, arama, suzgec),
       govde);
