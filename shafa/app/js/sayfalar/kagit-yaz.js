@@ -1,4 +1,4 @@
-// Reçeteyi KÂĞIDIN ÜZERİNDE yazma ekranı.
+// Reçeteyi KÂĞIDIN ÜZERİNDE yazma ekranı — reçete yazmanın tek yolu.
 //
 // Form doldurup sonra çıktıya bakmak yerine hekim doğrudan reçetenin
 // kendisine dokunuyor: ada dokun → hasta listesi, ℞ alanına dokun → ilaç
@@ -7,20 +7,29 @@
 // Kâğıdın çizimi kagit.js'te tek yerde duruyor; burası onu `duzenlenebilir`
 // kipinde çizdirip `data-alan` işaretlerinden yakalıyor. İkinci bir kâğıt
 // kopyası yok — basılan neyse düzenlenen de o.
-import { el, temizle, btn, btnS, girdi, sayfaBas } from '../cekirdek/dom.js';
+//
+// Eski form (recete-yeni.js) bunun yerine geçti ve kaldırıldı. Oradaki her
+// şey buraya taşındı: alerji uyarıları, şablonlar, düzenleme ve ilaç satırı
+// kutusu — sonuncusu artık ilac-satir-arayuz.js'te, iki yerden de kullanılsın
+// diye değil, tek yerde dursun diye.
+import { el, temizle, btn, btnS, girdi, sayfaBas, uyariSeridi } from '../cekirdek/dom.js';
 import { kagitCiz } from '../kagit.js';
-import { OLCUMLER, KAN_GRUPLARI, bosRecete, receteDogrula } from '../paylasilan/recete.js';
-import { gecmisler } from '../paylasilan/klinik.js';
+import {
+  OLCUMLER, KAN_GRUPLARI, bosRecete, receteDogrula, receteUyarilari, sikIlaclar,
+} from '../paylasilan/recete.js';
 import { klinigiOku } from '../depo/klinik.js';
+import { gecmisler } from '../paylasilan/klinik.js';
 import { secimKutusu } from '../klinik-arayuz.js';
-import { ilacAra, ilacEtiketi } from '../paylasilan/ilac.js';
-import { tamAd, hastaAra } from '../paylasilan/hasta.js';
+import { satirKutusu } from '../ilac-satir-arayuz.js';
+import { sablonuUygula } from '../paylasilan/sablon.js';
+import { sablonSecKutusu, sablonKaydetKutusu } from '../sablon-arayuz.js';
+import { tamAd, hastaAra, alerjiCakismasi } from '../paylasilan/hasta.js';
 import { receteKaydet } from '../depo/recete.js';
 import { bugun } from '../paylasilan/tarih.js';
 import { t } from '../i18n.js';
-import { dogrulaMetni, hataMetni } from '../hatalar.js';
+import { dogrulaMetni, hataMetni, uyariMetni } from '../hatalar.js';
 
-/** Basit liste kutusu: ara, seç. Hasta ve ilaç için ortak. */
+/** Basit liste kutusu: ara, seç. Hasta ve kan grubu için. */
 async function listeKutusu(ctx, { baslik, kayitlar, ara, etiket, alt }) {
   const { modal } = ctx;
   let secilen = null;
@@ -42,7 +51,7 @@ async function listeKutusu(ctx, { baslik, kayitlar, ara, etiket, alt }) {
       },
         el('div', { class: 'liste__govde' },
           el('div', { class: 'liste__baslik' }, etiket(k)),
-          el('div', { class: 'liste__alt' }, alt ? alt(k) || '—' : '—'))));
+          el('div', { class: 'liste__alt' }, (alt ? alt(k) : '') || '—'))));
     }
   }
   kutu.oninput = ciz;
@@ -73,27 +82,40 @@ async function degerKutusu(ctx, { baslik, deger = '', ipucu = '', tur = 'text' }
   return sonuc && typeof sonuc === 'object' ? sonuc.deger : null;
 }
 
+// Gezinme sırası: kâğıt veriyi beklerken başka bir sayfaya geçilirse eski
+// çizim geri dönüp yeni sayfanın üstüne yazıyordu.
 let cizimSirasi = 0;
 
 export default {
   baslik: 'Reçete kâğıdı',
   async cizim(kok, ctx) {
     const benimSira = ++cizimSirasi;
-    const { depo, git, basari, hata } = ctx;
-    const [ilaclar, hastalar, ayar, gecmisReceteler, klinik] = await Promise.all([
+    const { depo, git, basari, hata, onayla } = ctx;
+    const [ilaclar, hastalar, ayar, ilkSablonlar, gecmisReceteler, klinik] = await Promise.all([
       depo.listele('ilaclar', { sirala: 'ad' }),
       depo.listele('hastalar', { sirala: 'soyad' }),
       depo.ayarlar(),
+      depo.listele('sablonlar', { sirala: 'ad' }),
       depo.listele('receteler'),
       klinigiOku().catch(() => null),
     ]);
     if (benimSira !== cizimSirasi) return;
 
-    let recete = bosRecete(ayar, bugun());
-    let hasta = null;
-    let hatalar = {};
+    const duzenleme = ctx.param.id ? await depo.al('receteler', ctx.param.id) : null;
+    if (benimSira !== cizimSirasi) return;
 
-    /* --- Alan → ne açılacak --- */
+    let sablonlar = ilkSablonlar;
+    let recete = duzenleme ? { ...duzenleme } : bosRecete(ayar, bugun());
+    let hasta = recete.hastaId ? hastalar.find((h) => h.id === recete.hastaId) : null;
+    // Hasta kartındaki "reçete yaz" düğmesi hastayı adreste taşıyor.
+    if (!duzenleme && ctx.sorgu?.hasta) {
+      hasta = hastalar.find((h) => h.id === ctx.sorgu.hasta) || null;
+      if (hasta) { recete.hastaId = hasta.id; recete.kanGrubu = hasta.kanGrubu || ''; }
+    }
+    let hatalar = {};
+    const sikYazilanlar = sikIlaclar(gecmisReceteler, ilaclar);
+
+    /* --- Kâğıttaki alan → ne açılacak --- */
     const eylemler = {
       hasta: async () => {
         const h = await listeKutusu(ctx, {
@@ -102,29 +124,13 @@ export default {
         });
         if (h) {
           hasta = h; recete.hastaId = h.id;
-          // Hastanın kaydındaki kan grubu reçeteye mühürleniyor; kâğıtta
-          // yine değiştirilebiliyor.
+          // Kan grubu hastanın kaydından mühürleniyor; kâğıtta değiştirilebilir.
           if (!recete.kanGrubu) recete.kanGrubu = h.kanGrubu || '';
         }
       },
       tarih: async () => {
         const d = await degerKutusu(ctx, { baslik: t('genel.tarih', 'Tarih'), deger: recete.tarih, tur: 'date' });
         if (d) recete.tarih = d;
-      },
-      belirtiler: () => klinikSec('belirtiler', klinik?.belirtiler, klinik?.gruplar, t('recete.belirtiler', 'Belirti ve bulgular')),
-      tani: () => klinikSec('tani', klinik?.tanilar, klinik?.gruplar, t('recete.tani_sec', 'Tanı seç'), 'taniKodu'),
-      laboratuvar: () => klinikSec('laboratuvar', klinik?.laboratuvar, klinik?.labGruplari, t('recete.lab_sec', 'Laboratuvar / görüntüleme seç')),
-      'ilac-ekle': async () => {
-        const i = await listeKutusu(ctx, {
-          baslik: t('recete.ilac_ekle', 'İlaç ekle'), kayitlar: ilaclar, ara: ilacAra,
-          etiket: ilacEtiketi, alt: (x) => x.etkenMadde,
-        });
-        if (i) {
-          recete.satirlar = [...recete.satirlar, {
-            ilacId: i.id, ilacAdi: ilacEtiketi(i), form: i.form || '', etkenMadde: i.etkenMadde || '',
-            adet: 1, kullanim: '', sure: '', yol: '', not: '',
-          }];
-        }
       },
       kanGrubu: async () => {
         const g = await listeKutusu(ctx, {
@@ -135,6 +141,13 @@ export default {
         });
         if (g) recete.kanGrubu = g.ad;
       },
+      belirtiler: () => klinikSec('belirtiler', klinik?.belirtiler, klinik?.gruplar, t('recete.belirtiler', 'Belirti ve bulgular')),
+      tani: () => klinikSec('tani', klinik?.tanilar, klinik?.gruplar, t('recete.tani_sec', 'Tanı seç'), 'taniKodu'),
+      laboratuvar: () => klinikSec('laboratuvar', klinik?.laboratuvar, klinik?.labGruplari, t('recete.lab_sec', 'Laboratuvar / görüntüleme seç')),
+      'ilac-ekle': async () => {
+        const y = await satirKutusu(ctx, ilaclar, hasta, null, sikYazilanlar);
+        if (y) recete.satirlar = [...recete.satirlar, y];
+      },
       notlar: async () => {
         const n = await degerKutusu(ctx, { baslik: t('recete.not', 'Reçete notu'), deger: recete.notlar });
         if (n !== null) recete.notlar = n;
@@ -143,36 +156,28 @@ export default {
 
     async function klinikSec(alanAdi, liste, gruplar, baslik, kodAlani = null) {
       if (!liste) { hata(t('hata.tani_okunamadi', 'Klinik listeler okunamadı.')); return; }
-      const y = await secimKutusu(ctx, { liste, gruplar, baslik, kodAlani, recete, alan: alanAdi });
+      const y = await secimKutusu(ctx, {
+        liste, gruplar, baslik, kodAlani, recete, alan: alanAdi,
+        gecmis: gecmisler(gecmisReceteler, alanAdi, kodAlani),
+      });
       if (!y) return;
       recete[alanAdi] = y.metin;
       if (kodAlani) recete[kodAlani] = y.kodlar;
     }
 
-    /** İlaç satırı: adet, kullanım, süre. Satıra dokununca açılıyor. */
+    /** Kâğıttaki ilaç satırına dokununca: aynı kutu, dolu gelir.
+     *  Kutudaki "Sil" satırı çıkarır. */
     async function satirDuzenle(i) {
       const s = recete.satirlar[i];
       if (!s) return;
-      const adet = girdi({ type: 'number', name: 'adet', min: 1, value: s.adet });
-      const kullanim = girdi({ name: 'kullanim', value: s.kullanim });
-      const sure = girdi({ name: 'sure', value: s.sure });
-      const sonuc = await ctx.modal({
-        baslik: s.ilacAdi, genis: true,
-        govde: el('div', { class: 'izgara izgara--form' },
-          el('label', {}, el('span', { class: 'alan__etiket' }, t('recete.adet', 'Adet')), adet),
-          el('label', {}, el('span', { class: 'alan__etiket' }, t('recete.kullanim', 'Kullanım')), kullanim),
-          el('label', {}, el('span', { class: 'alan__etiket' }, t('recete.sure', 'Süre')), sure)),
-        dugmeler: [
-          { metin: t('genel.sil', 'Sil'), deger: { sil: true } },
-          { metin: t('genel.vazgec', 'Vazgeç'), deger: null },
-          { metin: t('genel.kaydet', 'Kaydet'), sinif: 'btn--birincil',
-            cb: () => ({ adet: Math.max(1, Math.floor(Number(adet.value)) || 1), kullanim: kullanim.value.trim(), sure: sure.value.trim() }) },
-        ],
-      });
-      if (!sonuc) return;
-      recete.satirlar = sonuc.sil
-        ? recete.satirlar.filter((_, j) => j !== i)
-        : recete.satirlar.map((x, j) => (j === i ? { ...x, ...sonuc } : x));
+      const y = await satirKutusu(ctx, ilaclar, hasta, s, sikYazilanlar);
+      if (y === 'sil') {
+        if (await onayla(t('recete.satir_sil_soru', '"{ad}" reçeteden çıkarılsın mı?', { ad: s.ilacAdi }))) {
+          recete.satirlar = recete.satirlar.filter((_, j) => j !== i);
+        }
+      } else if (y) {
+        recete.satirlar = recete.satirlar.map((x, j) => (j === i ? y : x));
+      }
     }
 
     async function olcumDuzenle(anahtar) {
@@ -196,13 +201,48 @@ export default {
     function ciz() {
       if (benimSira !== cizimSirasi) return;
       temizle(kok);
-      kok.append(sayfaBas(t('kagit.yaz', 'Reçete kâğıdı'), {
-        alt: t('kagit.yaz_alt', 'Kâğıdın üzerindeki alanlara dokunarak doldur.'),
-        eylemler: [
-          btnS('kaydet', t('recete.kaydet', 'Reçeteyi kaydet'), { class: 'btn btn--birincil', onclick: kaydet }),
-          btn(t('genel.vazgec', 'Vazgeç'), { class: 'btn btn--sade', onclick: () => git('/receteler') }),
-        ],
+
+      const eylemDugmeleri = [
+        btnS('kaydet', duzenleme ? t('recete.kaydet_degisiklik', 'Değişiklikleri kaydet') : t('recete.kaydet', 'Reçeteyi kaydet'),
+          { class: 'btn btn--birincil', onclick: kaydet }),
+      ];
+      if (sablonlar.length) {
+        eylemDugmeleri.push(btnS('recete', t('sablon.doldur', 'Şablondan doldur'), { class: 'btn', onclick: async () => {
+          const s = await sablonSecKutusu(ctx, sablonlar);
+          if (!s) return;
+          Object.assign(recete, sablonuUygula(recete, s));
+          basari(t('sablon.uygulandi', '"{ad}" uygulandı', { ad: s.ad }));
+          ciz();
+        } }));
+      }
+      if (recete.satirlar.length) {
+        eylemDugmeleri.push(btnS('kaydet', t('sablon.kaydet', 'Şablon olarak kaydet'), { class: 'btn', onclick: async () => {
+          if (await sablonKaydetKutusu(ctx, recete)) {
+            sablonlar = await depo.listele('sablonlar', { sirala: 'ad' });
+            ciz();
+          }
+        } }));
+      }
+      eylemDugmeleri.push(btn(t('genel.vazgec', 'Vazgeç'), {
+        class: 'btn btn--sade',
+        onclick: () => git(duzenleme ? `/recete/${duzenleme.id}` : '/receteler'),
       }));
+
+      kok.append(sayfaBas(
+        duzenleme ? `${t('recete.duzenle', 'Reçeteyi düzenle')} · ${duzenleme.receteNo || ''}` : t('nav.kagit', 'Reçete yaz'),
+        { alt: t('kagit.yaz_alt', 'Kâğıdın üzerindeki alanlara dokunarak doldur.'), eylemler: eylemDugmeleri },
+      ));
+
+      // Alerji ve çift etken madde uyarıları kâğıdın ÜSTÜNDE: kâğıda
+      // basılmıyorlar ama hekim kaydetmeden önce görmeli. Hiçbiri
+      // kaydetmeyi engellemiyor — karar hekimin.
+      const uyarilar = receteUyarilari(recete.satirlar, hasta, ilaclar, { alerjiBul: alerjiCakismasi });
+      const serit = uyariSeridi(uyarilar.map((u) => ({ tur: u.tur, metin: uyariMetni(u) })));
+      if (serit) kok.appendChild(serit);
+      const ilkHata = hatalar.hastaId || hatalar.satirlar || hatalar.tarih;
+      if (ilkHata) {
+        kok.appendChild(el('div', { class: 'uyari uyari--hata' }, el('span', {}, dogrulaMetni(ilkHata))));
+      }
 
       const tuval = el('div', { class: 'kagit-tuval' });
       const kagit = kagitCiz({ ayar, recete, hasta, duzenlenebilir: true });
@@ -224,17 +264,13 @@ export default {
       // İlk ölçüm yerleşimden SONRA: hemen ölçünce tuval daha dar geliyor
       // ve kâğıt küçücük kalıyordu.
       requestAnimationFrame(olcekle);
-      // Kâğıt büyüdükçe (ilaç eklendikçe) ve pencere değiştikçe yeniden ölçülüyor.
-      //
       // TUVALİN KENDİSİ İZLENMİYOR: boyunu bu geri çağrıda değiştiriyoruz,
-      // izleseydik kendi kendini tetikleyen bir döngü olur ve tarayıcı
-      // bildirimleri düşürüp ölçeği 0.2'de bırakırdı (telefonda 158 px).
+      // izleseydik kendi kendini tetikleyen bir döngü olurdu.
       const gozcu = new ResizeObserver(olcekle);
       gozcu.observe(kok);
       gozcu.observe(kagit);
 
-      // Tek dinleyici, kâğıdın tamamı için: her yeniden çizimde yenisini
-      // bağlamak yerine olay kâğıttan yukarı geliyor.
+      // Tek dinleyici, kâğıdın tamamı için: olay kâğıttan yukarı geliyor.
       tuval.addEventListener('click', async (e) => {
         const hedef = e.target.closest('[data-alan]');
         if (!hedef) return;

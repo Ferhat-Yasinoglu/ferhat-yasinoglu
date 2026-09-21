@@ -31,7 +31,7 @@ export default {
         alt: [yas !== null ? t('hasta.yas', '{n} yaş', { n: yas }) : null, secenekAdi(CINSIYETLER, hasta.cinsiyet, 'cinsiyet'), hasta.telefon].filter(Boolean).join(' · '),
         geri: () => git('/hastalar'),
         eylemler: [
-          btnS('recete', t('recete.yaz', 'Reçete yaz'), { class: 'btn btn--birincil', onclick: () => git(`/recete/yeni?hasta=${hasta.id}`) }),
+          btnS('recete', t('recete.yaz', 'Reçete yaz'), { class: 'btn btn--birincil', onclick: () => git(`/recete/kagit?hasta=${hasta.id}`) }),
           btnS('kalem', t('genel.duzenle', 'Düzenle'), { class: 'btn', onclick: async () => { if (await hastaKutusu(ctx, hasta)) ciz(); } }),
           btnS('cop', t('genel.sil', 'Sil'), { class: 'btn', onclick: async () => {
             if (await onayla(t('hasta.sil_onay', '"{ad}" silinsin mi? Reçete geçmişi kayıtlarda kalır.', { ad: tamAd(hasta) }), { tehlikeli: true, evet: t('genel.sil', 'Sil') })) {
@@ -89,7 +89,7 @@ export default {
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' },
           el('h2', {}, t('nav.receteler', 'Reçeteler')),
-          btnS('arti', t('recete.yeni', 'Yeni reçete'), { class: 'btn btn--kucuk', onclick: () => git(`/recete/yeni?hasta=${hasta.id}`) })),
+          btnS('arti', t('recete.yeni', 'Yeni reçete'), { class: 'btn btn--kucuk', onclick: () => git(`/recete/kagit?hasta=${hasta.id}`) })),
         receteGovdesi));
     }
 

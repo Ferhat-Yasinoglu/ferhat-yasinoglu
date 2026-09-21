@@ -34,7 +34,7 @@ export default {
         alt: [ilac.etkenMadde, ilac.uretici].filter(Boolean).join(' · '),
         geri: () => git('/ilaclar'),
         eylemler: [
-          btnS('recete', t('recete.yaz', 'Reçete yaz'), { class: 'btn btn--birincil', onclick: () => git('/recete/yeni') }),
+          btnS('recete', t('recete.yaz', 'Reçete yaz'), { class: 'btn btn--birincil', onclick: () => git('/recete/kagit') }),
           btnS('kalem', t('genel.duzenle', 'Düzenle'), { class: 'btn', onclick: async () => { if (await ilacKutusu(ctx, ilac)) ciz(); } }),
           btnS('cop', t('genel.sil', 'Sil'), { class: 'btn', onclick: async () => {
             if (await onayla(t('ilac.sil_onay', '"{ad}" silinsin mi? Yazılmış reçetelerde adı kalır.', { ad: ilac.ad }), { tehlikeli: true, evet: t('genel.sil', 'Sil') })) {

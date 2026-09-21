@@ -22,10 +22,7 @@ export default {
     kok.append(
       sayfaBas(t('nav.receteler', 'Reçeteler'), {
         alt: t('recete.sayfa_alt', 'Yazılan reçeteler.'),
-        eylemler: [
-          btnS('kalem', t('nav.kagit', 'Reçete yaz'), { class: 'btn btn--birincil', onclick: () => git('/recete/kagit') }),
-          btnS('arti', t('recete.yeni', 'Yeni reçete'), { class: 'btn', onclick: () => git('/recete/yeni') }),
-        ],
+        eylemler: [btnS('kalem', t('recete.yeni', 'Yeni reçete'), { class: 'btn btn--birincil', onclick: () => git('/recete/kagit') })],
       }),
       el('div', { class: 'satir', style: { marginBlockEnd: 'var(--b-4)' } }, arama, suzgec),
       govde);
@@ -54,7 +51,7 @@ export default {
         govde.appendChild(bosDurum({
           simge: 'recete', baslik: t('recete.bos', 'Henüz reçete yok'),
           alt: t('recete.bos_alt', 'Hasta seçip ilaçları ekleyerek ilk reçeteyi yaz.'),
-          eylem: btnS('arti', t('recete.yeni', 'Yeni reçete'), { class: 'btn btn--birincil', onclick: () => git('/recete/yeni') }),
+          eylem: btnS('kalem', t('recete.yeni', 'Yeni reçete'), { class: 'btn btn--birincil', onclick: () => git('/recete/kagit') }),
         }));
         return;
       }

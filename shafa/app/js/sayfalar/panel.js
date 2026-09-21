@@ -65,7 +65,7 @@ export default {
       kok.append(sayfaBas(t('nav.panel', 'Panel'), {
         alt: t('panel.alt', 'Reçeteler, hastalar ve ilaç listesi.'),
         eylemler: [
-          btnS('recete', t('recete.yaz', 'Reçete yaz'), { class: 'btn btn--birincil', onclick: () => git('/recete/yeni') }),
+          btnS('recete', t('recete.yaz', 'Reçete yaz'), { class: 'btn btn--birincil', onclick: () => git('/recete/kagit') }),
           btnS('hasta', t('hasta.ekle', 'Hasta ekle'), { class: 'btn', onclick: () => git('/hastalar') }),
           btnS('arti', t('ilac.ekle', 'İlaç ekle'), { class: 'btn', onclick: () => git('/ilaclar') }),
         ],
