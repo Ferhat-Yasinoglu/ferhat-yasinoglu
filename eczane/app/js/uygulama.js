@@ -13,6 +13,7 @@ import { hastaAra, tamAd } from './paylasilan/hasta.js';
 import { eslesir, bicimAyarla } from './paylasilan/metin.js';
 import { trTarih } from './paylasilan/tarih.js';
 import { t, yukle as dilYukle, uygula as dilUygula, suankiDil } from './i18n.js';
+import { kurtar } from './cekirdek/kurtarma.js';
 
 export const UYGULAMA_SURUMU = '0.2.0';
 globalThis.UYGULAMA_SURUMU = UYGULAMA_SURUMU;
@@ -214,11 +215,22 @@ async function baslat() {
   if ('serviceWorker' in navigator && !location.search.includes('nosw') && location.protocol.startsWith('http')) {
     try {
       const kayit = await navigator.serviceWorker.register('./sw.js');
+      // Denetleyici değişince sayfa bir kez yenilenir: yeni service worker
+      // devraldığı anda elimizdeki modüller eskidir, karışık bir grafikle
+      // devam etmek çökmeye götürüyor.
+      let yenilendi = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (yenilendi) return;
+        yenilendi = true;
+        location.reload();
+      });
       kayit.addEventListener('updatefound', () => {
         const y = kayit.installing;
         y?.addEventListener('statechange', () => {
           if (y.state === 'installed' && navigator.serviceWorker.controller) {
-            bildir(t('sw.yeni', 'Yeni sürüm hazır.'), { sure: 0, eylem: { metin: t('genel.yenile', 'Yenile'), cb: () => { y.postMessage('atla'); location.reload(); } } });
+            // Yenileme kullanıcının elinde: yarım kalmış bir reçetenin
+            // üstüne sayfa yenilemek veri kaybettirir.
+            bildir(t('sw.yeni', 'Yeni sürüm hazır.'), { sure: 0, eylem: { metin: t('genel.yenile', 'Yenile'), cb: () => y.postMessage('atla') } });
           }
         });
       });
@@ -226,7 +238,8 @@ async function baslat() {
   }
 }
 
-baslat().catch((e) => {
+baslat().catch(async (e) => {
   console.error(e);
+  if (await kurtar()) return;
   document.getElementById('sayfa').textContent = 'Uygulama başlatılamadı: ' + (e?.message || e);
 });

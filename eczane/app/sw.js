@@ -12,8 +12,13 @@ const KABUK = [
   './i18n/fa.json', './img/logo.svg', './yazi/vazirmatn.woff2',
 ];
 
+// skipWaiting burada BİLEREK yok. Yeni sürüm açık sayfayı ortasından
+// devralırsa modül grafiği karışıyor: sayfa eski dom.js'i çoktan yüklemişken
+// yeni panel.js geliyor ve "Importing binding name … is not found" diye
+// çöküyordu. Yeni sürüm sırasını bekler; kullanıcı "Yenile" deyince
+// 'atla' iletisiyle devralır (aşağıdaki message dinleyicisi).
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(ONBELLEK).then((c) => c.addAll(KABUK)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(ONBELLEK).then((c) => c.addAll(KABUK)));
 });
 
 self.addEventListener('activate', (e) => {
