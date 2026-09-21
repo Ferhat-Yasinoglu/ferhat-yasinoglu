@@ -101,15 +101,15 @@ if (ilacSayisi !== 8) throw new Error(`8 ilaç bekleniyordu, ${ilacSayisi} var`)
 ok(`ilaç listesi ${ilacSayisi} satır gösteriyor`);
 
 // --- Arama: etken maddeden muadil bulma
-await sayfa.fill('#sayfa input[type=search]', 'amoksisilin');
+await sayfa.fill('#sayfa input[type=search]', 'amoxicillin');
 await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 2);
 ok('etken madde araması 2 muadili buldu');
 await sayfa.fill('#sayfa input[type=search]', '');
 
 // --- Süzgeç: yalnız reçeteli ilaçlar
 await sayfa.selectOption('#sayfa select', { label: T('suzgec.receteli') });
-await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 6);
-ok('"yalnız reçeteli" süzgeci 6 ilaç bıraktı');
+await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 5);
+ok('"yalnız reçeteli" süzgeci 5 ilaç bıraktı');
 await sayfa.selectOption('#sayfa select', { label: T('suzgec.') });
 await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 8);
 
@@ -148,16 +148,16 @@ await sayfa.goto(KOK + '#/ilaclar');
 await sayfa.click('.tablo tbody tr:has-text("Augmentin")');
 await sayfa.waitForSelector(`h2:has-text("${T('ilac.muadiller')}")`);
 const muadil = await sayfa.textContent(`.kart:has(h2:text-is("${T('ilac.muadiller')}")) .liste__baslik`);
-if (!muadil.includes('Amoklavin')) throw new Error('muadil bulunamadı: ' + muadil);
+if (!muadil.includes('Co-Amoxiclav')) throw new Error('muadil bulunamadı: ' + muadil);
 ok('muadil kartı doğru ilacı gösterdi: ' + muadil.trim());
 
 // --- Hasta kartı ve alerji uyarısı
 await sayfa.click('#kenar-menu a[href="#/hastalar"]');
 await sayfa.waitForSelector('.liste__satir');
-await sayfa.click('.liste__satir:has-text("Ayşe Yılmaz")');
-await sayfa.waitForSelector('h1:has-text("Ayşe Yılmaz")');
+await sayfa.click('.liste__satir:has-text("فاطمه احمدی")');
+await sayfa.waitForSelector('h1:has-text("فاطمه احمدی")');
 const alerji = await sayfa.textContent('.uyari--hata');
-if (!alerji.includes('Penisilin')) throw new Error('alerji uyarısı yok');
+if (!alerji.includes('Penicillin')) throw new Error('alerji uyarısı yok');
 ok('hasta kartı alerjiyi kırmızı şeritte gösterdi: ' + alerji.trim());
 await resim(sayfa, '3-hasta-karti.png');
 
@@ -193,13 +193,13 @@ ok('reçete anteti kaydedildi (ad, ünvan şeridi, slogan, hizmetler, sabıka, r
 // aşağıdaki adımlar `input[name=...]` değil `[data-alan=...]` sürüyor.
 const kagitAlan = (ad) => `.kagit-tuval [data-alan="${ad}"]`;
 
-// --- Hasta kartından kâğıda geçiş (Zeynep'in ibuprofen alerjisi var)
+// --- Hasta kartından kâğıda geçiş (زهرا صدیقی'nin ibuprofen alerjisi var)
 await sayfa.click('#kenar-menu a[href="#/hastalar"]');
-await sayfa.click('.liste__satir:has-text("Zeynep Kaya")');
+await sayfa.click('.liste__satir:has-text("زهرا صدیقی")');
 await sayfa.click(`button:has-text("${T('recete.yaz')}")`);
 await sayfa.waitForSelector('.kagit-tuval .kagit');
 const seritMetni = await sayfa.textContent('.kagit__serit');
-if (!seritMetni.includes('Zeynep Kaya')) throw new Error('hasta kâğıda taşınmadı: ' + seritMetni);
+if (!seritMetni.includes('زهرا صدیقی')) throw new Error('hasta kâğıda taşınmadı: ' + seritMetni);
 ok('hasta kartından kâğıt açıldı, hasta kâğıdın "Name" alanında yazılı geldi');
 
 // --- Kâğıdın kendisi çalışma yüzeyi mi?
@@ -217,23 +217,23 @@ ok(`kâğıt üzerinde ${alanlar.length} alan dokunulabilir, ayrı reçete formu
 
 // --- Alerjili ilaç: uyarı, satır eklenmeden önce kutunun içinde çıkmalı
 await sayfa.click(kagitAlan('ilac-ekle'));
-await sayfa.fill('.modal input[name=ilacArama]', 'nurofen');
-await sayfa.click('.modal .liste__satir--tiklanir:has-text("Nurofen")');
+await sayfa.fill('.modal input[name=ilacArama]', 'brufen');
+await sayfa.click('.modal .liste__satir--tiklanir:has-text("Brufen")');
 await sayfa.waitForSelector('.modal .uyari--hata');
 const alerjiUyarisi = await sayfa.textContent('.modal .uyari--hata');
-if (!alerjiUyarisi.includes('İbuprofen')) throw new Error('alerji uyarısı yok: ' + alerjiUyarisi);
+if (!alerjiUyarisi.includes('Ibuprofen')) throw new Error('alerji uyarısı yok: ' + alerjiUyarisi);
 ok('ilaç seçilince alerji uyarısı çıktı: ' + alerjiUyarisi.trim());
 
 await sayfa.fill('.modal input[name=adet]', '2');
 await sayfa.fill('.modal input[name=kullanim]', 'Günde 2×1');
 await sayfa.fill('.modal input[name=sure]', '5 gün');
 await sayfa.click(`.modal button:has-text("${T('genel.ekle')}")`);
-await sayfa.waitForSelector('.kagit__ilaclar li:has-text("Nurofen")');
+await sayfa.waitForSelector('.kagit__ilaclar li:has-text("Brufen")');
 // Uyarı kâğıdın ÜSTÜNDE de duruyor: kâğıda basılmıyor ama hekim kaydetmeden
 // önce görmeli. Eski formun en değerli parçası buydu; taşınmazsa alerjili
 // reçete sessizce yazılırdı.
 const ustSerit = await sayfa.textContent('#sayfa .uyarilar .uyari--hata');
-if (!ustSerit.includes('İbuprofen')) throw new Error('kâğıdın üstünde alerji şeridi yok: ' + ustSerit);
+if (!ustSerit.includes('Ibuprofen')) throw new Error('kâğıdın üstünde alerji şeridi yok: ' + ustSerit);
 ok('alerjili ilaç kâğıda yazıldı, uyarı kâğıdın üstünde duruyor: ' + ustSerit.trim());
 
 // --- İkinci ilaç: kutuya hiç yazmadan, çiplerle
@@ -244,8 +244,8 @@ const gezinilebilir = await sayfa.locator('.modal .liste__satir--tiklanir').coun
 if (gezinilebilir < 3) throw new Error(`boş aramada gezinilecek liste yok, ${gezinilebilir} satır`);
 ok(`ilaç kutusu boşken ${gezinilebilir} ilaç listeleniyor, aramadan seçilebiliyor`);
 
-await sayfa.fill('.modal input[name=ilacArama]', 'parol');
-await sayfa.click('.modal .liste__satir--tiklanir:has-text("Parol")');
+await sayfa.fill('.modal input[name=ilacArama]', 'panadol');
+await sayfa.click('.modal .liste__satir--tiklanir:has-text("Panadol")');
 await sayfa.fill('.modal input[name=adet]', '1');
 // Kullanım, süre ve yol da dokunarak: metin tam eşleşmeli, "۵ روز" ile
 // "۱۵ روز" birbirinin içinde geçiyor.
@@ -261,20 +261,20 @@ if (cipSure !== T('sure.0')) throw new Error(`süre çipi yazmadı: "${cipSure}"
 if (cipYol !== T('yol.0')) throw new Error(`veriliş yolu çipi yazmadı: "${cipYol}"`);
 ok(`kullanım, süre ve veriliş yolu çiple dolduruldu: ${cipKullanim} · ${cipSure} · ${cipYol}`);
 await sayfa.click(`.modal button:has-text("${T('genel.ekle')}")`);
-await sayfa.waitForSelector('.kagit__ilaclar li:has-text("Parol")');
+await sayfa.waitForSelector('.kagit__ilaclar li:has-text("Panadol")');
 
 // --- Kâğıttaki satıra dokunmak onu açıyor; silme de aynı kutuda.
 // Eski formdaki çöp kutusu düğmesi kâğıda sığmıyordu, satırı çıkarmanın
 // başka yolu kalmasın diye kutuya taşındı.
 await sayfa.click(kagitAlan('ilac-ekle'));
-await sayfa.fill('.modal input[name=ilacArama]', 'majezik');
-await sayfa.click('.modal .liste__satir--tiklanir:has-text("Majezik")');
+await sayfa.fill('.modal input[name=ilacArama]', 'flagyl');
+await sayfa.click('.modal .liste__satir--tiklanir:has-text("Flagyl")');
 await sayfa.click(`.modal button:has-text("${T('genel.ekle')}")`);
-await sayfa.waitForSelector('.kagit__ilaclar li:has-text("Majezik")');
+await sayfa.waitForSelector('.kagit__ilaclar li:has-text("Flagyl")');
 await sayfa.click(kagitAlan('ilac:2'));
 await sayfa.waitForSelector(`.modal button:has-text("${T('genel.sil')}")`);
 const doluGelen = await sayfa.inputValue('.modal input[name=ilacArama]');
-if (!doluGelen.includes('Majezik')) throw new Error('satır kutusu dolu gelmedi: ' + doluGelen);
+if (!doluGelen.includes('Flagyl')) throw new Error('satır kutusu dolu gelmedi: ' + doluGelen);
 await sayfa.click(`.modal button:has-text("${T('genel.sil')}")`);
 // Onay kutusu da Farsça olmalı: cekirdek/modal.js'in varsayılanları Türkçe.
 await sayfa.waitForSelector('.modal .btn--birincil');
@@ -283,7 +283,7 @@ for (const turkce of ['Emin misin', 'Evet', 'Vazgeç']) {
   if (onayMetni.includes(turkce)) throw new Error(`onay kutusunda Türkçe metin "${turkce}": ${onayMetni}`);
 }
 await sayfa.click('.modal .btn--birincil');
-await sayfa.waitForSelector('.kagit__ilaclar li:has-text("Majezik")', { state: 'detached' });
+await sayfa.waitForSelector('.kagit__ilaclar li:has-text("Flagyl")', { state: 'detached' });
 const kalanSatir = await sayfa.locator('.kagit__ilaclar li').count();
 if (kalanSatir !== 2) throw new Error(`silmeden sonra 2 satır kalmalıydı, ${kalanSatir} var`);
 ok(`kâğıttaki satır dokununca dolu açıldı, Farsça onayla silindi, ${kalanSatir} satır kaldı`);
@@ -422,7 +422,7 @@ ok('reçete kaydedildi, numara kendiliğinden verildi: ' + receteNo);
 
 // --- Reçete kartı: satırlar okunur halde, karşılama düğmesi yok
 const ilacTablosu = await sayfa.textContent(`.kart:has(h2:text-is("${T('nav.ilaclar')}"))`);
-for (const beklenen of ['Nurofen 400 mg Tablet', 'Parol 500 mg Tablet']) {
+for (const beklenen of ['Brufen 400 mg Tablet', 'Panadol 500 mg Tablet']) {
   if (!ilacTablosu.includes(beklenen)) throw new Error(`reçete tablosunda "${beklenen}" yok`);
 }
 if (/\bnull\b/.test(ilacTablosu)) throw new Error('reçete tablosuna düz metin "null" sızmış');
@@ -450,7 +450,7 @@ await sayfa.goto(KOK + `#/recete/${receteId}/duzenle`);
 await sayfa.waitForSelector('.kagit-tuval .kagit');
 // Düzenleme kâğıdı dolu açılmalı: kaydedilmiş reçetenin üstüne yazılıyor.
 const duzenlenenKagit = await sayfa.textContent('.kagit-tuval .kagit');
-if (!duzenlenenKagit.includes('Nurofen') || !duzenlenenKagit.includes('Zeynep Kaya')) {
+if (!duzenlenenKagit.includes('Brufen') || !duzenlenenKagit.includes('زهرا صدیقی')) {
   throw new Error('düzenlemeye açılan kâğıt dolu gelmedi');
 }
 await sayfa.click(`button:has-text("${T('sablon.kaydet')}")`);
@@ -479,14 +479,14 @@ await yeniSekme.click(`button:has-text("${T('sablon.doldur')}")`);
 await yeniSekme.waitForSelector('.modal .liste__satir--tiklanir');
 await yeniSekme.click('.modal .liste__satir--tiklanir:has-text("ÜSYE denemesi")');
 await yeniSekme.click(`.modal button:has-text("${T('sablon.uygula')}")`);
-await yeniSekme.waitForSelector('.kagit__ilaclar li:has-text("Nurofen")');
+await yeniSekme.waitForSelector('.kagit__ilaclar li:has-text("Brufen")');
 const sablonSatir = await yeniSekme.locator('.kagit__ilaclar li').count();
 const sablonTani = await yeniSekme.textContent('.kagit__tani');
 if (sablonSatir !== 2) throw new Error(`şablondan 2 satır beklenirdi, ${sablonSatir} geldi`);
 if (!sablonTani.includes(usye.ad)) throw new Error('şablon tanıyı getirmedi: ' + sablonTani);
 // Hasta seçilmemiş olmalı: şablon hastaya ait değil.
 const sablonSerit = await yeniSekme.textContent('.kagit__serit');
-if (/Zeynep|Ayşe|Mehmet/.test(sablonSerit)) {
+if (/زهرا|فاطمه|نعیم/.test(sablonSerit)) {
   throw new Error('şablon uygulanınca hasta da geldi — şablon hastaya ait olmamalı: ' + sablonSerit.trim());
 }
 ok('şablon boş kâğıda uygulandı: 2 ilaç ve tanı geldi, hasta gelmedi');
@@ -525,7 +525,7 @@ const bolumler = [
   ['doktor adı', 'نمونه احمدی'], ['latin ad', 'Dr. Nemuna Ahmadi'],
   ['ünvan şeridi', 'معالج امراض داخله'], ['slogan', 'سلامتی شما'],
   ['hizmet', '(ECG)'], ['ilgi alanları', '(قلب ، شش'], ['sabıka', 'سابقه کاری'],
-  ['hasta', 'Zeynep Kaya'], ['tanı', 'J06.9'], ['ilaç', 'Nurofen'],
+  ['hasta', 'زهرا صدیقی'], ['tanı', 'J06.9'], ['ilaç', 'Brufen'],
   ['alerji', T('hasta.alerji')], ['adres', 'کابل'], ['telefon', '0700000000'],
   ['Clinical başlığı', 'Clinical'], ['ölçüm etiketi', 'BP :'],
   // Kâğıda ait sabit satırlar: ayarlardan gelmiyor, her kâğıtta olmalı.
@@ -615,8 +615,8 @@ for (const beklenen of ['نمونه احمدی', 'سلامتی شما', 'Your He
   if (!bosKagit.metin.includes(beklenen)) throw new Error(`boş kâğıtta "${beklenen}" yok`);
 }
 if (bosKagit.rozet !== 7) throw new Error(`boş kâğıtta 7 rozet olmalı, ${bosKagit.rozet} var`);
-if (bosKagit.metin.includes('Zeynep')) throw new Error('boş kâğıtta hasta bilgisi sızmış');
-if (bosKagit.metin.includes('Nurofen')) throw new Error('boş kâğıtta ilaç sızmış');
+if (bosKagit.metin.includes('زهرا')) throw new Error('boş kâğıtta hasta bilgisi sızmış');
+if (bosKagit.metin.includes('Brufen')) throw new Error('boş kâğıtta ilaç sızmış');
 
 // Hiç ayar yapılmamış kâğıt: hekim uygulamayı ilk açtığında bunu görüyor.
 // Basılı kâğıda ait sabit yazılar ayara dokunulmadan da çıkmalı, yoksa
@@ -654,13 +654,13 @@ await sayfa.evaluate(() => { window.__acilan = null; window.open = (u) => { wind
 await sayfa.click(`button:has-text("${T('paylas.gonder')}")`);
 await sayfa.waitForSelector('.modal textarea');
 const gonderilecek = await sayfa.inputValue('.modal textarea');
-for (const beklenen of ['Deneme Eczanesi', 'Zeynep Kaya', 'Nurofen', 'İbuprofen']) {
+for (const beklenen of ['Deneme Eczanesi', 'زهرا صدیقی', 'Brufen', 'Ibuprofen']) {
   if (!gonderilecek.includes(beklenen)) throw new Error(`gönderilecek metinde "${beklenen}" yok`);
 }
 await sayfa.click(`.modal button:has-text("${T('paylas.whatsapp')}")`);
 const acilan = await sayfa.evaluate(() => window.__acilan);
-if (!acilan?.startsWith('https://wa.me/93535')) throw new Error('WhatsApp bağlantısı beklenen numarayla açılmadı: ' + acilan);
-if (!decodeURIComponent(acilan).includes('Nurofen')) throw new Error('WhatsApp bağlantısında reçete metni yok');
+if (!acilan?.startsWith('https://wa.me/93700000003')) throw new Error('WhatsApp bağlantısı beklenen numarayla açılmadı: ' + acilan);
+if (!decodeURIComponent(acilan).includes('Brufen')) throw new Error('WhatsApp bağlantısında reçete metni yok');
 ok('gönder: WhatsApp bağlantısı hastanın numarasıyla ve reçete metniyle kuruldu');
 await sayfa.click(`.modal button:has-text("${T('genel.kapat')}")`);
 await sayfa.emulateMedia({ media: 'print' });
@@ -682,7 +682,7 @@ const kagitMetni = await sayfa.evaluate(async () => {
   const hasta = await depo.al('hastalar', recete.hastaId);
   return `${ozetMetni(recete, tamAd(hasta))}\n${kodSatiri(recete.dogrulamaKodu)}`;
 });
-if (!kagitMetni.includes('Nurofen')) throw new Error('özet metni beklenen içeriği taşımıyor');
+if (!kagitMetni.includes('Brufen')) throw new Error('özet metni beklenen içeriği taşımıyor');
 
 const denetle = async (metin) => {
   await sayfa.click('#kenar-menu a[href="#/ayarlar"]');
@@ -708,7 +708,7 @@ ok('adet 2 → 20 yapılan reçete yakalandı: kod tutmadı');
 // --- Reçete listesi ve süzgeç
 await sayfa.click('#kenar-menu a[href="#/receteler"]');
 await sayfa.waitForSelector(`h1:has-text("${T('nav.receteler')}")`);
-await sayfa.waitForSelector('.tablo tbody tr:has-text("Zeynep Kaya")');
+await sayfa.waitForSelector('.tablo tbody tr:has-text("زهرا صدیقی")');
 await sayfa.selectOption('#sayfa select', { label: T('recete.suzgec.bugun') });
 await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 1);
 ok('reçete listede göründü, "bugün yazılanlar" süzgeci onu buldu');
@@ -802,13 +802,13 @@ await turkceAra('panel');
 await sayfa.click('#kenar-menu a[href="#/ilaclar"]');
 await sayfa.waitForSelector('.tablo tbody tr');
 await turkceAra('ilaç listesi');
-await sayfa.click('.tablo tbody tr:has-text("Majezik")');
-await sayfa.waitForSelector('h1:has-text("Majezik")');
+await sayfa.click('.tablo tbody tr:has-text("Flagyl")');
+await sayfa.waitForSelector('h1:has-text("Flagyl")');
 await turkceAra('ilaç kartı');
 
 await sayfa.click('#kenar-menu a[href="#/hastalar"]');
 await sayfa.waitForSelector('.liste__satir');
-await sayfa.click('.liste__satir:has-text("Ayşe Yılmaz")');
+await sayfa.click('.liste__satir:has-text("فاطمه احمدی")');
 await sayfa.waitForSelector('.uyari');
 await turkceAra('hasta kartı (alerji şeridi)');
 

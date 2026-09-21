@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { BellekDepo, DepoHatasi } from '../app/js/depo/depo.js';
 import { IdbDepo } from '../app/js/depo/idb.js';
 import { yedekOlustur, iceAktar, yedekDogrula, hatirlatmaGerekli } from '../app/js/depo/yedek.js';
-import { ornekYukle } from '../app/js/depo/ornek.js';
+import { ornekYukle, ornekAntetiSil, ORNEK_ANTET } from '../app/js/depo/ornek.js';
 
 let depo;
 beforeEach(() => { depo = new BellekDepo(); });
@@ -199,5 +199,32 @@ describe('ayarların kısmi yedekten geri yüklenmesi', () => {
     expect(ayar.adres).toBe('Kabil');          // yeni alan eklendi
     expect(ayar.dogrulamaAnahtari).toBe('gizli-anahtar'); // dokunulmadı
     expect(ayar.paraBirimi).toBe('AFN');       // dokunulmadı
+  });
+});
+
+describe('örnek antet', () => {
+  it('örnek veri silinince hekimin dokunmadığı antet alanları temizlenir', async () => {
+    await ornekYukle(depo);
+    expect((await depo.ayarlar()).doktorAd).toBe(ORNEK_ANTET.doktorAd);
+
+    await depo.ornekSil();
+    await ornekAntetiSil(depo);
+    const ayar = await depo.ayarlar();
+    // Silinen örnek kâğıtta yaşamaya devam etmemeli: «نمونه» adı gitmeli.
+    expect(ayar.doktorAd).toBe('');
+    expect(ayar.deneyim).toBe('');
+  });
+
+  it('hekimin kendi yazdığı antete dokunmaz', async () => {
+    await ornekYukle(depo);
+    await depo.ayarKaydet({ doktorAd: 'داکتر خودم', adres: 'آدرس خودم' });
+
+    await depo.ornekSil();
+    await ornekAntetiSil(depo);
+    const ayar = await depo.ayarlar();
+    expect(ayar.doktorAd).toBe('داکتر خودم');
+    expect(ayar.adres).toBe('آدرس خودم');
+    // Dokunulmayan örnek alanı yine de temizlenmeli.
+    expect(ayar.doktorAdAlt).toBe('');
   });
 });
