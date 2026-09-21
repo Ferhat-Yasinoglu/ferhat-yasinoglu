@@ -119,7 +119,7 @@ export function sirala(kap) {
   return kap;
 }
 
-/** Uyarı şeridi: reçete ve ilaç ekranlarında alerji/stok uyarıları için. */
+/** Uyarı şeridi: reçete ve hasta ekranlarında alerji uyarıları için. */
 export const uyariSeridi = (uyarilar) =>
   uyarilar.length
     ? el('div', { class: 'uyarilar' }, ...uyarilar.map((u) =>

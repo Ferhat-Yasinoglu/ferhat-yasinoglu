@@ -12,8 +12,8 @@ import { kagidiYazdir } from '../kagit.js';
 import { hataMetni } from '../hatalar.js';
 import { metniDogrula } from '../depo/dogrulama.js';
 
-const KOL_ANAHTARI = { ilaclar: 'nav.ilaclar', hastalar: 'nav.hastalar', receteler: 'nav.receteler', hareketler: 'stok.hareketler', ayarlar: 'nav.ayarlar' };
-const KOL_ADI = { ilaclar: 'İlaç', hastalar: 'Hasta', receteler: 'Reçete', hareketler: 'Stok hareketi', ayarlar: 'Ayar' };
+const KOL_ANAHTARI = { ilaclar: 'nav.ilaclar', hastalar: 'nav.hastalar', receteler: 'nav.receteler', ayarlar: 'nav.ayarlar' };
+const KOL_ADI = { ilaclar: 'İlaç', hastalar: 'Hasta', receteler: 'Reçete', ayarlar: 'Ayar' };
 
 /** Antet alanları: [anahtar, Türkçe etiket, ipucu, çokSatır?]
  *  Sıra kâğıttaki sırayla aynı: ad, ünvan, slogan, hizmetler, sabıka, iletişim. */
@@ -250,7 +250,7 @@ export default {
       /* --- Tehlikeli bölge --- */
       kok.appendChild(kart({ style: { borderColor: 'rgb(var(--kirmizi) / .4)' } },
         el('div', { class: 'kart__bas' }, el('h2', { style: { color: 'rgb(var(--kirmizi))' } }, t('ayar.tehlike', 'Tehlikeli bölge'))),
-        el('p', { class: 'kart__alt' }, t('ayar.tehlike_alt', 'Bütün ilaçlar, hastalar, reçeteler ve hareketler bu cihazdan silinir. Geri alınamaz — önce yedek al.')),
+        el('p', { class: 'kart__alt' }, t('ayar.tehlike_alt', 'Bütün ilaçlar, hastalar ve reçeteler bu cihazdan silinir. Geri alınamaz — önce yedek al.')),
         btnS('cop', t('ayar.hepsini_sil', 'Tüm verileri sil'), { class: 'btn btn--tehlike', style: { marginBlockStart: 'var(--b-3)' }, onclick: async () => {
           const onayKelimesi = t('ayar.sil_kelimesi', 'SİL');
           const kutu = girdi({ placeholder: onayKelimesi, autocomplete: 'off' });

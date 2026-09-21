@@ -7,8 +7,6 @@ const DOGRULAMA = {
   ad_gerekli: 'İlaç adı gerekli.',
   soyad_gerekli: 'Soyad gerekli.',
   barkod_bicim: 'Barkod 6–14 rakam olmalı.',
-  stok_negatif: 'Stok negatif olamaz.',
-  fiyat_sayi: 'Fiyat sayı olmalı.',
   tarih_gecersiz: 'Tarih geçersiz.',
   kimlik_bicim: 'Kimlik numarası yalnız rakamlardan oluşmalı.',
   dogum_gelecek: 'Doğum tarihi gelecekte olamaz.',
@@ -24,13 +22,7 @@ const DEPO = {
   kota: 'Cihazda yer kalmadı. Yedek alıp eski kayıtları temizle.',
   yazma: 'Kayıt yazılamadı.',
   kilit: 'Veritabanı başka bir sekmede açık.',
-  ilac_bulunamadi: 'İlaç bulunamadı.',
   recete_bulunamadi: 'Reçete bulunamadı.',
-  satir_bulunamadi: 'Reçete satırı bulunamadı.',
-  satir_kapali: 'Bu satırın tamamı zaten verilmiş.',
-  sebep_gerekli: 'Sebep seçilmeli.',
-  miktar: 'Miktar sıfırdan büyük olmalı.',
-  stok_yetersiz: 'Stok yetersiz: {ad} için {var} adet var, {istenen} adet isteniyor.',
 };
 
 /** Doğrulama kodunu arayüz metnine çevirir. Kod tanınmazsa olduğu gibi döner. */
@@ -48,12 +40,7 @@ export function hataMetni(e, varsayilan = '') {
 }
 
 const UYARI = {
-  stok_yok: 'Stokta yok',
-  stok_kritik: 'Stok azaldı ({n} adet)',
-  skt_gecti: 'Son kullanma tarihi geçmiş',
-  skt_yakin: 'Son kullanmaya {n} gün kaldı',
   alerji: 'Hastanın "{a}" alerjisi var',
-  stok_yetersiz: '{istenen} isteniyor, stokta {mevcut} var',
   cift_etken: 'Aynı etken madde birden fazla satırda: {liste}',
 };
 

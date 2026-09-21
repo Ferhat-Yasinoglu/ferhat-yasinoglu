@@ -99,7 +99,7 @@ async function aramaAc(ctx, ilk = '') {
     if (!q) { sonuc.appendChild(el('div', { class: 'liste__satir sessiz' }, t('ara.basla', 'Aramak için yazmaya başla.'))); return; }
     const bulunan = [
       ...ilacAra(ilaclar, q).slice(0, 6).map((i) => ({
-        ad: ilacEtiketi(i), alt: t('ara.ilac', 'İlaç · stok {n}', { n: i.stok ?? 0 }), s: 'ilac', yol: `/ilac/${i.id}`,
+        ad: ilacEtiketi(i), alt: t('ara.ilac', 'İlaç · {e}', { e: i.etkenMadde || '—' }), s: 'ilac', yol: `/ilac/${i.id}`,
       })),
       ...hastaAra(hastalar, q).slice(0, 6).map((h) => ({
         ad: tamAd(h), alt: t('ara.hasta', 'Hasta · {b}', { b: h.telefon || h.kimlikNo || '—' }), s: 'hasta', yol: `/hasta/${h.id}`,

@@ -34,7 +34,7 @@ bu olmadan tarayıcı eski dosyaları süresiz tutar ve güncelleme hekime ulaş
 cd eczane
 npm install          # yalnız geliştirme bağımlılıkları (vitest, fake-indexeddb, jsqr)
 npm run sun          # http://localhost:8788/  — uygulama app/ klasöründen sunulur
-npm test             # alan mantığı, depo, stok ve yedek testleri
+npm test             # alan mantığı, depo, reçete ve yedek testleri
 npm run kontrol      # statik denetimler (mantıksal CSS, innerHTML yok, saf modüller)
 npm run deneme       # gerçek tarayıcıda uçtan uca deneme (playwright kuruluysa)
 ```
@@ -49,22 +49,22 @@ kurulu değilse betik kendini atlar:
 
 | Bölüm | İçerik |
 |---|---|
-| **Panel** | Stok uyarıları, son kullanma tarihi yaklaşanlar, bekleyen reçeteler, sayaçlar |
-| **İlaçlar** | Künye, barkod, etken madde, fiyat, raf; stok ve SKT uyarıları; muadil bulma |
-| **Stok hareketleri** | Mal girişi, iade, sayım düzeltmesi, fire — her değişiklik geçmişe yazılır |
+| **Panel** | Bugün yazılan reçeteler, son reçeteler, son hastalar, sayaçlar |
+| **İlaçlar** | Künye: ad, etken madde, şekil, doz, barkod, üretici; muadil bulma |
 | **Hastalar** | Kayıt, alerjiler, kronik hastalıklar, sürekli ilaçlar, reçete geçmişi |
-| **Reçete yazma** | Hasta ve ilaç seçimi, tanı/ICD, kullanım ve süre; alerji, stok, son kullanma ve çift etken madde uyarıları |
-| **Karşılama** | Satır satır verildi / kısmi / verilemedi (sebepli); verilen stoktan düşer, geri alınınca iade edilir |
+| **Reçete yazma** | Hasta ve ilaç seçimi, tanı/ICD, kullanım ve süre; alerji ve çift etken madde uyarıları |
 | **Reçete kâğıdı** | Doktorun kullandığı basılı kâğıdın aynısı: mavi antet (ad, ünvan şeridi), hizmet satırları, sabıka şeridi, Name/Age/Date şeridi, solda Clinical sütunu (BP · PR · RR · BW · Temperature), sağda ℞ alanı, altta rozetler ve iletişim |
 | **Boş kâğıt** | Aynı kâğıdı boş bastırıp elle doldurma — tomar halinde çıkar, alanlar çizgili gelir |
 | **Gönderme** | WhatsApp, e-posta, panoya kopyalama ve cihazın kendi paylaşma penceresi |
 | **Doğrulama** | Her reçete kâğıda basılan sekiz harflik bir kod taşır; kâğıtta oynanmışsa kod tutmaz |
 | **Ayarlar** | Reçete anteti, para birimi, kâğıt boyutu, QR içeriği, yedek al/geri yükle, örnek veri, depolama durumu, tema |
 
-**Reçete ile stok tek elden yürür.** Karşılamada verilen her kutu bir stok
-hareketi bırakır ve hareket reçete numarasıyla etiketlenir; satır geri alınınca
-iade hareketiyle stoğa döner. "Ne verildi" reçetede, "stok neden düştü" hareket
-geçmişinde durur ve ikisi hep birbirini tutar.
+**Stok takibi yok, bilerek.** Hasta ilacını dışarıdaki eczaneden kendi alıyor;
+hekimin elinde kutu durmuyor, neyin verildiğini de bilemiyor. Bu yüzden ilaç
+kaydı yalnız reçeteye doğru yazabilmek için var (ad, etken madde, şekil, doz) ve
+reçete kaydedilip basıldığında iş bitiyor. Depo, karşılama ve "kaç kutu kaldı"
+uygulamada hiç yok — olsaydı her gün doldurulması gereken, dolduruldukça da
+yanlışlaşan bir defter olurdu.
 
 **Kâğıt, doktorun hâlihazırda kullandığı basılı reçetenin birebir aynısı.**
 Antetteki her satır (ad, ünvan şeridi, slogan, hizmetler, ilgi alanları, sabıka,
@@ -130,21 +130,15 @@ değiştirirse yedekten gelen anahtarla eski reçeteler doğrulanmaya devam eder
 Anahtar yedekten de kaybolursa eski kodlar bir daha doğrulanamaz; yedek dosyası
 bu yüzden hasta bilgisi kadar bu anahtarı da korur.
 
-Karşılama (verilen adet) koda girmez: ilaç verildikçe kâğıttaki kodun
-geçersizleşmemesi gerekir.
-
-**Stok yalnız hareketle değişir.** İlaç kartındaki stok alanı elle düzenlenmez;
-mal girişi, sayım, fire ya da reçete karşılama üzerinden değişir ve her işlem
-öncesi/sonrası stoğuyla birlikte kaydedilir. "Stok neden 3'e düştü?" sorusunun
-cevabı her zaman kayıtlıdır. Stoğu eksiye düşüren işlem reddedilir.
+Kod reçetenin kanonik özetinden üretilir; aynı reçete yeniden basıldığında
+kod değişmez.
 
 ## Yapılacaklar
 
 - [x] İskelet: depo, yönlendirici, tema, bileşenler
-- [x] İlaçlar ve stok hareketleri
+- [x] İlaçlar
 - [x] Hastalar
-- [x] Reçete yazma (hasta + ilaç satırları, alerji ve stok uyarıları)
-- [x] Reçete karşılama: satır satır "verildi / verilmedi", stoğa otomatik düşme
+- [x] Reçete yazma (hasta + ilaç satırları, alerji ve çift etken madde uyarıları)
 - [x] Reçete yazdırma (A4/A5, antetli)
 - [x] Farsça arayüz ve sağdan sola düzen
 - [x] Reçete kâğıdı: antet, klinik ölçüm sütunu, QR, boş kâğıt
@@ -184,7 +178,7 @@ app/                      PWA (statik olarak olduğu gibi sunulur)
     hatalar.js            hata, doğrulama ve uyarı kodlarının arayüz metni
     kagit.js              reçete kâğıdı (dolu ve boş hali) + yazdırma
     cekirdek/             dom · yonlendirici · modal · bildirim · simge · tema
-    depo/                 sema · depo · idb · stok · recete · dogrulama · yedek · ornek
+    depo/                 sema · depo · idb · recete · dogrulama · yedek · ornek
     paylasilan/           saf alan mantığı: ilac · hasta · recete · qr · dogrulama ·
                           tarih · metin · kimlik
     sayfalar/             panel · ilaclar · ilac · hastalar · hasta ·
