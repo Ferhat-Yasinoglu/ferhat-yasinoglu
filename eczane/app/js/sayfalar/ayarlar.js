@@ -1,6 +1,6 @@
 // Ayarlar: yedek, örnek veri, depolama bilgisi, görünüm ve tehlikeli bölge.
 // Veriler yalnız bu cihazda durduğu için yedek en önemli kart; en üstte.
-import { el, temizle, btn, btnS, girdi, secim, kart, rozet, sayfaBas } from '../cekirdek/dom.js';
+import { el, temizle, btn, btnS, girdi, secim, alan, kart, rozet, sayfaBas } from '../cekirdek/dom.js';
 import { simge } from '../cekirdek/simge.js';
 import { yedekOlustur, iceAktar, yedekDogrula, indir, hatirlatmaGerekli } from '../depo/yedek.js';
 import { ornekYukle } from '../depo/ornek.js';
@@ -64,6 +64,7 @@ export default {
     async function ciz() {
       const benim = ++sira;
       const meta = await depo.meta();
+      const ayar = await depo.ayarlar();
       const h = hatirlatmaGerekli(meta);
       const kapasite = depo.kapasite ? await depo.kapasite() : null;
       const sayilar = {};
@@ -131,6 +132,37 @@ export default {
           ? el('div', { class: 'uyari uyari--hata', style: { marginBlockStart: 'var(--b-3)' } }, simge('uyari', { boy: 16 }),
             el('span', {}, 'Tarayıcı kalıcı depolama vermedi: kayıtlar silinebilir. Uygulamayı ana ekrana ekle ve özel pencerede kullanma.'))
           : null));
+
+      /* --- Eczane ve doktor bilgileri --- */
+      const bilgi = {
+        eczaneAdi: girdi({ name: 'eczaneAdi', value: ayar.eczaneAdi || '', placeholder: 'Örnek Eczanesi' }),
+        adres: girdi({ name: 'adres', value: ayar.adres || '' }),
+        telefon: girdi({ name: 'telefon', value: ayar.telefon || '', type: 'tel' }),
+        doktorUnvan: girdi({ name: 'doktorUnvan', value: ayar.doktorUnvan || '', placeholder: 'Dr.' }),
+        doktorAd: girdi({ name: 'doktorAd', value: ayar.doktorAd || '' }),
+        diplomaNo: girdi({ name: 'diplomaNo', value: ayar.diplomaNo || '' }),
+        kurum: girdi({ name: 'kurum', value: ayar.kurum || '' }),
+        yazdirmaBoyutu: secim([['A4', 'A4'], ['A5', 'A5']], { name: 'yazdirmaBoyutu', value: ayar.yazdirmaBoyutu || 'A4' }),
+      };
+      kok.appendChild(kart({},
+        el('div', { class: 'kart__bas' }, el('h2', {}, 'Eczane ve doktor bilgileri')),
+        el('p', { class: 'kart__alt' }, 'Bu bilgiler yeni reçetelere kendiliğinden düşer ve reçete çıktısının antedinde çıkar. Bir reçete kaydedildiğinde doktor bilgileri o günkü haliyle reçeteye işlenir — sonradan burada değişiklik yapsan eski reçeteler bozulmaz.'),
+        el('div', { class: 'izgara izgara--form', style: { marginBlockStart: 'var(--b-3)' } },
+          alan('Eczane adı', bilgi.eczaneAdi),
+          alan('Telefon', bilgi.telefon),
+          alan('Adres', bilgi.adres),
+          alan('Ünvan', bilgi.doktorUnvan),
+          alan('Doktor adı', bilgi.doktorAd),
+          alan('Diploma no', bilgi.diplomaNo),
+          alan('Kurum', bilgi.kurum),
+          alan('Reçete kâğıdı', bilgi.yazdirmaBoyutu)),
+        btnS('kaydet', 'Bilgileri kaydet', { class: 'btn btn--birincil', onclick: async () => {
+          const v = {};
+          for (const [ad, girdisi] of Object.entries(bilgi)) v[ad] = girdisi.value.trim();
+          await depo.ayarKaydet(v);
+          basari('Bilgiler kaydedildi');
+          ciz();
+        } })));
 
       /* --- Görünüm --- */
       const temaSecimi = secim([['aydinlik', 'Aydınlık'], ['karanlik', 'Karanlık']], {

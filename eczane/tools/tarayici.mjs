@@ -44,7 +44,9 @@ process.on('exit', kapat);
 await new Promise((c) => setTimeout(c, 400));
 
 const tarayici = await chromium.launch();
-const sayfa = await tarayici.newPage({ viewport: { width: 1280, height: 900 } });
+// Açık bir bağlam: yan sekmeler aynı IndexedDB'yi görsün diye gerekli.
+const baglam = await tarayici.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
+const sayfa = await baglam.newPage();
 sayfa.on('console', (m) => { if (m.type() === 'error') hatalar.push('console: ' + m.text()); });
 sayfa.on('pageerror', (e) => hatalar.push('pageerror: ' + e.message));
 
@@ -160,6 +162,136 @@ const alerji = await sayfa.textContent('.uyari--hata');
 if (!alerji.includes('Penisilin')) throw new Error('alerji uyarısı yok');
 ok('hasta kartı alerjiyi kırmızı şeritte gösterdi: ' + alerji.trim());
 await resim(sayfa, '3-hasta-karti.png');
+
+// --- Eczane ve doktor bilgileri (reçete antedine düşecek)
+await sayfa.click('#kenar-menu a[href="#/ayarlar"]');
+await sayfa.fill('input[name=eczaneAdi]', 'Deneme Eczanesi');
+await sayfa.fill('input[name=doktorUnvan]', 'Dr.');
+await sayfa.fill('input[name=doktorAd]', 'Ahmet Yılmaz');
+await sayfa.fill('input[name=diplomaNo]', '123456');
+await sayfa.fill('input[name=telefon]', '0212 000 00 00');
+await sayfa.click('button:has-text("Bilgileri kaydet")');
+await sayfa.waitForSelector('.bildirim--basari:has-text("Bilgiler kaydedildi")');
+ok('eczane ve doktor bilgileri kaydedildi');
+
+// --- Hasta kartından reçete yazma (Zeynep'in ibuprofen alerjisi var)
+await sayfa.click('#kenar-menu a[href="#/hastalar"]');
+await sayfa.click('.liste__satir:has-text("Zeynep Kaya")');
+await sayfa.click('button:has-text("Reçete yaz")');
+await sayfa.waitForSelector('h1:has-text("Yeni reçete")');
+if (!(await sayfa.textContent('.kart')).includes('Zeynep Kaya')) throw new Error('hasta reçeteye taşınmadı');
+ok('hasta kartından reçete açıldı, hasta önceden seçili geldi');
+
+// --- Alerjili ilaç: uyarı satır eklenmeden önce çıkmalı
+await sayfa.click('button:has-text("İlaç ekle")');
+await sayfa.fill('.modal input[name=ilacArama]', 'nurofen');
+await sayfa.click('.modal .liste__satir:has-text("Nurofen")');
+await sayfa.waitForSelector('.modal .uyari--hata');
+const alerjiUyarisi = await sayfa.textContent('.modal .uyari--hata');
+if (!alerjiUyarisi.includes('İbuprofen')) throw new Error('alerji uyarısı yok: ' + alerjiUyarisi);
+ok('ilaç seçilince alerji uyarısı çıktı: ' + alerjiUyarisi.trim());
+
+await sayfa.fill('.modal input[name=adet]', '2');
+await sayfa.fill('.modal input[name=kullanim]', 'Günde 2×1');
+await sayfa.fill('.modal input[name=sure]', '5 gün');
+await sayfa.click('.modal button:has-text("Ekle")');
+await sayfa.waitForSelector('.tablo tbody tr:has-text("Nurofen")');
+ok('alerjili ilaç uyarısıyla birlikte reçeteye eklendi');
+
+// --- İkinci ilaç
+await sayfa.click('button:has-text("İlaç ekle")');
+await sayfa.fill('.modal input[name=ilacArama]', 'parol');
+await sayfa.click('.modal .liste__satir:has-text("Parol")');
+await sayfa.fill('.modal input[name=adet]', '1');
+await sayfa.click('.modal button:has-text("Ekle")');
+await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 2);
+await sayfa.fill('input[name=tani]', 'Üst solunum yolu enfeksiyonu');
+await sayfa.fill('input[name=taniKodu]', 'J06.9');
+ok('ikinci ilaç ve tanı eklendi');
+await resim(sayfa, '7-recete-yaz.png', { fullPage: true });
+
+// --- Kaydet
+await sayfa.click('button:has-text("Reçeteyi kaydet")');
+await sayfa.waitForSelector('h2:has-text("Karşılama")');
+const receteNo = (await sayfa.textContent('h1')).trim();
+if (!/^\d{4}-\d{2}-\d{2}-\d{2}$/.test(receteNo)) throw new Error('reçete numarası beklenen biçimde değil: ' + receteNo);
+ok('reçete kaydedildi, numara kendiliğinden verildi: ' + receteNo);
+
+// --- Karşılama: bir satır verilir, stoktan düşer.
+// Stok yan sekmeden okunur: reçete sayfasından ayrılmadan bakılır ve aynı
+// IndexedDB'yi iki sekmenin paylaştığı da böylece doğrulanmış olur.
+const yanSekmede = async (hash, is) => {
+  const yan = await baglam.newPage();
+  await yan.goto(KOK + hash, { waitUntil: 'networkidle' });
+  const sonuc = await is(yan);
+  await yan.close();
+  return sonuc;
+};
+const stokOku = (ad) => yanSekmede('#/ilaclar', async (yan) => {
+  const secici = `.tablo tbody tr:has-text("${ad}") strong`;
+  await yan.waitForSelector(secici);
+  return Number((await yan.textContent(secici)).trim());
+});
+
+const nurofenOnce = await stokOku('Nurofen');
+await sayfa.click('.tablo tbody tr:has-text("Nurofen") button:text-is("Ver")');
+await sayfa.waitForSelector('.tablo tbody tr:has-text("Nurofen") .rozet--yesil');
+const nurofenSonra = await stokOku('Nurofen');
+if (nurofenSonra !== nurofenOnce - 2) throw new Error(`stok ${nurofenOnce} → ${nurofenSonra}, 2 düşmeliydi`);
+ok(`satır verildi, stok ${nurofenOnce} → ${nurofenSonra} düştü`);
+
+// --- Stok hareketi reçeteye bağlandı mı?
+const sonHareket = await yanSekmede('#/ilaclar', async (yan) => {
+  await yan.click('.tablo tbody tr:has-text("Nurofen")');
+  await yan.waitForSelector('h2:has-text("Stok hareketleri")');
+  return yan.textContent('.tablo tbody tr');
+});
+if (!sonHareket.includes(receteNo) || !sonHareket.includes('-2')) throw new Error('hareket reçeteye bağlanmadı: ' + sonHareket);
+ok('stok hareketi reçete numarasıyla kaydedildi');
+
+// --- İkinci satır verilemedi
+await sayfa.click('.tablo tbody tr:has-text("Parol") button:has-text("Verilemedi")');
+await sayfa.selectOption('.modal select', { label: 'Hasta almak istemedi' });
+await sayfa.click('.modal button:has-text("İşaretle")');
+await sayfa.waitForSelector('.tablo tbody tr:has-text("Parol") .rozet--kirmizi');
+await sayfa.waitForSelector('.kart__bas .rozet--yesil');
+ok('ikinci satır sebebiyle kapandı, reçete "Tamamlandı" oldu');
+
+// --- Kapanmış satırın düğmeleri ve tabloya sızan metin
+const parolSatiri = sayfa.locator('.tablo tbody tr:has-text("Parol")');
+if (await parolSatiri.locator('button:text-is("Ver")').count()) throw new Error('kapanmış satırda hâlâ "Ver" düğmesi var');
+if (!await parolSatiri.locator('button:has-text("Geri al")').count()) throw new Error('kapanmış satırda "Geri al" düğmesi yok');
+const karsilamaMetni = await sayfa.textContent('.kart:has(h2:text-is("Karşılama"))');
+if (/\bnull\b/.test(karsilamaMetni)) throw new Error('karşılama tablosuna düz metin "null" sızmış');
+ok('kapanmış satır yalnız "Geri al" gösteriyor, tabloya metin sızmıyor');
+await resim(sayfa, '8-recete-karsilama.png', { fullPage: true });
+
+// --- Geri alma stoğu iade eder
+await sayfa.click('.tablo tbody tr:has-text("Nurofen") button:has-text("Geri al")');
+await sayfa.click('.ortu button:has-text("Geri al")');
+await sayfa.waitForSelector('.tablo tbody tr:has-text("Nurofen") .rozet--gri');
+const nurofenGeri = await stokOku('Nurofen');
+if (nurofenGeri !== nurofenOnce) throw new Error(`iade sonrası stok ${nurofenGeri}, ${nurofenOnce} olmalıydı`);
+ok(`geri alma stoğu iade etti: ${nurofenSonra} → ${nurofenGeri}`);
+
+// --- Yazdırma alanı: ekranda gizli, içeriği eksiksiz
+const yazdirMetni = await sayfa.textContent('.yazdir-alan');
+for (const beklenen of ['Deneme Eczanesi', 'Dr. Ahmet Yılmaz', '123456', 'Zeynep Kaya', 'J06.9', 'Nurofen', 'ALERJİ']) {
+  if (!yazdirMetni.includes(beklenen)) throw new Error(`reçete çıktısında "${beklenen}" yok`);
+}
+if (await sayfa.isVisible('.yazdir-alan')) throw new Error('yazdırma alanı ekranda görünüyor');
+ok('reçete çıktısı antet, hasta, tanı ve alerjiyle hazır (ekranda gizli)');
+await sayfa.emulateMedia({ media: 'print' });
+await resim(sayfa, '9-recete-cikti.png', { fullPage: true });
+await sayfa.emulateMedia({ media: 'screen' });
+
+// --- Reçete listesi ve süzgeç
+await sayfa.click('#kenar-menu a[href="#/receteler"]');
+await sayfa.waitForSelector('h1:has-text("Reçeteler")');
+await sayfa.waitForSelector('.tablo tbody tr:has-text("Zeynep Kaya")');
+await sayfa.selectOption('select', { label: 'Bekleyen ve kısmi' });
+await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 1);
+ok('reçete listede göründü, "bekleyen ve kısmi" süzgeci onu buldu');
 
 // --- Panel dolu haliyle
 await sayfa.click('#kenar-menu a[href="#/panel"]');

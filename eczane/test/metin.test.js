@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { normalize, eslesir, basHarfler, kisalt, paraMetni } from '../app/js/paylasilan/metin.js';
+import { simdi } from '../app/js/paylasilan/kimlik.js';
 
 describe('normalize', () => {
   it('Türkçe harfleri sadeleştirir', () => {
@@ -49,5 +50,18 @@ describe('kisalt / paraMetni', () => {
     expect(paraMetni(null)).toBe('—');
     expect(paraMetni(undefined)).toBe('—');
     expect(paraMetni(0)).toContain('0,00');
+  });
+});
+
+describe('simdi', () => {
+  it('arka arkaya çağrılarda hep ileri gider', () => {
+    const damgalar = Array.from({ length: 50 }, () => simdi());
+    for (let i = 1; i < damgalar.length; i++) {
+      expect(damgalar[i] > damgalar[i - 1]).toBe(true);
+    }
+  });
+  it('duvar saatinden geri kalmaz', () => {
+    const once = Date.now();
+    expect(Date.parse(simdi())).toBeGreaterThanOrEqual(once);
   });
 });
