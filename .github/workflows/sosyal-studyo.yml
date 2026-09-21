@@ -1,7 +1,7 @@
 # Sosyal Stüdyo'nun testleri.
 #
 # Yayın burada değil: GitHub Pages bir depoda tek bir site yayınladığı için
-# dağıtım site.yml'de toplandı (bu proje + eczane aynı artefaktta). main'e giren
+# dağıtım site.yml'de toplandı (bu proje + shafa aynı artefaktta). main'e giren
 # kodu da orası test ediyor, bu yüzden burada push tetikleyicisi yok.
 name: Sosyal Studyo
 

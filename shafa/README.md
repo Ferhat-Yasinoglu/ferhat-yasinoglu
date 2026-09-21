@@ -18,7 +18,16 @@ hatırlatır, yedek tek JSON dosyasıdır.
 
 `main`'e giren her değişiklik GitHub Pages'e çıkar:
 
-**<https://ferhat-yasinoglu.github.io/ferhat-yasinoglu/eczane/>**
+**<https://ferhat-yasinoglu.github.io/ferhat-yasinoglu/shafa/app/>**
+
+Tanıtım sayfası bir üstte: <https://ferhat-yasinoglu.github.io/ferhat-yasinoglu/shafa/>
+
+Uygulama önce `/eczane/` adresindeydi. Orası artık taşındı sayfası: hekimin
+telefonundaki kurulu uygulama ve yer imi oraya baktığı için silinmedi,
+yeni adrese yönlendiriyor. Yanındaki `sw.js` eski service worker'ı kapatıyor —
+o olmasa eski uygulama önbellekten açılmaya devam eder ve yönlendirme hiç
+görünmezdi. Veriler taşınmadı çünkü taşınmasına gerek yok: IndexedDB yola değil
+kaynağa (origin) bağlı, iki adres de aynı alan adında.
 
 Telefonda açılıp "ana ekrana ekle" denince uygulama gibi kurulur ve ondan sonra
 internetsiz de açılır. Adres herkese açık, **veri değil**: her cihaz yalnız kendi
@@ -32,7 +41,7 @@ bu olmadan tarayıcı eski dosyaları süresiz tutar ve güncelleme hekime ulaş
 ## Çalıştırma
 
 ```bash
-cd eczane
+cd shafa
 npm install          # yalnız geliştirme bağımlılıkları (vitest, fake-indexeddb, jsqr)
 npm run sun          # http://localhost:8788/  — uygulama app/ klasöründen sunulur
 npm test             # alan mantığı, depo, reçete ve yedek testleri
