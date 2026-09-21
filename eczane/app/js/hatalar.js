@@ -24,6 +24,8 @@ const DEPO = {
   kota: 'Cihazda yer kalmadı. Yedek alıp eski kayıtları temizle.',
   yazma: 'Kayıt yazılamadı.',
   kilit: 'Veritabanı başka bir sekmede açık.',
+  liste_okunamadi: 'İlaç listesi okunamadı.',
+  liste_bozuk: 'İlaç listesi beklenen biçimde değil.',
   recete_bulunamadi: 'Reçete bulunamadı.',
 };
 
