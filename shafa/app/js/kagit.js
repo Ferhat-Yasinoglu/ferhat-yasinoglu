@@ -163,6 +163,12 @@ const VECIZE = 'طبیب حقیقی خداوند (ج) است';
 
 /** İmzanın karşısındaki hat yazısı. Vecize gibi kâğıda ait: ayarlardan
  *  gelmiyor, boş kâğıtta da basılıyor. */
+// Basılı kâğıtta iki satır: üstte küçük «سلامت», altında akışkan yazıyla
+// gerisi. Tek satır denendi, hat değil düz bir etiket gibi duruyordu.
+// Metin TEK yerde duruyor, satırlar ondan türetiliyor: iki ayrı sabit
+// olsaydı biri değişip öteki kalabilirdi. İlk satırın sonundaki boşluk
+// bilerek korunuyor — yoksa kâğıdın metni "سلامتسرمایهٔ" diye okunuyor
+// (ekran okuyucuda da, kopyalayınca da).
 const HAT_YAZISI = 'سلامت سرمایهٔ زندگی است';
 
 const KLINIK_ADLARI = { bp: 'BP', pr: 'PR', rr: 'RR', bw: 'BW', temp: 'Temperature', spo2: 'SpO2', ht: 'Height' };
@@ -184,27 +190,30 @@ const SERIT_SIMGELERI = ['hasta', 'takvim', 'takvim', 'recete'];
  *  (print-color-adjust yine de duruyor, bu ikinci emniyet.) */
 function dalga(yer) {
   if (yer === 'ust') {
-    // Dolgulu köşe kütleleri: katman katman akan dalgalar. Kontur denendi,
-    // basılı kâğıdın ağırlığını vermiyordu.
+    // Basılı kâğıtta antet, sayfanın TAMAMINI kateden akan kurdelelerin
+    // üzerinde duruyor. Köşe kütlesi denendi (iki köşeye birer üçgen):
+    // kurdele hissi vermiyordu, kâğıdın üstüne yapıştırılmış iki leke gibi
+    // duruyordu. Kurdeleler tam genişlikte, birbirinin üstünden geçiyor ve
+    // ortada alçalıp kenarlarda yükseliyor — asıl kâğıttaki hareket bu.
     return svgEl('svg', {
-      class: 'kagit__dalga kagit__dalga--ust', viewBox: '0 0 300 150',
+      class: 'kagit__dalga kagit__dalga--ust', viewBox: '0 0 1000 220',
       preserveAspectRatio: 'none', 'aria-hidden': 'true',
     },
-    // Köşe KÜTLESİ: köşeden başlayıp kavisli bir hipotenüsle inceliyor.
-    // Tam genişlik bant denendi, kâğıdın üstüne çekilmiş düz şerit gibi durdu.
-    svgEl('path', { class: 'kagit__dalga-1', d: 'M0 0H300C252 70 140 112 0 150Z' }),
-    svgEl('path', { class: 'kagit__dalga-2', d: 'M0 0H222C188 58 104 98 0 124Z' }),
-    svgEl('path', { class: 'kagit__dalga-3', d: 'M0 0H142C124 44 68 80 0 98Z' }));
+    // En geniş ve en soluk katman, en alta iniyor.
+    svgEl('path', { class: 'kagit__dalga-1', d: 'M0 0H1000V34C928 52 878 72 818 76 740 81 698 54 638 60 546 68 518 114 448 126 368 140 318 102 248 116 158 134 82 166 0 206Z' }),
+    svgEl('path', { class: 'kagit__dalga-2', d: 'M0 0H1000V24C930 40 882 58 824 62 748 67 708 42 650 47 560 54 534 96 466 107 388 119 340 82 272 92 186 104 90 106 0 96Z' }),
+    svgEl('path', { class: 'kagit__dalga-ak', d: 'M0 196C84 160 178 132 264 116 334 103 382 136 460 125 528 115 554 71 644 65 702 61 744 84 820 80 878 76 926 58 1000 40V22C926 40 878 58 820 62 744 66 702 43 644 47 554 53 528 97 460 107 382 118 334 85 264 98 178 114 84 142 0 178Z' }),
+    svgEl('path', { class: 'kagit__dalga-3', d: 'M0 0H1000V14C932 30 886 46 830 50 756 55 718 32 662 36 574 42 550 78 484 86 408 94 360 62 294 70 206 80 92 74 0 58Z' }));
   }
-  // Ayak bandının üst kenarı: kâğıt renginde kesip banda kıvrım veriyor.
+  // Ayak bandı: üst kenarı kâğıt renginde kesiliyor, içinde de kurdeleler akıyor.
   return svgEl('svg', {
-    class: 'kagit__dalga kagit__dalga--alt', viewBox: '0 0 1000 110',
+    class: 'kagit__dalga kagit__dalga--alt', viewBox: '0 0 1000 150',
     preserveAspectRatio: 'none', 'aria-hidden': 'true',
   },
   svgEl('path', { class: 'kagit__dalga-kesim', d: 'M0 0H1000V52C874 96 742 30 606 52 470 74 352 18 214 40 140 52 68 70 0 58Z' }),
-  svgEl('path', { class: 'kagit__dalga-2', d: 'M0 44C82 72 168 26 268 40 386 56 470 96 592 82 704 69 812 24 1000 62V0H0Z' }));
+  svgEl('path', { class: 'kagit__dalga-ak', d: 'M0 96C140 62 300 118 470 92 640 66 820 120 1000 82V104C820 142 640 88 470 114 300 140 140 84 0 118Z' }),
+  svgEl('path', { class: 'kagit__dalga-2', d: 'M0 62C82 90 168 44 268 58 386 74 470 114 592 100 704 87 812 42 1000 80V0H0Z' }));
 }
-
 
 const doluMu = (v) => String(v ?? '').trim() !== '';
 const satirlara = (metin) => String(metin ?? '').split('\n').map((x) => x.trim()).filter(Boolean);
@@ -447,7 +456,10 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
 
   // Hat yazısı imzanın KARŞI köşesinde. İmza 42mm'lik dar bir sütun, içine
   // koyunca sığmıyor; kendi başına konumlanıyor.
-  const hat = el('div', { class: 'kagit__hat' }, HAT_YAZISI);
+  const [hatIlk, ...hatKalan] = HAT_YAZISI.split(' ');
+  const hat = el('div', { class: 'kagit__hat' },
+    el('span', { class: 'kagit__hat-ust' }, hatIlk + ' '),
+    el('span', { class: 'kagit__hat-alt' }, hatKalan.join(' ')));
 
   const rx = el('section', { class: 'kagit__rx' },
     filigran(),
@@ -487,13 +499,11 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
         el('div', { class: 'kagit__rozet' }, el('span', { class: 'kagit__rozet-daire' }, simge(ROZET_SIMGE[i] || 'kalp', { boy: 20 })), el('span', {}, etiket))))
       : null);
 
-  // İki üst köşede birden: sağdaki CSS'te aynalanıyor.
-  const ustDalga = dalga('ust');
-  const ustDalga2 = dalga('ust');
-  ustDalga2.classList.add('kagit__dalga--ayna');
-
+  // Tek bant, tam genişlik: kurdeleler kâğıdın bir ucundan ötekine akıyor.
+  // Eskiden iki köşe parçasıydı (biri CSS'te aynalanan), o düzen kurdele
+  // değil iki ayrı leke gibi duruyordu.
   return el('div', { class: `yazdir-alan kagit${stilSinifi}` }, stil,
-    ustDalga, ustDalga2,
+    dalga('ust'),
     antet, unvan, hizmet, deneyim, vecize, serit,
     el('div', { class: 'kagit__govde' }, rx, sutun),
     ayak);
