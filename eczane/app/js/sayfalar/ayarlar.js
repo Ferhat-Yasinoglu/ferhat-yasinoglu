@@ -29,6 +29,8 @@ const ANTET_ALANLARI = [
   ['deneyim', 'Sabıka / çalışma geçmişi', 'Hizmetlerin altındaki açık mavi şerit'],
   ['adres', 'Adres', 'Kâğıdın altında'],
   ['telefon', 'Telefon', 'Kâğıdın altında'],
+  ['telefon2', 'İkinci telefon', 'Varsa klinik/eczane numarası; boşsa basılmaz'],
+  ['telefonEtiket', 'Telefon etiketleri', 'İki numara varsa etiketleri, virgülle: داکتر, دواخانه'],
   ['whatsapp', 'WhatsApp numarası', 'Boşsa telefon kullanılır'],
   ['ulkeKodu', 'Ülke kodu', 'Afganistan 93 · Türkiye 90'],
   ['eposta', 'E-posta', ''],
