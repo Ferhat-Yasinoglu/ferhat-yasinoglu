@@ -23,8 +23,36 @@
    Mürekkep derdi olanlar için Ayarlar'da "sade" stili var: aynı düzen, renksiz. */
 .yazdir-alan { display: none; }
 
-@media print {
-  #sayfa:has(.yazdir-alan) > *:not(.yazdir-alan) { display: none !important; }
+/* Düzenleme tuvali: reçete kâğıdı ekranda, üzerinde çalışılabilir hâlde.
+   Kâğıt A4 genişliğinde sabit; tuval dar ekranda onu ölçekliyor. */
+.kagit-tuval { display: flex; justify-content: center; padding-block: var(--b-3); }
+/* Dokunulabilir alanlar: yalnız düzenleme tuvalinde işaretli.
+   Basılan kâğıtta hiçbir iz kalmıyor — kurallar .kagit-tuval altında. */
+.kagit-tuval .kagit__duz { cursor: pointer; border-radius: 1.5mm; transition: background .12s ease, outline-color .12s ease; outline: 1px dashed transparent; outline-offset: 2px; }
+.kagit-tuval .kagit__duz:hover { background: rgb(13 115 119 / .09); outline-color: rgb(13 115 119 / .45); }
+.kagit-tuval .kagit__duz:focus-visible { outline: 2px solid rgb(13 115 119); outline-offset: 2px; }
+.kagit-tuval .kagit__duz-bos {
+  display: block; margin-block: 1.5mm; padding: 1.8mm 3mm;
+  border: 1px dashed rgb(13 115 119 / .5); border-radius: 1.5mm;
+  color: rgb(13 115 119); font-size: 9pt; font-weight: 600; text-align: center;
+}
+.kagit-tuval .kagit__duz-bos:hover { background: rgb(13 115 119 / .09); }
+
+.kagit-tuval .yazdir-alan {
+  display: flex; inline-size: 210mm; min-block-size: 297mm;
+  background: #fff; color: #0c1d21;
+  box-shadow: 0 2px 24px rgb(0 0 0 / .13); border-radius: 3px;
+}
+
+/* Kâğıt kuralları ekranda da geçerli: reçete üzerinde çalışılan
+   düzenleme ekranı aynı kâğıdı gösteriyor. Kâğıt normalde gizli
+   (.yazdir-alan { display: none }), yalnız yazdırırken ve düzenleme
+   tuvalinde görünüyor. */
+@media print, screen {
+  @media print {
+    #sayfa:has(.yazdir-alan) > *:not(.yazdir-alan) { display: none !important; }
+    .yazdir-alan { display: flex; }
+  }
 
   .kagit {
     --mavi-koyu: #123a78;
@@ -33,7 +61,11 @@
     --mavi-cok-acik: #eef4fc;
     --kagit-metin: #0f2647;
 
-    display: flex; flex-direction: column; min-block-size: 100%;
+    /* display BİLEREK burada değil. Bu kurallar artık ekranda da geçerli;
+       `display: flex` burada kalsaydı `.yazdir-alan { display: none }`
+       kuralını ezip kâğıdı her sayfada görünür yapardı (deneme yakaladı).
+       Görünürlük tek yerden: yazdırırken ve düzenleme tuvalinde. */
+    flex-direction: column; min-block-size: 100%;
     color: var(--kagit-metin); font-size: 10pt; line-height: 1.35;
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
@@ -226,7 +258,7 @@
 
    Mürekkep derdi olanlar için Ayarlar'da "sade" var: aynı düzen, renksiz.
    ============================================================ */
-@media print {
+@media print, screen {
   .kagit--modern {
     --m-vurgu: #0d7377;
     --m-koyu: #0a5558;

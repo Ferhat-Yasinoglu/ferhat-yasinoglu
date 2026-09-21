@@ -124,7 +124,14 @@ function filigran() {
  * Reçete kâğıdını kurar.
  * `bos: true` → hasta, ölçüm ve ilaç alanları elle doldurulmak üzere boş kalır.
  */
-export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } = {}) {
+/**
+ * @param {object} c
+ * @param {boolean} [c.duzenlenebilir] Kâğıdın üzerinde çalışılacaksa true:
+ *   boş alanlar da yer tutucuyla çiziliyor ve her alan `data-alan` ile
+ *   işaretleniyor. Düzenleme ekranı bu işaretlerden yakalıyor — kâğıdın
+ *   çizimi tek yerde kalsın, ikinci bir kopya çıkmasın diye.
+ */
+export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, duzenlenebilir = false } = {}) {
   const boyut = ayar.yazdirmaBoyutu === 'A5' ? 'A5' : 'A4';
   // Kâğıt stili. 'klasik' hekimin hâlihazırda kullandığı basılı kâğıdın
   // aynısı; eski sürüm bunu 'renkli' diye kaydediyordu, o değer korunuyor.
@@ -139,6 +146,21 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
     + ` .kagit { --rx-boy: ${boyut === 'A5' ? '92mm' : '168mm'}; }`;
 
   const yas = hasta ? hastaYasi(hasta) : null;
+
+  /** Alanı düzenleme ekranına tanıtır. Düzenlenebilir değilse öğeyi
+   *  olduğu gibi bırakır: basılan kâğıtta hiçbir iz kalmaz. */
+  const duz = (ad, oge) => {
+    if (!duzenlenebilir || !oge) return oge;
+    oge.setAttribute('data-alan', ad);
+    oge.setAttribute('tabindex', '0');
+    oge.setAttribute('role', 'button');
+    oge.classList.add('kagit__duz');
+    return oge;
+  };
+  /** Boş alanın yer tutucusu: düzenlerken görünür, basarken çizilmez. */
+  const yerTutucu = (ad, metin) => duzenlenebilir
+    ? duz(ad, el('div', { class: 'kagit__duz-bos' }, el('span', {}, '+ ' + metin)))
+    : null;
   const cizgi = (genislik) => el('span', { class: 'kagit__cizgi', style: genislik ? { inlineSize: genislik } : null }, ' ');
 
   /* ---- Antet: sağda doktorun adı, ortada amblem, solda slogan ---- */
@@ -180,17 +202,17 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
       el('span', { class: 'kagit__vecize-sus' }, '❖')));
 
   /* ---- Hasta şeridi: Name / Age / Date / No ---- */
-  const alan = (etiket, deger, genislik, simgeAdi) => el('span', { class: 'kagit__alan' },
+  const alan = (etiket, deger, genislik, simgeAdi, duzAd) => duz(duzAd, el('span', { class: 'kagit__alan' },
     simgeAdi ? simge(simgeAdi, { boy: 15 }) : null,
-    el('b', {}, etiket + ':'), bos ? cizgi(genislik) : el('span', { dir: 'auto' }, deger || '—'));
+    el('b', {}, etiket + ':'), bos ? cizgi(genislik) : el('span', { dir: 'auto' }, deger || '—')));
 
   // Şerit ve klinik sütun soldan sağa: etiketleri İngilizce ve basılı kâğıtta
   // da bu yönde. Sayfanın kalanı sağdan sola kalır.
   const serit = el('div', { class: 'kagit__serit', dir: 'ltr' },
-    alan('Name', tamAd(hasta), '52mm', SERIT_SIMGELERI[0]),
-    alan('Age', yas !== null ? String(yas) : '', '18mm', SERIT_SIMGELERI[1]),
-    alan('Date', bos ? '' : trTarih(recete.tarih), '30mm', SERIT_SIMGELERI[2]),
-    alan('No', bos ? '' : recete.receteNo, '28mm', SERIT_SIMGELERI[3]));
+    alan('Name', tamAd(hasta), '52mm', SERIT_SIMGELERI[0], 'hasta'),
+    alan('Age', yas !== null ? String(yas) : '', '18mm', SERIT_SIMGELERI[1], null),
+    alan('Date', bos ? '' : trTarih(recete.tarih), '30mm', SERIT_SIMGELERI[2], 'tarih'),
+    alan('No', bos ? '' : recete.receteNo, '28mm', SERIT_SIMGELERI[3], null));
 
   /* ---- Clinical sütunu: ölçümler, altta stetoskop ve QR ---- */
   const qr = qrGorsel(qrIcerigi(ayar, recete, hasta, { bos }), { boy: 76, sinif: 'kagit__qr' });
@@ -201,12 +223,12 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
     el('div', { class: 'kagit__olcumler' },
       // Girilmemiş ölçüm tire değil çizgi basılır: doktor çıktının üstüne
       // kalemle yazabilsin. Kâğıt hem dolu hem elle tamamlanabilir olsun diye.
-      ...OLCUMLER.map(([anahtar, , , birim]) => el('div', { class: 'kagit__olcum' },
+      ...OLCUMLER.map(([anahtar, , , birim]) => duz('olcum:' + anahtar, el('div', { class: 'kagit__olcum' },
         el('span', { class: 'kagit__olcum-simge' }, simge(OLCUM_SIMGELERI[anahtar] || 'kalp', { boy: 19 })),
         el('b', {}, `${KLINIK_ADLARI[anahtar]} :`),
         !bos && doluMu(recete.olcumler?.[anahtar])
           ? el('span', { dir: 'ltr' }, `${recete.olcumler[anahtar]} ${birim}`)
-          : cizgi()))),
+          : cizgi())))),
     !bos && doluMu(recete.dogrulamaKodu)
       ? el('div', { class: 'kagit__kod' },
         el('span', { class: 'kagit__olcum-simge' }, simge('kilit', { boy: 15 })),
@@ -218,8 +240,8 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
 
   /* ---- ℞ alanı ---- */
   const tani = !bos && (doluMu(recete.tani) || doluMu(recete.taniKodu))
-    ? el('div', { class: 'kagit__tani' }, el('b', {}, t('recete.tani', 'Tanı') + ': '), [recete.tani, recete.taniKodu].filter(doluMu).join(' · '))
-    : null;
+    ? duz('tani', el('div', { class: 'kagit__tani' }, el('b', {}, t('recete.tani', 'Tanı') + ': '), [recete.tani, recete.taniKodu].filter(doluMu).join(' · ')))
+    : (bos ? null : yerTutucu('tani', t('recete.tani', 'Tanı')));
 
   const alerjiler = hasta?.alerjiler || [];
   const alerji = !bos && alerjiler.length
@@ -233,9 +255,9 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
     ? null
     // Liste soldan sağa: sıra numarası adın SOLUNDA dursun ("1. Tab: …").
     // RTL'de numara sağa geçiyor ve ".1" diye ters basılıyordu.
-    : el('ol', { class: 'kagit__ilaclar', dir: 'ltr' }, ...(recete.satirlar || []).map((s) => {
+    : el('ol', { class: 'kagit__ilaclar', dir: 'ltr' }, ...(recete.satirlar || []).map((s, i) => {
       const kisa = formKisa(s.form);
-      return el('li', {},
+      return duz('ilac:' + i, el('li', {},
         el('div', { class: 'kagit__ilac-ad', dir: 'ltr' },
           kisa ? el('span', { class: 'kagit__form' }, kisa + ':') : null,
           el('b', {}, ilacAdiFormsuz(s.ilacAdi, s.form)),
@@ -243,21 +265,21 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
         doluMu(s.kullanim) || doluMu(s.sure) || doluMu(s.yol) || doluMu(s.not)
           // Kullanım satırı Farsça: yönünü içeriğinden alsın, liste LTR olsa da.
           ? el('div', { class: 'kagit__kullanim', dir: 'auto' }, [s.kullanim, s.sure, s.yol, s.not].filter(doluMu).join(' · '))
-          : null);
+          : null));
     }));
 
   // Hastanın anlattıkları tanının üstünde: kâğıt muayenenin sırasını izlesin.
   const belirtiler = !bos && doluMu(recete.belirtiler)
-    ? el('div', { class: 'kagit__belirti' }, el('b', {}, t('kagit.belirtiler', 'Belirtiler') + ': '), recete.belirtiler)
-    : null;
+    ? duz('belirtiler', el('div', { class: 'kagit__belirti' }, el('b', {}, t('kagit.belirtiler', 'Belirtiler') + ': '), recete.belirtiler))
+    : (bos ? null : yerTutucu('belirtiler', t('kagit.belirtiler', 'Belirtiler')));
 
   // Tetkik istemi ilaçlardan sonra, kendi bloğunda: gerçek reçetede de
   // ayrı bir istem, ilaç listesinin parçası değil.
   const laboratuvar = !bos && doluMu(recete.laboratuvar)
-    ? el('div', { class: 'kagit__lab' },
+    ? duz('laboratuvar', el('div', { class: 'kagit__lab' },
       el('div', { class: 'kagit__lab-bas' }, t('kagit.laboratuvar', 'Laboratuvar')),
-      el('div', {}, recete.laboratuvar))
-    : null;
+      el('div', {}, recete.laboratuvar)))
+    : (bos ? null : yerTutucu('laboratuvar', t('kagit.laboratuvar', 'Laboratuvar')));
 
   // İmza yeri: gerçek reçetede hekimin imzası olur. Dolu kâğıtta da boş
   // kâğıtta da basılıyor — imza her hâlükârda elle atılıyor.
@@ -268,8 +290,12 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
   const rx = el('section', { class: 'kagit__rx' },
     filigran(),
     el('div', { class: 'kagit__rx-isaret', dir: 'ltr' }, '℞'),
-    el('div', { class: 'kagit__rx-govde' }, belirtiler, tani, alerji, ilacGovdesi, laboratuvar,
-      !bos && doluMu(recete.notlar) ? el('div', { class: 'kagit__not' }, recete.notlar) : null),
+    el('div', { class: 'kagit__rx-govde' }, belirtiler, tani, alerji, ilacGovdesi,
+      bos ? null : yerTutucu('ilac-ekle', t('recete.ilac_ekle', 'İlaç ekle')),
+      laboratuvar,
+      !bos && doluMu(recete.notlar)
+        ? duz('notlar', el('div', { class: 'kagit__not' }, recete.notlar))
+        : (bos ? null : yerTutucu('notlar', t('recete.not', 'Reçete notu')))),
     imza);
 
   /* ---- Ayak: rozetler ve iletişim ---- */
