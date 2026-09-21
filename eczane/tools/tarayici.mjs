@@ -310,10 +310,12 @@ const bolumler = [
 for (const [ad, beklenen] of bolumler) {
   if (!yazdirMetni.includes(beklenen)) throw new Error(`reçete çıktısında ${ad} yok ("${beklenen}")`);
 }
+const amblemParca = await sayfa.locator('.kagit__amblem-cizim path, .kagit__amblem-cizim circle').count();
+if (amblemParca < 6) throw new Error(`antet amblemi eksik çizilmiş: ${amblemParca} parça`);
 const rozetSayisi = await sayfa.locator('.kagit__rozet').count();
 if (rozetSayisi !== 4) throw new Error(`ayakta 4 rozet bekleniyordu, ${rozetSayisi} var`);
 if (await sayfa.isVisible('.yazdir-alan')) throw new Error('yazdırma alanı ekranda görünüyor');
-ok(`reçete kâğıdı eksiksiz: antet, ünvan şeridi, hizmetler, sabıka, Clinical sütunu, ${rozetSayisi} rozet, iletişim`);
+ok(`reçete kâğıdı eksiksiz: kadüse amblemi (${amblemParca} parça), antet, ünvan şeridi, hizmetler, sabıka, Clinical sütunu, ${rozetSayisi} rozet, iletişim`);
 
 // --- QR ve klinik ölçüm sütunu kâğıtta yerinde mi?
 const qrModulSayisi = await sayfa.locator('.kagit__qr path').count();

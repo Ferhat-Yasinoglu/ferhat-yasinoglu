@@ -14,6 +14,35 @@ import { OLCUMLER, receteMetni } from './paylasilan/recete.js';
 import { trTarih } from './paylasilan/tarih.js';
 import { telefonNormalize } from './paylasilan/metin.js';
 
+/* Antetteki kadüse amblemi: tepede topuz, iki yanda tüylü kanat, asanın
+   etrafına dolanmış iki yılan — doktorun basılı kâğıdındaki amblemin aynısı.
+   Çizgi simge setiyle verilemeyecek kadar ayrıntılı olduğu için kâğıda ait,
+   dolgulu kendi çizimi. Yılanların sarmalı ve kanat tüyleri hesapla üretildi;
+   100×100 kutuya oturur, boyutu CSS verir. */
+const AMBLEM = {
+  kanat: 'M45.0 20.0Q26.9 12.0 1.1 17.7Q26.2 26.0 45.0 20.0ZM45.0 20.0Q27.8 16.2 6.5 26.1Q29.8 28.9 45.0 20.0ZM45.0 20.0Q30.0 19.6 14.2 31.8Q34.1 30.4 45.0 20.0ZM45.0 20.0Q33.0 21.4 23.0 33.8Q38.5 30.2 45.0 20.0Z',
+  yilanSag: 'M61.5 31.0C60.1 31.9 56.4 34.7 53.1 36.5C49.8 38.3 43.3 40.2 41.6 42.0C40.0 43.8 41.0 45.7 42.9 47.5C44.9 49.3 50.9 51.2 53.4 53.0C55.8 54.8 58.1 56.7 57.7 58.5C57.3 60.3 53.4 62.2 51.2 64.0C49.0 65.8 45.2 67.7 44.4 69.5C43.6 71.3 44.9 73.2 46.2 75.0C47.6 76.8 51.1 78.7 52.4 80.5C53.7 82.3 53.6 85.1 53.9 86.0',
+  yilanSol: 'M38.5 31.0C39.9 31.9 43.6 34.7 46.9 36.5C50.2 38.3 56.7 40.2 58.4 42.0C60.0 43.8 59.0 45.7 57.1 47.5C55.1 49.3 49.1 51.2 46.6 53.0C44.2 54.8 41.9 56.7 42.3 58.5C42.7 60.3 46.6 62.2 48.8 64.0C51.0 65.8 54.8 67.7 55.6 69.5C56.4 71.3 55.1 73.2 53.8 75.0C52.4 76.8 48.9 78.7 47.6 80.5C46.3 82.3 46.4 85.1 46.1 86.0',
+  basSag: 'M61.5 31c.6-4.6-7-5.6-7.8-1s5.4 6 7 2.4',
+  basSol: 'M38.5 31c-.6-4.6 7-5.6 7.8-1s-5.4 6-7 2.4',
+};
+
+/** Kadüse amblemi. Beyaz çizilir; rengi CSS'ten currentColor ile gelir. */
+function amblemCiz() {
+  return svgEl('svg', { class: 'kagit__amblem-cizim', viewBox: '0 0 100 100', 'aria-hidden': 'true' },
+    svgEl('g', { fill: 'currentColor' },
+      svgEl('circle', { cx: 50, cy: 11, r: 4.2 }),
+      svgEl('rect', { x: 46.4, y: 14.8, width: 7.2, height: 3.6, rx: 1.6 }),
+      svgEl('path', { d: 'M47.2 17.5h5.6v70.5l-2.8 8.5-2.8-8.5z' }),
+      svgEl('path', { d: AMBLEM.kanat }),
+      svgEl('path', { d: AMBLEM.kanat, transform: 'translate(100,0) scale(-1,1)' })),
+    svgEl('g', { fill: 'none', stroke: 'currentColor', 'stroke-width': 4.2, 'stroke-linecap': 'round' },
+      svgEl('path', { d: AMBLEM.yilanSag }),
+      svgEl('path', { d: AMBLEM.yilanSol }),
+      svgEl('path', { d: AMBLEM.basSag }),
+      svgEl('path', { d: AMBLEM.basSol })));
+}
+
 /* Klinik alanların etiketleri kâğıtta İngilizce durur: doktorun kendi kâğıdı
    da böyle ve BP/PR/RR/BW hekimlikte evrensel kısaltmalar. */
 const KLINIK_ADLARI = { bp: 'BP', pr: 'PR', rr: 'RR', bw: 'BW', temp: 'Temperature' };
@@ -73,7 +102,7 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
     el('div', { class: 'kagit__ad-blok' },
       el('div', { class: 'kagit__doktor' }, [recete.doktorUnvan || ayar.doktorUnvan, recete.doktorAd || ayar.doktorAd].filter(doluMu).join(' ')),
       doluMu(ayar.doktorAdAlt) ? el('div', { class: 'kagit__doktor-alt' }, ayar.doktorAdAlt) : null),
-    el('div', { class: 'kagit__amblem' }, simge('asa', { boy: 44 })),
+    el('div', { class: 'kagit__amblem' }, amblemCiz()),
     el('div', { class: 'kagit__slogan' },
       simge('ekg', { boy: 26 }),
       doluMu(ayar.slogan) ? el('div', {}, ...satirlara(ayar.slogan).map((x) => el('div', {}, x))) : null,
