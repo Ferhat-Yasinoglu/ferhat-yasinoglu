@@ -56,6 +56,34 @@ export function bosRecete(ayar = {}, gun = '') {
 
 /** Reçete kâğıdının sol sütunundaki klinik ölçümler.
  *  [anahtar, Türkçe ad, kısaltma, birim] — kısaltma çıktıda değişmez. */
+/** Süre için hazır seçenekler. Kullanım önerileri gibi bunlar da yalnız
+ *  YAZIM kısayolu: hangi ilacın kaç gün süreceğine hekim karar verir,
+ *  liste ilaçla eşleştirilmiş değil. */
+export const SURE_ONERILERI = [
+  '3 gün', '5 gün', '7 gün', '10 gün', '15 gün', '1 ay', 'Tek doz', 'Sürekli',
+];
+
+/**
+ * Hekimin en çok yazdığı ilaçlar, çok yazılandan aza.
+ * Reçete satırındaki ilaç kimliğine göre sayar; silinmiş ilaç listede
+ * bulunmadığı için kendiliğinden düşer — buradan tekrar seçilemez zaten.
+ * (Panel'deki sayım ADA göre: orada silinmiş ilaç da geçmişte görünmeli.)
+ */
+export function sikIlaclar(receteler, ilaclar, sinir = 8) {
+  const sayim = new Map();
+  for (const r of receteler || []) {
+    for (const satir of r?.satirlar || []) {
+      const id = satir?.ilacId;
+      if (id) sayim.set(id, (sayim.get(id) || 0) + 1);
+    }
+  }
+  return [...sayim.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([id]) => (ilaclar || []).find((i) => i.id === id))
+    .filter(Boolean)
+    .slice(0, sinir);
+}
+
 export const OLCUMLER = [
   ['bp', 'Kan basıncı', 'BP', 'mmHg'],
   ['pr', 'Nabız', 'PR', '/dk'],

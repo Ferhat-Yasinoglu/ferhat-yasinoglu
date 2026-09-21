@@ -26,6 +26,8 @@ const DEPO = {
   kilit: 'Veritabanı başka bir sekmede açık.',
   liste_okunamadi: 'İlaç listesi okunamadı.',
   liste_bozuk: 'İlaç listesi beklenen biçimde değil.',
+  tani_okunamadi: 'Tanı listesi okunamadı.',
+  tani_bozuk: 'Tanı listesi beklenen biçimde değil.',
   recete_bulunamadi: 'Reçete bulunamadı.',
 };
 

@@ -33,6 +33,15 @@ const T = (anahtar) => {
   return metin;
 };
 
+// Tanı çipleri Farsça yazıyor; denemede Türkçe karşılığından buluyoruz ki
+// bir tanı yeniden adlandırılınca burası da kendiliğinden güncellensin.
+const taniListesi = JSON.parse(await readFile(new URL('../app/veri/tanilar.json', import.meta.url), 'utf8'));
+const taniAdi = (tr) => {
+  const x = taniListesi.tanilar.find((y) => y.tr === tr);
+  if (!x) throw new Error(`tanı listesinde yok: ${tr}`);
+  return x;
+};
+
 const PORT = 8799;
 const KOK = `http://localhost:${PORT}/?nosw=1`;
 const ekranBayragi = process.argv.indexOf('--ekran');
@@ -194,18 +203,68 @@ await sayfa.click(`.modal button:has-text("${T('genel.ekle')}")`);
 await sayfa.waitForSelector('.tablo tbody tr:has-text("Nurofen")');
 ok('alerjili ilaç uyarısıyla birlikte reçeteye eklendi');
 
-// --- İkinci ilaç
+// --- İkinci ilaç: kutuya hiç yazmadan, çiplerle
 await sayfa.click(`button:has-text("${T('recete.ilac_ekle')}")`);
+// Arama kutusu boşken de liste geliyor: hekim yazmadan gezinebilmeli.
+await sayfa.waitForSelector('.modal .liste__satir--tiklanir');
+const gezinilebilir = await sayfa.locator('.modal .liste__satir--tiklanir').count();
+if (gezinilebilir < 3) throw new Error(`boş aramada gezinilecek liste yok, ${gezinilebilir} satır`);
+ok(`ilaç kutusu boşken ${gezinilebilir} ilaç listeleniyor, aramadan seçilebiliyor`);
+
 await sayfa.fill('.modal input[name=ilacArama]', 'parol');
 await sayfa.click('.modal .liste__satir:has-text("Parol")');
 await sayfa.fill('.modal input[name=adet]', '1');
+// Kullanım ve süre de dokunarak: metin tam eşleşmeli, "۵ روز" ile "۱۵ روز"
+// birbirinin içinde geçiyor.
+const cipSec = async (metin) => sayfa.click(`.modal .cip--secilir:has(span:text-is("${metin}"))`);
+await cipSec(T('kullanim.2'));
+await cipSec(T('sure.0'));
+const cipKullanim = await sayfa.inputValue('.modal input[name=kullanim]');
+const cipSure = await sayfa.inputValue('.modal input[name=sure]');
+if (cipKullanim !== T('kullanim.2')) throw new Error(`kullanım çipi yazmadı: "${cipKullanim}"`);
+if (cipSure !== T('sure.0')) throw new Error(`süre çipi yazmadı: "${cipSure}"`);
+ok(`kullanım ve süre çiple dolduruldu: ${cipKullanim} · ${cipSure}`);
 await sayfa.click(`.modal button:has-text("${T('genel.ekle')}")`);
 await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 2);
-await sayfa.fill('input[name=tani]', 'Üst solunum yolu enfeksiyonu');
-await sayfa.fill('input[name=taniKodu]', 'J06.9');
 await sayfa.fill('input[name=olcum_bp]', '110/70');
 await sayfa.fill('input[name=olcum_temp]', '38.2');
-ok('ikinci ilaç, tanı ve klinik ölçümler eklendi');
+ok('ikinci ilaç ve klinik ölçümler eklendi');
+
+// --- Tanı ÇİPLE seçiliyor: hekim elle yazmıyor, dokunuyor.
+const usye = taniAdi('Üst solunum yolu enfeksiyonu');
+await sayfa.click(`.cip--secilir:has-text("${usye.ad}")`);
+const secilenTani = await sayfa.inputValue('input[name=tani]');
+const secilenKod = await sayfa.inputValue('input[name=taniKodu]');
+if (secilenTani !== usye.ad) throw new Error(`çip tanıyı yazmadı: "${secilenTani}"`);
+if (secilenKod !== usye.kod) throw new Error(`çip ICD kodunu yazmadı: "${secilenKod}"`);
+ok(`tanı tek dokunuşla yazıldı: ${usye.ad} (${usye.kod}), elle yazılmadı`);
+
+// İkinci dokunuş geri almalı — yanlış basan hekim klavyeye gitmesin.
+await sayfa.click(`.cip--secilir:has-text("${usye.ad}")`);
+if (await sayfa.inputValue('input[name=tani]') !== '') throw new Error('ikinci dokunuş tanıyı geri almadı');
+if (await sayfa.inputValue('input[name=taniKodu]') !== '') throw new Error('tanı geri alınınca kod kaldı');
+await sayfa.click(`.cip--secilir:has-text("${usye.ad}")`);
+ok('çipe ikinci dokunuş tanıyı ve kodunu geri aldı');
+
+// Tam liste kutusu: arayıp ikinci bir tanı ekle, sonra çıkar.
+const dis = taniAdi('Diş ağrısı');
+await sayfa.click(`button:has-text("${T('tani.hepsi').replace(' ({n})', '')}")`);
+await sayfa.waitForSelector(`.modal h2, .modal [role=dialog], .modal input[name=taniArama]`);
+await sayfa.fill('.modal input[name=taniArama]', 'diş');
+await sayfa.click(`.modal .cip--secilir:has-text("${dis.ad}")`);
+await sayfa.click(`.modal button:has-text("${T('genel.sec')}")`);
+const ikiTani = await sayfa.inputValue('input[name=tani]');
+const ikiKod = await sayfa.inputValue('input[name=taniKodu]');
+if (!ikiTani.includes(usye.ad) || !ikiTani.includes(dis.ad)) throw new Error('iki tanı birleşmedi: ' + ikiTani);
+if (!ikiKod.includes(usye.kod) || !ikiKod.includes(dis.kod)) throw new Error('iki kod birleşmedi: ' + ikiKod);
+ok(`tam listeden ikinci tanı eklendi, ikisi birleşti: ${ikiTani} / ${ikiKod}`);
+
+// İkinciyi geri al: reçetede yalnız ÜSYE kalsın (sonraki adımlar buna dayanıyor).
+await sayfa.click(`.cip--secilir:has-text("${dis.ad}")`);
+const tekTani = await sayfa.inputValue('input[name=tani]');
+const tekKod = await sayfa.inputValue('input[name=taniKodu]');
+if (tekTani !== usye.ad || tekKod !== usye.kod) throw new Error(`tanı çıkarılınca kalan yanlış: "${tekTani}" / "${tekKod}"`);
+ok('ikinci tanı çıkarıldı, kalanın kodu bozulmadı');
 await resim(sayfa, '7-recete-yaz.png', { fullPage: true });
 
 // --- Kaydet
@@ -246,7 +305,7 @@ await sayfa.waitForSelector(`button:has-text("${T('sablon.kaydet')}")`);
 await sayfa.click(`button:has-text("${T('sablon.kaydet')}")`);
 await sayfa.waitForSelector('.modal input[name=ad]');
 const onerilen = await sayfa.inputValue('.modal input[name=ad]');
-if (!onerilen.includes('Üst solunum')) throw new Error('şablon adı tanıdan önerilmedi: ' + onerilen);
+if (!onerilen.includes(taniAdi('Üst solunum yolu enfeksiyonu').ad)) throw new Error('şablon adı tanıdan önerilmedi: ' + onerilen);
 await sayfa.fill('.modal input[name=ad]', 'ÜSYE denemesi');
 await sayfa.click(`.modal button:has-text("${T('genel.kaydet')}")`);
 await sayfa.waitForSelector('.bildirim--basari');
@@ -266,7 +325,7 @@ await yeniSekme.waitForSelector('.tablo tbody tr:has-text("Nurofen")');
 const sablonSatir = await yeniSekme.locator('#sayfa .tablo tbody tr').count();
 const sablonTani = await yeniSekme.inputValue('input[name=tani]');
 if (sablonSatir !== 2) throw new Error(`şablondan 2 satır beklenirdi, ${sablonSatir} geldi`);
-if (!sablonTani.includes('Üst solunum')) throw new Error('şablon tanıyı getirmedi: ' + sablonTani);
+if (!sablonTani.includes(taniAdi('Üst solunum yolu enfeksiyonu').ad)) throw new Error('şablon tanıyı getirmedi: ' + sablonTani);
 // Hasta seçilmemiş olmalı: şablon hastaya ait değil.
 const hastaKarti = await yeniSekme.textContent(`.kart:has(h2:text-is("${T('nav.hasta')}"))`);
 if (/Zeynep|Ayşe|Mehmet/.test(hastaKarti)) {
