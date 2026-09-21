@@ -41,10 +41,13 @@ const ROTALAR = [
   { yol: '/hastalar', yukle: () => import('./sayfalar/hastalar.js') },
   { yol: '/hasta/:id', yukle: () => import('./sayfalar/hasta.js') },
   { yol: '/receteler', yukle: () => import('./sayfalar/receteler.js') },
+  // Reçete yazmanın tek yolu kâğıt ekranı. /recete/yeni eski formun
+  // adresiydi; hekimin yer imi ve eski bağlantılar kırılmasın diye
+  // buraya yönleniyor.
   { yol: '/recete/kagit', yukle: () => import('./sayfalar/kagit-yaz.js') },
-  { yol: '/recete/yeni', yukle: () => import('./sayfalar/recete-yeni.js') },
+  { yol: '/recete/yeni', yukle: () => import('./sayfalar/kagit-yaz.js') },
   { yol: '/recete/:id', yukle: () => import('./sayfalar/recete.js') },
-  { yol: '/recete/:id/duzenle', yukle: () => import('./sayfalar/recete-yeni.js') },
+  { yol: '/recete/:id/duzenle', yukle: () => import('./sayfalar/kagit-yaz.js') },
   { yol: '/ayarlar', yukle: () => import('./sayfalar/ayarlar.js') },
   { yol: '/404', yukle: () => import('./sayfalar/bulunamadi.js') },
 ];
@@ -170,8 +173,19 @@ async function baslat() {
   await dilYukle();
   bicimAyarla({ dil: suankiDil(), kur: ayar.paraBirimi || 'AFN' });
 
+  // onayla()'nın varsayılanları (başlık, "Evet", "Vazgeç") kodda Türkçe:
+  // cekirdek/ saf tutuluyor, sözlüğü oradan çağırmıyoruz. Çeviri burada,
+  // ctx kurulurken giydiriliyor — yoksa Farsça arayüzün ortasında Türkçe
+  // bir onay kutusu açılıyordu. Çağıran yer yine kendi metnini geçebilir.
+  const onaylaCevirili = (mesaj, secenekler = {}) => onayla(mesaj, {
+    baslik: t('genel.emin', 'Emin misin?'),
+    evet: t('genel.evet', 'Evet'),
+    hayir: t('genel.vazgec', 'Vazgeç'),
+    ...secenekler,
+  });
+
   const ctx = {
-    depo, t, bildir, basari, uyar, hata, modal, onayla, sor, uygulamaSurumu: UYGULAMA_SURUMU,
+    depo, t, bildir, basari, uyar, hata, modal, sor, onayla: onaylaCevirili, uygulamaSurumu: UYGULAMA_SURUMU,
     git: (yol) => { location.hash = '#' + yol; },
     yenileBantlar: () => bantlariYenile(ctx),
     yenileMenu: () => menuCiz(depo),

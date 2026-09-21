@@ -1,8 +1,12 @@
-// Belirti / tanı / laboratuvar seçme arayüzü: çipler ve tam liste kutusu.
+// Belirti / tanı / laboratuvar seçme kutusu: ara, grupla, çiple seç.
 //
 // sayfalar/ dışında duruyor çünkü orası default export bekliyor; burası
-// reçete formunun kullandığı parçalar.
-import { el, temizle, btn, btnS, girdi } from './cekirdek/dom.js';
+// kâğıt üzerinde yazma ekranının kullandığı parçalar.
+//
+// Eski formda bir de sayfaya gömülü çip şeridi (secimSeridi) vardı; form
+// kalkınca onunla birlikte gitti. Oradaki asıl değer hekimin KENDİ sık
+// yazdıklarıydı — o buraya, kutunun en üstüne taşındı.
+import { el, temizle, girdi } from './cekirdek/dom.js';
 import { simge } from './cekirdek/simge.js';
 import { ara, degistir, taniDegistir, secili, siklar, gruplaraBol, parcala } from './paylasilan/klinik.js';
 import { t } from './i18n.js';
@@ -18,103 +22,18 @@ export function cip(metin, { secili: isaretli = false, alt = '', onclick } = {})
   }, isaretli ? simge('onay', { boy: 13 }) : null, el('span', {}, metin));
 }
 
-/**
- * Bir seçim alanının çip şeridi.
- *
- * Üç liste de aynı kalıpta: önce hekimin kendi sık yazdıkları, sonra (varsa)
- * listedeki yaygınlar, sonra "tüm liste" düğmesi. Tanıda ad ve ICD kodu
- * birlikte yürüyor; belirti ve laboratuvarda kod yok.
- *
- * Tıklanınca reçeteyi yerinde günceller ve girdiyi tazeler — sayfayı baştan
- * çizmiyoruz ki hekim kaydırdığı yerden düşmesin.
- *
- * @param {object} c
- * @param {Array} c.liste seçilebilecek kayıtlar
- * @param {Array} c.gruplar tam liste kutusundaki başlıklar
- * @param {string} c.alan reçetedeki alan adı
- * @param {string|null} c.kodAlani tanıda 'taniKodu', ötekilerde null
- * @param {HTMLElement} c.girdiElemani alanın metin kutusu
- * @param {HTMLElement|null} c.kodGirdisi kod kutusu (yalnız tanıda)
- */
-export function secimSeridi(ctx, {
-  liste, gruplar, alan, kodAlani = null, baslik, gecmis = [], recete,
-  girdiElemani, kodGirdisi = null, tazele,
-}) {
-  const kap = el('div', {});
-
-  const uygula = (secilen) => {
-    if (kodAlani) {
-      const y = taniDegistir({ tani: recete[alan] || '', taniKodu: recete[kodAlani] || '' }, secilen);
-      recete[alan] = y.tani; recete[kodAlani] = y.taniKodu;
-      if (kodGirdisi) kodGirdisi.value = y.taniKodu;
-    } else {
-      recete[alan] = degistir(recete[alan] || '', secilen.ad);
-    }
-    girdiElemani.value = recete[alan];
-    girdiElemani.classList.remove('input--hata');
-    ciz();
-    tazele?.();
-  };
-
-  function seritCiz(etiket, kayitlar) {
-    if (!kayitlar.length) return null;
-    return el('div', { class: 'cip-kume' },
-      el('span', { class: 'cip-kume__etiket' }, etiket),
-      ...kayitlar.map((x) => cip(x.ad, {
-        secili: secili(recete[alan], x.ad),
-        alt: [x.tr, x.kod].filter(Boolean).join(' · '),
-        onclick: () => uygula(x),
-      })));
-  }
-
-  function ciz() {
-    temizle(kap);
-    // Kendi geçmişinde olanı ikinci kez yaygınlar arasında göstermiyoruz.
-    const gecmisAdlari = new Set(gecmis.map((x) => x.ad));
-    const yaygin = siklar(liste).filter((x) => !gecmisAdlari.has(x.ad));
-    // append() null'u "null" metnine çeviriyor — el() gibi atlamıyor.
-    // Boş şerit (henüz geçmiş yokken) ekranda "null" yazıyordu.
-    const parcalar = [
-      seritCiz(t('klinik.sik_senin', 'Senin sık yazdıkların'), gecmis),
-      seritCiz(t('klinik.sik', 'Yaygın'), yaygin.slice(0, 12)),
-      el('div', { class: 'satir', style: { marginBlockStart: 'var(--b-2)' } },
-        btnS('ara', t('klinik.hepsi', 'Tüm liste ({n})', { n: liste.length }), {
-          class: 'btn btn--kucuk',
-          onclick: async () => {
-            const y = await secimKutusu(ctx, { liste, gruplar, baslik, kodAlani, recete, alan });
-            if (!y) return;
-            recete[alan] = y.metin;
-            if (kodAlani) { recete[kodAlani] = y.kodlar; if (kodGirdisi) kodGirdisi.value = y.kodlar; }
-            girdiElemani.value = y.metin;
-            ciz();
-            tazele?.();
-          },
-        }),
-        parcala(recete[alan]).length
-          ? btn(t('klinik.temizle', 'Temizle'), { class: 'btn btn--kucuk btn--sade', onclick: () => {
-            recete[alan] = '';
-            if (kodAlani) { recete[kodAlani] = ''; if (kodGirdisi) kodGirdisi.value = ''; }
-            girdiElemani.value = '';
-            ciz(); tazele?.();
-          } })
-          : null),
-    ];
-    kap.append(...parcalar.filter(Boolean));
-  }
-
-  ciz();
-  return kap;
-}
-
 /** Tam liste: arama + gruplar. Vazgeçilirse reçeteye dokunulmaz. */
-export async function secimKutusu(ctx, { liste, gruplar, baslik, kodAlani, recete, alan }) {
+export async function secimKutusu(ctx, { liste, gruplar, baslik, kodAlani, recete, alan, gecmis = [] }) {
   const { modal } = ctx;
   let metin = recete[alan] || '';
   let kodlar = kodAlani ? (recete[kodAlani] || '') : '';
 
   const kutu = girdi({ type: 'search', name: 'klinikArama', placeholder: t('klinik.ara', 'Ara…') });
-  const ozet = el('div', { class: 'cip-kume', style: { marginBlockEnd: 'var(--b-2)' } });
-  const govde = el('div', { style: { maxBlockSize: '52vh', overflowY: 'auto' } });
+  // Sınıf adları görünüşe değil, parçaları AYIRT ETMEYE yarıyor: aynı ad
+  // hem "seçilen" özetinde hem listede çipli duruyor, ikisini karıştırmamak
+  // gerek (denemede de öyle).
+  const ozet = el('div', { class: 'cip-kume klinik-ozet', style: { marginBlockEnd: 'var(--b-2)' } });
+  const govde = el('div', { class: 'klinik-liste', style: { maxBlockSize: '52vh', overflowY: 'auto' } });
 
   function sec(kayit) {
     if (kodAlani) {
@@ -141,6 +60,30 @@ export async function secimKutusu(ctx, { liste, gruplar, baslik, kodAlani, recet
 
   function listeCiz() {
     temizle(govde);
+    // Kısayollar en üstte: 231 tanının içinde gezinmek yerine kutuyu açan
+    // hareketin çoğu bu birkaç kayıt için. Önce hekimin KENDİ yazdıkları,
+    // sonra listenin yaygın işaretlileri (yeni hekimde geçmiş yok).
+    // Yalnız kutu boşken: arama sırasında aynı kayıt hem burada hem
+    // sonuçlarda çıkıyordu.
+    if (!kutu.value.trim()) {
+      const gecmisAdlari = new Set(gecmis.map((x) => x.ad));
+      const kisayol = (sinif, etiket, kayitlar) => {
+        if (!kayitlar.length) return;
+        govde.appendChild(el('div', { class: `cip-kume ${sinif}` },
+          el('span', { class: 'cip-kume__etiket' }, etiket),
+          ...kayitlar.map((x) => cip(x.ad, {
+            secili: secili(metin, x.ad),
+            alt: [x.tr, x.kod].filter(Boolean).join(' · '),
+            // Kaydı tam listeden buluyoruz: geçmiş kaydı eski bir koda
+            // sahip olabilir, basılan ICD güncel listeninki olmalı.
+            onclick: () => sec(liste.find((y) => y.ad === x.ad) || x),
+          }))));
+      };
+      kisayol('klinik-gecmis', t('klinik.sik_senin', 'Senin sık yazdıkların'), gecmis);
+      // Kendi geçmişinde olanı ikinci kez yaygınlar arasında göstermiyoruz.
+      kisayol('klinik-yaygin', t('klinik.sik', 'Yaygın'),
+        siklar(liste).filter((x) => !gecmisAdlari.has(x.ad)).slice(0, 12));
+    }
     const bulunan = ara(liste, kutu.value);
     if (!bulunan.length) { govde.appendChild(el('div', { class: 'liste__satir sessiz' }, t('klinik.eslesme_yok', 'Eşleşen kayıt yok'))); return; }
     for (const g of gruplaraBol(bulunan, gruplar)) {
