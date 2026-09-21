@@ -3,14 +3,14 @@
 // çıkar; hiçbiri kaydetmeyi engellemez, karar hekimindir — ama görmeden geçilmez.
 import { el, temizle, btn, btnS, girdi, secim, metinAlani, alan, kart, rozet, sayfaBas, bosDurum, sirala } from '../cekirdek/dom.js';
 import { simge } from '../cekirdek/simge.js';
-import { RECETE_TURLERI, KULLANIM_ONERILERI, SURE_ONERILERI, OLCUMLER, bosRecete, bosSatir, receteDogrula, receteUyarilari, sikIlaclar } from '../paylasilan/recete.js';
+import { RECETE_TURLERI, KULLANIM_ONERILERI, SURE_ONERILERI, YOLLAR, OLCUMLER, bosRecete, bosSatir, receteDogrula, receteUyarilari, sikIlaclar } from '../paylasilan/recete.js';
 import { receteKaydet } from '../depo/recete.js';
 import { sablonuUygula } from '../paylasilan/sablon.js';
 import { sablonSecKutusu, sablonKaydetKutusu } from '../sablon-arayuz.js';
 import { ilacAra, ilacEtiketi } from '../paylasilan/ilac.js';
-import { gecmisTanilar } from '../paylasilan/tani.js';
-import { tanilariOku } from '../depo/tanilar.js';
-import { taniSecicisi, cip } from '../tani-arayuz.js';
+import { gecmisler } from '../paylasilan/klinik.js';
+import { klinigiOku } from '../depo/klinik.js';
+import { secimSeridi, cip } from '../klinik-arayuz.js';
 import { tamAd, hastaAra, hastaYasi, alerjiCakismasi } from '../paylasilan/hasta.js';
 import { basHarfler } from '../paylasilan/metin.js';
 import { bugun } from '../paylasilan/tarih.js';
@@ -77,6 +77,7 @@ async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = []) {
   const adet = girdi({ type: 'number', name: 'adet', min: 1, step: 1, value: mevcut?.adet ?? 1 });
   const kullanim = girdi({ name: 'kullanim', value: mevcut?.kullanim ?? '', list: 'kullanim-onerileri', placeholder: t('recete.kullanim_yer', 'Günde 2×1') });
   const sure = girdi({ name: 'sure', value: mevcut?.sure ?? '', placeholder: t('recete.sure_yer', '10 gün') });
+  const yol = girdi({ name: 'yol', value: mevcut?.yol ?? '', placeholder: t('recete.yol_yer', 'Ağızdan') });
   const not = girdi({ name: 'satirNotu', value: mevcut?.not ?? '', placeholder: t('recete.not_yer', 'Tok karnına…') });
   const oneriler = el('datalist', { id: 'kullanim-onerileri' }, ...KULLANIM_ONERILERI.map((k, i) => el('option', { value: t(`kullanim.${i}`, k) })));
 
@@ -164,6 +165,8 @@ async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = []) {
       oneriCipleri(kullanim, KULLANIM_ONERILERI.map((k, i) => t(`kullanim.${i}`, k))),
       alan(t('recete.sure', 'Süre'), sure),
       oneriCipleri(sure, SURE_ONERILERI.map((k, i) => t(`sure.${i}`, k))),
+      alan(t('recete.yol', 'Veriliş yolu'), yol),
+      oneriCipleri(yol, YOLLAR.map((k, i) => t(`yol.${i}`, k))),
       alan(t('genel.not', 'Not'), not)),
     dugmeler: [
       { metin: t('genel.vazgec', 'Vazgeç'), deger: null },
@@ -174,7 +177,11 @@ async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = []) {
         return {
           ...bosSatir(), ...(mevcut || {}),
           ilacId: ilac.id, ilacAdi: ilacEtiketi(ilac), etkenMadde: ilac.etkenMadde || '',
-          adet: n, kullanim: kullanim.value.trim(), sure: sure.value.trim(), not: not.value.trim(),
+          // Şekli de saklıyoruz: kâğıt "Cap:" önekini bundan basıyor ve
+          // ilaç sonradan silinse bile eski reçete doğru basılsın.
+          form: ilac.form || '',
+          adet: n, kullanim: kullanim.value.trim(), sure: sure.value.trim(),
+          yol: yol.value.trim(), not: not.value.trim(),
         };
       } },
     ],
@@ -193,19 +200,19 @@ export default {
   async cizim(kok, ctx) {
     const benimSira = ++cizimSirasi;
     const { depo, git, basari, hata, onayla } = ctx;
-    // Tanı listesi okunamazsa form yine çalışsın: çipler görünmez, alan
-    // elle yazılabilir kalır. Reçete yazmayı bir veri dosyası engellememeli.
-    const [ilaclar, hastalar, ayar, ilkSablonlar, gecmisReceteler, taniBelgesi] = await Promise.all([
+    // Klinik listeler okunamazsa form yine çalışsın: çipler görünmez,
+    // alanlar elle yazılabilir kalır. Reçete yazmayı bir veri dosyası
+    // engellememeli.
+    const [ilaclar, hastalar, ayar, ilkSablonlar, gecmisReceteler, klinik] = await Promise.all([
       depo.listele('ilaclar', { sirala: 'ad' }),
       depo.listele('hastalar', { sirala: 'soyad' }),
       depo.ayarlar(),
       depo.listele('sablonlar', { sirala: 'ad' }),
       depo.listele('receteler'),
-      tanilariOku().catch(() => null),
+      klinigiOku().catch(() => null),
     ]);
     if (benimSira !== cizimSirasi) return;
     const sikYazilanlar = sikIlaclar(gecmisReceteler, ilaclar);
-    const kendiTanilari = gecmisTanilar(gecmisReceteler);
     // Şablon listesi yeni bir şablon kaydedilince tazelenir.
     let sablonlar = ilkSablonlar;
 
@@ -250,24 +257,65 @@ export default {
         tarih: girdi({ type: 'date', name: 'tarih', value: String(recete.tarih || '').slice(0, 10), onchange: (e) => { recete.tarih = e.target.value; } }),
         tur: secim(secenekleriCevir(RECETE_TURLERI, 'recete.tur'), { name: 'tur', value: recete.tur, onchange: (e) => { recete.tur = e.target.value; } }),
         receteNo: girdi({ name: 'receteNo', value: recete.receteNo, placeholder: t('recete.no_yer', 'Kaydedince kendiliğinden verilir'), onchange: (e) => { recete.receteNo = e.target.value.trim(); } }),
+        belirtiler: girdi({ name: 'belirtiler', value: recete.belirtiler || '', onchange: (e) => { recete.belirtiler = e.target.value.trim(); } }),
         tani: girdi({ name: 'tani', value: recete.tani, onchange: (e) => { recete.tani = e.target.value.trim(); } }),
         taniKodu: girdi({ name: 'taniKodu', value: recete.taniKodu, placeholder: 'J06.9', onchange: (e) => { recete.taniKodu = e.target.value.trim(); } }),
+        laboratuvar: girdi({ name: 'laboratuvar', value: recete.laboratuvar || '', onchange: (e) => { recete.laboratuvar = e.target.value.trim(); } }),
         protokolNo: girdi({ name: 'protokolNo', value: recete.protokolNo, onchange: (e) => { recete.protokolNo = e.target.value.trim(); } }),
       };
+
+      // Üç seçim alanı da aynı kalıpta: kutu + çip şeridi. Hekimin klavyeye
+      // gitmesi gereken yerler bunlardı.
+      const seciciler = klinik ? {
+        belirtiler: secimSeridi(ctx, {
+          liste: klinik.belirtiler, gruplar: klinik.gruplar, alan: 'belirtiler',
+          baslik: t('recete.belirtiler', 'Belirti ve bulgular'),
+          gecmis: gecmisler(gecmisReceteler, 'belirtiler'),
+          recete, girdiElemani: g.belirtiler,
+        }),
+        tani: secimSeridi(ctx, {
+          liste: klinik.tanilar, gruplar: klinik.gruplar, alan: 'tani', kodAlani: 'taniKodu',
+          baslik: t('recete.tani_sec', 'Tanı seç'),
+          gecmis: gecmisler(gecmisReceteler, 'tani', 'taniKodu'),
+          recete, girdiElemani: g.tani, kodGirdisi: g.taniKodu,
+        }),
+        laboratuvar: secimSeridi(ctx, {
+          liste: klinik.laboratuvar, gruplar: klinik.labGruplari, alan: 'laboratuvar',
+          baslik: t('recete.lab_sec', 'Laboratuvar / görüntüleme seç'),
+          gecmis: gecmisler(gecmisReceteler, 'laboratuvar'),
+          recete, girdiElemani: g.laboratuvar,
+        }),
+      } : {};
+
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' }, el('h2', {}, t('recete.bilgiler', 'Reçete bilgileri'))),
         el('div', { class: 'izgara izgara--form' },
           alan(t('genel.tarih', 'Tarih'), g.tarih, { gerekli: true, hata: dogrulaMetni(hatalar.tarih) }),
           alan(t('recete.turu', 'Reçete türü'), g.tur),
           alan(t('recete.no', 'Reçete no'), g.receteNo),
-          alan(t('recete.protokol', 'Protokol no'), g.protokolNo)),
-        el('div', { style: { marginBlockStart: 'var(--b-3)' } },
-          el('div', { class: 'izgara izgara--form' },
-            alan(t('recete.tani', 'Tanı'), g.tani, { ipucu: t('recete.tani_ipucu', 'Aşağıdan seç ya da elle yaz.') }),
-            alan(t('recete.tani_kodu', 'Tanı kodu (ICD-10)'), g.taniKodu)),
-          taniBelgesi
-            ? taniSecicisi(ctx, { belge: taniBelgesi, gecmis: kendiTanilari, recete, adGirdisi: g.tani, kodGirdisi: g.taniKodu })
-            : null)));
+          alan(t('recete.protokol', 'Protokol no'), g.protokolNo))));
+
+      /* --- Belirtiler, tanı, laboratuvar: hepsi seçilerek --- */
+      kok.appendChild(kart({},
+        el('div', { class: 'kart__bas' },
+          el('h2', {}, t('recete.belirtiler', 'Belirti ve bulgular')),
+          el('span', { class: 'kart__alt' }, t('genel.zorunlu_degil', 'Zorunlu değil'))),
+        alan(t('recete.belirtiler_alan', 'Hastanın anlattıkları'), g.belirtiler, { ipucu: t('recete.sec_ipucu', 'Aşağıdan seç ya da elle yaz.') }),
+        seciciler.belirtiler || null));
+
+      kok.appendChild(kart({},
+        el('div', { class: 'kart__bas' }, el('h2', {}, t('recete.tani', 'Tanı'))),
+        el('div', { class: 'izgara izgara--form' },
+          alan(t('recete.tani', 'Tanı'), g.tani, { ipucu: t('recete.sec_ipucu', 'Aşağıdan seç ya da elle yaz.') }),
+          alan(t('recete.tani_kodu', 'Tanı kodu (ICD-10)'), g.taniKodu)),
+        seciciler.tani || null));
+
+      kok.appendChild(kart({},
+        el('div', { class: 'kart__bas' },
+          el('h2', {}, t('recete.laboratuvar', 'Laboratuvar / görüntüleme')),
+          el('span', { class: 'kart__alt' }, t('genel.zorunlu_degil', 'Zorunlu değil'))),
+        alan(t('recete.lab_alan', 'İstenen tetkikler'), g.laboratuvar, { ipucu: t('recete.sec_ipucu', 'Aşağıdan seç ya da elle yaz.') }),
+        seciciler.laboratuvar || null));
 
       /* --- Klinik ölçümler --- */
       kok.appendChild(kart({},

@@ -17,6 +17,7 @@ function metneCevir(recete, hasta, ayar) {
   return receteMetni(recete, hasta, ayar, {
     recete: t('nav.recete', 'Reçete'), tarih: t('genel.tarih', 'Tarih'), hasta: t('nav.hasta', 'Hasta'),
     tani: t('recete.tani', 'Tanı'), ilaclar: t('nav.ilaclar', 'İlaçlar'), not: t('genel.not', 'Not'),
+    belirtiler: t('kagit.belirtiler', 'Belirtiler'), laboratuvar: t('kagit.laboratuvar', 'Laboratuvar'),
     alerji: t('hasta.alerji', 'Alerji'), adet: t('recete.kutu', 'kutu'), hastaAdi: tamAd(hasta),
   }) + kod;
 }

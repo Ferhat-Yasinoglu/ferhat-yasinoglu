@@ -19,7 +19,7 @@ export function receteOzet(recete) {
 
 /** Boş reçete satırı. */
 export function bosSatir() {
-  return { ilacId: '', ilacAdi: '', adet: 1, kullanim: '', sure: '', not: '' };
+  return { ilacId: '', ilacAdi: '', form: '', adet: 1, kullanim: '', sure: '', yol: '', not: '' };
 }
 
 /** Gün içinde artan reçete numarası: "2026-09-20-03". Aynı güne ait en büyük
@@ -47,7 +47,7 @@ export const KULLANIM_ONERILERI = [
 export function bosRecete(ayar = {}, gun = '') {
   return {
     receteNo: '', tarih: gun, tur: 'normal', hastaId: '',
-    tani: '', taniKodu: '', protokolNo: '', notlar: '', satirlar: [],
+    belirtiler: '', tani: '', taniKodu: '', laboratuvar: '', protokolNo: '', notlar: '', satirlar: [],
     olcumler: {},
     doktorAd: ayar.doktorAd || '', doktorUnvan: ayar.doktorUnvan || '',
     diplomaNo: ayar.diplomaNo || '', kurum: ayar.kurum || '',
@@ -56,6 +56,13 @@ export function bosRecete(ayar = {}, gun = '') {
 
 /** Reçete kâğıdının sol sütunundaki klinik ölçümler.
  *  [anahtar, Türkçe ad, kısaltma, birim] — kısaltma çıktıda değişmez. */
+/** İlacın veriliş yolu. Şekil çoğu zaman yolu ima ediyor ama ampulde
+ *  (عضلی mi وریدی mi) ima etmiyor; hekim seçsin diye duruyor. */
+export const YOLLAR = [
+  'Ağızdan', 'Kas içine', 'Damar içine', 'Deri üstüne', 'Göze', 'Kulağa',
+  'Buruna', 'Solunumla', 'Makattan', 'Dil altına',
+];
+
 /** Süre için hazır seçenekler. Kullanım önerileri gibi bunlar da yalnız
  *  YAZIM kısayolu: hangi ilacın kaç gün süreceğine hekim karar verir,
  *  liste ilaçla eşleştirilmiş değil. */
@@ -90,6 +97,8 @@ export const OLCUMLER = [
   ['rr', 'Solunum', 'RR', '/dk'],
   ['bw', 'Kilo', 'BW', 'kg'],
   ['temp', 'Ateş', 'T', '°C'],
+  ['spo2', 'Oksijen', 'SpO₂', '%'],
+  ['ht', 'Boy', 'Ht', 'cm'],
 ];
 
 /** Dolu olan ölçümler: çıktıda ve kartta yalnız bunlar gösterilir. */
@@ -150,6 +159,7 @@ export function receteUyarilari(satirlar, hasta, ilaclar, sec = {}) {
 export function receteMetni(recete, hasta, ayar = {}, etiket = {}) {
   const e = {
     recete: 'Reçete', tarih: 'Tarih', hasta: 'Hasta', yas: 'Yaş', tani: 'Tanı',
+    belirtiler: 'Belirtiler', laboratuvar: 'Laboratuvar',
     ilaclar: 'İlaçlar', not: 'Not', doktor: 'Doktor', alerji: 'Alerji',
     adet: 'kutu', ...etiket,
   };
@@ -164,16 +174,18 @@ export function receteMetni(recete, hasta, ayar = {}, etiket = {}) {
   ekle(e.recete, recete.receteNo);
   ekle(e.tarih, String(recete.tarih || '').slice(0, 10));
   ekle(e.hasta, etiket.hastaAdi || '');
+  ekle(e.belirtiler, recete.belirtiler);
   ekle(e.tani, [recete.tani, recete.taniKodu].filter(Boolean).join(' · '));
   if ((hasta?.alerjiler || []).length) ekle(e.alerji, hasta.alerjiler.join(', '));
 
   if ((recete.satirlar || []).length) {
     satirlar.push('', e.ilaclar + ':');
     recete.satirlar.forEach((s, i) => {
-      const parcalar = [`${s.adet} ${e.adet}`, s.kullanim, s.sure].filter(Boolean).join(' · ');
+      const parcalar = [`${s.adet} ${e.adet}`, s.kullanim, s.sure, s.yol].filter(Boolean).join(' · ');
       satirlar.push(`${i + 1}) ${s.ilacAdi}${parcalar ? ' — ' + parcalar : ''}${s.not ? ` (${s.not})` : ''}`);
     });
   }
+  if (recete.laboratuvar) { satirlar.push(''); ekle(e.laboratuvar, recete.laboratuvar); }
   if (recete.notlar) { satirlar.push(''); ekle(e.not, recete.notlar); }
   if (ayar.telefon) { satirlar.push(''); satirlar.push(ayar.telefon); }
 
