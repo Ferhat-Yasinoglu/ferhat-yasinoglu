@@ -14,8 +14,20 @@ import { kagidiYazdir } from '../kagit.js';
 import { hataMetni } from '../hatalar.js';
 import { metniDogrula } from '../depo/dogrulama.js';
 
-const KOL_ANAHTARI = { ilaclar: 'nav.ilaclar', hastalar: 'nav.hastalar', receteler: 'nav.receteler', ayarlar: 'nav.ayarlar' };
-const KOL_ADI = { ilaclar: 'İlaç', hastalar: 'Hasta', receteler: 'Reçete', ayarlar: 'Ayar' };
+/* Koleksiyon → ekranda görünecek etiket. HER yedeklenen koleksiyon burada
+   olmalı: eksik kalan, "Veriler" kartında ve yedek geri yükleme metninde ham
+   anahtarıyla, yani Türkçe basılıyor (şablonlar eklendiğinde tam bu oldu:
+   Farsça sütunun ortasında "sablonlar" yazıyordu). Denetim bunu göremiyor,
+   anahtar `KOL_ANAHTARI[ad] || ad` ile dinamik kuruluyor — tarayıcı denemesi
+   kartta Latin harfli etiket kalmadığını doğruluyor. */
+const KOL_ANAHTARI = {
+  ilaclar: 'nav.ilaclar', hastalar: 'nav.hastalar', receteler: 'nav.receteler',
+  sablonlar: 'sablon.kisa', ayarlar: 'nav.ayarlar',
+};
+const KOL_ADI = {
+  ilaclar: 'İlaç', hastalar: 'Hasta', receteler: 'Reçete',
+  sablonlar: 'Şablon', ayarlar: 'Ayar',
+};
 
 /** Antet alanları: [anahtar, Türkçe etiket, ipucu, çokSatır?]
  *  Sıra kâğıttaki sırayla aynı: ad, ünvan, slogan, hizmetler, sabıka, iletişim. */

@@ -757,6 +757,28 @@ if (belge.bicim !== 'shafa-yedek' || belge.koleksiyonlar.ilaclar.length !== 9) {
 ok(`yedek indirildi (${dosya.suggestedFilename()}): 9 ilaç, ${belge.koleksiyonlar.hastalar.length} hasta, ${belge.koleksiyonlar.receteler.length} reçete`);
 if ('hareketler' in belge.koleksiyonlar) throw new Error('yedekte stok hareketleri koleksiyonu duruyor');
 
+// --- "Veriler" kartı: her koleksiyonun etiketi ÇEVRİLMİŞ olmalı.
+// Etiket anahtarı `KOL_ANAHTARI[ad] || ad` ile dinamik kuruluyor, yani statik
+// denetim göremiyor: haritaya eklenmeyen koleksiyon ham anahtarıyla, Türkçe
+// basılıyor. Şablonlar eklendiğinde tam bu oldu — Farsça sütunun ortasında
+// "sablonlar" yazıyordu ve hekimin telefonunda öyle göründü.
+const veriKarti = `.kart:has(h2:text-is("${T('ayar.veriler')}"))`;
+await sayfa.waitForSelector(veriKarti);
+const veriEtiketleri = await sayfa.$$eval(`${veriKarti} .alan__etiket`, (e) => e.map((x) => x.textContent.trim()));
+const koleksiyonSayisi = await sayfa.evaluate(async () => {
+  const { KOLEKSIYONLAR } = await import('./js/depo/sema.js');
+  return Object.keys(KOLEKSIYONLAR).filter((a) => a !== 'meta' && a !== 'ayarlar').length;
+});
+if (veriEtiketleri.length !== koleksiyonSayisi) {
+  throw new Error(`Veriler kartında ${koleksiyonSayisi} etiket bekleniyordu, ${veriEtiketleri.length} var`);
+}
+// Latin harfle başlayan etiket = çevrilmemiş ham anahtar.
+const cevrilmemis = veriEtiketleri.filter((x) => /[A-Za-z]/.test(x));
+if (cevrilmemis.length) {
+  throw new Error('Veriler kartında çevrilmemiş etiket: ' + cevrilmemis.join(', '));
+}
+ok(`Veriler kartındaki ${veriEtiketleri.length} etiketin hepsi çevrili: ${veriEtiketleri.join(' · ')}`);
+
 // --- Arayüz tek dilli: Farsça ve sağdan sola
 const yon = await sayfa.evaluate(() => [document.documentElement.dir, document.documentElement.lang]);
 if (yon[0] !== 'rtl' || yon[1] !== 'fa') throw new Error('belge Farsça/sağdan sola değil: ' + yon.join(' '));
