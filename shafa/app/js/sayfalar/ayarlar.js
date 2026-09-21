@@ -3,7 +3,7 @@
 import { el, temizle, btn, btnS, girdi, secim, metinAlani, alan, kart, rozet, sayfaBas } from '../cekirdek/dom.js';
 import { simge } from '../cekirdek/simge.js';
 import { yedekOlustur, iceAktar, yedekDogrula, indir, hatirlatmaGerekli } from '../depo/yedek.js';
-import { ornekYukle } from '../depo/ornek.js';
+import { ornekYukle, ornekAntetiSil } from '../depo/ornek.js';
 import { hazirListeyiYukle } from '../depo/hazir-ilaclar.js';
 import { KOLEKSIYONLAR } from '../depo/sema.js';
 import { trTarihSaat } from '../paylasilan/tarih.js';
@@ -232,6 +232,9 @@ export default {
             ? btnS('cop', t('ayar.ornek_sil', 'Örnek verileri sil'), { class: 'btn', onclick: async () => {
               if (await onayla(t('ayar.ornek_sil_onay', 'Örnek ilaç ve hastalar silinsin mi? Kendi eklediğin kayıtlara dokunulmaz.'), { evet: t('genel.sil', 'Sil') })) {
                 const n = await depo.ornekSil();
+                // Antet ayarlar koleksiyonunda; ornekSil oraya bakmıyor.
+                // Temizlenmezse kâğıtta «نمونه» adı basılmaya devam ediyor.
+                await ornekAntetiSil(depo);
                 basari(t('ayar.ornek_silindi', '{n} örnek kayıt silindi', { n }));
                 ciz();
               }
