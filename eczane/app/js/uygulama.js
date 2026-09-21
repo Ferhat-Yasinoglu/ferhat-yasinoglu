@@ -176,7 +176,11 @@ async function baslat() {
   dilUygula(document);
 
   const ustAra = document.getElementById('ust-ara');
-  const aramaKutusu = girdi({ type: 'search', placeholder: t('ara.yer', 'Ara…  (Ctrl+K)'), 'aria-label': t('ara.etiket', 'Ara'), style: { minHeight: '36px' } });
+  // Telefonda "(Ctrl+K)" ipucu yer kaplamaktan başka bir işe yaramıyor:
+  // klavye yok. Kısayol yalnız fare/klavyeli cihazlarda yazılı.
+  const klavyeli = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const araYer = klavyeli ? t('ara.yer', 'Ara…  (Ctrl+K)') : t('ara.yer_kisa', 'Ara…');
+  const aramaKutusu = girdi({ type: 'search', placeholder: araYer, 'aria-label': t('ara.etiket', 'Ara'), style: { minHeight: '36px' } });
   aramaKutusu.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); aramaAc(ctx, aramaKutusu.value); aramaKutusu.value = ''; }
   });

@@ -179,8 +179,8 @@ await sayfa.click('#kenar-menu a[href="#/ayarlar"]');
 await sayfa.waitForSelector('input[name=doktorAd]');
 // Örnek veriyle gelen antetin üstüne denemenin kendi bilgileri yazılır.
 await sayfa.fill('input[name=doktorUnvan]', 'الحاج داکتر');
-await sayfa.fill('input[name=doktorAd]', 'فدامحمد «احسان»');
-await sayfa.fill('input[name=doktorAdAlt]', 'Dr. Fida Mohammad (Ehsan)');
+await sayfa.fill('input[name=doktorAd]', 'نمونه احمدی');
+await sayfa.fill('input[name=doktorAdAlt]', 'Dr. Nemuna Ahmadi');
 await sayfa.fill('input[name=uzmanlik]', 'معالج امراض داخله عمومی و اطفال');
 await sayfa.fill('textarea[name=slogan]', 'سلامتی شما\nهدف ماست');
 await sayfa.fill('input[name=klinikAdi]', 'Deneme Eczanesi');
@@ -188,9 +188,9 @@ await sayfa.fill('textarea[name=hizmetler]', 'ثبت و تشخیص گراف بر
 await sayfa.fill('input[name=hizmetAlanlari]', '(قلب ، شش ، معده ، گرده)');
 await sayfa.fill('input[name=deneyim]', 'سابقه کاری : شفاخانه نمونه');
 await sayfa.fill('input[name=ayakEtiketleri]', 'قلب, شش, معده, اطفال');
-await sayfa.fill('input[name=telefon]', '0791448001');
+await sayfa.fill('input[name=telefon]', '0700000000');
 await sayfa.fill('input[name=ulkeKodu]', '93');
-await sayfa.fill('input[name=adres]', 'کندز، افغانستان');
+await sayfa.fill('input[name=adres]', 'کابل، افغانستان');
 await sayfa.click(`button:has-text("${T('ayar.antet_kaydet')}")`);
 await sayfa.waitForSelector('.bildirim--basari');
 ok('reçete anteti kaydedildi (ad, ünvan şeridi, slogan, hizmetler, sabıka, rozetler, iletişim)');
@@ -300,11 +300,11 @@ ok(`geri alma stoğu iade etti: ${nurofenSonra} → ${nurofenGeri}`);
 // --- Yazdırma alanı: ekranda gizli, içeriği eksiksiz
 const yazdirMetni = await sayfa.textContent('.yazdir-alan');
 const bolumler = [
-  ['doktor adı', 'فدامحمد «احسان»'], ['latin ad', 'Dr. Fida Mohammad (Ehsan)'],
+  ['doktor adı', 'نمونه احمدی'], ['latin ad', 'Dr. Nemuna Ahmadi'],
   ['ünvan şeridi', 'معالج امراض داخله'], ['slogan', 'سلامتی شما'],
   ['hizmet', '(ECG)'], ['ilgi alanları', '(قلب ، شش'], ['sabıka', 'سابقه کاری'],
   ['hasta', 'Zeynep Kaya'], ['tanı', 'J06.9'], ['ilaç', 'Nurofen'],
-  ['alerji', T('hasta.alerji')], ['adres', 'کندز'], ['telefon', '0791448001'],
+  ['alerji', T('hasta.alerji')], ['adres', 'کابل'], ['telefon', '0700000000'],
   ['Clinical başlığı', 'Clinical'], ['ölçüm etiketi', 'BP :'],
 ];
 for (const [ad, beklenen] of bolumler) {
@@ -347,7 +347,7 @@ const bosKagit = await sayfa.evaluate(async () => {
   };
 });
 if (bosKagit.cizgi < 8) throw new Error(`boş kâğıtta doldurma çizgisi eksik: ${bosKagit.cizgi}`);
-for (const beklenen of ['فدامحمد «احسان»', 'سلامتی شما', 'سابقه کاری', 'Clinical', 'BP :', '℞']) {
+for (const beklenen of ['نمونه احمدی', 'سلامتی شما', 'سابقه کاری', 'Clinical', 'BP :', '℞']) {
   if (!bosKagit.metin.includes(beklenen)) throw new Error(`boş kâğıtta "${beklenen}" yok`);
 }
 if (bosKagit.metin.includes('Zeynep')) throw new Error('boş kâğıtta hasta bilgisi sızmış');
