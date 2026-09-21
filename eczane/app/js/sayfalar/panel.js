@@ -60,7 +60,7 @@ export default {
         ],
       }));
 
-      kok.appendChild(el('div', { class: 'izgara', style: { marginBlockEnd: 'var(--b-5)' } },
+      kok.appendChild(el('div', { class: 'izgara izgara--sayac', style: { marginBlockEnd: 'var(--b-5)' } },
         sayacKutusu({ baslik: t('panel.ilac_cesidi', 'İlaç çeşidi'), deger: ilaclar.length, alt: t('panel.kutu_stok', '{n} kutu stok', { n: ilaclar.reduce((a, i) => a + Number(i.stok || 0), 0) }), simge: 'ilac', tur: 'vurgu', yol: '/ilaclar' }),
         sayacKutusu({ baslik: t('nav.hasta', 'Hasta'), deger: hastalar.length, alt: t('panel.kayitli', 'kayıtlı'), simge: 'hasta', tur: 'vurgu', yol: '/hastalar' }),
         sayacKutusu({ baslik: t('panel.stok_uyarisi', 'Stok uyarısı'), deger: azalan.length + tukenen.length, alt: t('panel.stok_alt', '{a} tükendi · {b} azaldı', { a: tukenen.length, b: azalan.length }), simge: 'kutu', tur: (azalan.length + tukenen.length) ? 'uyari' : 'notr', yol: '/ilaclar?suzgec=azalan' }),
@@ -78,12 +78,17 @@ export default {
         rozet: rozet(sktDurumu(i) === 'gecti' ? t('panel.gecti', 'Geçti') : t('panel.yakin', 'Yakın'), sktDurumu(i) === 'gecti' ? 'kirmizi' : 'sari'),
       }));
 
-      kok.appendChild(listeKarti({ baslik: t('panel.stok_uyarilari', 'Stok uyarıları'), simgeAdi: 'kutu', satirlar: stokSatirlari, bos: t('panel.stok_yeterli', 'Stoklar yeterli'), tumuYol: '/ilaclar?suzgec=azalan' }));
-      kok.appendChild(listeKarti({ baslik: t('ilac.son_kullanma', 'Son kullanma tarihi'), simgeAdi: 'takvim', satirlar: sktSatirlari, bos: t('panel.skt_yok', 'Yaklaşan son kullanma yok'), tumuYol: '/ilaclar?suzgec=skt_yakin' }));
+      // Panel kartları geniş ekranda iki sütuna dizilir (bkz. .panel-izgara):
+      // tek sütunda her kart bin piksele geniyor ve içindeki üç satırın
+      // yanında sayfanın yarısı boş kalıyordu.
+      const kartlar = [
+        listeKarti({ baslik: t('panel.stok_uyarilari', 'Stok uyarıları'), simgeAdi: 'kutu', satirlar: stokSatirlari, bos: t('panel.stok_yeterli', 'Stoklar yeterli'), tumuYol: '/ilaclar?suzgec=azalan' }),
+        listeKarti({ baslik: t('ilac.son_kullanma', 'Son kullanma tarihi'), simgeAdi: 'takvim', satirlar: sktSatirlari, bos: t('panel.skt_yok', 'Yaklaşan son kullanma yok'), tumuYol: '/ilaclar?suzgec=skt_yakin' }),
+      ];
 
       if (bekleyen.length) {
         const hastaAdi = (id) => tamAd(hastalar.find((h) => h.id === id)) || t('nav.hasta', 'Hasta');
-        kok.appendChild(listeKarti({
+        kartlar.push(listeKarti({
           baslik: t('panel.bekleyen_receteler', 'Bekleyen reçeteler'), simgeAdi: 'recete',
           satirlar: bekleyen.map((r) => {
             const o = receteOzet(r);
@@ -95,12 +100,14 @@ export default {
 
       if (hastalar.length) {
         const son = [...hastalar].sort((a, b) => String(b.olusturuldu).localeCompare(String(a.olusturuldu))).slice(0, 6);
-        kok.appendChild(listeKarti({
+        kartlar.push(listeKarti({
           baslik: t('panel.son_hastalar', 'Son eklenen hastalar'), simgeAdi: 'hasta',
           satirlar: son.map((h) => ({ yol: `/hasta/${h.id}`, baslik: tamAd(h), alt: h.telefon || '—', harf: basHarfler(tamAd(h)) })),
           bos: t('panel.hasta_yok', 'Hasta yok'), tumuYol: '/hastalar',
         }));
       }
+
+      kok.appendChild(el('div', { class: 'panel-izgara' }, ...kartlar));
 
       if (!ilaclar.length && !hastalar.length) {
         kok.appendChild(kart({}, bosDurum({

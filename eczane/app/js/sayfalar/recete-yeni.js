@@ -202,7 +202,7 @@ export default {
       /* --- Klinik ölçümler --- */
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' }, el('h2', {}, t('recete.olcumler', 'Klinik ölçümler')), el('span', { class: 'kart__alt' }, t('genel.zorunlu_degil', 'Zorunlu değil'))),
-        el('div', { class: 'izgara izgara--form' }, ...OLCUMLER.map(([anahtar, ad, kisa, birim]) =>
+        el('div', { class: 'izgara izgara--dar' }, ...OLCUMLER.map(([anahtar, ad, kisa, birim]) =>
           alan(`${t('olcum.' + anahtar, ad)} (${kisa})`, girdi({
             name: 'olcum_' + anahtar, value: recete.olcumler?.[anahtar] ?? '', placeholder: birim,
             onchange: (e) => { recete.olcumler = { ...recete.olcumler, [anahtar]: e.target.value.trim() }; },

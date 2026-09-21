@@ -85,6 +85,27 @@ yok, çevrimdışı çalışır. İçeriği ayarlardan seçilir: doktorun WhatsA
 (hasta okutup yazar) ya da reçetenin metni (okutunca telefonda açılır).
 Doğruluğu bağımsız bir QR çözücüyle test ediliyor.
 
+## Arayüz
+
+**Yazı tipi Vazirmatn** (`app/yazi/`, OFL lisansı, tek değişken dosya 111 KB).
+Sistem yazı tipleri Arap harflerini genelde ikinci sınıf taşıyor: harf
+yükseklikleri oynuyor, nokta kümeleri birbirine giriyor, kalın gerektiğinde
+kalınlık sahteleniyor. Yazı tipi service worker'ın önbelleğinde, ilk açılıştan
+sonra çevrimdışı da geliyor; inene kadar metin sistem yazı tipiyle görünür
+kalıyor (`font-display: swap`). Reçete kâğıdı da bu yazı tipini kullanıyor.
+
+Arap yazısı Latin'den daha çok satır aralığı ister — harfler satırın altına ve
+üstüne uzanıyor — bu yüzden gövde satır aralığı 1.62.
+
+Panel geniş ekranda iki sütun, sayaçlar beşi bir satırda; telefonda sayaçlar
+ikişerli, sayfa eylemleri ızgarada (asıl eylem tam satır). Önceki düzende
+beşinci sayaç alt satıra tek başına düşüyor, yanında kocaman bir boşluk
+kalıyordu; telefonda dört kocaman kutuyu geçmeden içeriğe ulaşılamıyordu.
+
+Düzen yalnız mantıksal yön özellikleriyle kurulu (`margin-inline-start` gibi),
+bu yüzden sağdan sola akış kendiliğinden çıkıyor — ayrı bir RTL sayfası yok.
+`npm run kontrol` fiziksel yön özelliği kullanıldığında uyarıyor.
+
 ## Sahteciliğe karşı
 
 Her reçete kaydedilirken bir **doğrulama kodu** alır: reçetenin kanonik özetinin,
