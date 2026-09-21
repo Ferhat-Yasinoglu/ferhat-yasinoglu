@@ -9,7 +9,7 @@ const KABUK = [
   './', './index.html', './manifest.webmanifest',
   './css/tokenlar.css', './css/bilesenler.css', './css/uygulama.css', './css/yazdirma.css',
   './js/cekirdek/tema.js', './js/uygulama.js', './js/i18n.js',
-  './i18n/fa.json', './img/logo.svg', './yazi/vazirmatn.woff2',
+  './i18n/fa.json', './img/logo.svg', './yazi/vazirmatn.woff2', './veri/ilaclar.json',
 ];
 
 // skipWaiting burada BİLEREK yok. Yeni sürüm açık sayfayı ortasından
