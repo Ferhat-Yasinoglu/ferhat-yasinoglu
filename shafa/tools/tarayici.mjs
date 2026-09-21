@@ -170,11 +170,16 @@ await sayfa.fill('input[name=doktorAd]', 'نمونه احمدی');
 await sayfa.fill('input[name=doktorAdAlt]', 'Dr. Nemuna Ahmadi');
 await sayfa.fill('input[name=uzmanlik]', 'معالج امراض داخله عمومی و اطفال');
 await sayfa.fill('textarea[name=slogan]', 'سلامتی شما\nهدف ماست');
+await sayfa.fill('input[name=sloganAlt]', 'Your Health, Our Priority');
 await sayfa.fill('input[name=klinikAdi]', 'Deneme Eczanesi');
+await sayfa.fill('input[name=cagriUst]', 'با ما');
+await sayfa.fill('input[name=cagriAlt]', 'به سوی زندگی سالم‌تر');
 await sayfa.fill('textarea[name=hizmetler]', 'ثبت و تشخیص گراف برقی قلب (ECG)\nماهر معاینات تلویزیونی (التراساند)');
 await sayfa.fill('input[name=hizmetAlanlari]', '(قلب ، شش ، معده ، گرده)');
 await sayfa.fill('input[name=deneyim]', 'سابقه کاری : شفاخانه نمونه');
-await sayfa.fill('input[name=ayakEtiketleri]', 'قلب, شش, معده, اطفال');
+// Basılı kâğıtta yedi rozet var; dördü denenirse yedincinin sıkışması
+// görünmez kalıyordu.
+await sayfa.fill('input[name=ayakEtiketleri]', 'قلب, شش, معده, گرده, شکر, روماتیزم, سردرد');
 await sayfa.fill('input[name=telefon]', '0700000000');
 await sayfa.fill('input[name=ulkeKodu]', '93');
 await sayfa.fill('input[name=adres]', 'کابل، افغانستان');
@@ -523,8 +528,13 @@ const bolumler = [
   ['hasta', 'Zeynep Kaya'], ['tanı', 'J06.9'], ['ilaç', 'Nurofen'],
   ['alerji', T('hasta.alerji')], ['adres', 'کابل'], ['telefon', '0700000000'],
   ['Clinical başlığı', 'Clinical'], ['ölçüm etiketi', 'BP :'],
-  // Kâğıda ait sabit satır: ayarlardan gelmiyor, her kâğıtta olmalı.
+  // Kâğıda ait sabit satırlar: ayarlardan gelmiyor, her kâğıtta olmalı.
   ['sabit satır', 'طبیب حقیقی خداوند'],
+  ['hat yazısı', 'سلامت سرمایهٔ زندگی است'],
+  // Antetin iki yanı: solda Latin slogan, sağda aile amblemi yazıları.
+  ['Latin slogan', 'Your Health, Our Priority'],
+  ['amblem üst yazısı', 'با ما'], ['amblem alt yazısı', 'به سوی زندگی سالم‌تر'],
+  ['sağlık sözü', 'Brighter'],
 ];
 for (const [ad, beklenen] of bolumler) {
   if (!yazdirMetni.includes(beklenen)) throw new Error(`reçete çıktısında ${ad} yok ("${beklenen}")`);
@@ -532,9 +542,14 @@ for (const [ad, beklenen] of bolumler) {
 const amblemParca = await sayfa.locator('.kagit__amblem-cizim path, .kagit__amblem-cizim circle').count();
 if (amblemParca < 6) throw new Error(`antet amblemi eksik çizilmiş: ${amblemParca} parça`);
 const rozetSayisi = await sayfa.locator('.kagit__rozet').count();
-if (rozetSayisi !== 4) throw new Error(`ayakta 4 rozet bekleniyordu, ${rozetSayisi} var`);
+if (rozetSayisi !== 7) throw new Error(`ayakta 7 rozet bekleniyordu, ${rozetSayisi} var`);
+// Antetteki iki amblem de çizilmiş olmalı: kadüse ve kalbin içindeki aile.
+const aileParca = await sayfa.locator('.kagit__aile-cizim path, .kagit__aile-cizim circle').count();
+if (aileParca < 6) throw new Error(`aile amblemi eksik çizilmiş: ${aileParca} parça`);
+const saglikParca = await sayfa.locator('.kagit__saglik-cizim path, .kagit__saglik-cizim circle').count();
+if (!saglikParca) throw new Error('Clinical sütununda sağlık çizimi yok');
 if (await sayfa.isVisible('.yazdir-alan')) throw new Error('yazdırma alanı ekranda görünüyor');
-ok(`reçete kâğıdı eksiksiz: kadüse amblemi (${amblemParca} parça), antet, ünvan şeridi, hizmetler, sabıka, Clinical sütunu, ${rozetSayisi} rozet, iletişim`);
+ok(`reçete kâğıdı eksiksiz: kadüse (${amblemParca} parça) ve aile amblemi (${aileParca} parça), antet, ünvan şeridi, hizmetler, sabıka, Clinical sütunu, hat yazısı, ${rozetSayisi} rozet, iletişim`);
 
 // --- QR ve klinik ölçüm sütunu kâğıtta yerinde mi?
 const qrModulSayisi = await sayfa.locator('.kagit__qr path').count();
@@ -592,12 +607,31 @@ const bosKagit = await sayfa.evaluate(async () => {
   };
 });
 if (bosKagit.cizgi < 8) throw new Error(`boş kâğıtta doldurma çizgisi eksik: ${bosKagit.cizgi}`);
-for (const beklenen of ['نمونه احمدی', 'سلامتی شما', 'سابقه کاری', 'طبیب حقیقی خداوند', 'Clinical', 'BP :', '℞']) {
+// Kâğıda ait ne varsa boş kâğıtta da basılmalı: hekim bunu tomar halinde
+// bastırıp üzerine kalemle yazıyor, eksik basılan şey tomarın tamamında eksik.
+for (const beklenen of ['نمونه احمدی', 'سلامتی شما', 'Your Health, Our Priority',
+  'با ما', 'سابقه کاری', 'طبیب حقیقی خداوند', 'سلامت سرمایهٔ زندگی است',
+  'Clinical', 'BP :', 'Brighter', '℞']) {
   if (!bosKagit.metin.includes(beklenen)) throw new Error(`boş kâğıtta "${beklenen}" yok`);
 }
+if (bosKagit.rozet !== 7) throw new Error(`boş kâğıtta 7 rozet olmalı, ${bosKagit.rozet} var`);
 if (bosKagit.metin.includes('Zeynep')) throw new Error('boş kâğıtta hasta bilgisi sızmış');
 if (bosKagit.metin.includes('Nurofen')) throw new Error('boş kâğıtta ilaç sızmış');
-ok(`boş kâğıt hazır: antet ve Clinical sütunu duruyor, ${bosKagit.cizgi} doldurma çizgisi, hasta ve ilaç yok`);
+
+// Hiç ayar yapılmamış kâğıt: hekim uygulamayı ilk açtığında bunu görüyor.
+// Basılı kâğıda ait sabit yazılar ayara dokunulmadan da çıkmalı, yoksa
+// antetin iki yanı boş kalıyor.
+const ayarsiz = await sayfa.evaluate(async () => {
+  const { kagitCiz } = await import('./js/kagit.js');
+  const k = kagitCiz({ ayar: {}, bos: true });
+  return { metin: k.textContent, rozet: k.querySelectorAll('.kagit__rozet').length };
+});
+for (const beklenen of ['Your Health, Our Priority', 'با ما', 'به سوی زندگی سالم‌تر',
+  'طبیب حقیقی خداوند', 'سلامت سرمایهٔ زندگی است']) {
+  if (!ayarsiz.metin.includes(beklenen)) throw new Error(`ayarsız kâğıtta "${beklenen}" yok`);
+}
+if (ayarsiz.rozet !== 7) throw new Error(`ayarsız kâğıtta 7 rozet olmalı, ${ayarsiz.rozet} var`);
+ok(`boş kâğıt hazır: antet ve Clinical sütunu duruyor, ${bosKagit.cizgi} doldurma çizgisi, hasta ve ilaç yok; ayara hiç dokunulmamış kâğıtta da sabit yazılar ve 7 rozet yerinde`);
 
 // Boş kâğıdın çıktısı da görülsün: sayfadaki kâğıt geçici olarak boşuyla değişir.
 if (EKRAN) {

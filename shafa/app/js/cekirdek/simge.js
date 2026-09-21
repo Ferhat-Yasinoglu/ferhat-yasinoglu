@@ -107,14 +107,17 @@ const SIMGELER = {
     ['path', { d: 'M12 3.4s6 6.6 6 10.6a6 6 0 0 1-12 0c0-4 6-10.6 6-10.6z' }],
     ['path', { d: 'M10 14h4M12 12v4' }],
   ],
+  /* Romatizma rozeti: eklemli kemik. Önceki çizim (iki daire + çapraz
+     çizgiler) rozet boyunda kaleme benziyordu. */
   eklem: [
-    ['circle', { cx: 6.2, cy: 6.2, r: 2.6 }],
-    ['circle', { cx: 17.8, cy: 17.8, r: 2.6 }],
-    ['path', { d: 'M8 8.2l7.8 7.6M8.4 5.4l10 9.8M5.6 8.6l9.8 10' }],
+    ['path', { d: 'M8.6 5.2a2.3 2.3 0 1 0-3.4 3l-.2.2a2.3 2.3 0 1 0 3 3.4l6.4-6.4a2.3 2.3 0 1 0-3.4-3z' }],
+    ['path', { d: 'M15.4 18.8a2.3 2.3 0 1 0 3.4-3l.2-.2a2.3 2.3 0 1 0-3-3.4l-6.4 6.4a2.3 2.3 0 1 0 3.4 3z' }],
   ],
+  /* Baş ağrısı rozeti: profilden kafa ve içinde beyin kıvrımları. Rozet
+     boyunda iki yarım beyin çizimi tek dikey çizgiye iniyordu. */
   beyin: [
-    ['path', { d: 'M11 4.5a3 3 0 0 0-3 3c-2 .3-3.5 1.8-3.5 3.9 0 1.4.7 2.6 1.8 3.3-.1 2.3 1.5 4 3.7 4 .4.9 1.2 1.4 2 1.4V4.5z' }],
-    ['path', { d: 'M13 4.5a3 3 0 0 1 3 3c2 .3 3.5 1.8 3.5 3.9 0 1.4-.7 2.6-1.8 3.3.1 2.3-1.5 4-3.7 4-.4.9-1.2 1.4-2 1.4V4.5z' }],
+    ['path', { d: 'M16.8 20v-2.6c2-1.2 3.2-3.3 3.2-5.7 0-4-3.3-7.2-7.4-7.2S5.2 7.7 5.2 11.7c0 1.7.6 3.2 1.6 4.4v3.9' }],
+    ['path', { d: 'M12.4 8.6c-1.3 0-2.2.9-2.2 2s.9 2 2.2 2 2.2.9 2.2 2-.9 2-2.2 2' }],
   ],
 
   /* Kan grubu: damla, oksijenden ayrılsın diye bantlı. */
