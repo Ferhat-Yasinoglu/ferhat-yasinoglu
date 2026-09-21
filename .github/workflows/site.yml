@@ -73,6 +73,10 @@ jobs:
           cp -r sosyal-studyo/app/. site/sosyal-studyo/
           cp -r eczane/app/. site/eczane/
           cp .github/site/index.html site/index.html
+          # Pages, bilinmeyen her yol icin kokteki 404.html'i verir. Bu yuzden
+          # icindeki baglantilar goreli degil mutlak: /a/b/c gibi derin bir
+          # yanlis adreste goreli yollar bambaska bir yere cikardi.
+          cp .github/site/404.html site/404.html
           sed -i "s/__SURUM__/${GITHUB_SHA::7}/g" \
             site/sosyal-studyo/sw.js \
             site/sosyal-studyo/js/uygulama.js \
