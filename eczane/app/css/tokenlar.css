@@ -1,0 +1,72 @@
+/* Tasarım tokenları — klinik yeşil, yüksek okunurluk.
+   Eczane tezgâhında gündüz ışığında kullanılır: varsayılan tema aydınlık,
+   karanlık tema gece nöbeti için. Renkler rgb üçlüsü olarak tutulur ki
+   rgb(var(--vurgu) / .12) gibi saydamlıklar tek yerden türesin.
+   Yalnız mantıksal yön özellikleri kullanılır. */
+:root {
+  --bg: 244 247 245;
+  --yuzey: 255 255 255;
+  --yuzey-2: 239 245 242;
+  --yuzey-3: 226 236 231;
+  --cizgi: 16 44 34;
+
+  --metin: 15 32 26;
+  --metin-2: 78 98 89;
+  --metin-3: 122 140 131;
+
+  --vurgu: 11 122 90;          /* eczane yeşili */
+  --vurgu-2: 8 99 73;
+  --vurgu-yz: 255 255 255;
+
+  --kirmizi: 187 40 40;
+  --sari: 161 106 6;
+  --yesil: 22 122 78;
+  --mavi: 30 96 160;
+  --mor: 116 74 172;
+
+  --r-kucuk: 7px; --r: 11px; --r-buyuk: 16px; --r-tam: 999px;
+  --b-1: 4px; --b-2: 8px; --b-3: 12px; --b-4: 16px; --b-5: 24px; --b-6: 32px; --b-8: 48px;
+
+  --golge-1: 0 1px 2px rgb(var(--cizgi) / .08);
+  --golge-2: 0 2px 6px rgb(var(--cizgi) / .09), 0 1px 2px rgb(var(--cizgi) / .06);
+  --golge-3: 0 12px 32px rgb(var(--cizgi) / .16), 0 2px 8px rgb(var(--cizgi) / .08);
+  --kenarlik: 1px solid rgb(var(--cizgi) / .12);
+  --kenarlik-2: 1px solid rgb(var(--cizgi) / .22);
+
+  --yazi: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --mono: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --f-xs: .6875rem; --f-s: .8125rem; --f-m: .9375rem; --f-l: 1.0625rem; --f-xl: 1.375rem; --f-2xl: 1.75rem;
+
+  --ust-cubuk: 58px; --alt-cubuk: 64px; --kenar: 232px;
+  --gecis: 160ms cubic-bezier(.2, .6, .2, 1);
+  color-scheme: light;
+}
+
+:root[data-tema="karanlik"] {
+  --bg: 11 18 16;
+  --yuzey: 18 27 24;
+  --yuzey-2: 25 36 32;
+  --yuzey-3: 34 48 42;
+  --cizgi: 130 205 178;
+
+  --metin: 228 238 233;
+  --metin-2: 158 180 171;
+  --metin-3: 118 140 131;
+
+  --vurgu: 52 186 140;
+  --vurgu-2: 96 214 172;
+  --vurgu-yz: 5 24 18;
+
+  --kirmizi: 233 112 106;
+  --sari: 224 178 74;
+  --yesil: 88 200 148;
+  --mavi: 122 172 228;
+  --mor: 180 150 220;
+
+  --golge-1: 0 1px 2px rgb(0 0 0 / .4);
+  --golge-2: 0 2px 8px rgb(0 0 0 / .45);
+  --golge-3: 0 14px 36px rgb(0 0 0 / .55), 0 2px 8px rgb(0 0 0 / .4);
+  --kenarlik: 1px solid rgb(var(--cizgi) / .16);
+  --kenarlik-2: 1px solid rgb(var(--cizgi) / .28);
+  color-scheme: dark;
+}

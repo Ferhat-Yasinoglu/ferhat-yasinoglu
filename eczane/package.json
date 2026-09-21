@@ -1,0 +1,22 @@
+{
+  "name": "eczane",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Eczane yönetimi: ilaç stoğu, hasta kayıtları, reçete yazma ve karşılama. Çerçevesiz, derleme adımsız PWA; veriler yalnız cihazda.",
+  "scripts": {
+    "sun": "node tools/sun.mjs app 8788",
+    "test": "vitest run",
+    "test:izle": "vitest",
+    "kontrol": "node tools/kontrol.mjs",
+    "deneme": "node tools/tarayici.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "^6.0.0",
+    "jsqr": "^1.4.0",
+    "vitest": "^5.0.0"
+  }
+}
