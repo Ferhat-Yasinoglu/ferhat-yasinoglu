@@ -1,0 +1,90 @@
+# Siteyi GitHub Pages'e yayinlar.
+#
+# Pages bir depoda tek bir site yayinlar: iki ayri workflow ayri ayri dagitim
+# yaparsa sonuncusu digerinin dosyalarini siler. Bu yuzden yayin tek yerden
+# yapiliyor ve artefakt her iki projeyi birden tasiyor. Projelerin kendi
+# workflow'lari yalniz PR'da test kosuyor; main'e giren kodu asagidaki `dogrula`
+# isi test ediyor ve ancak gecerse yayin yapiliyor.
+#
+# configure-pages `enablement: true` ile Pages'i kendisi acmayi dener. Buna izin
+# verilmezse tek elle adim: Settings -> Pages -> Build and deployment ->
+# Source: "GitHub Actions"; sonra bu workflow'da "Re-run" yeter.
+name: Site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "eczane/**"
+      - "sosyal-studyo/**"
+      - ".github/site/**"
+      - ".github/workflows/site.yml"
+  workflow_dispatch:
+
+jobs:
+  dogrula:
+    name: Testler (${{ matrix.proje }})
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ matrix.proje }}
+    strategy:
+      matrix:
+        proje: [eczane, sosyal-studyo]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          # Lockfile'lar kokte degil, her proje kendi klasorunde.
+          cache-dependency-path: ${{ matrix.proje }}/package-lock.json
+      - run: npm ci
+      - run: npm run kontrol
+      - run: npm test
+
+  yayinla:
+    name: GitHub Pages
+    needs: dogrula
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.dagitim.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/configure-pages@v6
+        with:
+          enablement: true
+      # Site koku: projeleri listeleyen bir sayfa; her uygulama kendi klasorunde.
+      # Uygulamalarin butun yollari goreli, alt klasorden sorunsuz calisiyorlar.
+      # Surum damgasi kisa SHA ile yaziliyor; service worker eski onbellegi buna
+      # gore siliyor, yoksa yeni dagitim kullanicinin tarayicisina hic ulasmiyor.
+      - name: Siteyi hazirla
+        run: |
+          set -euo pipefail
+          mkdir -p site/sosyal-studyo site/eczane
+          cp -r sosyal-studyo/app/. site/sosyal-studyo/
+          cp -r eczane/app/. site/eczane/
+          cp .github/site/index.html site/index.html
+          sed -i "s/__SURUM__/${GITHUB_SHA::7}/g" \
+            site/sosyal-studyo/sw.js \
+            site/sosyal-studyo/js/uygulama.js \
+            site/eczane/sw.js
+          # Yer tutucu kalmadigini dogrula: kalirsa onbellek anahtari her
+          # dagitimda ayni kalir ve guncelleme kullaniciya hic ulasmaz.
+          if grep -rl "__SURUM__" site; then
+            echo "::error::site/ icinde __SURUM__ yer tutucusu kaldi"
+            exit 1
+          fi
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - id: dagitim
+        uses: actions/deploy-pages@v5

@@ -1,0 +1,33 @@
+# eczane'nin testleri. GitHub yalniz depo kokundeki .github/workflows'u okudugu
+# icin bu dosya projenin yaninda degil burada duruyor.
+#
+# Push tetikleyicisi yok: main'e giren kod site.yml icindeki `dogrula` isinde
+# zaten test ediliyor (yayindan once). Ayni testi iki kez kosmanin anlami yok.
+name: Eczane testleri
+
+on:
+  pull_request:
+    paths:
+      - "eczane/**"
+      - ".github/workflows/eczane.yml"
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: eczane
+
+jobs:
+  dogrula:
+    name: Testler
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          # Lockfile kokte degil, projenin kendi klasorunde.
+          cache-dependency-path: eczane/package-lock.json
+      - run: npm ci
+      - run: npm run kontrol
+      - run: npm test
