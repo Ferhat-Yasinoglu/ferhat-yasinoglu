@@ -1,0 +1,745 @@
+{
+ "surum": 1,
+ "aciklama": "Yaygın şikâyet ve tanıların adı ile ICD-10 kodu. Bu bir yazım kolaylığıdır, teşhis önerisi değil: hastada hangi tanının olduğuna muayene sonrası hekim karar verir. Liste tedavi, ilaç ya da doz içermez.",
+ "gruplar": [
+  {
+   "anahtar": "umumi",
+   "ad": "عمومی",
+   "tr": "Genel"
+  },
+  {
+   "anahtar": "sinir",
+   "ad": "سر و اعصاب",
+   "tr": "Baş ve sinir"
+  },
+  {
+   "anahtar": "dandan",
+   "ad": "دهان و دندان",
+   "tr": "Ağız ve diş"
+  },
+  {
+   "anahtar": "gulu",
+   "ad": "چشم، گوش، بینی، گلو",
+   "tr": "Göz, kulak, burun, boğaz"
+  },
+  {
+   "anahtar": "tanaffus",
+   "ad": "تنفسی",
+   "tr": "Solunum"
+  },
+  {
+   "anahtar": "guwarish",
+   "ad": "گوارشی",
+   "tr": "Sindirim"
+  },
+  {
+   "anahtar": "qalb",
+   "ad": "قلب و عروق",
+   "tr": "Kalp ve damar"
+  },
+  {
+   "anahtar": "idrar",
+   "ad": "ادراری و تناسلی",
+   "tr": "İdrar ve üreme"
+  },
+  {
+   "anahtar": "jildi",
+   "ad": "جلدی",
+   "tr": "Deri"
+  },
+  {
+   "anahtar": "ustukhan",
+   "ad": "عضلات و استخوان",
+   "tr": "Kas ve kemik"
+  },
+  {
+   "anahtar": "ghudad",
+   "ad": "غدد و متابولیزم",
+   "tr": "Hormon ve metabolizma"
+  },
+  {
+   "anahtar": "ufunat",
+   "ad": "عفونی",
+   "tr": "Enfeksiyon"
+  },
+  {
+   "anahtar": "zanan",
+   "ad": "زنان و اطفال",
+   "tr": "Kadın ve çocuk"
+  },
+  {
+   "anahtar": "ravani",
+   "ad": "روانی",
+   "tr": "Ruhsal"
+  }
+ ],
+ "tanilar": [
+  {
+   "ad": "تب",
+   "tr": "Ateş",
+   "kod": "R50.9",
+   "grup": "umumi",
+   "sik": 1
+  },
+  {
+   "ad": "ضعف و بی‌حالی",
+   "tr": "Halsizlik",
+   "kod": "R53",
+   "grup": "umumi"
+  },
+  {
+   "ad": "بی‌اشتهایی",
+   "tr": "İştahsızlık",
+   "kod": "R63.0",
+   "grup": "umumi"
+  },
+  {
+   "ad": "کاهش وزن بدون دلیل",
+   "tr": "Nedensiz kilo kaybı",
+   "kod": "R63.4",
+   "grup": "umumi"
+  },
+  {
+   "ad": "تعریق شبانه",
+   "tr": "Gece terlemesi",
+   "kod": "R61",
+   "grup": "umumi"
+  },
+  {
+   "ad": "ورم (ادیم)",
+   "tr": "Ödem",
+   "kod": "R60.9",
+   "grup": "umumi"
+  },
+  {
+   "ad": "کم‌خونی",
+   "tr": "Kansızlık",
+   "kod": "D64.9",
+   "grup": "umumi"
+  },
+  {
+   "ad": "معاینه عمومی",
+   "tr": "Genel muayene",
+   "kod": "Z00.0",
+   "grup": "umumi"
+  },
+  {
+   "ad": "سردردی",
+   "tr": "Baş ağrısı",
+   "kod": "R51",
+   "grup": "sinir",
+   "sik": 1
+  },
+  {
+   "ad": "میگرن",
+   "tr": "Migren",
+   "kod": "G43.9",
+   "grup": "sinir"
+  },
+  {
+   "ad": "سرگیچی",
+   "tr": "Baş dönmesi",
+   "kod": "R42",
+   "grup": "sinir",
+   "sik": 1
+  },
+  {
+   "ad": "بی‌خوابی",
+   "tr": "Uykusuzluk",
+   "kod": "G47.0",
+   "grup": "sinir"
+  },
+  {
+   "ad": "غش (بی‌هوشی گذرا)",
+   "tr": "Bayılma",
+   "kod": "R55",
+   "grup": "sinir"
+  },
+  {
+   "ad": "لرزش دست",
+   "tr": "El titremesi",
+   "kod": "R25.1",
+   "grup": "sinir"
+  },
+  {
+   "ad": "فلج صورت",
+   "tr": "Yüz felci",
+   "kod": "G51.0",
+   "grup": "sinir"
+  },
+  {
+   "ad": "صرع",
+   "tr": "Sara",
+   "kod": "G40.9",
+   "grup": "sinir"
+  },
+  {
+   "ad": "درد عصب سیاتیک",
+   "tr": "Siyatik",
+   "kod": "M54.3",
+   "grup": "sinir"
+  },
+  {
+   "ad": "سکته مغزی",
+   "tr": "İnme",
+   "kod": "I64",
+   "grup": "sinir"
+  },
+  {
+   "ad": "دندان‌دردی",
+   "tr": "Diş ağrısı",
+   "kod": "K08.8",
+   "grup": "dandan",
+   "sik": 1
+  },
+  {
+   "ad": "التهاب لثه",
+   "tr": "Diş eti iltihabı",
+   "kod": "K05.1",
+   "grup": "dandan"
+  },
+  {
+   "ad": "زخم دهان (آفت)",
+   "tr": "Aft",
+   "kod": "K12.0",
+   "grup": "dandan"
+  },
+  {
+   "ad": "خشکی دهان",
+   "tr": "Ağız kuruluğu",
+   "kod": "R68.2",
+   "grup": "dandan"
+  },
+  {
+   "ad": "گلودردی",
+   "tr": "Boğaz ağrısı",
+   "kod": "J02.9",
+   "grup": "gulu",
+   "sik": 1
+  },
+  {
+   "ad": "التهاب لوزه",
+   "tr": "Bademcik iltihabı",
+   "kod": "J03.9",
+   "grup": "gulu"
+  },
+  {
+   "ad": "گوش‌دردی",
+   "tr": "Kulak ağrısı",
+   "kod": "H92.0",
+   "grup": "gulu",
+   "sik": 1
+  },
+  {
+   "ad": "التهاب گوش میانی",
+   "tr": "Orta kulak iltihabı",
+   "kod": "H66.9",
+   "grup": "gulu"
+  },
+  {
+   "ad": "سینوزیت",
+   "tr": "Sinüzit",
+   "kod": "J01.9",
+   "grup": "gulu"
+  },
+  {
+   "ad": "گرفتگی بینی",
+   "tr": "Burun tıkanıklığı",
+   "kod": "J34.8",
+   "grup": "gulu"
+  },
+  {
+   "ad": "خون‌ریزی بینی",
+   "tr": "Burun kanaması",
+   "kod": "R04.0",
+   "grup": "gulu"
+  },
+  {
+   "ad": "التهاب ملتحمه چشم",
+   "tr": "Konjonktivit",
+   "kod": "H10.9",
+   "grup": "gulu"
+  },
+  {
+   "ad": "کاهش بینایی",
+   "tr": "Görme azalması",
+   "kod": "H54.7",
+   "grup": "gulu"
+  },
+  {
+   "ad": "کاهش شنوایی",
+   "tr": "İşitme kaybı",
+   "kod": "H91.9",
+   "grup": "gulu"
+  },
+  {
+   "ad": "زنگ زدن گوش",
+   "tr": "Kulak çınlaması",
+   "kod": "H93.1",
+   "grup": "gulu"
+  },
+  {
+   "ad": "زکام (سرماخوردگی)",
+   "tr": "Nezle",
+   "kod": "J00",
+   "grup": "tanaffus",
+   "sik": 1
+  },
+  {
+   "ad": "سرفه",
+   "tr": "Öksürük",
+   "kod": "R05",
+   "grup": "tanaffus",
+   "sik": 1
+  },
+  {
+   "ad": "انفلونزا",
+   "tr": "Grip",
+   "kod": "J11.1",
+   "grup": "tanaffus"
+  },
+  {
+   "ad": "عفونت مجرای تنفسی فوقانی",
+   "tr": "Üst solunum yolu enfeksiyonu",
+   "kod": "J06.9",
+   "grup": "tanaffus",
+   "sik": 1
+  },
+  {
+   "ad": "برونشیت حاد",
+   "tr": "Akut bronşit",
+   "kod": "J20.9",
+   "grup": "tanaffus"
+  },
+  {
+   "ad": "ذات‌الریه (نمونیا)",
+   "tr": "Zatürre",
+   "kod": "J18.9",
+   "grup": "tanaffus"
+  },
+  {
+   "ad": "آسم",
+   "tr": "Astım",
+   "kod": "J45.9",
+   "grup": "tanaffus"
+  },
+  {
+   "ad": "تنگی نفس",
+   "tr": "Nefes darlığı",
+   "kod": "R06.0",
+   "grup": "tanaffus"
+  },
+  {
+   "ad": "التهاب حنجره",
+   "tr": "Larenjit",
+   "kod": "J04.0",
+   "grup": "tanaffus"
+  },
+  {
+   "ad": "دل‌دردی (درد شکم)",
+   "tr": "Karın ağrısı",
+   "kod": "R10.4",
+   "grup": "guwarish",
+   "sik": 1
+  },
+  {
+   "ad": "سوزش معده (گاستریت)",
+   "tr": "Gastrit",
+   "kod": "K29.7",
+   "grup": "guwarish",
+   "sik": 1
+  },
+  {
+   "ad": "ریفلاکس معده",
+   "tr": "Reflü",
+   "kod": "K21.9",
+   "grup": "guwarish"
+  },
+  {
+   "ad": "زخم معده",
+   "tr": "Mide ülseri",
+   "kod": "K27.9",
+   "grup": "guwarish"
+  },
+  {
+   "ad": "اسهال",
+   "tr": "İshal",
+   "kod": "A09",
+   "grup": "guwarish",
+   "sik": 1
+  },
+  {
+   "ad": "قبضیت (یبوست)",
+   "tr": "Kabızlık",
+   "kod": "K59.0",
+   "grup": "guwarish"
+  },
+  {
+   "ad": "دل‌بدی و استفراغ",
+   "tr": "Bulantı ve kusma",
+   "kod": "R11.2",
+   "grup": "guwarish"
+  },
+  {
+   "ad": "نفخ شکم",
+   "tr": "Şişkinlik",
+   "kod": "R14",
+   "grup": "guwarish"
+  },
+  {
+   "ad": "کرم‌های روده",
+   "tr": "Bağırsak solucanı",
+   "kod": "B82.9",
+   "grup": "guwarish"
+  },
+  {
+   "ad": "بواسیر",
+   "tr": "Basur",
+   "kod": "K64.9",
+   "grup": "guwarish"
+  },
+  {
+   "ad": "التهاب کبد (هپاتیت)",
+   "tr": "Hepatit",
+   "kod": "B19.9",
+   "grup": "guwarish"
+  },
+  {
+   "ad": "سنگ کیسه صفرا",
+   "tr": "Safra taşı",
+   "kod": "K80.2",
+   "grup": "guwarish"
+  },
+  {
+   "ad": "مسمومیت غذایی",
+   "tr": "Gıda zehirlenmesi",
+   "kod": "A05.9",
+   "grup": "guwarish"
+  },
+  {
+   "ad": "فشار خون بلند",
+   "tr": "Yüksek tansiyon",
+   "kod": "I10",
+   "grup": "qalb",
+   "sik": 1
+  },
+  {
+   "ad": "فشار خون پایین",
+   "tr": "Düşük tansiyon",
+   "kod": "I95.9",
+   "grup": "qalb"
+  },
+  {
+   "ad": "درد سینه",
+   "tr": "Göğüs ağrısı",
+   "kod": "R07.4",
+   "grup": "qalb"
+  },
+  {
+   "ad": "تپش قلب",
+   "tr": "Çarpıntı",
+   "kod": "R00.2",
+   "grup": "qalb"
+  },
+  {
+   "ad": "نارسایی قلب",
+   "tr": "Kalp yetmezliği",
+   "kod": "I50.9",
+   "grup": "qalb"
+  },
+  {
+   "ad": "تنگی شریان قلب",
+   "tr": "Koroner arter hastalığı",
+   "kod": "I25.1",
+   "grup": "qalb"
+  },
+  {
+   "ad": "واریس",
+   "tr": "Varis",
+   "kod": "I83.9",
+   "grup": "qalb"
+  },
+  {
+   "ad": "سوزش ادرار",
+   "tr": "İdrar yanması",
+   "kod": "R30.0",
+   "grup": "idrar",
+   "sik": 1
+  },
+  {
+   "ad": "عفونت مجاری ادرار",
+   "tr": "İdrar yolu enfeksiyonu",
+   "kod": "N39.0",
+   "grup": "idrar",
+   "sik": 1
+  },
+  {
+   "ad": "سنگ گرده",
+   "tr": "Böbrek taşı",
+   "kod": "N20.0",
+   "grup": "idrar"
+  },
+  {
+   "ad": "درد گرده",
+   "tr": "Böbrek ağrısı",
+   "kod": "N23",
+   "grup": "idrar"
+  },
+  {
+   "ad": "بزرگی پروستات",
+   "tr": "Prostat büyümesi",
+   "kod": "N40",
+   "grup": "idrar"
+  },
+  {
+   "ad": "نارسایی گرده",
+   "tr": "Böbrek yetmezliği",
+   "kod": "N19",
+   "grup": "idrar"
+  },
+  {
+   "ad": "خارش پوست",
+   "tr": "Kaşıntı",
+   "kod": "L29.9",
+   "grup": "jildi",
+   "sik": 1
+  },
+  {
+   "ad": "حساسیت پوستی",
+   "tr": "Deri alerjisi",
+   "kod": "L23.9",
+   "grup": "jildi"
+  },
+  {
+   "ad": "اگزما",
+   "tr": "Egzama",
+   "kod": "L30.9",
+   "grup": "jildi"
+  },
+  {
+   "ad": "کهیر",
+   "tr": "Ürtiker",
+   "kod": "L50.9",
+   "grup": "jildi"
+  },
+  {
+   "ad": "زخم جلدی",
+   "tr": "Deri yarası",
+   "kod": "L98.9",
+   "grup": "jildi"
+  },
+  {
+   "ad": "قارچ پوست",
+   "tr": "Deri mantarı",
+   "kod": "B35.9",
+   "grup": "jildi"
+  },
+  {
+   "ad": "جرب (گال)",
+   "tr": "Uyuz",
+   "kod": "B86",
+   "grup": "jildi"
+  },
+  {
+   "ad": "آکنه (جوش)",
+   "tr": "Akne",
+   "kod": "L70.0",
+   "grup": "jildi"
+  },
+  {
+   "ad": "سوختگی",
+   "tr": "Yanık",
+   "kod": "T30.0",
+   "grup": "jildi"
+  },
+  {
+   "ad": "ریزش مو",
+   "tr": "Saç dökülmesi",
+   "kod": "L65.9",
+   "grup": "jildi"
+  },
+  {
+   "ad": "کمردردی",
+   "tr": "Bel ağrısı",
+   "kod": "M54.5",
+   "grup": "ustukhan",
+   "sik": 1
+  },
+  {
+   "ad": "گردن‌دردی",
+   "tr": "Boyun ağrısı",
+   "kod": "M54.2",
+   "grup": "ustukhan"
+  },
+  {
+   "ad": "درد مفاصل",
+   "tr": "Eklem ağrısı",
+   "kod": "M25.5",
+   "grup": "ustukhan",
+   "sik": 1
+  },
+  {
+   "ad": "روماتیزم",
+   "tr": "Romatizma",
+   "kod": "M79.0",
+   "grup": "ustukhan"
+  },
+  {
+   "ad": "درد زانو",
+   "tr": "Diz ağrısı",
+   "kod": "M25.56",
+   "grup": "ustukhan"
+  },
+  {
+   "ad": "درد شانه",
+   "tr": "Omuz ağrısı",
+   "kod": "M25.51",
+   "grup": "ustukhan"
+  },
+  {
+   "ad": "پوکی استخوان",
+   "tr": "Kemik erimesi",
+   "kod": "M81.9",
+   "grup": "ustukhan"
+  },
+  {
+   "ad": "درد عضلات",
+   "tr": "Kas ağrısı",
+   "kod": "M79.1",
+   "grup": "ustukhan"
+  },
+  {
+   "ad": "نقرس",
+   "tr": "Gut",
+   "kod": "M10.9",
+   "grup": "ustukhan"
+  },
+  {
+   "ad": "شکستگی استخوان",
+   "tr": "Kemik kırığı",
+   "kod": "T14.2",
+   "grup": "ustukhan"
+  },
+  {
+   "ad": "مرض شکر (دیابت)",
+   "tr": "Şeker hastalığı",
+   "kod": "E11.9",
+   "grup": "ghudad",
+   "sik": 1
+  },
+  {
+   "ad": "کم‌کاری غده تایرایید",
+   "tr": "Hipotiroidi",
+   "kod": "E03.9",
+   "grup": "ghudad"
+  },
+  {
+   "ad": "پرکاری غده تایرایید",
+   "tr": "Hipertiroidi",
+   "kod": "E05.9",
+   "grup": "ghudad"
+  },
+  {
+   "ad": "چربی خون بلند",
+   "tr": "Yüksek kolesterol",
+   "kod": "E78.5",
+   "grup": "ghudad"
+  },
+  {
+   "ad": "چاقی",
+   "tr": "Obezite",
+   "kod": "E66.9",
+   "grup": "ghudad"
+  },
+  {
+   "ad": "کمبود ویتامین D",
+   "tr": "D vitamini eksikliği",
+   "kod": "E55.9",
+   "grup": "ghudad"
+  },
+  {
+   "ad": "عفونت عمومی",
+   "tr": "Enfeksiyon",
+   "kod": "A49.9",
+   "grup": "ufunat"
+  },
+  {
+   "ad": "ملاریا",
+   "tr": "Sıtma",
+   "kod": "B54",
+   "grup": "ufunat"
+  },
+  {
+   "ad": "تایفویید",
+   "tr": "Tifo",
+   "kod": "A01.0",
+   "grup": "ufunat"
+  },
+  {
+   "ad": "توبرکلوز (سل)",
+   "tr": "Verem",
+   "kod": "A15.9",
+   "grup": "ufunat"
+  },
+  {
+   "ad": "لیشمانیا (سالک)",
+   "tr": "Şark çıbanı",
+   "kod": "B55.1",
+   "grup": "ufunat"
+  },
+  {
+   "ad": "قاعدگی دردناک",
+   "tr": "Ağrılı adet",
+   "kod": "N94.6",
+   "grup": "zanan"
+  },
+  {
+   "ad": "بی‌نظمی قاعدگی",
+   "tr": "Adet düzensizliği",
+   "kod": "N92.6",
+   "grup": "zanan"
+  },
+  {
+   "ad": "حاملگی",
+   "tr": "Gebelik",
+   "kod": "Z34.9",
+   "grup": "zanan"
+  },
+  {
+   "ad": "کم‌خونی دوران حاملگی",
+   "tr": "Gebelik anemisi",
+   "kod": "O99.0",
+   "grup": "zanan"
+  },
+  {
+   "ad": "سوء تغذیه اطفال",
+   "tr": "Çocuk beslenme bozukluğu",
+   "kod": "E46",
+   "grup": "zanan"
+  },
+  {
+   "ad": "واکسین",
+   "tr": "Aşı",
+   "kod": "Z23",
+   "grup": "zanan"
+  },
+  {
+   "ad": "اضطراب",
+   "tr": "Kaygı",
+   "kod": "F41.9",
+   "grup": "ravani"
+  },
+  {
+   "ad": "افسردگی",
+   "tr": "Depresyon",
+   "kod": "F32.9",
+   "grup": "ravani"
+  },
+  {
+   "ad": "استرس",
+   "tr": "Stres",
+   "kod": "F43.9",
+   "grup": "ravani"
+  }
+ ]
+}
