@@ -196,10 +196,21 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
   const rozetler = String(ayar.ayakEtiketleri ?? t('kagit.ayak_etiketleri', 'قلب, شش, معده, اطفال'))
     .split(',').map((x) => x.trim()).filter(Boolean).slice(0, 4);
   const ROZET_SIMGE = ['kalp', 'akciger', 'mide', 'cocuk'];
+  // Basılı kâğıtta iki numara var (doktor ve klinik). İkincisi boşsa
+  // basılmıyor; etiketler ayarlardan, boşsa tek ortak etiket kullanılıyor.
+  const etiketler = String(ayar.telefonEtiket ?? '').split(',').map((x) => x.trim());
+  const numaralar = [ayar.telefon, ayar.telefon2].map((x, i) => ({ no: x, etiket: etiketler[i] }))
+    .filter((x) => doluMu(x.no));
+  const telefonSatirlari = numaralar.map(({ no, etiket }) =>
+    el('div', { class: 'kagit__iletisim-satir' },
+      simge('telefon', { boy: 16 }),
+      el('span', {}, `${doluMu(etiket) ? etiket : t('kagit.tel', 'شماره تماس')} : `),
+      el('span', { dir: 'ltr' }, no)));
+
   const ayak = el('footer', { class: 'kagit__ayak' },
     el('div', { class: 'kagit__iletisim' },
       doluMu(ayar.adres) ? el('div', { class: 'kagit__iletisim-satir' }, simge('konum', { boy: 16 }), el('span', {}, `${t('kagit.adres', 'آدرس')} : ${ayar.adres}`)) : null,
-      doluMu(ayar.telefon) ? el('div', { class: 'kagit__iletisim-satir' }, simge('telefon', { boy: 16 }), el('span', { dir: 'ltr' }, `${t('kagit.tel', 'شماره تماس')} : ${ayar.telefon}`)) : null),
+      ...telefonSatirlari),
     rozetler.length
       ? el('div', { class: 'kagit__rozetler', dir: 'ltr' }, ...rozetler.map((etiket, i) =>
         el('div', { class: 'kagit__rozet' }, el('span', { class: 'kagit__rozet-daire' }, simge(ROZET_SIMGE[i] || 'kalp', { boy: 20 })), el('span', {}, etiket))))
