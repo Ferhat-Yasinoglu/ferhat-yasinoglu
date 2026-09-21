@@ -1,42 +1,62 @@
-/* Bileşenler: düğme, girdi, kart, liste, tablo, rozet, modal, bildirim, sayaç. */
+/* Bileşenler: düğme, girdi, kart, liste, tablo, rozet, modal, bildirim, sayaç, grafik. */
 
 /* ---------- Düğmeler ---------- */
 .btn {
-  display: inline-flex; align-items: center; gap: var(--b-2);
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--b-2);
   min-height: 40px; padding-block: 0; padding-inline: var(--b-4);
   border: var(--kenarlik-2); border-radius: var(--r-kucuk);
   background: rgb(var(--yuzey)); color: rgb(var(--metin));
   font: inherit; font-size: var(--f-m); font-weight: 600;
   cursor: pointer; text-decoration: none; white-space: nowrap;
-  transition: background var(--gecis), border-color var(--gecis), transform var(--gecis);
+  transition: background var(--hiz-1) var(--egri), border-color var(--hiz-1) var(--egri),
+              box-shadow var(--hiz-1) var(--egri), transform var(--hiz-1) var(--egri);
 }
-.btn:hover:not(:disabled) { background: rgb(var(--yuzey-2)); border-color: rgb(var(--vurgu) / .5); }
-.btn:active:not(:disabled) { transform: translateY(1px); }
-.btn:disabled { opacity: .5; cursor: not-allowed; }
-.btn--birincil { background: rgb(var(--vurgu)); border-color: rgb(var(--vurgu)); color: rgb(var(--vurgu-yz)); }
-.btn--birincil:hover:not(:disabled) { background: rgb(var(--vurgu-2)); border-color: rgb(var(--vurgu-2)); }
+.btn:hover:not(:disabled) { background: rgb(var(--yuzey-2)); border-color: rgb(var(--vurgu) / .45); }
+/* Basılma geri bildirimi ölçülü: 1 piksel inmek yerine hafif küçülmek,
+   dokunmatikte parmağın altında daha doğru hissettiriyor. */
+.btn:active:not(:disabled) { transform: scale(.975); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+.btn--birincil {
+  background: linear-gradient(180deg, rgb(var(--vurgu-3)), rgb(var(--vurgu)));
+  border-color: rgb(var(--vurgu-2)); color: rgb(var(--vurgu-yz));
+  box-shadow: 0 1px 2px rgb(var(--cizgi) / .18);
+}
+.btn--birincil:hover:not(:disabled) {
+  background: linear-gradient(180deg, rgb(var(--vurgu)), rgb(var(--vurgu-2)));
+  border-color: rgb(var(--vurgu-2));
+  box-shadow: 0 2px 10px rgb(var(--vurgu) / .3);
+}
 .btn--tehlike { background: rgb(var(--kirmizi)); border-color: rgb(var(--kirmizi)); color: #fff; }
-.btn--tehlike:hover:not(:disabled) { filter: brightness(.92); }
+.btn--tehlike:hover:not(:disabled) { filter: brightness(.93); }
 .btn--sade { background: transparent; border-color: transparent; }
 .btn--sade:hover:not(:disabled) { background: rgb(var(--yuzey-2)); border-color: transparent; }
 .btn--kucuk { min-height: 32px; padding-inline: var(--b-3); font-size: var(--f-s); }
-.btn--ikon { padding-inline: var(--b-2); min-width: 40px; justify-content: center; }
+.btn--ikon { padding-inline: var(--b-2); min-width: 40px; }
 .btn--ikon.btn--kucuk { min-width: 32px; }
-.btn--genis { width: 100%; justify-content: center; }
+.btn--genis { width: 100%; }
 
 /* ---------- Girdiler ---------- */
 .input {
-  inline-size: 100%; min-height: 40px;
+  inline-size: 100%; min-height: 42px;
   padding-block: var(--b-2); padding-inline: var(--b-3);
   border: var(--kenarlik-2); border-radius: var(--r-kucuk);
   background: rgb(var(--yuzey)); color: rgb(var(--metin));
   font: inherit; font-size: var(--f-m);
+  transition: border-color var(--hiz-1) var(--egri), box-shadow var(--hiz-1) var(--egri);
 }
-.input:focus-visible, .btn:focus-visible, a:focus-visible, .sekme:focus-visible {
+.input:hover:not(:disabled) { border-color: rgb(var(--cizgi) / .3); }
+/* Odak halkası: kutunun dışına taşan ince bir ışık. Yalnız outline
+   kullanıldığında kenarlıkla çakışıyor ve ucuz duruyordu. */
+.input:focus { outline: none; border-color: rgb(var(--vurgu)); box-shadow: var(--halka); }
+.btn:focus-visible, a:focus-visible, .sekme:focus-visible, .input:focus-visible {
   outline: 2px solid rgb(var(--vurgu)); outline-offset: 2px;
 }
+.input:focus:not(:focus-visible) { outline: none; }
 .input--hata { border-color: rgb(var(--kirmizi)); }
-textarea.input { min-height: 72px; resize: vertical; }
+.input--hata:focus { box-shadow: 0 0 0 3px rgb(var(--kirmizi) / .18); }
+textarea.input { min-height: 76px; resize: vertical; }
 select.input { cursor: pointer; }
 
 .alan { display: flex; flex-direction: column; gap: var(--b-1); margin-block-end: var(--b-3); }
@@ -57,10 +77,9 @@ select.input { cursor: pointer; }
    tek satıra sığsın. Genel form ızgarasında dördü sığıp beşincisi alt satıra
    tek başına düşüyor, yanı boş kalıyordu. */
 .izgara--dar { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-/* Sayaç ızgarası dar kutularla auto-fit: beş sayaç genişte tek satıra sığar.
-   230px'lik genel ızgarada dördü sığıp beşincisi alt satıra tek başına
-   düşüyor, yanında kocaman bir boşluk kalıyordu. Telefonda ikişerli. */
-.izgara--sayac { grid-template-columns: repeat(auto-fit, minmax(166px, 1fr)); gap: var(--b-2); }
+/* Sayaç ızgarası dar kutularla auto-fit: dördü genişte tek satıra sığar,
+   telefonda ikişerli. */
+.izgara--sayac { grid-template-columns: repeat(auto-fit, minmax(166px, 1fr)); gap: var(--b-3); }
 
 /* Panel kartları: geniş ekranda iki sütun. Kartlar kendi yüksekliklerinde
    kalsın diye align-items: start — yoksa iki satırlık kart, yanındaki altı
@@ -74,9 +93,9 @@ select.input { cursor: pointer; }
   background: rgb(var(--yuzey)); border: var(--kenarlik); border-radius: var(--r);
   padding: var(--b-4); margin-block-end: var(--b-4);
 }
-/* Başlık ile içerik arasında ince bir çizgi: kart içinde nerede biten neyin
-   başladığı belli olsun. Kartın kendi dolgusu kadar iki yana taşıyor ki
-   çizgi kartı boydan boya bölsün. */
+/* Başlık ile içerik arasında ince bir çizgi: kart içinde nerede neyin bittiği
+   belli olsun. Kartın kendi dolgusu kadar iki yana taşıyor ki çizgi kartı
+   boydan boya bölsün. */
 .kart__bas {
   display: flex; justify-content: space-between; align-items: center; gap: var(--b-2);
   margin-block-end: var(--b-3); padding-block-end: var(--b-3);
@@ -87,42 +106,69 @@ select.input { cursor: pointer; }
 .kart__alt { font-size: var(--f-s); color: rgb(var(--metin-2)); }
 
 /* ---------- Sayaç kutusu (panel) ---------- */
-/* Sayaç kutusu dar ve sıkı: beşi yan yana durabilsin, telefonda ikisi
-   yan yana sığsın. Önceki hâli geniş ve boştu — kocaman bir kutunun
-   içinde tek haneli bir sayı duruyordu. */
+/* Simge kendi hafif zemininde bir rozet gibi duruyor; sayı büyük ve tabular.
+   Kutu dar tutuldu ki dördü yan yana, telefonda ikisi yan yana sığsın. */
 .sayac {
+  position: relative; overflow: hidden;
   display: flex; flex-direction: column; gap: 2px;
   padding: var(--b-3); border: var(--kenarlik); border-radius: var(--r);
   background: rgb(var(--yuzey));
   color: inherit; text-decoration: none;
-  border-inline-start: 3px solid rgb(var(--metin-3) / .5);
-  transition: border-color var(--gecis), background var(--gecis);
+  transition: border-color var(--gecis), box-shadow var(--gecis), transform var(--gecis);
 }
-a.sayac:hover { background: rgb(var(--yuzey-2)); }
+a.sayac:hover { border-color: rgb(var(--vurgu) / .4); box-shadow: var(--golge-2); transform: translateY(-2px); }
 .sayac__ust {
-  display: flex; align-items: center; gap: var(--b-1);
+  display: flex; align-items: center; gap: var(--b-2);
   font-size: var(--f-s); color: rgb(var(--metin-2)); font-weight: 600;
-  min-inline-size: 0;
+  min-inline-size: 0; margin-block-end: var(--b-1);
+}
+/* Simge kutunun bitiş kenarına itiliyor: etiket bir uçta, simge öteki uçta.
+   Yan yana durduklarında kutunun yarısı boş kalıyordu. */
+.sayac__ust .simge {
+  margin-inline-start: auto;
+  inline-size: 28px; block-size: 28px; border-radius: var(--r-kucuk);
+  padding: 5px; background: rgb(var(--metin-3) / .12); color: rgb(var(--metin-2));
 }
 .sayac__ust span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sayac__deger { font-size: var(--f-2xl); line-height: 1.15; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sayac__deger {
+  font-size: var(--f-2xl); line-height: 1.15; font-weight: 700;
+  font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+}
 .sayac__alt { font-size: var(--f-xs); line-height: 1.4; color: rgb(var(--metin-3)); }
-.sayac--vurgu { border-inline-start-color: rgb(var(--vurgu)); }
 .sayac--vurgu .sayac__ust { color: rgb(var(--vurgu)); }
-/* Uyarı ve hata sayaçları yalnız kenar çizgisiyle değil hafif bir zeminle
-   de ayrılıyor: panele bakan kişi neye bakması gerektiğini önce görsün. */
-.sayac--uyari { border-inline-start-color: rgb(var(--sari)); background: rgb(var(--sari) / .06); }
+.sayac--vurgu .sayac__ust .simge { background: rgb(var(--vurgu) / .12); color: rgb(var(--vurgu)); }
+/* Uyarı ve hata sayaçları hafif bir zeminle de ayrılıyor: panele bakan kişi
+   neye bakması gerektiğini önce görsün. */
+.sayac--uyari { background: rgb(var(--sari) / .06); border-color: rgb(var(--sari) / .28); }
 .sayac--uyari .sayac__ust { color: rgb(var(--sari)); }
-a.sayac--uyari:hover { background: rgb(var(--sari) / .12); }
-.sayac--hata { border-inline-start-color: rgb(var(--kirmizi)); background: rgb(var(--kirmizi) / .06); }
+.sayac--uyari .sayac__ust .simge { background: rgb(var(--sari) / .14); color: rgb(var(--sari)); }
+.sayac--hata { background: rgb(var(--kirmizi) / .06); border-color: rgb(var(--kirmizi) / .28); }
 .sayac--hata .sayac__ust { color: rgb(var(--kirmizi)); }
-a.sayac--hata:hover { background: rgb(var(--kirmizi) / .12); }
+.sayac--hata .sayac__ust .simge { background: rgb(var(--kirmizi) / .14); color: rgb(var(--kirmizi)); }
+
+/* ---------- Grafik (son günlerin reçeteleri) ---------- */
+.grafik { display: flex; align-items: flex-end; gap: 2%; block-size: 120px; padding-block-start: var(--b-2); }
+.grafik__sutun {
+  flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+  gap: 6px; min-inline-size: 0; block-size: 100%;
+}
+.grafik__cubuk {
+  inline-size: 100%; max-inline-size: 26px; border-radius: 5px 5px 2px 2px;
+  background: linear-gradient(180deg, rgb(var(--vurgu-3)), rgb(var(--vurgu)));
+  /* Yükseklik satır içi stille geliyor; buradan yalnız açılış animasyonu. */
+  transform-origin: bottom;
+  animation: cubuk-bit var(--hiz-3) var(--egri) backwards;
+  animation-delay: calc(var(--i, 0) * 28ms);
+}
+.grafik__sutun--bos .grafik__cubuk { background: rgb(var(--metin-3) / .18); }
+.grafik__etiket { font-size: var(--f-xs); color: rgb(var(--metin-3)); white-space: nowrap; }
+.grafik__sutun--bugun .grafik__etiket { color: rgb(var(--vurgu)); font-weight: 700; }
+@keyframes cubuk-bit { from { transform: scaleY(0); opacity: 0; } }
 
 /* ---------- Liste ---------- */
 .liste { display: flex; flex-direction: column; border: var(--kenarlik); border-radius: var(--r); overflow: hidden; background: rgb(var(--yuzey)); }
 /* Kartın içindeki liste kendi kenarlığını taşımaz — kutu içinde kutu oluyor
-   ve satırlar kartın kenarına kadar uzanamıyordu. Kartın dolgusunu geri
-   alıp listeyi kenarlara yaslıyoruz. */
+   ve satırlar kartın kenarına kadar uzanamıyordu. */
 .kart > .liste {
   border: none; border-radius: 0; background: transparent;
   margin-inline: calc(var(--b-4) * -1); margin-block-end: calc(var(--b-4) * -1);
@@ -130,13 +176,14 @@ a.sayac--hata:hover { background: rgb(var(--kirmizi) / .12); }
 .kart > .liste > .liste__satir { padding-inline: var(--b-4); }
 .kart > .liste > .liste__satir:last-child { border-block-end: none; }
 .liste__satir {
+  position: relative;
   display: flex; align-items: center; gap: var(--b-3); min-block-size: 56px;
   padding-block: var(--b-2); padding-inline: var(--b-3); border-block-end: var(--kenarlik);
   color: inherit; text-decoration: none;
-  transition: background var(--gecis);
+  transition: background var(--hiz-1) var(--egri);
 }
 .liste__satir:last-child { border-block-end: none; }
-a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--yuzey-2)); }
+a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurgu) / .05); }
 .liste__govde { flex: 1; min-inline-size: 0; }
 .liste__baslik { font-weight: 600; overflow-wrap: anywhere; }
 .liste__alt { font-size: var(--f-s); color: rgb(var(--metin-2)); overflow-wrap: anywhere; }
@@ -150,29 +197,33 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--yuze
 
 /* ---------- Tablo ---------- */
 .tablo-kap { overflow-x: auto; border: var(--kenarlik); border-radius: var(--r); background: rgb(var(--yuzey)); }
+.kart > .tablo-kap { border: none; border-radius: 0; margin-inline: calc(var(--b-4) * -1); margin-block-end: calc(var(--b-4) * -1); }
 .tablo { inline-size: 100%; border-collapse: collapse; font-size: var(--f-m); }
 .tablo th, .tablo td { padding: var(--b-3); text-align: start; border-block-end: var(--kenarlik); vertical-align: middle; }
+.kart > .tablo-kap .tablo th:first-child, .kart > .tablo-kap .tablo td:first-child { padding-inline-start: var(--b-4); }
+.kart > .tablo-kap .tablo th:last-child, .kart > .tablo-kap .tablo td:last-child { padding-inline-end: var(--b-4); }
 .tablo th {
   font-size: var(--f-xs); color: rgb(var(--metin-2)); font-weight: 700; white-space: nowrap;
   background: rgb(var(--yuzey-2)); letter-spacing: .04em; padding-block: var(--b-2);
 }
 .tablo tbody tr:last-child td { border-block-end: none; }
-.tablo tbody tr:hover { background: rgb(var(--yuzey-2) / .6); }
+.tablo tbody tr { transition: background var(--hiz-1) var(--egri); }
+.tablo tbody tr:hover { background: rgb(var(--vurgu) / .05); }
 .tablo .sayi { text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* ---------- Rozet ---------- */
 .rozet {
   display: inline-flex; align-items: center; gap: 4px;
-  padding-block: 2px; padding-inline: var(--b-2);
+  padding-block: 3px; padding-inline: var(--b-2);
   border-radius: var(--r-tam); font-size: var(--f-xs); font-weight: 700; white-space: nowrap;
   background: rgb(var(--metin-3) / .14); color: rgb(var(--metin-2));
 }
-.rozet--yesil { background: rgb(var(--yesil) / .14); color: rgb(var(--yesil)); }
-.rozet--kirmizi { background: rgb(var(--kirmizi) / .14); color: rgb(var(--kirmizi)); }
-.rozet--sari { background: rgb(var(--sari) / .16); color: rgb(var(--sari)); }
-.rozet--mavi { background: rgb(var(--mavi) / .14); color: rgb(var(--mavi)); }
-.rozet--mor { background: rgb(var(--mor) / .14); color: rgb(var(--mor)); }
-.rozet--vurgu { background: rgb(var(--vurgu) / .14); color: rgb(var(--vurgu)); }
+.rozet--yesil { background: rgb(var(--yesil) / .13); color: rgb(var(--yesil)); }
+.rozet--kirmizi { background: rgb(var(--kirmizi) / .13); color: rgb(var(--kirmizi)); }
+.rozet--sari { background: rgb(var(--sari) / .15); color: rgb(var(--sari)); }
+.rozet--mavi { background: rgb(var(--mavi) / .13); color: rgb(var(--mavi)); }
+.rozet--mor { background: rgb(var(--mor) / .13); color: rgb(var(--mor)); }
+.rozet--vurgu { background: rgb(var(--vurgu) / .13); color: rgb(var(--vurgu)); }
 
 /* ---------- Sekmeler ---------- */
 .sekmeler { display: flex; gap: var(--b-1); border-block-end: var(--kenarlik); margin-block-end: var(--b-4); overflow-x: auto; }
@@ -180,6 +231,7 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--yuze
   padding-block: var(--b-2); padding-inline: var(--b-3); border: none; background: none;
   color: rgb(var(--metin-2)); font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap;
   border-block-end: 2px solid transparent; margin-block-end: -1px;
+  transition: color var(--hiz-1) var(--egri), border-color var(--hiz-1) var(--egri);
 }
 .sekme[aria-selected="true"] { color: rgb(var(--vurgu)); border-block-end-color: rgb(var(--vurgu)); }
 
@@ -188,34 +240,43 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--yuze
 .uyari {
   display: flex; align-items: center; gap: var(--b-2);
   padding: var(--b-2) var(--b-3); border-radius: var(--r-kucuk); font-size: var(--f-s); font-weight: 600;
-  background: rgb(var(--sari) / .12); color: rgb(var(--sari));
+  background: rgb(var(--sari) / .1); color: rgb(var(--sari));
   border-inline-start: 3px solid rgb(var(--sari));
 }
-.uyari--hata { background: rgb(var(--kirmizi) / .12); color: rgb(var(--kirmizi)); border-inline-start-color: rgb(var(--kirmizi)); }
-.uyari--bilgi { background: rgb(var(--mavi) / .12); color: rgb(var(--mavi)); border-inline-start-color: rgb(var(--mavi)); }
+.uyari--hata { background: rgb(var(--kirmizi) / .1); color: rgb(var(--kirmizi)); border-inline-start-color: rgb(var(--kirmizi)); }
+.uyari--bilgi { background: rgb(var(--mavi) / .1); color: rgb(var(--mavi)); border-inline-start-color: rgb(var(--mavi)); }
 
 /* ---------- Boş durum ---------- */
 .durum { display: flex; flex-direction: column; align-items: center; gap: var(--b-2); padding: var(--b-8) var(--b-4); text-align: center; color: rgb(var(--metin-2)); }
-.durum__simge { color: rgb(var(--metin-3)); }
+.durum__simge {
+  color: rgb(var(--metin-3)); background: rgb(var(--metin-3) / .1);
+  inline-size: 56px; block-size: 56px; border-radius: var(--r-tam);
+  display: grid; place-items: center; margin-block-end: var(--b-1);
+}
 .durum__baslik { font-weight: 700; font-size: var(--f-l); color: rgb(var(--metin)); }
 .durum__alt { margin: 0; max-inline-size: 46ch; font-size: var(--f-m); }
-.durum--hata .durum__simge { color: rgb(var(--kirmizi)); }
+.durum--hata .durum__simge { color: rgb(var(--kirmizi)); background: rgb(var(--kirmizi) / .1); }
 
 /* ---------- Modal ---------- */
 .ortu {
-  position: fixed; inset: 0; z-index: 60; background: rgb(0 0 0 / .45);
+  position: fixed; inset: 0; z-index: 60; background: rgb(var(--cizgi) / .45);
+  backdrop-filter: blur(3px);
   display: grid; place-items: center; padding: var(--b-4); overflow-y: auto;
+  animation: ortu-gir var(--hiz-2) var(--egri);
 }
+@keyframes ortu-gir { from { opacity: 0; } }
 .modal {
   background: rgb(var(--yuzey)); border-radius: var(--r-buyuk); box-shadow: var(--golge-3);
   inline-size: min(560px, 100%); max-block-size: 90vh; display: flex; flex-direction: column;
   border: var(--kenarlik);
+  animation: modal-gir var(--hiz-3) var(--egri-yay);
 }
+@keyframes modal-gir { from { opacity: 0; transform: translateY(12px) scale(.97); } }
 .modal--genis { inline-size: min(880px, 100%); }
 .modal__bas { display: flex; justify-content: space-between; align-items: center; gap: var(--b-2); padding: var(--b-4); border-block-end: var(--kenarlik); }
 .modal__bas h2 { margin: 0; font-size: var(--f-l); }
 .modal__govde { padding: var(--b-4); overflow-y: auto; }
-.modal__ayak { display: flex; justify-content: flex-end; gap: var(--b-2); padding: var(--b-4); border-block-start: var(--kenarlik); }
+.modal__ayak { display: flex; justify-content: flex-end; gap: var(--b-2); padding: var(--b-4); border-block-start: var(--kenarlik); background: rgb(var(--yuzey-2) / .5); border-end-start-radius: var(--r-buyuk); border-end-end-radius: var(--r-buyuk); }
 
 /* ---------- Bildirim ---------- */
 .bildirimler { position: fixed; inset-block-end: var(--b-4); inset-inline: var(--b-4) auto; z-index: 80; display: flex; flex-direction: column; gap: var(--b-2); pointer-events: none; }
@@ -224,12 +285,12 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--yuze
   padding: var(--b-3) var(--b-4); border-radius: var(--r); box-shadow: var(--golge-3);
   background: rgb(var(--yuzey)); border: var(--kenarlik-2); font-size: var(--f-m); font-weight: 600;
   max-inline-size: min(420px, calc(100vw - var(--b-8)));
-  animation: bildirim-gir 220ms cubic-bezier(.2, .6, .2, 1);
+  animation: bildirim-gir var(--hiz-3) var(--egri-yay);
 }
-.bildirim--basari { border-color: rgb(var(--yesil)); color: rgb(var(--yesil)); }
-.bildirim--hata { border-color: rgb(var(--kirmizi)); color: rgb(var(--kirmizi)); }
-.bildirim--uyari { border-color: rgb(var(--sari)); color: rgb(var(--sari)); }
-@keyframes bildirim-gir { from { opacity: 0; transform: translateY(8px); } }
+.bildirim--basari { border-color: rgb(var(--yesil) / .5); color: rgb(var(--yesil)); }
+.bildirim--hata { border-color: rgb(var(--kirmizi) / .5); color: rgb(var(--kirmizi)); }
+.bildirim--uyari { border-color: rgb(var(--sari) / .5); color: rgb(var(--sari)); }
+@keyframes bildirim-gir { from { opacity: 0; transform: translateY(14px) scale(.96); } }
 
 /* ---------- Küçükler ---------- */
 .cip { display: inline-flex; align-items: center; gap: 4px; padding-block: 3px; padding-inline: var(--b-2); border-radius: var(--r-tam); background: rgb(var(--yuzey-2)); border: var(--kenarlik); font-size: var(--f-xs); }

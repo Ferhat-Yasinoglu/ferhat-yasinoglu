@@ -119,9 +119,10 @@ export default {
       }
       const boyut = secim([['A4', 'A4'], ['A5', 'A5']], { name: 'yazdirmaBoyutu', value: ayar.yazdirmaBoyutu || 'A4' });
       const stil = secim([
-        ['renkli', t('ayar.stil_renkli', 'Renkli (basılı kâğıdın aynısı)')],
+        ['modern', t('ayar.stil_modern', 'Modern (beyaz zemin, ince çizgiler)')],
+        ['klasik', t('ayar.stil_klasik', 'Klasik (basılı kâğıdın aynısı)')],
         ['sade', t('ayar.stil_sade', 'Sade (siyah-beyaz, az mürekkep)')],
-      ], { name: 'kagitStili', value: ayar.kagitStili || 'renkli' });
+      ], { name: 'kagitStili', value: ayar.kagitStili === 'renkli' ? 'klasik' : (ayar.kagitStili || 'modern') });
       const qr = secim(QR_SECENEKLERI.map(([k, ad]) => [k, t('ayar.qr.' + k, ad)]), { name: 'qrIcerik', value: ayar.qrIcerik || 'recete' });
       const para = secim(PARA_BIRIMLERI, { name: 'paraBirimi', value: ayar.paraBirimi || 'AFN' });
 
@@ -280,7 +281,7 @@ export default {
       /* --- Hakkında --- */
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' }, el('h2', {}, t('ayar.hakkinda', 'Hakkında'))),
-        el('p', { class: 'kart__alt' }, `${t('uygulama.tam_ad', 'Eczane Yönetim')} · ${t('ayar.surum', 'sürüm')} ${ctx.uygulamaSurumu}`),
+        el('p', { class: 'kart__alt' }, `${t('uygulama.tam_ad', 'Shafa — Reçete')} · ${t('ayar.surum', 'sürüm')} ${ctx.uygulamaSurumu}`),
         el('p', { class: 'kart__alt' }, t('ayar.hakkinda_alt', 'Çerçevesiz, derleme adımsız bir PWA. İnternet olmadan da tam çalışır; hiçbir veri sunucuya gönderilmez.'))));
     }
 

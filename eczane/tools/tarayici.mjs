@@ -42,7 +42,15 @@ if (EKRAN) await mkdir(EKRAN, { recursive: true });
 const hatalar = [];
 let adim = 0;
 const ok = (m) => console.log(`✓ ${++adim}. ${m}`);
-const resim = async (sayfa, ad, sec) => { if (EKRAN) await sayfa.screenshot({ path: `${EKRAN}/${ad}`, ...sec }); };
+const resim = async (sayfa, ad, sec) => {
+  if (!EKRAN) return;
+  // Animasyonlar bitmeden çekilen görüntü yarı saydam satırlar ve büyümemiş
+  // sütunlar gösteriyor. CSS animasyonlarını bekle, sayaçların sayması için
+  // de kısa bir pay bırak (o requestAnimationFrame ile yürüyor).
+  await sayfa.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {}))));
+  await sayfa.waitForTimeout(750);
+  await sayfa.screenshot({ path: `${EKRAN}/${ad}`, ...sec });
+};
 
 // Kendi sunucusunu açar, sonunda kapatır.
 const sunucu = spawn(process.execPath, [new URL('sun.mjs', import.meta.url).pathname, 'app', String(PORT)], {
@@ -387,7 +395,7 @@ await sayfa.click(`button:has-text("${T('yedek.indir')}")`);
 const dosya = await indirme;
 const yol = await dosya.path();
 const belge = JSON.parse(await readFile(yol, 'utf8'));
-if (belge.bicim !== 'eczane-yedek' || belge.koleksiyonlar.ilaclar.length !== 9) {
+if (belge.bicim !== 'shafa-yedek' || belge.koleksiyonlar.ilaclar.length !== 9) {
   throw new Error('yedek içeriği beklenmedik: ' + JSON.stringify(Object.keys(belge)));
 }
 ok(`yedek indirildi (${dosya.suggestedFilename()}): 9 ilaç, ${belge.koleksiyonlar.hastalar.length} hasta, ${belge.koleksiyonlar.receteler.length} reçete`);

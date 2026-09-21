@@ -4,6 +4,8 @@
 import { TemelDepo, BellekDepo, DepoHatasi } from './depo.js';
 import { SEMA_SURUMU, idbYukselt } from './sema.js';
 
+// Veritabanı adı ilk sürümden beri 'eczane'. Uygulamanın adı değişti ama bu
+// değişemez: adı değiştirmek kullanıcının bütün kayıtlarını öksüz bırakırdı.
 const VT_ADI = 'eczane';
 
 function istek(r) {
