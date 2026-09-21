@@ -1,48 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import {
-  satirDurumu, satirKapali, durumHesapla, receteOzet, receteNoUret,
-  satirKalan, receteDogrula, bosRecete, receteUyarilari, receteMetni, doluOlcumler, OLCUMLER,
+  receteOzet, receteNoUret, receteDogrula, bosRecete,
+  receteUyarilari, receteMetni, doluOlcumler, OLCUMLER,
 } from '../app/js/paylasilan/recete.js';
 
-const satir = (o) => ({ adet: 2, verilenAdet: 0, sebep: '', birimFiyat: 10, ...o });
-
-describe('satirDurumu', () => {
-  it('hiç verilmediyse bekliyor', () => expect(satirDurumu(satir({}))).toBe('bekliyor'));
-  it('sebep varsa verilmedi', () => expect(satirDurumu(satir({ sebep: 'stok_yok' }))).toBe('verilmedi'));
-  it('eksik verildiyse kısmi', () => expect(satirDurumu(satir({ verilenAdet: 1 }))).toBe('kismi'));
-  it('tamamı verildiyse verildi', () => expect(satirDurumu(satir({ verilenAdet: 2 }))).toBe('verildi'));
-  it('fazla verildiyse yine verildi', () => expect(satirDurumu(satir({ verilenAdet: 3 }))).toBe('verildi'));
-});
-
-describe('durumHesapla', () => {
-  it('satır yoksa boş', () => expect(durumHesapla([])).toBe('bos'));
-  it('hepsi bekliyorsa bekliyor', () => expect(durumHesapla([satir({}), satir({})])).toBe('bekliyor'));
-  it('biri verildiyse kısmi', () => expect(durumHesapla([satir({ verilenAdet: 2 }), satir({})])).toBe('kismi'));
-  it('hepsi kapandıysa tamamlandı', () => {
-    expect(durumHesapla([satir({ verilenAdet: 2 }), satir({ sebep: 'stok_yok' })])).toBe('tamamlandi');
-  });
-  it('kısmi verilen satır reçeteyi tamamlamaz', () => {
-    expect(durumHesapla([satir({ verilenAdet: 1 })])).toBe('kismi');
-  });
-});
-
-describe('satirKapali', () => {
-  it('verilen ve verilmeyen satır kapalıdır', () => {
-    expect(satirKapali(satir({ verilenAdet: 2 }))).toBe(true);
-    expect(satirKapali(satir({ sebep: 'hasta_istemedi' }))).toBe(true);
-  });
-  it('bekleyen satır açıktır', () => expect(satirKapali(satir({}))).toBe(false));
-});
+const satir = (o) => ({ adet: 2, ...o });
 
 describe('receteOzet', () => {
-  it('sayıları ve tutarı hesaplar', () => {
-    const o = receteOzet({ satirlar: [satir({ verilenAdet: 2 }), satir({ verilenAdet: 1 }), satir({})] });
-    expect(o).toMatchObject({ toplam: 3, verilen: 1, bekleyen: 2, durum: 'kismi' });
-    expect(o.tutar).toBe(30);
+  it('satır sayısını verir', () => {
+    expect(receteOzet({ satirlar: [satir({}), satir({}), satir({})] })).toEqual({ toplam: 3 });
   });
-  it('satırsız reçetede sıfırlar', () => {
-    expect(receteOzet({ satirlar: [] })).toMatchObject({ toplam: 0, verilen: 0, tutar: 0, durum: 'bos' });
-  });
+  it('satırsız reçetede sıfır döner', () => expect(receteOzet({ satirlar: [] })).toEqual({ toplam: 0 }));
+  it('reçete yoksa da patlamaz', () => expect(receteOzet(null)).toEqual({ toplam: 0 }));
 });
 
 describe('receteNoUret', () => {
@@ -53,11 +22,6 @@ describe('receteNoUret', () => {
   it('başka günün numaralarını saymaz', () => {
     expect(receteNoUret(['2026-09-19-09'], '2026-09-20')).toBe('2026-09-20-01');
   });
-});
-
-describe('satirKalan', () => {
-  it('istenen eksi verilen', () => expect(satirKalan({ adet: 3, verilenAdet: 1 })).toBe(2));
-  it('fazla verilende eksiye düşmez', () => expect(satirKalan({ adet: 2, verilenAdet: 5 })).toBe(0));
 });
 
 describe('receteDogrula', () => {
@@ -79,9 +43,9 @@ describe('bosRecete', () => {
 
 describe('receteUyarilari', () => {
   const ilaclar = [
-    { id: 'a', ad: 'Largopen', etkenMadde: 'Amoksisilin', stok: 10 },
-    { id: 'b', ad: 'Amoklavin', etkenMadde: 'amoksisilin', stok: 4 },
-    { id: 'c', ad: 'Parol', etkenMadde: 'Parasetamol', stok: 2 },
+    { id: 'a', ad: 'Largopen', etkenMadde: 'Amoksisilin' },
+    { id: 'b', ad: 'Amoklavin', etkenMadde: 'amoksisilin' },
+    { id: 'c', ad: 'Parol', etkenMadde: 'Parasetamol' },
   ];
   const hasta = { alerjiler: ['Penisilin'] };
   const alerjiBul = (h, i) => (i.ad === 'Largopen' && h.alerjiler.includes('Penisilin') ? 'Penisilin' : null);
@@ -90,11 +54,7 @@ describe('receteUyarilari', () => {
     const u = receteUyarilari([{ ilacId: 'a', adet: 1 }], hasta, ilaclar, { alerjiBul });
     expect(u).toEqual([{ satir: 0, tur: 'hata', kod: 'alerji', veri: { ad: 'Largopen', a: 'Penisilin' } }]);
   });
-  it('istenen adet stoktan fazlaysa uyarır', () => {
-    const u = receteUyarilari([{ ilacId: 'c', adet: 5 }], null, ilaclar, {});
-    expect(u).toEqual([{ satir: 0, tur: 'uyari', kod: 'stok_yetersiz', veri: { ad: 'Parol', istenen: 5, mevcut: 2 } }]);
-  });
-  it('stok yetiyorsa susar', () => {
+  it('sorun yoksa susar', () => {
     expect(receteUyarilari([{ ilacId: 'c', adet: 2 }], null, ilaclar, {})).toEqual([]);
   });
   it('aynı etken maddeyi iki satırda yakalar', () => {
@@ -102,13 +62,8 @@ describe('receteUyarilari', () => {
     expect(u.map((x) => x.kod)).toEqual(['cift_etken']);
     expect(u[0].veri.liste).toBe('Largopen, Amoklavin');
   });
-  it('ilaç uyarılarını devralır ama stok eşiğini kendi hesaplar', () => {
-    const ilacUyarilariBul = () => [
-      { tur: 'uyari', kod: 'stok_kritik', veri: { n: 2 } },
-      { tur: 'hata', kod: 'skt_gecti', veri: {} },
-    ];
-    const u = receteUyarilari([{ ilacId: 'c', adet: 1 }], null, ilaclar, { ilacUyarilariBul });
-    expect(u.map((x) => x.kod)).toEqual(['skt_gecti']);
+  it('alerji denetçisi verilmezse alerjiye bakmaz', () => {
+    expect(receteUyarilari([{ ilacId: 'a', adet: 1 }], hasta, ilaclar, {})).toEqual([]);
   });
   it('kayıtta olmayan ilacı atlar', () => {
     expect(receteUyarilari([{ ilacId: 'yok', adet: 1 }], hasta, ilaclar, { alerjiBul })).toEqual([]);
