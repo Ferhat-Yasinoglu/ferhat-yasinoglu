@@ -10,7 +10,8 @@ import { el, svgEl, qrGorsel } from './cekirdek/dom.js';
 import { simge } from './cekirdek/simge.js';
 import { t } from './i18n.js';
 import { tamAd, hastaYasi } from './paylasilan/hasta.js';
-import { OLCUMLER, receteMetni } from './paylasilan/recete.js';
+import { OLCUMLER } from './paylasilan/recete.js';
+import { ozetMetni, kodSatiri } from './paylasilan/dogrulama.js';
 import { trTarih } from './paylasilan/tarih.js';
 import { telefonNormalize } from './paylasilan/metin.js';
 
@@ -51,11 +52,10 @@ export function qrIcerigi(ayar, recete, hasta, { bos = false } = {}) {
   const secim = ayar.qrIcerik || 'whatsapp';
   if (secim === 'yok') return '';
   if (secim === 'recete' && !bos && recete) {
-    return receteMetni(recete, hasta, ayar, {
-      recete: t('nav.recete', 'Reçete'), tarih: t('genel.tarih', 'Tarih'), hasta: t('nav.hasta', 'Hasta'),
-      tani: t('recete.tani', 'Tanı'), ilaclar: t('nav.ilaclar', 'İlaçlar'), not: t('genel.not', 'Not'),
-      alerji: t('hasta.alerji', 'Alerji'), adet: t('recete.kutu', 'kutu'), hastaAdi: tamAd(hasta),
-    });
+    // Doğrulanabilir içerik: kanonik özet + kod. Eczane QR'ı okutup kâğıttaki
+    // yazıyla karşılaştırır; ikisi tutmuyorsa kâğıt üzerinde oynanmıştır.
+    const ozet = ozetMetni(recete, tamAd(hasta));
+    return recete.dogrulamaKodu ? `${ozet}\n${kodSatiri(recete.dogrulamaKodu)}` : ozet;
   }
   const numara = telefonNormalize(ayar.whatsapp || ayar.telefon, ayar.ulkeKodu);
   return numara ? `https://wa.me/${numara}` : '';
@@ -145,6 +145,9 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
         !bos && doluMu(recete.olcumler?.[anahtar])
           ? el('span', { dir: 'ltr' }, `${recete.olcumler[anahtar]} ${birim}`)
           : cizgi()))),
+    !bos && doluMu(recete.dogrulamaKodu)
+      ? el('div', { class: 'kagit__kod' }, el('b', {}, t('kagit.kod', 'کد تأیید') + ': '), el('span', { dir: 'ltr' }, recete.dogrulamaKodu))
+      : null,
     el('div', { class: 'kagit__sutun-ayak' },
       qr,
       el('div', { class: 'kagit__sutun-resim' }, simge('stetoskop', { boy: 54 }), simge('kalp', { boy: 34 }))));

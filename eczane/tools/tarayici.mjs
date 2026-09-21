@@ -388,6 +388,44 @@ await sayfa.emulateMedia({ media: 'print' });
 await resim(sayfa, '9-recete-cikti.png', { fullPage: true });
 await sayfa.emulateMedia({ media: 'screen' });
 
+// --- Doğrulama kodu: kâğıtta basılı mı, QR'da var mı?
+const basiliKod = (await sayfa.textContent('.kagit__kod')).trim();
+if (!/[0-9A-Z]{4}-[0-9A-Z]{4}/.test(basiliKod)) throw new Error('kâğıtta doğrulama kodu yok: ' + basiliKod);
+ok('kâğıda doğrulama kodu basıldı: ' + basiliKod);
+
+// --- Doğrulama: dokunulmamış metin geçerli, kurcalanmış metin yakalanmalı
+const kagitMetni = await sayfa.evaluate(async () => {
+  const { ozetMetni, kodSatiri } = await import('./js/paylasilan/dogrulama.js');
+  const { yerelDepoAc } = await import('./js/depo/idb.js');
+  const { tamAd } = await import('./js/paylasilan/hasta.js');
+  const depo = await yerelDepoAc();
+  const [recete] = await depo.listele('receteler');
+  const hasta = await depo.al('hastalar', recete.hastaId);
+  return `${ozetMetni(recete, tamAd(hasta))}\n${kodSatiri(recete.dogrulamaKodu)}`;
+});
+if (!kagitMetni.includes('Nurofen')) throw new Error('özet metni beklenen içeriği taşımıyor');
+
+const denetle = async (metin) => {
+  await sayfa.click('#kenar-menu a[href="#/ayarlar"]');
+  await sayfa.waitForSelector(`h2:has-text("${T('dogrula.baslik')}")`);
+  await sayfa.fill(`textarea[placeholder="${T('dogrula.yer')}"]`, metin);
+  await sayfa.click(`button:has-text("${T('dogrula.dugme')}")`);
+  await sayfa.waitForSelector('.kart:has(h2:text-is("' + T('dogrula.baslik') + '")) .uyari');
+  return sayfa.textContent('.kart:has(h2:text-is("' + T('dogrula.baslik') + '")) .uyari');
+};
+
+const saglam = await denetle(kagitMetni);
+if (!saglam.includes(T('dogrula.gecerli'))) throw new Error('dokunulmamış reçete geçerli sayılmadı: ' + saglam.trim());
+ok('dokunulmamış reçete "geçerli" dedi');
+
+const kurcalanmis = kagitMetni.replace('× 2', '× 20');
+if (kurcalanmis === kagitMetni) throw new Error('kurcalama uygulanamadı');
+const yakalandi = await denetle(kurcalanmis);
+if (!yakalandi.includes(T('dogrula.gecersiz').split('{')[0].trim())) {
+  throw new Error('adedi değiştirilmiş reçete yakalanmadı: ' + yakalandi.trim());
+}
+ok('adet 2 → 20 yapılan reçete yakalandı: kod tutmadı');
+
 // --- Reçete listesi ve süzgeç
 await sayfa.click('#kenar-menu a[href="#/receteler"]');
 await sayfa.waitForSelector(`h1:has-text("${T('nav.receteler')}")`);
