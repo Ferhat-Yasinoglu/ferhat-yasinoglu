@@ -158,6 +158,20 @@ export function sutunGrafik(veri, { etiket = '' } = {}) {
     }));
 }
 
+/** Yatay çubuk listesi — "en çok yazılan ilaçlar" gibi sıralı sayımlar için.
+ *  veri: [{ etiket, deger }], en büyükten küçüğe verilmiş olmalı. Sütun
+ *  grafiği burada işe yaramaz: etiketler uzun ve okunması gereken şey
+ *  sıralama, eğilim değil. */
+export function yatayGrafik(veri, { etiket = '' } = {}) {
+  const enBuyuk = Math.max(1, ...veri.map((v) => Number(v.deger) || 0));
+  return el('div', { class: 'yatay-grafik', role: 'img', 'aria-label': etiket },
+    ...veri.map((v, i) => el('div', { class: 'yatay-grafik__satir', style: { '--i': i } },
+      el('div', { class: 'yatay-grafik__etiket', title: v.etiket }, v.etiket),
+      el('div', { class: 'yatay-grafik__yol' },
+        el('div', { class: 'yatay-grafik__cubuk', style: { inlineSize: Math.max(6, (Number(v.deger) || 0) / enBuyuk * 100) + '%' } })),
+      el('div', { class: 'yatay-grafik__deger' }, String(v.deger)))));
+}
+
 /** Liste/ızgara öğelerine sırayla açılma gecikmesi verir. */
 export function sirala(kap) {
   kap.classList.add('sirali');

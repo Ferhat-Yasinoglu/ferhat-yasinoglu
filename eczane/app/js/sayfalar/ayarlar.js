@@ -4,10 +4,12 @@ import { el, temizle, btn, btnS, girdi, secim, metinAlani, alan, kart, rozet, sa
 import { simge } from '../cekirdek/simge.js';
 import { yedekOlustur, iceAktar, yedekDogrula, indir, hatirlatmaGerekli } from '../depo/yedek.js';
 import { ornekYukle } from '../depo/ornek.js';
+import { hazirListeyiYukle } from '../depo/hazir-ilaclar.js';
 import { KOLEKSIYONLAR } from '../depo/sema.js';
 import { trTarihSaat } from '../paylasilan/tarih.js';
 import { sayiMetni, bicimAyarla, PARA_BIRIMLERI } from '../paylasilan/metin.js';
 import { t } from '../i18n.js';
+import { sablonListesi } from '../sablon-arayuz.js';
 import { kagidiYazdir } from '../kagit.js';
 import { hataMetni } from '../hatalar.js';
 import { metniDogrula } from '../depo/dogrulama.js';
@@ -102,6 +104,7 @@ export default {
       const ayar = await depo.ayarlar();
       const h = hatirlatmaGerekli(meta);
       const kapasite = depo.kapasite ? await depo.kapasite() : null;
+      const sablonlar = await depo.listele('sablonlar', { sirala: 'ad' });
       const sayilar = {};
       for (const ad of Object.keys(KOLEKSIYONLAR)) {
         if (ad === 'meta' || ad === 'ayarlar') continue;
@@ -225,6 +228,26 @@ export default {
             } }),
           el('span', { class: 'kart__alt' }, t('ayar.ornek_alt', 'Örnek kayıtlar "örnek" rozetiyle görünür.')))));
 
+      /* --- Hazır ilaç listesi --- */
+      kok.appendChild(kart({},
+        el('div', { class: 'kart__bas' },
+          el('h2', {}, t('ayar.hazir_liste', 'Hazır ilaç listesi')),
+          meta.hazirListeSurumu ? rozet(t('ayar.hazir_yuklendi', 'yüklendi'), 'yesil') : null),
+        el('p', { class: 'kart__alt' }, t('ayar.hazir_alt', 'Yaygın kullanılan jenerik ilaçların adı, şekli ve dozu. Her ilacı sıfırdan yazmamak için.')),
+        el('div', { class: 'uyari uyari--bilgi', style: { marginBlock: 'var(--b-3)' } },
+          simge('bilgi', { boy: 16 }),
+          el('span', {}, t('ayar.hazir_uyari', 'Bu bir ad listesidir, tedavi önerisi değil. Kullanım şekli, doz ve süre kararı hekimindir; kutunun üstündeki bilgiyle karşılaştırın.'))),
+        el('div', { class: 'satir' },
+          btnS('yukle', t('ayar.hazir_yukle', 'Listeyi yükle'), { class: 'btn', onclick: async () => {
+            try {
+              const r = await hazirListeyiYukle(depo);
+              if (r.eklendi) basari(t('ayar.hazir_eklendi', '{n} ilaç eklendi', { n: r.eklendi }));
+              else uyar(t('ayar.hazir_zaten', 'Listedeki ilaçların hepsi zaten kayıtlı'));
+              ciz();
+            } catch (e) { hata(hataMetni(e, t('ayar.hazir_hata', 'İlaç listesi yüklenemedi'))); }
+          } }),
+          el('span', { class: 'kart__alt' }, t('ayar.hazir_silme', 'Yüklenen ilaçlar tek tek silinebilir; kendi eklediklerine dokunulmaz.')))));
+
       /* --- Depolama --- */
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' }, el('h2', {}, t('ayar.depolama', 'Depolama')),
@@ -249,6 +272,13 @@ export default {
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' }, el('h2', {}, t('ayar.gorunum', 'Görünüm'))),
         el('div', { class: 'izgara izgara--form' }, alan(t('ayar.tema', 'Tema'), temaSecimi))));
+
+      /* --- Reçete şablonları --- */
+      kok.appendChild(kart({},
+        el('div', { class: 'kart__bas' },
+          el('h2', {}, t('sablon.baslik', 'Reçete şablonları')),
+          el('span', { class: 'kart__alt' }, t('sablon.baslik_alt', 'Tekrar yazdığın ilaç kümelerini bir kez kaydet.'))),
+        sablonListesi(ctx, sablonlar, ciz)));
 
       /* --- Tehlikeli bölge --- */
       kok.appendChild(kart({ style: { borderColor: 'rgb(var(--kirmizi) / .4)' } },
