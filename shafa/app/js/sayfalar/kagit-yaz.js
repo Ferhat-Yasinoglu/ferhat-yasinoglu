@@ -191,8 +191,33 @@ export default {
       }));
 
       const tuval = el('div', { class: 'kagit-tuval' });
-      tuval.appendChild(kagitCiz({ ayar, recete, hasta, duzenlenebilir: true }));
+      const kagit = kagitCiz({ ayar, recete, hasta, duzenlenebilir: true });
+      tuval.appendChild(kagit);
       kok.appendChild(tuval);
+
+      // Kâğıt her ekranda AYNI tek uzun sayfa: mm ölçüleri değişmiyor,
+      // yalnız kabın genişliğine göre ölçekleniyor. CSS kırılma noktaları
+      // denendi ve kenar çubuğunu hesaba katmadıkları için telefonda kâğıt
+      // 107 px'e düşüyordu; ölçek kabın GERÇEK genişliğinden hesaplanıyor.
+      const KAGIT_PX = 794;            // 210 mm, 96 dpi
+      const olcekle = () => {
+        if (!tuval.isConnected) return;
+        const olcek = Math.min(1, Math.max(0.2, (tuval.clientWidth - 8) / KAGIT_PX));
+        tuval.style.setProperty('--olcek', String(olcek));
+        // Ölçeklenen öğe yerinde yer kaplamıyor; tuvalin boyunu elle veriyoruz.
+        tuval.style.blockSize = Math.ceil(kagit.offsetHeight * olcek) + 'px';
+      };
+      // İlk ölçüm yerleşimden SONRA: hemen ölçünce tuval daha dar geliyor
+      // ve kâğıt küçücük kalıyordu.
+      requestAnimationFrame(olcekle);
+      // Kâğıt büyüdükçe (ilaç eklendikçe) ve pencere değiştikçe yeniden ölçülüyor.
+      //
+      // TUVALİN KENDİSİ İZLENMİYOR: boyunu bu geri çağrıda değiştiriyoruz,
+      // izleseydik kendi kendini tetikleyen bir döngü olur ve tarayıcı
+      // bildirimleri düşürüp ölçeği 0.2'de bırakırdı (telefonda 158 px).
+      const gozcu = new ResizeObserver(olcekle);
+      gozcu.observe(kok);
+      gozcu.observe(kagit);
 
       // Tek dinleyici, kâğıdın tamamı için: her yeniden çizimde yenisini
       // bağlamak yerine olay kâğıttan yukarı geliyor.

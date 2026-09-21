@@ -66,16 +66,17 @@ const SERIT_SIMGELERI = ['hasta', 'takvim', 'takvim', 'recete'];
  *  (print-color-adjust yine de duruyor, bu ikinci emniyet.) */
 function dalga(yer) {
   if (yer === 'ust') {
-    // Üst köşe süsü: şekli korunsun diye esnetilmiyor.
-    // Dolu köşe değil akan ŞERİTLER: dolgu denendi ve kâğıda yapıştırılmış
-    // renkli bir dikdörtgen gibi duruyordu, üstelik sloganı okunmaz yapıyordu.
+    // Dolgulu köşe kütleleri: katman katman akan dalgalar. Kontur denendi,
+    // basılı kâğıdın ağırlığını vermiyordu.
     return svgEl('svg', {
-      class: 'kagit__dalga kagit__dalga--ust', viewBox: '0 0 200 92',
+      class: 'kagit__dalga kagit__dalga--ust', viewBox: '0 0 300 150',
       preserveAspectRatio: 'none', 'aria-hidden': 'true',
     },
-    svgEl('path', { class: 'kagit__dalga-1', d: 'M0 4C46 4 84 26 112 46 140 66 170 84 200 88' }),
-    svgEl('path', { class: 'kagit__dalga-2', d: 'M0 22C42 22 76 42 102 60 128 78 160 90 200 92' }),
-    svgEl('path', { class: 'kagit__dalga-3', d: 'M0 44C34 44 62 58 84 72 106 86 134 92 168 92' }));
+    // Köşe KÜTLESİ: köşeden başlayıp kavisli bir hipotenüsle inceliyor.
+    // Tam genişlik bant denendi, kâğıdın üstüne çekilmiş düz şerit gibi durdu.
+    svgEl('path', { class: 'kagit__dalga-1', d: 'M0 0H300C252 70 140 112 0 150Z' }),
+    svgEl('path', { class: 'kagit__dalga-2', d: 'M0 0H222C188 58 104 98 0 124Z' }),
+    svgEl('path', { class: 'kagit__dalga-3', d: 'M0 0H142C124 44 68 80 0 98Z' }));
   }
   // Ayak bandının üst kenarı: kâğıt renginde kesip banda kıvrım veriyor.
   return svgEl('svg', {
@@ -85,6 +86,7 @@ function dalga(yer) {
   svgEl('path', { class: 'kagit__dalga-kesim', d: 'M0 0H1000V52C874 96 742 30 606 52 470 74 352 18 214 40 140 52 68 70 0 58Z' }),
   svgEl('path', { class: 'kagit__dalga-2', d: 'M0 44C82 72 168 26 268 40 386 56 470 96 592 82 704 69 812 24 1000 62V0H0Z' }));
 }
+
 
 const doluMu = (v) => String(v ?? '').trim() !== '';
 const satirlara = (metin) => String(metin ?? '').split('\n').map((x) => x.trim()).filter(Boolean);
@@ -182,7 +184,9 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
     ? el('div', { class: 'kagit__hizmet' },
       hizmetSatirlari.length
         ? el('div', { class: 'kagit__hizmet-satir' }, ...hizmetSatirlari.map((h, i) =>
-          el('span', { class: 'kagit__hizmet-oge' }, simge(i % 2 ? 'ultrason' : 'ekg', { boy: 17 }), el('span', {}, h))))
+          el('span', { class: 'kagit__hizmet-oge' },
+            el('span', { class: 'kagit__hizmet-daire' }, simge(i % 2 ? 'ultrason' : 'ekg', { boy: 15 })),
+            el('span', {}, h))))
         : null,
       doluMu(ayar.hizmetAlanlari) ? el('div', { class: 'kagit__hizmet-alan' }, ayar.hizmetAlanlari) : null)
     : null;
@@ -235,7 +239,8 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
         el('b', {}, t('kagit.kod', 'کد تأیید') + ': '), el('span', { dir: 'ltr' }, recete.dogrulamaKodu))
       : null,
     el('div', { class: 'kagit__sutun-ayak' },
-      qr,
+      el('div', { class: 'kagit__qr-kutu' }, qr,
+        el('span', { class: 'kagit__qr-alt' }, t('kagit.qr_alt', 'Scan for Contact'))),
       el('div', { class: 'kagit__sutun-resim' }, simge('stetoskop', { boy: 54 }), simge('kalp', { boy: 34 }))));
 
   /* ---- ℞ alanı ---- */
@@ -300,8 +305,10 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
 
   /* ---- Ayak: rozetler ve iletişim ---- */
   const rozetler = String(ayar.ayakEtiketleri ?? t('kagit.ayak_etiketleri', 'قلب, شش, معده, اطفال'))
-    .split(',').map((x) => x.trim()).filter(Boolean).slice(0, 4);
-  const ROZET_SIMGE = ['kalp', 'akciger', 'mide', 'cocuk'];
+    .split(',').map((x) => x.trim()).filter(Boolean).slice(0, 8);
+  // Basılı kâğıtta hekimin ilgilendiği alanlar rozet olarak diziliyor.
+  // Sıra ayardaki etiket sırasını izliyor; fazlası 'kalp' ile doluyor.
+  const ROZET_SIMGE = ['kalp', 'akciger', 'mide', 'bobrek', 'seker', 'eklem', 'beyin', 'cocuk'];
   // Basılı kâğıtta iki numara var (doktor ve klinik). İkincisi boşsa
   // basılmıyor; etiketler ayarlardan, boşsa tek ortak etiket kullanılıyor.
   const etiketler = String(ayar.telefonEtiket ?? '').split(',').map((x) => x.trim());
@@ -323,8 +330,13 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
         el('div', { class: 'kagit__rozet' }, el('span', { class: 'kagit__rozet-daire' }, simge(ROZET_SIMGE[i] || 'kalp', { boy: 20 })), el('span', {}, etiket))))
       : null);
 
+  // İki üst köşede birden: sağdaki CSS'te aynalanıyor.
+  const ustDalga = dalga('ust');
+  const ustDalga2 = dalga('ust');
+  ustDalga2.classList.add('kagit__dalga--ayna');
+
   return el('div', { class: `yazdir-alan kagit${stilSinifi}` }, stil,
-    dalga('ust'),
+    ustDalga, ustDalga2,
     antet, unvan, hizmet, deneyim, vecize, serit,
     el('div', { class: 'kagit__govde' }, rx, sutun),
     ayak);
