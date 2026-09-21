@@ -10,6 +10,8 @@ import { bildir, basari, uyar, hata } from './cekirdek/bildirim.js';
 import { modal, onayla, sor } from './cekirdek/modal.js';
 import { ilacAra, ilacEtiketi } from './paylasilan/ilac.js';
 import { hastaAra, tamAd } from './paylasilan/hasta.js';
+import { eslesir } from './paylasilan/metin.js';
+import { trTarih } from './paylasilan/tarih.js';
 
 export const UYGULAMA_SURUMU = '0.1.0';
 globalThis.UYGULAMA_SURUMU = UYGULAMA_SURUMU;
@@ -19,6 +21,7 @@ const MENU = [
     { yol: '/panel', ad: 'Panel', simge: 'panel', alt: true },
     { yol: '/ilaclar', ad: 'İlaçlar', simge: 'ilac', alt: true, sayac: 'ilaclar' },
     { yol: '/hastalar', ad: 'Hastalar', simge: 'hasta', alt: true, sayac: 'hastalar' },
+    { yol: '/receteler', ad: 'Reçeteler', simge: 'recete', alt: true, sayac: 'receteler' },
   ] },
   { grup: 'Sistem', ogeler: [
     { yol: '/ayarlar', ad: 'Ayarlar', simge: 'ayarlar', alt: true },
@@ -32,6 +35,10 @@ const ROTALAR = [
   { yol: '/ilac/:id', yukle: () => import('./sayfalar/ilac.js') },
   { yol: '/hastalar', yukle: () => import('./sayfalar/hastalar.js') },
   { yol: '/hasta/:id', yukle: () => import('./sayfalar/hasta.js') },
+  { yol: '/receteler', yukle: () => import('./sayfalar/receteler.js') },
+  { yol: '/recete/yeni', yukle: () => import('./sayfalar/recete-yeni.js') },
+  { yol: '/recete/:id', yukle: () => import('./sayfalar/recete.js') },
+  { yol: '/recete/:id/duzenle', yukle: () => import('./sayfalar/recete-yeni.js') },
   { yol: '/ayarlar', yukle: () => import('./sayfalar/ayarlar.js') },
   { yol: '/404', yukle: () => import('./sayfalar/bulunamadi.js') },
 ];
@@ -44,6 +51,7 @@ async function menuCiz(depo) {
   const sayilar = {
     ilaclar: await depo.say('ilaclar'),
     hastalar: await depo.say('hastalar'),
+    receteler: await depo.say('receteler'),
   };
   temizle(kok);
   for (const g of MENU) {
@@ -65,7 +73,10 @@ function aktifIsaretle(yol) {
   for (const a of document.querySelectorAll('[data-yol]')) {
     const hedef = a.dataset.yol;
     // Detay sayfaları kendi listelerini aktif gösterir: /ilac/x → İlaçlar.
-    const aktif = hedef === yol || hedef === kok || (hedef === '/ilaclar' && kok === '/ilac') || (hedef === '/hastalar' && kok === '/hasta');
+    const aktif = hedef === yol || hedef === kok
+      || (hedef === '/ilaclar' && kok === '/ilac')
+      || (hedef === '/hastalar' && kok === '/hasta')
+      || (hedef === '/receteler' && kok === '/recete');
     if (aktif) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   }
 }
@@ -75,7 +86,7 @@ async function aramaAc(ctx, ilk = '') {
   const { depo } = ctx;
   const kutu = girdi({ type: 'search', placeholder: 'İlaç, barkod, hasta adı…', value: ilk });
   const sonuc = el('div', { class: 'liste', style: { marginBlockStart: 'var(--b-3)' } });
-  const [ilaclar, hastalar] = await Promise.all([depo.listele('ilaclar'), depo.listele('hastalar')]);
+  const [ilaclar, hastalar, receteler] = await Promise.all([depo.listele('ilaclar'), depo.listele('hastalar'), depo.listele('receteler')]);
   const kapat = () => document.querySelector('.ortu')?.remove();
 
   function ciz() {
@@ -85,6 +96,8 @@ async function aramaAc(ctx, ilk = '') {
     const bulunan = [
       ...ilacAra(ilaclar, q).slice(0, 6).map((i) => ({ ad: ilacEtiketi(i), alt: `İlaç · stok ${i.stok ?? 0}`, s: 'ilac', yol: `/ilac/${i.id}` })),
       ...hastaAra(hastalar, q).slice(0, 6).map((h) => ({ ad: tamAd(h), alt: `Hasta · ${h.telefon || h.kimlikNo || '—'}`, s: 'hasta', yol: `/hasta/${h.id}` })),
+      ...receteler.filter((r) => eslesir(`${r.receteNo || ''} ${r.tani || ''}`, q)).slice(0, 4)
+        .map((r) => ({ ad: r.receteNo || 'Reçete', alt: `Reçete · ${trTarih(r.tarih)}`, s: 'recete', yol: `/recete/${r.id}` })),
     ];
     if (!bulunan.length) { sonuc.appendChild(el('div', { class: 'liste__satir sessiz' }, 'Sonuç yok.')); return; }
     for (const x of bulunan) {
@@ -163,7 +176,7 @@ async function baslat() {
   yonlendirici.ctx = ctx;
   ctx.git = (yol) => yonlendirici.git(yol);
   // Kayıt değişince kenar menüdeki sayılar tazelenir.
-  depo.dinle('*', ({ kol }) => { if (kol === 'ilaclar' || kol === 'hastalar') menuCiz(depo); });
+  depo.dinle('*', ({ kol }) => { if (['ilaclar', 'hastalar', 'receteler'].includes(kol)) menuCiz(depo); });
 
   // replaceState kullanılır: `location.hash = …` bir hashchange kuyruğa alır ve
   // yönlendirici açılışta iki kez çizerdi.

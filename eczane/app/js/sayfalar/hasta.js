@@ -33,6 +33,7 @@ export default {
         alt: [yas !== null ? `${yas} yaş` : null, adiBul(CINSIYETLER, hasta.cinsiyet), hasta.telefon].filter(Boolean).join(' · '),
         geri: () => git('/hastalar'),
         eylemler: [
+          btnS('recete', 'Reçete yaz', { class: 'btn btn--birincil', onclick: () => git(`/recete/yeni?hasta=${hasta.id}`) }),
           btnS('kalem', 'Düzenle', { class: 'btn', onclick: async () => { if (await hastaKutusu(ctx, hasta)) ciz(); } }),
           btnS('cop', 'Sil', { class: 'btn', onclick: async () => {
             if (await onayla(`"${tamAd(hasta)}" silinsin mi? Reçete geçmişi kayıtlarda kalır.`, { tehlikeli: true, evet: 'Sil' })) {
@@ -88,7 +89,11 @@ export default {
         }))
         : bosDurum({ simge: 'recete', baslik: 'Reçete yok', alt: 'Bu hastaya henüz reçete yazılmamış.' });
 
-      kok.appendChild(kart({}, el('div', { class: 'kart__bas' }, el('h2', {}, 'Reçeteler')), receteGovdesi));
+      kok.appendChild(kart({},
+        el('div', { class: 'kart__bas' },
+          el('h2', {}, 'Reçeteler'),
+          btnS('arti', 'Yeni reçete', { class: 'btn btn--kucuk', onclick: () => git(`/recete/yeni?hasta=${hasta.id}`) })),
+        receteGovdesi));
     }
 
     await ciz();

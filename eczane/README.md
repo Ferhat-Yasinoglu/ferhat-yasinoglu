@@ -33,7 +33,15 @@ kurulu değilse betik kendini atlar:
 | **İlaçlar** | Künye, barkod, etken madde, fiyat, raf; stok ve SKT uyarıları; muadil bulma |
 | **Stok hareketleri** | Mal girişi, iade, sayım düzeltmesi, fire — her değişiklik geçmişe yazılır |
 | **Hastalar** | Kayıt, alerjiler, kronik hastalıklar, sürekli ilaçlar, reçete geçmişi |
-| **Ayarlar** | Yedek al/geri yükle, örnek veri, depolama durumu, tema, tüm veriyi silme |
+| **Reçete yazma** | Hasta ve ilaç seçimi, tanı/ICD, kullanım ve süre; alerji, stok, son kullanma ve çift etken madde uyarıları |
+| **Karşılama** | Satır satır verildi / kısmi / verilemedi (sebepli); verilen stoktan düşer, geri alınınca iade edilir |
+| **Yazdırma** | Antetli reçete çıktısı (A4 ya da A5), hasta ve tanı bilgileriyle; alerji kâğıtta da yazar |
+| **Ayarlar** | Eczane ve doktor bilgileri, yedek al/geri yükle, örnek veri, depolama durumu, tema, tüm veriyi silme |
+
+**Reçete ile stok tek elden yürür.** Karşılamada verilen her kutu bir stok
+hareketi bırakır ve hareket reçete numarasıyla etiketlenir; satır geri alınınca
+iade hareketiyle stoğa döner. "Ne verildi" reçetede, "stok neden düştü" hareket
+geçmişinde durur ve ikisi hep birbirini tutar.
 
 **Stok yalnız hareketle değişir.** İlaç kartındaki stok alanı elle düzenlenmez;
 mal girişi, sayım, fire ya da reçete karşılama üzerinden değişir ve her işlem
@@ -45,9 +53,22 @@ cevabı her zaman kayıtlıdır. Stoğu eksiye düşüren işlem reddedilir.
 - [x] İskelet: depo, yönlendirici, tema, bileşenler
 - [x] İlaçlar ve stok hareketleri
 - [x] Hastalar
-- [ ] Reçete yazma (hasta + ilaç satırları, alerji ve stok uyarıları)
-- [ ] Reçete karşılama: satır satır "verildi / verilmedi", stoğa otomatik düşme
-- [ ] Reçete yazdırma (A4/A5)
+- [x] Reçete yazma (hasta + ilaç satırları, alerji ve stok uyarıları)
+- [x] Reçete karşılama: satır satır "verildi / verilmedi", stoğa otomatik düşme
+- [x] Reçete yazdırma (A4/A5, antetli)
+- [ ] Reçete başlık alanlarının gözden geçirilmesi (aşağıya bak)
+
+### Reçete alanları
+
+Şu an standart bir küme kullanılıyor: reçete no (gün içinde kendiliğinden artar,
+elle de yazılabilir), tarih, reçete türü (normal/kırmızı/yeşil/mor/turuncu),
+hasta, tanı, tanı kodu (ICD-10), protokol no, reçete notu; doktor adı, ünvanı,
+diploma no ve kurumu Ayarlar'dan gelir ve kaydedilirken reçeteye işlenir.
+Satırda: ilaç, adet, kullanım şekli, süre, not.
+
+Alan eklemek için üç yer: `paylasilan/recete.js` içindeki `bosRecete`,
+`sayfalar/recete-yeni.js` içindeki form ızgarası ve `sayfalar/recete.js`
+içindeki yazdırma bölümü.
 
 ## Dosyalar
 
@@ -58,9 +79,10 @@ app/                      PWA (statik olarak olduğu gibi sunulur)
   js/
     uygulama.js           giriş: depo, menü, arama, yönlendirici
     cekirdek/             dom · yonlendirici · modal · bildirim · simge · tema
-    depo/                 sema · depo · idb · stok · yedek · ornek
+    depo/                 sema · depo · idb · stok · recete · yedek · ornek
     paylasilan/           saf alan mantığı: ilac · hasta · recete · tarih · metin · kimlik
-    sayfalar/             panel · ilaclar · ilac · hastalar · hasta · ayarlar · bulunamadi
+    sayfalar/             panel · ilaclar · ilac · hastalar · hasta ·
+                          receteler · recete-yeni · recete · ayarlar · bulunamadi
 test/                     vitest
 tools/                    sun (statik sunucu) · kontrol (statik denetim) · tarayici (uçtan uca)
 ```

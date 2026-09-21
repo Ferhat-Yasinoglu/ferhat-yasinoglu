@@ -18,4 +18,15 @@ export function yeniId(onek = 'kyt') {
   return `${onek}_${govde}`;
 }
 
-export const simdi = () => new Date().toISOString();
+// Zaman damgası tekdüze artar: aynı milisaniyede iki kayıt oluşursa (ver + geri
+// al gibi arka arkaya işlemler) ikincisi bir milisaniye ileri atılır. Yoksa
+// hareket geçmişi eşit damgalarda kararsız sıralanıyor, "önce ne oldu"
+// sorusunun cevabı ekrana rastgele çıkıyordu. Duvar saati yakalayınca
+// kendiliğinden hizaya döner.
+let sonDamga = 0;
+
+export function simdi() {
+  const t = Math.max(Date.now(), sonDamga + 1);
+  sonDamga = t;
+  return new Date(t).toISOString();
+}

@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { satirDurumu, satirKapali, durumHesapla, receteOzet, receteNoUret } from '../app/js/paylasilan/recete.js';
+import {
+  satirDurumu, satirKapali, durumHesapla, receteOzet, receteNoUret,
+  satirKalan, receteDogrula, bosRecete, receteUyarilari,
+} from '../app/js/paylasilan/recete.js';
 
 const satir = (o) => ({ adet: 2, verilenAdet: 0, sebep: '', birimFiyat: 10, ...o });
 
@@ -49,5 +52,65 @@ describe('receteNoUret', () => {
   });
   it('başka günün numaralarını saymaz', () => {
     expect(receteNoUret(['2026-09-19-09'], '2026-09-20')).toBe('2026-09-20-01');
+  });
+});
+
+describe('satirKalan', () => {
+  it('istenen eksi verilen', () => expect(satirKalan({ adet: 3, verilenAdet: 1 })).toBe(2));
+  it('fazla verilende eksiye düşmez', () => expect(satirKalan({ adet: 2, verilenAdet: 5 })).toBe(0));
+});
+
+describe('receteDogrula', () => {
+  const gecerli = { hastaId: 'has_1', tarih: '2026-09-21', satirlar: [{ adet: 1 }] };
+  it('hasta ister', () => expect(receteDogrula({ ...gecerli, hastaId: '' }).hastaId).toBeTruthy());
+  it('en az bir ilaç ister', () => expect(receteDogrula({ ...gecerli, satirlar: [] }).satirlar).toBeTruthy());
+  it('sıfır adetli satırı reddeder', () => expect(receteDogrula({ ...gecerli, satirlar: [{ adet: 0 }] }).satirlar).toBeTruthy());
+  it('bozuk tarihi reddeder', () => expect(receteDogrula({ ...gecerli, tarih: '21.09.2026' }).tarih).toBeTruthy());
+  it('doğru reçeteyi geçirir', () => expect(receteDogrula(gecerli)).toEqual({}));
+});
+
+describe('bosRecete', () => {
+  it('doktor bilgilerini ayarlardan alır', () => {
+    const r = bosRecete({ doktorAd: 'Ahmet Yılmaz', diplomaNo: '12345' }, '2026-09-21');
+    expect(r).toMatchObject({ doktorAd: 'Ahmet Yılmaz', diplomaNo: '12345', tarih: '2026-09-21', tur: 'normal' });
+    expect(r.satirlar).toEqual([]);
+  });
+});
+
+describe('receteUyarilari', () => {
+  const ilaclar = [
+    { id: 'a', ad: 'Largopen', etkenMadde: 'Amoksisilin', stok: 10 },
+    { id: 'b', ad: 'Amoklavin', etkenMadde: 'amoksisilin', stok: 4 },
+    { id: 'c', ad: 'Parol', etkenMadde: 'Parasetamol', stok: 2 },
+  ];
+  const hasta = { alerjiler: ['Penisilin'] };
+  const alerjiBul = (h, i) => (i.ad === 'Largopen' && h.alerjiler.includes('Penisilin') ? 'Penisilin' : null);
+
+  it('alerjiyi satırına bağlar', () => {
+    const u = receteUyarilari([{ ilacId: 'a', adet: 1 }], hasta, ilaclar, { alerjiBul });
+    expect(u).toEqual([{ satir: 0, tur: 'hata', kod: 'alerji', metin: 'Largopen: hastanın "Penisilin" alerjisi var' }]);
+  });
+  it('istenen adet stoktan fazlaysa uyarır', () => {
+    const u = receteUyarilari([{ ilacId: 'c', adet: 5 }], null, ilaclar, {});
+    expect(u).toEqual([{ satir: 0, tur: 'uyari', kod: 'stok_yetersiz', metin: 'Parol: 5 isteniyor, stokta 2 var' }]);
+  });
+  it('stok yetiyorsa susar', () => {
+    expect(receteUyarilari([{ ilacId: 'c', adet: 2 }], null, ilaclar, {})).toEqual([]);
+  });
+  it('aynı etken maddeyi iki satırda yakalar', () => {
+    const u = receteUyarilari([{ ilacId: 'a', adet: 1 }, { ilacId: 'b', adet: 1 }], null, ilaclar, {});
+    expect(u.map((x) => x.kod)).toEqual(['cift_etken']);
+    expect(u[0].metin).toContain('Largopen, Amoklavin');
+  });
+  it('ilaç uyarılarını devralır ama stok eşiğini kendi hesaplar', () => {
+    const ilacUyarilariBul = () => [
+      { tur: 'uyari', kod: 'stok_kritik', metin: 'Stok azaldı' },
+      { tur: 'hata', kod: 'skt_gecti', metin: 'Son kullanma tarihi geçmiş' },
+    ];
+    const u = receteUyarilari([{ ilacId: 'c', adet: 1 }], null, ilaclar, { ilacUyarilariBul });
+    expect(u.map((x) => x.kod)).toEqual(['skt_gecti']);
+  });
+  it('kayıtta olmayan ilacı atlar', () => {
+    expect(receteUyarilari([{ ilacId: 'yok', adet: 1 }], hasta, ilaclar, { alerjiBul })).toEqual([]);
   });
 });

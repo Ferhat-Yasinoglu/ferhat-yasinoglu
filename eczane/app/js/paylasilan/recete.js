@@ -66,3 +66,86 @@ export function receteNoUret(mevcutNolar, gun) {
     .reduce((a, b) => Math.max(a, b), 0);
   return `${onek}-${String(enBuyuk + 1).padStart(2, '0')}`;
 }
+
+/** Sık kullanılan kullanım şekilleri — yazmak yerine seçilebilsin diye. */
+export const KULLANIM_ONERILERI = [
+  'Günde 1×1', 'Günde 2×1', 'Günde 3×1', 'Günde 1×2', 'Günde 2×2',
+  '12 saatte bir', '8 saatte bir', 'Aç karnına', 'Tok karnına', 'Gerektikçe',
+];
+
+/** Satırda daha kaç adet verilmeyi bekliyor? */
+export function satirKalan(satir) {
+  return Math.max(0, Number(satir?.adet ?? 0) - Number(satir?.verilenAdet ?? 0));
+}
+
+/** Yeni reçete iskeleti. Doktor bilgileri ayarlardan gelir ve reçeteye
+ *  mühürlenir: ayarlar sonradan değişse bile eski reçete yazıldığı günkü
+ *  bilgiyi taşır. */
+export function bosRecete(ayar = {}, gun = '') {
+  return {
+    receteNo: '', tarih: gun, tur: 'normal', hastaId: '',
+    tani: '', taniKodu: '', protokolNo: '', notlar: '', satirlar: [],
+    doktorAd: ayar.doktorAd || '', doktorUnvan: ayar.doktorUnvan || '',
+    diplomaNo: ayar.diplomaNo || '', kurum: ayar.kurum || '',
+  };
+}
+
+export function receteDogrula(recete) {
+  const h = {};
+  if (!recete.hastaId) h.hastaId = 'Hasta seçilmeli.';
+  if (!String(recete.tarih ?? '').match(/^\d{4}-\d{2}-\d{2}$/)) h.tarih = 'Tarih geçersiz.';
+  if (!recete.satirlar?.length) h.satirlar = 'En az bir ilaç eklenmeli.';
+  else if (recete.satirlar.some((s) => !(Number(s.adet) > 0))) h.satirlar = 'Her satırın adedi sıfırdan büyük olmalı.';
+  return h;
+}
+
+/**
+ * Reçetenin klinik uyarıları. Saf: hasta ve ilaç kayıtlarını dışarıdan alır.
+ * Döndürdüğü her uyarı hangi satıra ait olduğunu `satir` alanında taşır
+ * (reçetenin tamamına ait uyarılarda -1).
+ */
+export function receteUyarilari(satirlar, hasta, ilaclar, sec = {}) {
+  const { alerjiBul, ilacUyarilariBul } = sec;
+  const u = [];
+  const bul = (id) => (ilaclar || []).find((x) => x.id === id);
+  const etkenSayaci = new Map();
+
+  (satirlar || []).forEach((s, i) => {
+    const ilac = bul(s.ilacId);
+    if (!ilac) return;
+
+    if (alerjiBul && hasta) {
+      const a = alerjiBul(hasta, ilac);
+      if (a) u.push({ satir: i, tur: 'hata', kod: 'alerji', metin: `${ilac.ad}: hastanın "${a}" alerjisi var` });
+    }
+
+    if (ilacUyarilariBul) {
+      for (const x of ilacUyarilariBul(ilac)) {
+        // Stok uyarısı istenen adede göre yeniden değerlendirilir: 3 kutu
+        // isteniyor ve 2 kutu varsa bu "stok az" değil, karşılanamayan satırdır.
+        if (x.kod === 'stok_kritik') continue;
+        u.push({ satir: i, tur: x.tur, kod: x.kod, metin: `${ilac.ad}: ${x.metin}` });
+      }
+    }
+
+    const istenen = Number(s.adet ?? 0);
+    const stok = Number(ilac.stok ?? 0);
+    if (stok > 0 && istenen > stok) {
+      u.push({ satir: i, tur: 'uyari', kod: 'stok_yetersiz', metin: `${ilac.ad}: ${istenen} isteniyor, stokta ${stok} var` });
+    }
+
+    const etken = String(ilac.etkenMadde || '').trim().toLocaleLowerCase('tr');
+    if (etken) etkenSayaci.set(etken, [...(etkenSayaci.get(etken) || []), { i, ad: ilac.ad }]);
+  });
+
+  // Aynı etken madde iki satırda: çift doz riski.
+  for (const [, satirlarDizisi] of etkenSayaci) {
+    if (satirlarDizisi.length > 1) {
+      u.push({
+        satir: satirlarDizisi[1].i, tur: 'uyari', kod: 'cift_etken',
+        metin: `Aynı etken madde birden fazla satırda: ${satirlarDizisi.map((x) => x.ad).join(', ')}`,
+      });
+    }
+  }
+  return u;
+}

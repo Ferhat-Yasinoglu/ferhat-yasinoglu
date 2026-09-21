@@ -12,3 +12,34 @@
   .rozet { border: 1px solid #999; background: none !important; color: #000 !important; }
   @page { size: A4; margin: 14mm; }
 }
+
+/* Reçete çıktısı. Ekranda gizlidir; yazdırılırken sayfadaki tek görünen şeydir. */
+.yazdir-alan { display: none; }
+
+@media print {
+  #sayfa:has(.yazdir-alan) > *:not(.yazdir-alan) { display: none !important; }
+  .yazdir-alan { display: block; color: #000; font-size: 11pt; }
+
+  .yaz__antet { display: flex; justify-content: space-between; gap: 8mm; border-block-end: 1.5pt solid #000; padding-block-end: 3mm; }
+  .yaz__sag { text-align: end; }
+  .yaz__kurum { font-weight: 700; font-size: 12pt; }
+  .yaz__ince { font-size: 9pt; }
+
+  .yaz__baslik { text-align: center; font-size: 13pt; letter-spacing: .12em; margin-block: 5mm 3mm; }
+  .yaz__ust { display: flex; flex-wrap: wrap; gap: 8mm; font-size: 10pt; margin-block-end: 3mm; }
+  .yaz__kutu { border: 1pt solid #000; padding: 3mm; display: grid; grid-template-columns: 1fr 1fr; gap: 1mm 6mm; font-size: 10pt; }
+  .yaz__cift { break-inside: avoid; }
+  .yaz__alerji { margin-block-start: 3mm; border: 1.5pt solid #000; padding: 2mm 3mm; font-size: 10pt; }
+
+  .yaz__tablo { inline-size: 100%; border-collapse: collapse; margin-block-start: 4mm; font-size: 10pt; }
+  .yaz__tablo th, .yaz__tablo td { border: 1pt solid #000; padding: 2mm; text-align: start; vertical-align: top; }
+  .yaz__tablo th { background: #eee; }
+  .yaz__tablo tr { break-inside: avoid; }
+
+  .yaz__not { font-size: 10pt; margin-block-start: 3mm; }
+  .yaz__imza { display: flex; justify-content: flex-end; margin-block-start: 12mm; }
+  .yaz__imza-kutu {
+    inline-size: 55mm; block-size: 22mm; border: 1pt dashed #666;
+    display: flex; align-items: flex-end; justify-content: center; font-size: 9pt; padding-block-end: 2mm;
+  }
+}

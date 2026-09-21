@@ -52,6 +52,7 @@ export default {
       kok.append(sayfaBas('Panel', {
         alt: 'Stok, hasta ve reçete durumu.',
         eylemler: [
+          btnS('recete', 'Reçete yaz', { class: 'btn btn--birincil', onclick: () => git('/recete/yeni') }),
           btnS('arti', 'İlaç ekle', { class: 'btn', onclick: () => git('/ilaclar') }),
           btnS('hasta', 'Hasta ekle', { class: 'btn', onclick: () => git('/hastalar') }),
         ],
@@ -62,7 +63,7 @@ export default {
         sayacKutusu({ baslik: 'Hasta', deger: hastalar.length, alt: 'kayıtlı', simge: 'hasta', tur: 'vurgu', yol: '/hastalar' }),
         sayacKutusu({ baslik: 'Stok uyarısı', deger: azalan.length + tukenen.length, alt: `${tukenen.length} tükendi · ${azalan.length} azaldı`, simge: 'kutu', tur: (azalan.length + tukenen.length) ? 'uyari' : 'notr', yol: '/ilaclar?suzgec=azalan' }),
         sayacKutusu({ baslik: 'Son kullanma', deger: sktYakin.length + sktGecti.length, alt: `${sktGecti.length} geçti · ${sktYakin.length} yaklaşıyor`, simge: 'takvim', tur: sktGecti.length ? 'hata' : sktYakin.length ? 'uyari' : 'notr', yol: '/ilaclar?suzgec=skt_yakin' }),
-        sayacKutusu({ baslik: 'Bekleyen reçete', deger: bekleyen.length, alt: `${receteler.length} reçete toplam`, simge: 'recete', tur: bekleyen.length ? 'uyari' : 'notr' })));
+        sayacKutusu({ baslik: 'Bekleyen reçete', deger: bekleyen.length, alt: `${receteler.length} reçete toplam`, simge: 'recete', tur: bekleyen.length ? 'uyari' : 'notr', yol: '/receteler?suzgec=acik' })));
 
       const stokSatirlari = [...tukenen, ...azalan].map((i) => ({
         yol: `/ilac/${i.id}`, baslik: ilacEtiketi(i),
