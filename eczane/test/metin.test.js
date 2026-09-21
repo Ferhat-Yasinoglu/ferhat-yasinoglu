@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalize, eslesir, basHarfler, kisalt, paraMetni } from '../app/js/paylasilan/metin.js';
+import { normalize, eslesir, basHarfler, kisalt, paraMetni, telefonNormalize, bicimAyarla, sayiMetni } from '../app/js/paylasilan/metin.js';
 import { simdi } from '../app/js/paylasilan/kimlik.js';
 
 describe('normalize', () => {
@@ -45,6 +45,25 @@ describe('kisalt / paraMetni', () => {
     expect(paraMetni('abc')).toBe('—');
     expect(paraMetni(12.5)).toContain('12,50');
   });
+  it('para birimi ve dil ayarlanabilir', () => {
+    bicimAyarla({ dil: 'tr', kur: 'TRY' });
+    expect(paraMetni(12.5)).toContain('12,50');
+    expect(paraMetni(12.5)).toMatch(/₺|TRY/);
+
+    bicimAyarla({ kur: 'AFN' });
+    expect(paraMetni(12.5)).toMatch(/؋|AFN/);
+
+    bicimAyarla({ dil: 'en', kur: 'USD' });
+    expect(paraMetni(1234.5)).toContain('1,234.50');
+
+    bicimAyarla({ dil: 'tr', kur: 'AFN' });   // varsayılana dön
+  });
+  it('Dari biçiminde de Latin rakam kullanır', () => {
+    bicimAyarla({ dil: 'fa', kur: 'AFN' });
+    expect(sayiMetni(1234)).toMatch(/^[\d.,\s\u00a0]+$/);
+    expect(paraMetni(20)).toMatch(/\d/);
+    bicimAyarla({ dil: 'tr', kur: 'AFN' });
+  });
   it('girilmemiş fiyatı sıfır saymaz', () => {
     expect(paraMetni('')).toBe('—');
     expect(paraMetni(null)).toBe('—');
@@ -63,5 +82,27 @@ describe('simdi', () => {
   it('duvar saatinden geri kalmaz', () => {
     const once = Date.now();
     expect(Date.parse(simdi())).toBeGreaterThanOrEqual(once);
+  });
+});
+
+describe('telefonNormalize', () => {
+  it('baştaki sıfırı ülke koduyla değiştirir', () => {
+    expect(telefonNormalize('0702397511', '93')).toBe('93702397511');
+    expect(telefonNormalize('0532 000 00 01', '90')).toBe('905320000001');
+  });
+  it('artı ile başlayan numarayı olduğu gibi alır', () => {
+    expect(telefonNormalize('+93 702 397 511', '90')).toBe('93702397511');
+    expect(telefonNormalize('0093702397511')).toBe('93702397511');
+  });
+  it('zaten ülke koduyla başlayan numarayı tekrarlamaz', () => {
+    expect(telefonNormalize('93702397511', '93')).toBe('93702397511');
+  });
+  it('ülke kodu yoksa yalnız rakamları verir', () => {
+    expect(telefonNormalize('702-397-511')).toBe('702397511');
+  });
+  it('boş değerde boş döner', () => {
+    expect(telefonNormalize('')).toBe('');
+    expect(telefonNormalize(null, '93')).toBe('');
+    expect(telefonNormalize('abc')).toBe('');
   });
 });

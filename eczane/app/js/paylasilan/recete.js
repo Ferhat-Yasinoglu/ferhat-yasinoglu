@@ -85,10 +85,25 @@ export function bosRecete(ayar = {}, gun = '') {
   return {
     receteNo: '', tarih: gun, tur: 'normal', hastaId: '',
     tani: '', taniKodu: '', protokolNo: '', notlar: '', satirlar: [],
+    olcumler: {},
     doktorAd: ayar.doktorAd || '', doktorUnvan: ayar.doktorUnvan || '',
     diplomaNo: ayar.diplomaNo || '', kurum: ayar.kurum || '',
   };
 }
+
+/** Reçete kâğıdının sol sütunundaki klinik ölçümler.
+ *  [anahtar, Türkçe ad, kısaltma, birim] — kısaltma çıktıda değişmez. */
+export const OLCUMLER = [
+  ['bp', 'Kan basıncı', 'BP', 'mmHg'],
+  ['pr', 'Nabız', 'PR', '/dk'],
+  ['rr', 'Solunum', 'RR', '/dk'],
+  ['bw', 'Kilo', 'BW', 'kg'],
+  ['temp', 'Ateş', 'T', '°C'],
+];
+
+/** Dolu olan ölçümler: çıktıda ve kartta yalnız bunlar gösterilir. */
+export const doluOlcumler = (recete) =>
+  OLCUMLER.filter(([k]) => String(recete?.olcumler?.[k] ?? '').trim() !== '');
 
 export function receteDogrula(recete) {
   const h = {};
@@ -148,4 +163,41 @@ export function receteUyarilari(satirlar, hasta, ilaclar, sec = {}) {
     }
   }
   return u;
+}
+
+/**
+ * Reçetenin düz metin hali: WhatsApp, e-posta ve QR için.
+ * Etiketler dışarıdan verilir — bu modül saf kalır, dili çağıran bilir.
+ */
+export function receteMetni(recete, hasta, ayar = {}, etiket = {}) {
+  const e = {
+    recete: 'Reçete', tarih: 'Tarih', hasta: 'Hasta', yas: 'Yaş', tani: 'Tanı',
+    ilaclar: 'İlaçlar', not: 'Not', doktor: 'Doktor', alerji: 'Alerji',
+    adet: 'kutu', ...etiket,
+  };
+  const satirlar = [];
+  const ekle = (etiketi, deger) => { if (deger) satirlar.push(`${etiketi}: ${deger}`); };
+
+  const doktor = [recete.doktorUnvan, recete.doktorAd].filter(Boolean).join(' ');
+  if (ayar.klinikAdi) satirlar.push(ayar.klinikAdi);
+  if (doktor) satirlar.push(doktor);
+  if (satirlar.length) satirlar.push('');
+
+  ekle(e.recete, recete.receteNo);
+  ekle(e.tarih, String(recete.tarih || '').slice(0, 10));
+  ekle(e.hasta, etiket.hastaAdi || '');
+  ekle(e.tani, [recete.tani, recete.taniKodu].filter(Boolean).join(' · '));
+  if ((hasta?.alerjiler || []).length) ekle(e.alerji, hasta.alerjiler.join(', '));
+
+  if ((recete.satirlar || []).length) {
+    satirlar.push('', e.ilaclar + ':');
+    recete.satirlar.forEach((s, i) => {
+      const parcalar = [`${s.adet} ${e.adet}`, s.kullanim, s.sure].filter(Boolean).join(' · ');
+      satirlar.push(`${i + 1}) ${s.ilacAdi}${parcalar ? ' — ' + parcalar : ''}${s.not ? ` (${s.not})` : ''}`);
+    });
+  }
+  if (recete.notlar) { satirlar.push(''); ekle(e.not, recete.notlar); }
+  if (ayar.telefon) { satirlar.push(''); satirlar.push(ayar.telefon); }
+
+  return satirlar.join('\n').trim();
 }

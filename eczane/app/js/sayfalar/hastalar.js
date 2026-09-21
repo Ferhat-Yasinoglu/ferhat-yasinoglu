@@ -2,13 +2,14 @@
 import { el, temizle, btn, btnS, girdi, secim, metinAlani, alan, rozet, sayfaBas, bosDurum, sirala } from '../cekirdek/dom.js';
 import { CINSIYETLER, KAN_GRUPLARI, SIGORTALAR, tamAd, hastaYasi, hastaAra, bosHasta, hastaDogrula, listeyeCevir, tcGecerli } from '../paylasilan/hasta.js';
 import { basHarfler } from '../paylasilan/metin.js';
+import { t, secenekleriCevir } from '../i18n.js';
 
 /** Hasta rozetleri: alerji ve kronik hastalık tek bakışta görünsün. */
 export function hastaRozetleri(h) {
   const r = [];
-  for (const a of h.alerjiler || []) r.push(rozet(a, 'kirmizi', { title: 'Alerji' }));
+  for (const a of h.alerjiler || []) r.push(rozet(a, 'kirmizi', { title: t('hasta.alerji', 'Alerji') }));
   for (const k of (h.kronikHastaliklar || []).slice(0, 2)) r.push(rozet(k, 'mavi'));
-  if (h.ornek) r.push(rozet('örnek', 'mor'));
+  if (h.ornek) r.push(rozet(t('genel.ornek', 'örnek'), 'mor'));
   return r;
 }
 
@@ -24,34 +25,34 @@ export async function hastaKutusu(ctx, mevcut = null) {
       soyad: girdi({ name: 'soyad', value: deger.soyad, autocomplete: 'off' }),
       kimlikNo: girdi({ name: 'kimlikNo', value: deger.kimlikNo, inputmode: 'numeric', autocomplete: 'off' }),
       dogumTarihi: girdi({ name: 'dogumTarihi', value: String(deger.dogumTarihi || '').slice(0, 10), type: 'date' }),
-      cinsiyet: secim(CINSIYETLER, { name: 'cinsiyet', value: deger.cinsiyet }),
+      cinsiyet: secim(secenekleriCevir(CINSIYETLER, 'cinsiyet'), { name: 'cinsiyet', value: deger.cinsiyet }),
       telefon: girdi({ name: 'telefon', value: deger.telefon, type: 'tel', autocomplete: 'off' }),
       eposta: girdi({ name: 'eposta', value: deger.eposta, type: 'email', autocomplete: 'off' }),
       kanGrubu: secim([['', '—'], ...KAN_GRUPLARI.map((k) => [k, k])], { name: 'kanGrubu', value: deger.kanGrubu }),
-      sigorta: secim(SIGORTALAR, { name: 'sigorta', value: deger.sigorta }),
+      sigorta: secim(secenekleriCevir(SIGORTALAR, 'sigorta'), { name: 'sigorta', value: deger.sigorta }),
       adres: girdi({ name: 'adres', value: deger.adres }),
-      alerjiler: girdi({ name: 'alerjiler', value: (deger.alerjiler || []).join(', '), placeholder: 'Penisilin, aspirin…' }),
-      kronikHastaliklar: girdi({ name: 'kronikHastaliklar', value: (deger.kronikHastaliklar || []).join(', '), placeholder: 'Diyabet, astım…' }),
+      alerjiler: girdi({ name: 'alerjiler', value: (deger.alerjiler || []).join(', '), placeholder: t('hasta.alerji_yer', 'Penisilin, aspirin…') }),
+      kronikHastaliklar: girdi({ name: 'kronikHastaliklar', value: (deger.kronikHastaliklar || []).join(', '), placeholder: t('hasta.kronik_yer', 'Diyabet, astım…') }),
       surekliIlaclar: girdi({ name: 'surekliIlaclar', value: (deger.surekliIlaclar || []).join(', ') }),
       notlar: metinAlani({ name: 'notlar', value: deger.notlar, rows: 2 }),
     };
     govde.append(
       el('div', { class: 'izgara izgara--form' },
-        alan('Ad', g.ad, { gerekli: true, hata: hatalar.ad }),
-        alan('Soyad', g.soyad, { gerekli: true, hata: hatalar.soyad }),
-        alan('Kimlik no', g.kimlikNo, { hata: hatalar.kimlikNo, ipucu: 'Zorunlu değil' }),
-        alan('Doğum tarihi', g.dogumTarihi, { hata: hatalar.dogumTarihi }),
-        alan('Cinsiyet', g.cinsiyet),
-        alan('Telefon', g.telefon),
-        alan('E-posta', g.eposta, { hata: hatalar.eposta }),
-        alan('Kan grubu', g.kanGrubu),
-        alan('Sigorta', g.sigorta)),
-      alan('Adres', g.adres),
+        alan(t('hasta.ad', 'Ad'), g.ad, { gerekli: true, hata: hatalar.ad }),
+        alan(t('hasta.soyad', 'Soyad'), g.soyad, { gerekli: true, hata: hatalar.soyad }),
+        alan(t('hasta.kimlik_no', 'Kimlik no'), g.kimlikNo, { hata: hatalar.kimlikNo, ipucu: t('genel.zorunlu_degil', 'Zorunlu değil') }),
+        alan(t('hasta.dogum', 'Doğum tarihi'), g.dogumTarihi, { hata: hatalar.dogumTarihi }),
+        alan(t('hasta.cinsiyet', 'Cinsiyet'), g.cinsiyet),
+        alan(t('genel.telefon', 'Telefon'), g.telefon),
+        alan(t('genel.eposta', 'E-posta'), g.eposta, { hata: hatalar.eposta }),
+        alan(t('hasta.kan_grubu', 'Kan grubu'), g.kanGrubu),
+        alan(t('hasta.sigorta', 'Sigorta'), g.sigorta)),
+      alan(t('genel.adres', 'Adres'), g.adres),
       el('div', { class: 'izgara izgara--form' },
-        alan('Alerjiler', g.alerjiler, { ipucu: 'Virgülle ayır — reçete yazarken uyarır' }),
-        alan('Kronik hastalıklar', g.kronikHastaliklar, { ipucu: 'Virgülle ayır' }),
-        alan('Sürekli kullandığı ilaçlar', g.surekliIlaclar, { ipucu: 'Virgülle ayır' })),
-      alan('Not', g.notlar));
+        alan(t('hasta.alerjiler', 'Alerjiler'), g.alerjiler, { ipucu: t('hasta.alerji_ipucu', 'Virgülle ayır — reçete yazarken uyarır') }),
+        alan(t('hasta.kronik', 'Kronik hastalıklar'), g.kronikHastaliklar, { ipucu: t('genel.virgul', 'Virgülle ayır') }),
+        alan(t('hasta.surekli_ilaclar', 'Sürekli kullandığı ilaçlar'), g.surekliIlaclar, { ipucu: t('genel.virgul', 'Virgülle ayır') })),
+      alan(t('genel.not', 'Not'), g.notlar));
     govde._oku = () => {
       const v = {};
       for (const x of govde.querySelectorAll('[name]')) v[x.name] = x.value.trim();
@@ -62,11 +63,11 @@ export async function hastaKutusu(ctx, mevcut = null) {
   ciz();
 
   const sonuc = await modal({
-    baslik: mevcut ? 'Hastayı düzenle' : 'Yeni hasta',
+    baslik: mevcut ? t('hasta.duzenle', 'Hastayı düzenle') : t('hasta.yeni', 'Yeni hasta'),
     govde, genis: true,
     dugmeler: [
-      { metin: 'Vazgeç', deger: null },
-      { metin: 'Kaydet', sinif: 'btn--birincil', cb: () => {
+      { metin: t('genel.vazgec', 'Vazgeç'), deger: null },
+      { metin: t('genel.kaydet', 'Kaydet'), sinif: 'btn--birincil', cb: () => {
         const v = { ...deger, ...govde._oku() };
         const hatalar = hastaDogrula(v);
         if (Object.keys(hatalar).length) { deger = v; ciz(hatalar); return false; }
@@ -79,13 +80,13 @@ export async function hastaKutusu(ctx, mevcut = null) {
   // T.C. kimlik algoritması tutmuyorsa engellenmez, yalnız uyarılır:
   // yurt dışındaki hastalarda numara başka biçimde olabilir.
   if (sonuc.kimlikNo && sonuc.kimlikNo.length === 11 && !tcGecerli(sonuc.kimlikNo)) {
-    uyar('Kimlik numarası T.C. algoritmasına uymuyor — yine de kaydedildi.');
+    uyar(t('hasta.tc_uyari', 'Kimlik numarası T.C. algoritmasına uymuyor — yine de kaydedildi.'));
   }
   try {
     const y = await depo.kaydet('hastalar', { ...(mevcut || {}), ...sonuc });
-    basari(mevcut ? 'Hasta güncellendi' : 'Hasta eklendi');
+    basari(mevcut ? t('hasta.guncellendi', 'Hasta güncellendi') : t('hasta.eklendi', 'Hasta eklendi'));
     return y;
-  } catch (e) { hata(e.message || 'Kaydedilemedi'); return null; }
+  } catch (e) { hata(e.message || t('genel.kaydedilemedi', 'Kaydedilemedi')); return null; }
 }
 
 export default {
@@ -94,13 +95,13 @@ export default {
     const { depo, git } = ctx;
     temizle(kok);
 
-    const arama = girdi({ type: 'search', placeholder: 'Ad, soyad, telefon, kimlik no…', style: { flex: '1', minWidth: '220px', inlineSize: 'auto' } });
+    const arama = girdi({ type: 'search', placeholder: t('hasta.ara', 'Ad, soyad, telefon, kimlik no…'), style: { flex: '1', minWidth: '220px', inlineSize: 'auto' } });
     const govde = el('div', {});
 
     kok.append(
-      sayfaBas('Hastalar', {
-        alt: 'Kayıtlar, alerjiler ve kronik hastalıklar.',
-        eylemler: [btnS('arti', 'Hasta ekle', { class: 'btn btn--birincil', onclick: async () => { if (await hastaKutusu(ctx)) listele(); } })],
+      sayfaBas(t('nav.hastalar', 'Hastalar'), {
+        alt: t('hasta.sayfa_alt', 'Kayıtlar, alerjiler ve kronik hastalıklar.'),
+        eylemler: [btnS('arti', t('hasta.ekle', 'Hasta ekle'), { class: 'btn btn--birincil', onclick: async () => { if (await hastaKutusu(ctx)) listele(); } })],
       }),
       el('div', { class: 'satir', style: { marginBlockEnd: 'var(--b-4)' } }, arama),
       govde);
@@ -116,13 +117,13 @@ export default {
 
       if (!hepsi.length) {
         govde.appendChild(bosDurum({
-          simge: 'hasta', baslik: 'Henüz hasta yok',
-          alt: 'İlk hastayı ekle ya da Ayarlar\'dan örnek verileri yükle.',
-          eylem: btnS('arti', 'Hasta ekle', { class: 'btn btn--birincil', onclick: async () => { if (await hastaKutusu(ctx)) listele(); } }),
+          simge: 'hasta', baslik: t('hasta.bos', 'Henüz hasta yok'),
+          alt: t('hasta.bos_alt', 'İlk hastayı ekle ya da Ayarlar\'dan örnek verileri yükle.'),
+          eylem: btnS('arti', t('hasta.ekle', 'Hasta ekle'), { class: 'btn btn--birincil', onclick: async () => { if (await hastaKutusu(ctx)) listele(); } }),
         }));
         return;
       }
-      if (!liste.length) { govde.appendChild(bosDurum({ simge: 'ara', baslik: 'Eşleşen hasta yok', alt: 'Aramayı değiştir.' })); return; }
+      if (!liste.length) { govde.appendChild(bosDurum({ simge: 'ara', baslik: t('hasta.eslesme_yok', 'Eşleşen hasta yok'), alt: t('genel.arama_degistir', 'Aramayı değiştir.') })); return; }
 
       const kap = el('div', { class: 'liste' });
       for (const h of liste) {
@@ -131,10 +132,10 @@ export default {
           el('span', { class: 'avatar' }, basHarfler(tamAd(h))),
           el('div', { class: 'liste__govde' },
             el('div', { class: 'liste__baslik' }, tamAd(h)),
-            el('div', { class: 'liste__alt' }, [yas !== null ? `${yas} yaş` : null, h.telefon, h.kanGrubu].filter(Boolean).join(' · ') || '—'),
+            el('div', { class: 'liste__alt' }, [yas !== null ? t('hasta.yas', '{n} yaş', { n: yas }) : null, h.telefon, h.kanGrubu].filter(Boolean).join(' · ') || '—'),
             el('div', { class: 'satir', style: { gap: '4px', marginBlockStart: '4px' } }, ...hastaRozetleri(h)))));
       }
-      govde.append(el('p', { class: 'kart__alt' }, `${liste.length} hasta${liste.length !== hepsi.length ? ` (toplam ${hepsi.length})` : ''}`), kap);
+      govde.append(el('p', { class: 'kart__alt' }, t('hasta.sayim', '{n} hasta', { n: liste.length }) + (liste.length !== hepsi.length ? ' ' + t('genel.toplam', '(toplam {n})', { n: hepsi.length }) : '')), kap);
       sirala(kap);
     }
 

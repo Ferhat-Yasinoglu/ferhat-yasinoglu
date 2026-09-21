@@ -188,3 +188,6 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--yuze
 .sessiz { color: rgb(var(--metin-3)); }
 .sayi-yazi { font-variant-numeric: tabular-nums; }
 .simge { flex-shrink: 0; }
+
+/* Üst çubuktaki dil seçici: dar tutulur, arama kutusunu ezmesin. */
+.ust__dil { inline-size: auto; min-inline-size: 104px; min-height: 36px; padding-inline: var(--b-2); font-size: var(--f-s); }

@@ -1,12 +1,13 @@
 /* Service worker: uygulama kabuğunu önbelleğe alır, internetsiz çalıştırır.
    Veri IndexedDB'de durduğu için çevrimdışı hiçbir işlev kapanmaz —
    önbellek yalnız dosyalar içindir. Sürüm değişince eski önbellek silinir. */
-const SURUM = 'v1';
+const SURUM = 'v2';
 const ONBELLEK = 'ecz-' + SURUM;
 const KABUK = [
   './', './index.html', './manifest.webmanifest',
   './css/tokenlar.css', './css/bilesenler.css', './css/uygulama.css', './css/yazdirma.css',
-  './js/cekirdek/tema.js', './js/uygulama.js', './img/logo.svg',
+  './js/cekirdek/tema.js', './js/uygulama.js', './js/i18n.js',
+  './i18n/fa.json', './i18n/en.json', './img/logo.svg',
 ];
 
 self.addEventListener('install', (e) => {

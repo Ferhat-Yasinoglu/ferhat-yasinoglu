@@ -7,6 +7,7 @@ import { FORMLAR, formAdi, ilacAra, ilacEtiketi, stokDurumu, sktDurumu, bosIlac,
 import { paraMetni } from '../paylasilan/metin.js';
 import { trTarih } from '../paylasilan/tarih.js';
 import { hareketUygula } from '../depo/stok.js';
+import { t, secenekleriCevir } from '../i18n.js';
 
 const SUZGECLER = [
   ['', 'Tümü'],
@@ -16,17 +17,18 @@ const SUZGECLER = [
   ['skt_gecti', 'Son kullanması geçmişler'],
   ['receteli', 'Yalnız reçeteli'],
 ];
+const suzgecler = () => secenekleriCevir(SUZGECLER, 'suzgec');
 
 /** İlaç rozetleri: stok ve son kullanma durumu tek bakışta. */
 export function ilacRozetleri(i) {
   const r = [];
   const s = stokDurumu(i);
-  if (s === 'yok') r.push(rozet('Stok yok', 'kirmizi'));
-  else if (s === 'kritik') r.push(rozet('Stok az', 'sari'));
+  if (s === 'yok') r.push(rozet(t('ilac.stok_yok', 'Stok yok'), 'kirmizi'));
+  else if (s === 'kritik') r.push(rozet(t('ilac.stok_az', 'Stok az'), 'sari'));
   const k = sktDurumu(i);
-  if (k === 'gecti') r.push(rozet('SKT geçti', 'kirmizi'));
-  else if (k === 'yaklasiyor') r.push(rozet('SKT yakın', 'sari'));
-  if (i.ornek) r.push(rozet('örnek', 'mor'));
+  if (k === 'gecti') r.push(rozet(t('ilac.skt_gecti', 'SKT geçti'), 'kirmizi'));
+  else if (k === 'yaklasiyor') r.push(rozet(t('ilac.skt_yakin', 'SKT yakın'), 'sari'));
+  if (i.ornek) r.push(rozet(t('genel.ornek', 'örnek'), 'mor'));
   return r;
 }
 
@@ -42,7 +44,7 @@ export async function ilacKutusu(ctx, mevcut = null) {
       ad: girdi({ name: 'ad', value: deger.ad, autocomplete: 'off' }),
       barkod: girdi({ name: 'barkod', value: deger.barkod, inputmode: 'numeric', autocomplete: 'off' }),
       etkenMadde: girdi({ name: 'etkenMadde', value: deger.etkenMadde, autocomplete: 'off' }),
-      form: secim(FORMLAR, { name: 'form', value: deger.form }),
+      form: secim(secenekleriCevir(FORMLAR, 'form'), { name: 'form', value: deger.form }),
       doz: girdi({ name: 'doz', value: deger.doz, placeholder: '500 mg' }),
       kutuAdedi: girdi({ name: 'kutuAdedi', value: deger.kutuAdedi, type: 'number', min: 0, step: 1 }),
       stok: girdi({ name: 'stok', value: deger.stok, type: 'number', min: 0, step: 1, disabled: !!mevcut }),
@@ -53,27 +55,27 @@ export async function ilacKutusu(ctx, mevcut = null) {
       uretici: girdi({ name: 'uretici', value: deger.uretici }),
       raf: girdi({ name: 'raf', value: deger.raf, placeholder: 'A1' }),
       notlar: metinAlani({ name: 'notlar', value: deger.notlar, rows: 2 }),
-      receteli: onayKutusu('Reçete ile verilir', { name: 'receteli', checked: !!deger.receteli }),
+      receteli: onayKutusu(t('ilac.receteli', 'Reçete ile verilir'), { name: 'receteli', checked: !!deger.receteli }),
     };
     govde.append(
       el('div', { class: 'izgara izgara--form' },
-        alan('İlaç adı', g.ad, { gerekli: true, hata: hatalar.ad }),
-        alan('Etken madde', g.etkenMadde, { ipucu: 'Muadil bulmakta kullanılır' }),
-        alan('Form', g.form),
-        alan('Doz', g.doz),
-        alan('Kutudaki adet', g.kutuAdedi),
-        alan('Barkod', g.barkod, { hata: hatalar.barkod }),
-        alan(mevcut ? 'Stok (yalnız hareketlerle değişir)' : 'Başlangıç stoğu', g.stok, {
+        alan(t('ilac.ad', 'İlaç adı'), g.ad, { gerekli: true, hata: hatalar.ad }),
+        alan(t('ilac.etken_madde', 'Etken madde'), g.etkenMadde, { ipucu: t('ilac.etken_ipucu', 'Muadil bulmakta kullanılır') }),
+        alan(t('ilac.form', 'Form'), g.form),
+        alan(t('ilac.doz', 'Doz'), g.doz),
+        alan(t('ilac.kutu_adedi', 'Kutudaki adet'), g.kutuAdedi),
+        alan(t('ilac.barkod', 'Barkod'), g.barkod, { hata: hatalar.barkod }),
+        alan(mevcut ? t('ilac.stok_kilitli', 'Stok (yalnız hareketlerle değişir)') : t('ilac.baslangic_stogu', 'Başlangıç stoğu'), g.stok, {
           hata: hatalar.stok,
-          ipucu: mevcut ? 'Mal girişi, sayım ve fire için ilaç kartını aç.' : 'Mal girişi olarak kaydedilir.',
+          ipucu: mevcut ? t('ilac.stok_ipucu', 'Mal girişi, sayım ve fire için ilaç kartını aç.') : t('ilac.baslangic_ipucu', 'Mal girişi olarak kaydedilir.'),
         }),
-        alan('Kritik stok eşiği', g.kritikStok, { hata: hatalar.kritikStok, ipucu: 'Bu sayıya düşünce uyarır' }),
-        alan('Alış fiyatı (₺)', g.alisFiyati, { hata: hatalar.alisFiyati }),
-        alan('Satış fiyatı (₺)', g.satisFiyati, { hata: hatalar.satisFiyati }),
-        alan('Son kullanma tarihi', g.sonKullanma, { hata: hatalar.sonKullanma }),
-        alan('Üretici', g.uretici),
-        alan('Raf', g.raf)),
-      alan('Not', g.notlar),
+        alan(t('ilac.kritik_stok', 'Kritik stok eşiği'), g.kritikStok, { hata: hatalar.kritikStok, ipucu: t('ilac.kritik_ipucu', 'Bu sayıya düşünce uyarır') }),
+        alan(t('ilac.alis', 'Alış fiyatı'), g.alisFiyati, { hata: hatalar.alisFiyati }),
+        alan(t('ilac.satis', 'Satış fiyatı'), g.satisFiyati, { hata: hatalar.satisFiyati }),
+        alan(t('ilac.son_kullanma', 'Son kullanma tarihi'), g.sonKullanma, { hata: hatalar.sonKullanma }),
+        alan(t('ilac.uretici', 'Üretici'), g.uretici),
+        alan(t('ilac.raf', 'Raf'), g.raf)),
+      alan(t('genel.not', 'Not'), g.notlar),
       g.receteli);
     govde._oku = () => {
       const v = {};
@@ -88,11 +90,11 @@ export async function ilacKutusu(ctx, mevcut = null) {
   ciz();
 
   const sonuc = await modal({
-    baslik: mevcut ? 'İlacı düzenle' : 'Yeni ilaç',
+    baslik: mevcut ? t('ilac.duzenle', 'İlacı düzenle') : t('ilac.yeni', 'Yeni ilaç'),
     govde, genis: true,
     dugmeler: [
-      { metin: 'Vazgeç', deger: null },
-      { metin: 'Kaydet', sinif: 'btn--birincil', cb: () => {
+      { metin: t('genel.vazgec', 'Vazgeç'), deger: null },
+      { metin: t('genel.kaydet', 'Kaydet'), sinif: 'btn--birincil', cb: () => {
         const v = { ...deger, ...govde._oku() };
         if (mevcut) v.stok = mevcut.stok; // kilitli alan okunmaz
         const hatalar = ilacDogrula(v);
@@ -106,16 +108,16 @@ export async function ilacKutusu(ctx, mevcut = null) {
   try {
     if (mevcut) {
       const y = await depo.kaydet('ilaclar', { ...mevcut, ...sonuc, stok: mevcut.stok });
-      basari('İlaç güncellendi');
+      basari(t('ilac.guncellendi', 'İlaç güncellendi'));
       return y;
     }
     const baslangic = Math.max(0, Number(sonuc.stok) || 0);
     const y = await depo.kaydet('ilaclar', { ...sonuc, stok: 0 });
-    if (baslangic > 0) await hareketUygula(depo, { ilacId: y.id, tur: 'giris', adet: baslangic, aciklama: 'İlk kayıt' });
-    basari('İlaç eklendi');
+    if (baslangic > 0) await hareketUygula(depo, { ilacId: y.id, tur: 'giris', adet: baslangic, aciklama: t('ilac.ilk_kayit', 'İlk kayıt') });
+    basari(t('ilac.eklendi', 'İlaç eklendi'));
     return depo.al('ilaclar', y.id);
   } catch (e) {
-    hata(e.message || 'Kaydedilemedi');
+    hata(e.message || t('genel.kaydedilemedi', 'Kaydedilemedi'));
     return null;
   }
 }
@@ -126,14 +128,14 @@ export default {
     const { depo, git } = ctx;
     temizle(kok);
 
-    const arama = girdi({ type: 'search', placeholder: 'Ad, barkod, etken madde…', style: { flex: '2', minWidth: '200px', inlineSize: 'auto' } });
-    const suzgec = secim(SUZGECLER, { style: { flex: '1', minWidth: '180px', inlineSize: 'auto' }, value: ctx.sorgu?.suzgec || '' });
+    const arama = girdi({ type: 'search', placeholder: t('ilac.ara', 'Ad, barkod, etken madde…'), style: { flex: '2', minWidth: '200px', inlineSize: 'auto' } });
+    const suzgec = secim(suzgecler(), { style: { flex: '1', minWidth: '180px', inlineSize: 'auto' }, value: ctx.sorgu?.suzgec || '' });
     const govde = el('div', {});
 
     kok.append(
-      sayfaBas('İlaçlar', {
-        alt: 'Stok, fiyat ve son kullanma takibi.',
-        eylemler: [btnS('arti', 'İlaç ekle', { class: 'btn btn--birincil', onclick: async () => { if (await ilacKutusu(ctx)) listele(); } })],
+      sayfaBas(t('nav.ilaclar', 'İlaçlar'), {
+        alt: t('ilac.sayfa_alt', 'Stok, fiyat ve son kullanma takibi.'),
+        eylemler: [btnS('arti', t('ilac.ekle', 'İlaç ekle'), { class: 'btn btn--birincil', onclick: async () => { if (await ilacKutusu(ctx)) listele(); } })],
       }),
       el('div', { class: 'satir', style: { marginBlockEnd: 'var(--b-4)' } }, arama, suzgec),
       govde);
@@ -157,13 +159,13 @@ export default {
 
       if (!hepsi.length) {
         govde.appendChild(bosDurum({
-          simge: 'ilac', baslik: 'Henüz ilaç yok',
-          alt: 'İlk ilacı ekle ya da Ayarlar\'dan örnek verileri yükleyerek uygulamayı dene.',
-          eylem: btnS('arti', 'İlaç ekle', { class: 'btn btn--birincil', onclick: async () => { if (await ilacKutusu(ctx)) listele(); } }),
+          simge: 'ilac', baslik: t('ilac.bos', 'Henüz ilaç yok'),
+          alt: t('ilac.bos_alt', 'İlk ilacı ekle ya da Ayarlar\'dan örnek verileri yükleyerek uygulamayı dene.'),
+          eylem: btnS('arti', t('ilac.ekle', 'İlaç ekle'), { class: 'btn btn--birincil', onclick: async () => { if (await ilacKutusu(ctx)) listele(); } }),
         }));
         return;
       }
-      if (!liste.length) { govde.appendChild(bosDurum({ simge: 'ara', baslik: 'Eşleşen ilaç yok', alt: 'Aramayı ya da süzgeci değiştir.' })); return; }
+      if (!liste.length) { govde.appendChild(bosDurum({ simge: 'ara', baslik: t('ilac.eslesme_yok', 'Eşleşen ilaç yok'), alt: t('genel.suzgec_degistir', 'Aramayı ya da süzgeci değiştir.') })); return; }
 
       const tbody = el('tbody', {});
       for (const i of liste) {
@@ -175,15 +177,15 @@ export default {
           el('td', {}, trTarih(i.sonKullanma)),
           el('td', { class: 'sayi' }, paraMetni(i.satisFiyati)),
           el('td', {}, i.raf || '—'),
-          el('td', { class: 'sayi' }, btn(simge('sag', { boy: 16 }), { class: 'btn btn--kucuk btn--ikon btn--sade', 'aria-label': `${i.ad} kartını aç` }))));
+          el('td', { class: 'sayi' }, btn(simge('sag', { boy: 16 }), { class: 'btn btn--kucuk btn--ikon btn--sade', 'aria-label': t('ilac.karti_ac', '{ad} kartını aç', { ad: i.ad }) }))));
       }
       const tablo = el('div', { class: 'tablo-kap' },
         el('table', { class: 'tablo' },
           el('thead', {}, el('tr', {},
-            el('th', {}, 'İlaç'), el('th', { class: 'sayi' }, 'Stok'), el('th', {}, 'Son kullanma'),
-            el('th', { class: 'sayi' }, 'Satış'), el('th', {}, 'Raf'), el('th', {}, ''))),
+            el('th', {}, t('nav.ilac', 'İlaç')), el('th', { class: 'sayi' }, t('ilac.stok', 'Stok')), el('th', {}, t('ilac.son_kullanma', 'Son kullanma')),
+            el('th', { class: 'sayi' }, t('ilac.satis_kisa', 'Satış')), el('th', {}, t('ilac.raf', 'Raf')), el('th', {}, ''))),
           tbody));
-      govde.append(el('p', { class: 'kart__alt' }, `${liste.length} ilaç${liste.length !== hepsi.length ? ` (toplam ${hepsi.length})` : ''}`), tablo);
+      govde.append(el('p', { class: 'kart__alt' }, t('ilac.sayim', '{n} ilaç', { n: liste.length }) + (liste.length !== hepsi.length ? ' ' + t('genel.toplam', '(toplam {n})', { n: hepsi.length }) : '')), tablo);
       sirala(tbody);
     }
 
