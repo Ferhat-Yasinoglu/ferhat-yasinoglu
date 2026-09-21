@@ -1,62 +1,15 @@
-// Reçete kartı: karşılama, paylaşma ve yazdırma.
-// Karşılama satır satır yürür: her "ver" stoktan düşer ve hareket bırakır,
-// "verilemedi" sebebiyle kapanır, "geri al" iade hareketiyle stoğa döndürür.
-// Reçetedeki durum ile stok geçmişi hep birbirini tutar.
-import { el, temizle, btn, btnS, girdi, secim, metinAlani, alan, kart, rozet, sayfaBas, bosDurum, sirala } from '../cekirdek/dom.js';
+// Reçete kartı: yazılan reçetenin künyesi, gönderilmesi ve yazdırılması.
+// Karşılama yok — hasta ilacını dışarıdaki eczaneden kendi alıyor.
+import { el, temizle, btn, btnS, metinAlani, alan, kart, sayfaBas, bosDurum, sirala } from '../cekirdek/dom.js';
 import { simge } from '../cekirdek/simge.js';
-import {
-  RECETE_TURLERI, VERILMEME_SEBEPLERI, OLCUMLER, doluOlcumler,
-  satirDurumu, satirKalan, satirKapali, receteOzet, DURUM_ADLARI, receteUyarilari, receteMetni,
-} from '../paylasilan/recete.js';
-import { satirVer, satirVerilmedi, satirGeriAl, hepsiniVer } from '../depo/recete.js';
-import { ilacUyarilari, stokDurumu } from '../paylasilan/ilac.js';
+import { RECETE_TURLERI, doluOlcumler, receteUyarilari, receteMetni } from '../paylasilan/recete.js';
 import { tamAd, hastaYasi, alerjiCakismasi } from '../paylasilan/hasta.js';
-import { basHarfler, paraMetni, telefonNormalize } from '../paylasilan/metin.js';
+import { basHarfler, telefonNormalize } from '../paylasilan/metin.js';
 import { trTarih, trTarihSaat } from '../paylasilan/tarih.js';
-import { t, secenekleriCevir, secenekAdi } from '../i18n.js';
+import { t, secenekAdi } from '../i18n.js';
 import { kagitCiz, kagidiYazdir } from '../kagit.js';
-import { hataMetni, uyariMetni } from '../hatalar.js';
+import { uyariMetni } from '../hatalar.js';
 import { kodSatiri } from '../paylasilan/dogrulama.js';
-
-const DURUM_RENGI = { bekliyor: 'sari', kismi: 'mavi', tamamlandi: 'yesil', bos: 'gri' };
-const SATIR_RENGI = { bekliyor: 'gri', kismi: 'mavi', verildi: 'yesil', verilmedi: 'kirmizi' };
-const SATIR_ADI = { bekliyor: 'Bekliyor', kismi: 'Kısmen verildi', verildi: 'Verildi', verilmedi: 'Verilmedi' };
-
-/** Kısmi verme kutusu: kalandan az adet. */
-async function kismiKutusu(ctx, satir) {
-  const kalan = satirKalan(satir);
-  const adet = girdi({ type: 'number', min: 1, max: kalan, step: 1, value: Math.max(1, kalan - 1) });
-  const sonuc = await ctx.modal({
-    baslik: t('recete.kismi', 'Kısmi ver'),
-    govde: el('div', {},
-      el('p', {}, t('recete.kismi_aciklama', '{ad} — {n} adet bekliyor.', { ad: satir.ilacAdi, n: kalan })),
-      alan(t('recete.verilecek_adet', 'Verilecek adet'), adet)),
-    dugmeler: [
-      { metin: t('genel.vazgec', 'Vazgeç'), deger: null },
-      { metin: t('recete.ver', 'Ver'), sinif: 'btn--birincil', cb: () => {
-        const n = Math.floor(Number(adet.value));
-        if (!(n > 0) || n > kalan) { adet.classList.add('input--hata'); adet.focus(); return false; }
-        return n;
-      } },
-    ],
-  });
-  return typeof sonuc === 'number' ? sonuc : null;
-}
-
-/** Verilemedi kutusu: sebep ve not. */
-async function sebepKutusu(ctx, satir) {
-  const sebep = secim(secenekleriCevir(VERILMEME_SEBEPLERI, 'sebep'), { value: 'stok_yok' });
-  const not = metinAlani({ rows: 2, value: satir.not || '', placeholder: t('genel.aciklama_istege_bagli', 'İsteğe bağlı açıklama') });
-  const sonuc = await ctx.modal({
-    baslik: t('recete.verilemedi_baslik', 'Verilemedi olarak işaretle'),
-    govde: el('div', {}, el('p', {}, satir.ilacAdi), alan(t('recete.sebep', 'Sebep'), sebep), alan(t('genel.not', 'Not'), not)),
-    dugmeler: [
-      { metin: t('genel.vazgec', 'Vazgeç'), deger: null },
-      { metin: t('recete.isaretle', 'İşaretle'), sinif: 'btn--birincil', cb: () => ({ sebep: sebep.value, not: not.value.trim() }) },
-    ],
-  });
-  return sonuc && typeof sonuc === 'object' ? sonuc : null;
-}
 
 /** Reçeteyi düz metne çevirir: WhatsApp, e-posta ve panoya kopyalama aynı metni kullanır. */
 function metneCevir(recete, hasta, ayar) {
@@ -118,7 +71,7 @@ async function paylasKutusu(ctx, recete, hasta, ayar) {
 export default {
   baslik: 'Reçete',
   async cizim(kok, ctx) {
-    const { depo, git, basari, hata, uyar, onayla } = ctx;
+    const { depo, git, basari, onayla } = ctx;
     let sira = 0;
 
     async function ciz() {
@@ -141,11 +94,7 @@ export default {
       ]);
       if (benim !== sira) return;
 
-      const ozet = receteOzet(recete);
-      const uyarilar = receteUyarilari(recete.satirlar, hasta, ilaclar, {
-        alerjiBul: alerjiCakismasi,
-        ilacUyarilariBul: (i) => ilacUyarilari(i),
-      });
+      const uyarilar = receteUyarilari(recete.satirlar, hasta, ilaclar, { alerjiBul: alerjiCakismasi });
 
       temizle(kok);
       kok.append(sayfaBas(recete.receteNo || t('nav.recete', 'Reçete'), {
@@ -154,13 +103,9 @@ export default {
         eylemler: [
           btnS('telefon', t('paylas.gonder', 'Gönder'), { class: 'btn btn--birincil', onclick: () => paylasKutusu(ctx, recete, hasta, ayar) }),
           btnS('yazdir', t('genel.yazdir', 'Yazdır'), { class: 'btn', onclick: () => kagidiYazdir({ recete, hasta, ayar }) }),
-          ozet.durum === 'bekliyor' ? btnS('kalem', t('genel.duzenle', 'Düzenle'), { class: 'btn', onclick: () => git(`/recete/${recete.id}/duzenle`) }) : null,
+          btnS('kalem', t('genel.duzenle', 'Düzenle'), { class: 'btn', onclick: () => git(`/recete/${recete.id}/duzenle`) }),
           btnS('cop', t('genel.sil', 'Sil'), { class: 'btn', onclick: async () => {
-            const verilmis = (recete.satirlar || []).some((s) => Number(s.verilenAdet || 0) > 0);
-            const mesaj = verilmis
-              ? t('recete.sil_onay_verilmis', 'Bu reçetede verilmiş ilaçlar var. Reçete silinirse stok geri alınmaz — önce satırları geri alman gerekebilir. Yine de silinsin mi?')
-              : t('recete.sil_onay', 'Reçete silinsin mi?');
-            if (await onayla(mesaj, { tehlikeli: true, evet: t('genel.sil', 'Sil') })) {
+            if (await onayla(t('recete.sil_onay', 'Reçete silinsin mi?'), { tehlikeli: true, evet: t('genel.sil', 'Sil') })) {
               await depo.sil('receteler', recete.id);
               basari(t('recete.silindi', 'Reçete silindi'));
               git('/receteler');
@@ -171,7 +116,7 @@ export default {
 
       /* --- Hasta ve künye --- */
       kok.appendChild(kart({},
-        el('div', { class: 'kart__bas' }, el('h2', {}, t('nav.hasta', 'Hasta')), rozet(t('durum.' + ozet.durum, DURUM_ADLARI[ozet.durum] || ozet.durum), DURUM_RENGI[ozet.durum] || 'gri')),
+        el('div', { class: 'kart__bas' }, el('h2', {}, t('nav.hasta', 'Hasta'))),
         hasta
           ? el('div', { class: 'liste' },
             el('a', { class: 'liste__satir', href: `#/hasta/${hasta.id}` },
@@ -200,103 +145,35 @@ export default {
               el('div', {}, `${recete.olcumler[anahtar]} ${birim}`))))));
       }
 
-      /* --- Karşılama --- */
+      /* --- Reçetedeki ilaçlar --- */
       const tbody = el('tbody', {});
       (recete.satirlar || []).forEach((s, i) => {
-        const durum = satirDurumu(s);
-        const kalan = satirKalan(s);
-        const ilac = ilaclar.find((x) => x.id === s.ilacId);
-        const stok = Number(ilac?.stok ?? 0);
         const satirUyarilari = uyarilar.filter((u) => u.satir === i);
-
-        // Açık satır verilebilir; bir şey verilmiş ya da sebeple kapatılmışsa geri
-        // alınabilir. Kısmi satırda ikisi birden görünür.
-        const acik = !satirKapali(s);
-        const geriAlinabilir = Number(s.verilenAdet || 0) > 0 || !!s.sebep;
-        const eylemler = el('div', { class: 'satir', style: { justifyContent: 'flex-end' } },
-          acik ? btn(t('recete.ver', 'Ver'), {
-            class: 'btn btn--kucuk btn--birincil',
-            disabled: !!ilac && stok <= 0,
-            title: ilac && stok <= 0 ? t('ilac.stok_yok', 'Stokta yok') : t('recete.ver_ipucu', '{n} adet ver', { n: kalan }),
-            onclick: () => calistir(() => satirVer(depo, recete.id, i), t('recete.verildi_bildirim', '{ad}: {n} adet verildi', { ad: s.ilacAdi, n: kalan })),
-          }) : null,
-          acik && kalan > 1 ? btn(t('recete.kismi', 'Kısmi'), { class: 'btn btn--kucuk', onclick: async () => {
-            const n = await kismiKutusu(ctx, s);
-            if (n) calistir(() => satirVer(depo, recete.id, i, n), t('recete.verildi_bildirim', '{ad}: {n} adet verildi', { ad: s.ilacAdi, n }));
-          } }) : null,
-          acik ? btn(t('recete.verilemedi', 'Verilemedi'), { class: 'btn btn--kucuk', onclick: async () => {
-            const r = await sebepKutusu(ctx, s);
-            if (r) calistir(() => satirVerilmedi(depo, recete.id, i, r.sebep, r.not), `${s.ilacAdi}: ${secenekAdi(VERILMEME_SEBEPLERI, r.sebep, 'sebep')}`);
-          } }) : null,
-          geriAlinabilir ? btnS('yenile', t('recete.geri_al', 'Geri al'), { class: 'btn btn--kucuk btn--sade', onclick: async () => {
-            const geri = Number(s.verilenAdet || 0);
-            const mesaj = geri > 0
-              ? t('recete.geri_onay', '{ad}: {n} adet stoğa iade edilecek. Geri alınsın mı?', { ad: s.ilacAdi, n: geri })
-              : t('recete.geri_onay_bos', '{ad} yeniden bekleyene alınsın mı?', { ad: s.ilacAdi });
-            if (await onayla(mesaj, { evet: t('recete.geri_al', 'Geri al') })) {
-              calistir(() => satirGeriAl(depo, recete.id, i), t('recete.geri_alindi', '{ad} geri alındı', { ad: s.ilacAdi }));
-            }
-          } }) : null);
-
         tbody.appendChild(el('tr', {},
+          el('td', { class: 'sayi' }, String(i + 1)),
           el('td', {},
             el('div', { class: 'liste__baslik' }, s.ilacAdi),
-            el('div', { class: 'liste__alt' }, [s.kullanim, s.sure].filter(Boolean).join(' · ') || '—'),
-            s.sebep ? el('div', { class: 'liste__alt' }, `${t('recete.sebep', 'Sebep')}: ${secenekAdi(VERILMEME_SEBEPLERI, s.sebep, 'sebep')}${s.not ? ' · ' + s.not : ''}`) : null,
+            el('div', { class: 'liste__alt' }, [s.kullanim, s.sure].filter(Boolean).join(' \u00b7 ') || '\u2014'),
+            s.not ? el('div', { class: 'liste__alt' }, s.not) : null,
             ...satirUyarilari.map((u) => el('div', { class: 'alan__hata', style: u.tur === 'uyari' ? { color: 'rgb(var(--sari))' } : null }, uyariMetni(u)))),
-          el('td', { class: 'sayi' }, String(s.adet)),
-          el('td', { class: 'sayi' }, `${s.verilenAdet || 0}`),
-          el('td', {}, ilac
-            ? rozet(`${t('ilac.stok', 'Stok')} ${stok}`, stokDurumu(ilac) === 'yok' ? 'kirmizi' : stokDurumu(ilac) === 'kritik' ? 'sari' : 'gri')
-            : el('span', { class: 'sessiz' }, t('recete.kayit_yok', 'kayıt yok'))),
-          el('td', {}, rozet(t('satir.' + durum, SATIR_ADI[durum]), SATIR_RENGI[durum]), s.verilmeTarihi ? el('div', { class: 'liste__alt' }, trTarihSaat(s.verilmeTarihi)) : null),
-          el('td', {}, eylemler)));
+          el('td', { class: 'sayi' }, String(s.adet))));
       });
 
-      const bekleyenVar = (recete.satirlar || []).some((s) => satirKalan(s) > 0);
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' },
-          el('h2', {}, t('recete.karsilama', 'Karşılama')),
-          bekleyenVar
-            ? btnS('onay', t('recete.hepsini_ver', 'Bekleyenlerin hepsini ver'), { class: 'btn btn--kucuk btn--birincil', onclick: async () => {
-              if (!await onayla(t('recete.hepsi_onay', 'Bekleyen bütün satırlar stoktan verilecek. Devam edilsin mi?'), { evet: t('recete.ver', 'Ver') })) return;
-              try {
-                const r = await hepsiniVer(depo, recete.id);
-                if (r.verilen) basari(t('recete.satir_verildi', '{n} satır verildi', { n: r.verilen }));
-                for (const a of r.atlanan) uyar(`${a.ad}: ${hataMetni(a.hata)}`);
-                if (!r.verilen && !r.atlanan.length) uyar(t('recete.verilecek_yok', 'Verilecek satır kalmadı'));
-              } catch (e) { hata(hataMetni(e)); }
-              ciz();
-            } })
-            : rozet(t('recete.karsilama_tamam', 'Karşılama tamam'), 'yesil')),
+          el('h2', {}, t('nav.ilaclar', '\u0130la\u00e7lar')),
+          el('span', { class: 'kart__alt' }, t('recete.ilac_sayisi', '{n} ila\u00e7', { n: (recete.satirlar || []).length }))),
         recete.satirlar?.length
           ? el('div', { class: 'tablo-kap' }, el('table', { class: 'tablo' },
             el('thead', {}, el('tr', {},
-              el('th', {}, t('nav.ilac', 'İlaç')), el('th', { class: 'sayi' }, t('recete.istenen', 'İstenen')), el('th', { class: 'sayi' }, t('recete.verilen', 'Verilen')),
-              el('th', {}, t('ilac.stok', 'Stok')), el('th', {}, t('genel.durum', 'Durum')), el('th', {}, ''))),
+              el('th', { class: 'sayi' }, '#'), el('th', {}, t('nav.ilac', '\u0130la\u00e7')), el('th', { class: 'sayi' }, t('genel.adet', 'Adet')))),
             tbody))
-          : bosDurum({ simge: 'ilac', baslik: t('recete.ilac_yok', 'Reçetede ilaç yok') }),
-        el('p', { class: 'kart__alt', style: { marginBlockStart: 'var(--b-3)' } },
-          t('recete.ozet', '{a}/{b} satır verildi · {c} bekliyor · verilen tutar {d}', {
-            a: ozet.verilen, b: ozet.toplam, c: ozet.bekleyen, d: paraMetni(ozet.tutar),
-          }))));
+          : bosDurum({ simge: 'ilac', baslik: t('recete.ilac_yok', 'Re\u00e7etede ila\u00e7 yok') })));
 
       kok.appendChild(kagitCiz({ recete, hasta, ayar }));
       sirala(tbody);
     }
 
-    /** İşlemi çalıştırır, sonucu bildirir, ekranı tazeler. */
-    async function calistir(is, basariMetni) {
-      try {
-        await is();
-        basari(basariMetni);
-      } catch (e) {
-        hata(hataMetni(e));
-      }
-      ciz();
-    }
-
     await ciz();
-    return depo.dinle('receteler', () => {});
   },
 };

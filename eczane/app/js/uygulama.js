@@ -99,7 +99,7 @@ async function aramaAc(ctx, ilk = '') {
     if (!q) { sonuc.appendChild(el('div', { class: 'liste__satir sessiz' }, t('ara.basla', 'Aramak için yazmaya başla.'))); return; }
     const bulunan = [
       ...ilacAra(ilaclar, q).slice(0, 6).map((i) => ({
-        ad: ilacEtiketi(i), alt: t('ara.ilac', 'İlaç · stok {n}', { n: i.stok ?? 0 }), s: 'ilac', yol: `/ilac/${i.id}`,
+        ad: ilacEtiketi(i), alt: t('ara.ilac', 'İlaç · {e}', { e: i.etkenMadde || '—' }), s: 'ilac', yol: `/ilac/${i.id}`,
       })),
       ...hastaAra(hastalar, q).slice(0, 6).map((h) => ({
         ad: tamAd(h), alt: t('ara.hasta', 'Hasta · {b}', { b: h.telefon || h.kimlikNo || '—' }), s: 'hasta', yol: `/hasta/${h.id}`,
@@ -176,7 +176,11 @@ async function baslat() {
   dilUygula(document);
 
   const ustAra = document.getElementById('ust-ara');
-  const aramaKutusu = girdi({ type: 'search', placeholder: t('ara.yer', 'Ara…  (Ctrl+K)'), 'aria-label': t('ara.etiket', 'Ara'), style: { minHeight: '36px' } });
+  // Telefonda "(Ctrl+K)" ipucu yer kaplamaktan başka bir işe yaramıyor:
+  // klavye yok. Kısayol yalnız fare/klavyeli cihazlarda yazılı.
+  const klavyeli = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const araYer = klavyeli ? t('ara.yer', 'Ara…  (Ctrl+K)') : t('ara.yer_kisa', 'Ara…');
+  const aramaKutusu = girdi({ type: 'search', placeholder: araYer, 'aria-label': t('ara.etiket', 'Ara'), style: { minHeight: '36px' } });
   aramaKutusu.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); aramaAc(ctx, aramaKutusu.value); aramaKutusu.value = ''; }
   });

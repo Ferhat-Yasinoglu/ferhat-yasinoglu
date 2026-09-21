@@ -3,16 +3,32 @@
    karanlık tema gece nöbeti için. Renkler rgb üçlüsü olarak tutulur ki
    rgb(var(--vurgu) / .12) gibi saydamlıklar tek yerden türesin.
    Yalnız mantıksal yön özellikleri kullanılır. */
+
+/* Vazirmatn: Farsça için çizilmiş açık kaynak (OFL) yazı tipi — lisans
+   yazi/OFL.txt. Sistem yazı tipleri Arap harflerini genelde ikinci sınıf
+   taşır: harf yükseklikleri oynar, nokta kümeleri birbirine girer, kalınlık
+   sahtelenir. Tek değişken dosya (111 KB) bütün kalınlıkları taşıyor ve
+   service worker'ın önbelleğinde olduğu için ilk açılıştan sonra çevrimdışı
+   da geliyor. font-display: swap — yazı tipi inene kadar metin görünür kalsın,
+   reçete yazan kimse boş ekrana bakmasın. */
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('../yazi/vazirmatn.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --bg: 244 247 245;
+  --bg: 245 248 246;
   --yuzey: 255 255 255;
-  --yuzey-2: 239 245 242;
-  --yuzey-3: 226 236 231;
+  --yuzey-2: 240 245 242;
+  --yuzey-3: 227 237 232;
   --cizgi: 16 44 34;
 
-  --metin: 15 32 26;
-  --metin-2: 78 98 89;
-  --metin-3: 122 140 131;
+  --metin: 13 30 24;
+  --metin-2: 74 96 86;
+  --metin-3: 122 142 132;
 
   --vurgu: 11 122 90;          /* eczane yeşili */
   --vurgu-2: 8 99 73;
@@ -24,26 +40,33 @@
   --mavi: 30 96 160;
   --mor: 116 74 172;
 
-  --r-kucuk: 7px; --r: 11px; --r-buyuk: 16px; --r-tam: 999px;
+  --r-kucuk: 8px; --r: 12px; --r-buyuk: 18px; --r-tam: 999px;
   --b-1: 4px; --b-2: 8px; --b-3: 12px; --b-4: 16px; --b-5: 24px; --b-6: 32px; --b-8: 48px;
 
-  --golge-1: 0 1px 2px rgb(var(--cizgi) / .08);
-  --golge-2: 0 2px 6px rgb(var(--cizgi) / .09), 0 1px 2px rgb(var(--cizgi) / .06);
-  --golge-3: 0 12px 32px rgb(var(--cizgi) / .16), 0 2px 8px rgb(var(--cizgi) / .08);
-  --kenarlik: 1px solid rgb(var(--cizgi) / .12);
-  --kenarlik-2: 1px solid rgb(var(--cizgi) / .22);
+  /* Gölgeler hafif: yüzeyler kenarlıkla ayrılıyor, gölge yalnız gerçekten
+     yüzen şeylerde (modal, bildirim, açılır) iş görüyor. Her kutuya gölge
+     koymak sayfayı bulanıklaştırıyordu. */
+  --golge-1: 0 1px 2px rgb(var(--cizgi) / .05);
+  --golge-2: 0 4px 14px rgb(var(--cizgi) / .08), 0 1px 3px rgb(var(--cizgi) / .05);
+  --golge-3: 0 20px 48px rgb(var(--cizgi) / .18), 0 4px 12px rgb(var(--cizgi) / .08);
+  --kenarlik: 1px solid rgb(var(--cizgi) / .10);
+  --kenarlik-2: 1px solid rgb(var(--cizgi) / .20);
 
-  --yazi: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --yazi: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Arabic', Tahoma, Roboto, 'Helvetica Neue', Arial, sans-serif;
   --mono: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  --f-xs: .6875rem; --f-s: .8125rem; --f-m: .9375rem; --f-l: 1.0625rem; --f-xl: 1.375rem; --f-2xl: 1.75rem;
+  --f-xs: .6875rem; --f-s: .8125rem; --f-m: .9375rem; --f-l: 1.0625rem; --f-xl: 1.375rem; --f-2xl: 1.875rem;
+  /* Arap yazısı Latin'den daha çok satır aralığı ister: harfler altına ve
+     üstüne uzanıyor, dar satırda birbirine değiyorlar. */
+  --satir-yazi: 1.62;
+  --satir-baslik: 1.3;
 
-  --ust-cubuk: 58px; --alt-cubuk: 64px; --kenar: 232px;
+  --ust-cubuk: 60px; --alt-cubuk: 64px; --kenar: 236px; --icerik-en: 1240px;
   --gecis: 160ms cubic-bezier(.2, .6, .2, 1);
   color-scheme: light;
 }
 
 :root[data-tema="karanlik"] {
-  --bg: 11 18 16;
+  --bg: 10 17 15;
   --yuzey: 18 27 24;
   --yuzey-2: 25 36 32;
   --yuzey-3: 34 48 42;
@@ -64,9 +87,9 @@
   --mor: 180 150 220;
 
   --golge-1: 0 1px 2px rgb(0 0 0 / .4);
-  --golge-2: 0 2px 8px rgb(0 0 0 / .45);
-  --golge-3: 0 14px 36px rgb(0 0 0 / .55), 0 2px 8px rgb(0 0 0 / .4);
-  --kenarlik: 1px solid rgb(var(--cizgi) / .16);
-  --kenarlik-2: 1px solid rgb(var(--cizgi) / .28);
+  --golge-2: 0 4px 16px rgb(0 0 0 / .45);
+  --golge-3: 0 20px 48px rgb(0 0 0 / .6), 0 4px 12px rgb(0 0 0 / .4);
+  --kenarlik: 1px solid rgb(var(--cizgi) / .14);
+  --kenarlik-2: 1px solid rgb(var(--cizgi) / .26);
   color-scheme: dark;
 }

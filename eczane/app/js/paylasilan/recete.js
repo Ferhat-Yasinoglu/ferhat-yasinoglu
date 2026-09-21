@@ -1,6 +1,10 @@
-// Reçete alanı: satır durumları ve reçetenin toplam durumu.
+// Reçete alanı: reçete türleri, satırlar, numara üretimi, klinik uyarılar.
 // Reçete başlığındaki alanlar (numara, tanı, doktor bilgileri…) sema tarafında
-// tutulur; burada yalnız "ne verildi, ne verilmedi" mantığı yaşar.
+// tutulur.
+//
+// Burada "karşılama" (ne verildi, ne verilmedi) yok: hasta ilacını dışarıdaki
+// eczaneden kendi alıyor, hekim neyin verildiğini zaten bilemez. Reçete
+// yazılır, kâğıda basılır, gönderilir — hikâye burada biter.
 
 export const RECETE_TURLERI = [
   ['normal', 'Normal reçete'], ['kirmizi', 'Kırmızı reçete'], ['yesil', 'Yeşil reçete'],
@@ -8,50 +12,14 @@ export const RECETE_TURLERI = [
 ];
 export const receteTuruAdi = (k) => RECETE_TURLERI.find(([v]) => v === k)?.[1] || k;
 
-/** Bir satır neden verilmemiş olabilir? Karşılama ekranında seçilir. */
-export const VERILMEME_SEBEPLERI = [
-  ['stok_yok', 'Stokta yok'], ['hasta_istemedi', 'Hasta almak istemedi'],
-  ['muadil', 'Muadili verildi'], ['sonra', 'Sonra gelecek'], ['diger', 'Diğer'],
-];
-export const sebepAdi = (k) => VERILMEME_SEBEPLERI.find(([v]) => v === k)?.[1] || k;
-
-/** 'bekliyor' | 'kismi' | 'verildi' | 'verilmedi' — satırın kendi durumu. */
-export function satirDurumu(satir) {
-  const istenen = Math.max(0, Number(satir?.adet ?? 0));
-  const verilen = Math.max(0, Number(satir?.verilenAdet ?? 0));
-  if (verilen <= 0) return satir?.sebep ? 'verilmedi' : 'bekliyor';
-  if (istenen > 0 && verilen < istenen) return 'kismi';
-  return 'verildi';
-}
-
-/** Satır kapandı mı? Kapalı satır artık bekleyen iş değildir. */
-export const satirKapali = (satir) => ['verildi', 'verilmedi'].includes(satirDurumu(satir));
-
-/** 'bos' | 'bekliyor' | 'kismi' | 'tamamlandi' — reçetenin bütünü. */
-export function durumHesapla(satirlar) {
-  const s = Array.isArray(satirlar) ? satirlar : [];
-  if (!s.length) return 'bos';
-  if (s.every(satirKapali)) return 'tamamlandi';
-  if (s.some((x) => satirDurumu(x) !== 'bekliyor')) return 'kismi';
-  return 'bekliyor';
-}
-
-export const DURUM_ADLARI = {
-  bos: 'Boş', bekliyor: 'Bekliyor', kismi: 'Kısmen verildi', tamamlandi: 'Tamamlandı',
-};
-
-/** Listelerde ve panelde gösterilen sayılar. */
+/** Listelerde gösterilen sayılar. */
 export function receteOzet(recete) {
-  const satirlar = recete?.satirlar || [];
-  const verilen = satirlar.filter((s) => satirDurumu(s) === 'verildi').length;
-  const bekleyen = satirlar.filter((s) => !satirKapali(s)).length;
-  const tutar = satirlar.reduce((t, s) => t + (Number(s.verilenAdet ?? 0) * Number(s.birimFiyat ?? 0)), 0);
-  return { toplam: satirlar.length, verilen, bekleyen, tutar, durum: durumHesapla(satirlar) };
+  return { toplam: (recete?.satirlar || []).length };
 }
 
 /** Boş reçete satırı. */
 export function bosSatir() {
-  return { ilacId: '', ilacAdi: '', adet: 1, kullanim: '', sure: '', birimFiyat: 0, verilenAdet: 0, sebep: '', verilmeTarihi: '', not: '' };
+  return { ilacId: '', ilacAdi: '', adet: 1, kullanim: '', sure: '', not: '' };
 }
 
 /** Gün içinde artan reçete numarası: "2026-09-20-03". Aynı güne ait en büyük
@@ -72,11 +40,6 @@ export const KULLANIM_ONERILERI = [
   'Günde 1×1', 'Günde 2×1', 'Günde 3×1', 'Günde 1×2', 'Günde 2×2',
   '12 saatte bir', '8 saatte bir', 'Aç karnına', 'Tok karnına', 'Gerektikçe',
 ];
-
-/** Satırda daha kaç adet verilmeyi bekliyor? */
-export function satirKalan(satir) {
-  return Math.max(0, Number(satir?.adet ?? 0) - Number(satir?.verilenAdet ?? 0));
-}
 
 /** Yeni reçete iskeleti. Doktor bilgileri ayarlardan gelir ve reçeteye
  *  mühürlenir: ayarlar sonradan değişse bile eski reçete yazıldığı günkü
@@ -122,7 +85,7 @@ export function receteDogrula(recete) {
  * (reçetenin tamamına ait uyarılarda -1).
  */
 export function receteUyarilari(satirlar, hasta, ilaclar, sec = {}) {
-  const { alerjiBul, ilacUyarilariBul } = sec;
+  const { alerjiBul } = sec;
   const u = [];
   const bul = (id) => (ilaclar || []).find((x) => x.id === id);
   const etkenSayaci = new Map();
@@ -134,21 +97,6 @@ export function receteUyarilari(satirlar, hasta, ilaclar, sec = {}) {
     if (alerjiBul && hasta) {
       const a = alerjiBul(hasta, ilac);
       if (a) u.push({ satir: i, tur: 'hata', kod: 'alerji', veri: { ad: ilac.ad, a } });
-    }
-
-    if (ilacUyarilariBul) {
-      for (const x of ilacUyarilariBul(ilac)) {
-        // Stok uyarısı istenen adede göre yeniden değerlendirilir: 3 kutu
-        // isteniyor ve 2 kutu varsa bu "stok az" değil, karşılanamayan satırdır.
-        if (x.kod === 'stok_kritik') continue;
-        u.push({ satir: i, tur: x.tur, kod: x.kod, veri: { ...x.veri, ad: ilac.ad } });
-      }
-    }
-
-    const istenen = Number(s.adet ?? 0);
-    const stok = Number(ilac.stok ?? 0);
-    if (stok > 0 && istenen > stok) {
-      u.push({ satir: i, tur: 'uyari', kod: 'stok_yetersiz', veri: { ad: ilac.ad, istenen, mevcut: stok } });
     }
 
     const etken = String(ilac.etkenMadde || '').trim().toLocaleLowerCase('tr');

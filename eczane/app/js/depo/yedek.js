@@ -1,7 +1,7 @@
 // Yedek: bütün veriyi tek JSON dosyasına yazar, geri okur.
 // Veriler yalnız bu cihazda durduğu için yedek tek güvencedir; uygulama
 // belirli aralıklarla hatırlatır. Dosya hasta bilgisi içerir, arayüz bunu söyler.
-import { KOLEKSIYONLAR, SEMA_SURUMU, YEDEKLENEN } from './sema.js';
+import { KOLEKSIYONLAR, DUSEN_KOLEKSIYONLAR, SEMA_SURUMU, YEDEKLENEN } from './sema.js';
 import { simdi } from '../paylasilan/kimlik.js';
 
 export const YEDEK_BICIMI = 'eczane-yedek';
@@ -28,6 +28,10 @@ export function yedekDogrula(belge) {
     if (!belge.koleksiyonlar || typeof belge.koleksiyonlar !== 'object') hatalar.push('Yedekte koleksiyon yok.');
     else {
       for (const ad of Object.keys(belge.koleksiyonlar)) {
+        // Uygulamadan düşmüş koleksiyonlar (stok hareketleri) eski yedeklerde
+        // var: hata değil, sessizce atlanır. Yoksa doktorun elindeki yedek
+        // "bilinmeyen koleksiyon" diye reddedilirdi.
+        if (DUSEN_KOLEKSIYONLAR.includes(ad)) continue;
         if (!KOLEKSIYONLAR[ad]) hatalar.push(`Bilinmeyen koleksiyon: ${ad}`);
         else if (!Array.isArray(belge.koleksiyonlar[ad])) hatalar.push(`${ad} bir liste değil.`);
       }
@@ -47,6 +51,7 @@ export async function iceAktar(depo, belge, { strateji = 'birlestir', prova = fa
 
   const rapor = {};
   for (const [ad, kayitlar] of Object.entries(belge.koleksiyonlar)) {
+    if (DUSEN_KOLEKSIYONLAR.includes(ad)) continue;
     const r = { eklendi: 0, guncellendi: 0, atlandi: 0 };
     if (!prova && strateji === 'degistir') await depo.kaliciSil(ad);
     for (const k of kayitlar) {

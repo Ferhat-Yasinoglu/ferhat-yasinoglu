@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Gerçek tarayıcıda uçtan uca deneme: `npm run deneme`.
-// Uygulamayı açar, örnek veriyi yükler, ilaç ekler, stok işletir, arar, yedek indirir;
+// Uygulamayı açar, örnek veriyi yükler, ilaç ekler, reçete yazar, arar, yedek indirir;
 // hiçbir adımda konsola hata düşmediğini doğrular. Ekran görüntüleri --ekran <klasör>.
 //
 // Playwright bu projenin bağımlılığı değil (tarayıcı indirmesi ağır): kurulu
@@ -80,23 +80,16 @@ const ilacSayisi = await sayfa.locator('.tablo tbody tr').count();
 if (ilacSayisi !== 8) throw new Error(`8 ilaç bekleniyordu, ${ilacSayisi} var`);
 ok(`ilaç listesi ${ilacSayisi} satır gösteriyor`);
 
-// --- Rozetler: stok ve SKT uyarıları göründü mü?
-const rozetler = await sayfa.locator('.tablo tbody .rozet').allTextContents();
-for (const beklenen of [T('ilac.stok_yok'), T('ilac.stok_az'), T('ilac.skt_gecti'), T('ilac.skt_yakin')]) {
-  if (!rozetler.includes(beklenen)) throw new Error(`"${beklenen}" rozeti yok. Görülenler: ${rozetler.join(', ')}`);
-}
-ok('stok ve son kullanma rozetleri doğru: ' + [...new Set(rozetler)].join(', '));
-
 // --- Arama: etken maddeden muadil bulma
 await sayfa.fill('#sayfa input[type=search]', 'amoksisilin');
 await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 2);
 ok('etken madde araması 2 muadili buldu');
 await sayfa.fill('#sayfa input[type=search]', '');
 
-// --- Süzgeç
-await sayfa.selectOption('#sayfa select', { label: T('suzgec.skt_gecti') });
-await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 1);
-ok('SKT geçmişler süzgeci 1 ilaç bıraktı');
+// --- Süzgeç: yalnız reçeteli ilaçlar
+await sayfa.selectOption('#sayfa select', { label: T('suzgec.receteli') });
+await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 6);
+ok('"yalnız reçeteli" süzgeci 6 ilaç bıraktı');
 await sayfa.selectOption('#sayfa select', { label: T('suzgec.') });
 await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 8);
 
@@ -108,8 +101,6 @@ await sayfa.waitForSelector('.modal');
 await sayfa.fill('.modal input[name=ad]', 'Aferin');
 await sayfa.fill('.modal input[name=etkenMadde]', 'Parasetamol + Klorfeniramin');
 await sayfa.fill('.modal input[name=doz]', '500 mg');
-await sayfa.fill('.modal input[name=stok]', '12');
-await sayfa.fill('.modal input[name=satisFiyati]', '36.9');
 await sayfa.fill('.modal input[name=barkod]', '123');           // bilerek geçersiz
 await sayfa.click(`.modal button:has-text("${T('genel.kaydet')}")`);
 await sayfa.waitForSelector('.alan__hata');
@@ -121,39 +112,15 @@ await sayfa.click(`.modal button:has-text("${T('genel.kaydet')}")`);
 await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 9);
 ok('yeni ilaç eklendi, liste 9 satır');
 
-// --- İlaç kartı ve stok işlemi
+// --- İlaç kartı: künye doğru mu?
 await sayfa.click('.tablo tbody tr:has-text("Aferin")');
 await sayfa.waitForSelector('h1:has-text("Aferin")');
-const stokMetni = () => sayfa.textContent(`.kart .izgara div:has(.alan__etiket:text-is("${T('ilac.stok')}")) strong`);
-if ((await stokMetni()).trim() !== '12') throw new Error('başlangıç stoğu 12 değil: ' + await stokMetni());
-ok('başlangıç stoğu mal girişi olarak işlendi (12)');
-
-await sayfa.click(`button:has-text("${T('stok.islem')}")`);
-await sayfa.waitForSelector('.modal');
-await sayfa.selectOption('.modal select[name=tur]', { label: T('hareket.fire') });
-await sayfa.fill('.modal input[name=adet]', '3');
-await sayfa.fill('.modal textarea[name=aciklama]', 'kutu ezildi');
-await sayfa.click(`.modal button:has-text("${T('genel.uygula')}")`);
-await sayfa.waitForFunction((etiket) => {
-  const h = [...document.querySelectorAll('.alan__etiket')].find((x) => x.textContent === etiket);
-  return h?.nextElementSibling?.textContent.trim() === '9';
-}, T('ilac.stok'));
-ok('fire işlemi stoğu 12 → 9 yaptı');
-
-const hareketSatiri = await sayfa.textContent('.tablo tbody tr');
-if (!hareketSatiri.includes('kutu ezildi') || !hareketSatiri.includes('-3')) throw new Error('hareket kaydı eksik: ' + hareketSatiri);
-ok('hareket geçmişine "-3 · kutu ezildi" yazıldı');
-
-// --- Stok yetersizliği engelleniyor mu?
-await sayfa.click(`button:has-text("${T('stok.islem')}")`);
-await sayfa.selectOption('.modal select[name=tur]', { label: T('hareket.sayim') });
-await sayfa.fill('.modal input[name=adet]', '4');
-await sayfa.click(`.modal button:has-text("${T('genel.uygula')}")`);
-await sayfa.waitForFunction((etiket) => {
-  const h = [...document.querySelectorAll('.alan__etiket')].find((x) => x.textContent === etiket);
-  return h?.nextElementSibling?.textContent.trim() === '4';
-}, T('ilac.stok'));
-ok('sayım düzeltmesi stoğu 4\'e eşitledi');
+const kunyeMetni = await sayfa.textContent(`.kart:has(h2:text-is("${T('genel.kunye')}"))`);
+for (const beklenen of ['Parasetamol + Klorfeniramin', '500 mg', '8699546010999']) {
+  if (!kunyeMetni.includes(beklenen)) throw new Error(`künyede "${beklenen}" yok`);
+}
+if (/[0-9]+\s*(عدد|بسته)/.test(kunyeMetni)) throw new Error('künyede stok kalıntısı var');
+ok('ilaç künyesi eksiksiz: etken madde, doz, barkod — stok alanı yok');
 await resim(sayfa, '2-ilac-karti.png');
 
 // --- Muadil bağlantısı
@@ -179,8 +146,8 @@ await sayfa.click('#kenar-menu a[href="#/ayarlar"]');
 await sayfa.waitForSelector('input[name=doktorAd]');
 // Örnek veriyle gelen antetin üstüne denemenin kendi bilgileri yazılır.
 await sayfa.fill('input[name=doktorUnvan]', 'الحاج داکتر');
-await sayfa.fill('input[name=doktorAd]', 'فدامحمد «احسان»');
-await sayfa.fill('input[name=doktorAdAlt]', 'Dr. Fida Mohammad (Ehsan)');
+await sayfa.fill('input[name=doktorAd]', 'نمونه احمدی');
+await sayfa.fill('input[name=doktorAdAlt]', 'Dr. Nemuna Ahmadi');
 await sayfa.fill('input[name=uzmanlik]', 'معالج امراض داخله عمومی و اطفال');
 await sayfa.fill('textarea[name=slogan]', 'سلامتی شما\nهدف ماست');
 await sayfa.fill('input[name=klinikAdi]', 'Deneme Eczanesi');
@@ -188,9 +155,9 @@ await sayfa.fill('textarea[name=hizmetler]', 'ثبت و تشخیص گراف بر
 await sayfa.fill('input[name=hizmetAlanlari]', '(قلب ، شش ، معده ، گرده)');
 await sayfa.fill('input[name=deneyim]', 'سابقه کاری : شفاخانه نمونه');
 await sayfa.fill('input[name=ayakEtiketleri]', 'قلب, شش, معده, اطفال');
-await sayfa.fill('input[name=telefon]', '0791448001');
+await sayfa.fill('input[name=telefon]', '0700000000');
 await sayfa.fill('input[name=ulkeKodu]', '93');
-await sayfa.fill('input[name=adres]', 'کندز، افغانستان');
+await sayfa.fill('input[name=adres]', 'کابل، افغانستان');
 await sayfa.click(`button:has-text("${T('ayar.antet_kaydet')}")`);
 await sayfa.waitForSelector('.bildirim--basari');
 ok('reçete anteti kaydedildi (ad, ünvan şeridi, slogan, hizmetler, sabıka, rozetler, iletişim)');
@@ -235,76 +202,40 @@ await resim(sayfa, '7-recete-yaz.png', { fullPage: true });
 
 // --- Kaydet
 await sayfa.click(`button:has-text("${T('recete.kaydet')}")`);
-await sayfa.waitForSelector(`h2:has-text("${T('recete.karsilama')}")`);
+// Kaydedilen reçetenin sayfasına geçilmesini bekle: "İlaçlar" başlığı reçete
+// yazma ekranında da var, tek başına geçişi kanıtlamıyor.
+await sayfa.waitForURL(/#\/recete\/rec_/);
+await sayfa.waitForSelector(`.kart:has(h2:text-is("${T('nav.ilaclar')}")) .tablo tbody tr`);
 const receteNo = (await sayfa.textContent('h1')).trim();
 if (!/^\d{4}-\d{2}-\d{2}-\d{2}$/.test(receteNo)) throw new Error('reçete numarası beklenen biçimde değil: ' + receteNo);
 ok('reçete kaydedildi, numara kendiliğinden verildi: ' + receteNo);
 
-// --- Karşılama: bir satır verilir, stoktan düşer.
-// Stok yan sekmeden okunur: reçete sayfasından ayrılmadan bakılır ve aynı
-// IndexedDB'yi iki sekmenin paylaştığı da böylece doğrulanmış olur.
-const yanSekmede = async (hash, is) => {
-  const yan = await baglam.newPage();
-  await yan.goto(KOK + hash, { waitUntil: 'networkidle' });
-  const sonuc = await is(yan);
-  await yan.close();
-  return sonuc;
-};
-const stokOku = (ad) => yanSekmede('#/ilaclar', async (yan) => {
-  const secici = `.tablo tbody tr:has-text("${ad}") strong`;
-  await yan.waitForSelector(secici);
-  return Number((await yan.textContent(secici)).trim());
-});
+// --- Reçete kartı: satırlar okunur halde, karşılama düğmesi yok
+const ilacTablosu = await sayfa.textContent(`.kart:has(h2:text-is("${T('nav.ilaclar')}"))`);
+for (const beklenen of ['Nurofen 400 mg Tablet', 'Parol 500 mg Tablet']) {
+  if (!ilacTablosu.includes(beklenen)) throw new Error(`reçete tablosunda "${beklenen}" yok`);
+}
+if (/\bnull\b/.test(ilacTablosu)) throw new Error('reçete tablosuna düz metin "null" sızmış');
+ok('reçetedeki iki ilaç adet ve kullanımıyla listelendi');
 
-const nurofenOnce = await stokOku('Nurofen');
-await sayfa.click(`.tablo tbody tr:has-text("Nurofen") button:text-is("${T('recete.ver')}")`);
-await sayfa.waitForSelector('.tablo tbody tr:has-text("Nurofen") .rozet--yesil');
-const nurofenSonra = await stokOku('Nurofen');
-if (nurofenSonra !== nurofenOnce - 2) throw new Error(`stok ${nurofenOnce} → ${nurofenSonra}, 2 düşmeliydi`);
-ok(`satır verildi, stok ${nurofenOnce} → ${nurofenSonra} düştü`);
-
-// --- Stok hareketi reçeteye bağlandı mı?
-const sonHareket = await yanSekmede('#/ilaclar', async (yan) => {
-  await yan.click('.tablo tbody tr:has-text("Nurofen")');
-  await yan.waitForSelector(`h2:has-text("${T('stok.hareketler')}")`);
-  return yan.textContent('.tablo tbody tr');
-});
-if (!sonHareket.includes(receteNo) || !sonHareket.includes('-2')) throw new Error('hareket reçeteye bağlanmadı: ' + sonHareket);
-ok('stok hareketi reçete numarasıyla kaydedildi');
-
-// --- İkinci satır verilemedi
-await sayfa.click(`.tablo tbody tr:has-text("Parol") button:has-text("${T('recete.verilemedi')}")`);
-await sayfa.selectOption('.modal select', { label: T('sebep.hasta_istemedi') });
-await sayfa.click(`.modal button:has-text("${T('recete.isaretle')}")`);
-await sayfa.waitForSelector('.tablo tbody tr:has-text("Parol") .rozet--kirmizi');
-await sayfa.waitForSelector('.kart__bas .rozet--yesil');
-ok('ikinci satır sebebiyle kapandı, reçete "Tamamlandı" oldu');
-
-// --- Kapanmış satırın düğmeleri ve tabloya sızan metin
-const parolSatiri = sayfa.locator('.tablo tbody tr:has-text("Parol")');
-if (await parolSatiri.locator(`button:text-is("${T('recete.ver')}")`).count()) throw new Error('kapanmış satırda hâlâ "Ver" düğmesi var');
-if (!await parolSatiri.locator(`button:has-text("${T('recete.geri_al')}")`).count()) throw new Error('kapanmış satırda "Geri al" düğmesi yok');
-const karsilamaMetni = await sayfa.textContent(`.kart:has(h2:text-is("${T('recete.karsilama')}"))`);
-if (/\bnull\b/.test(karsilamaMetni)) throw new Error('karşılama tablosuna düz metin "null" sızmış');
-ok('kapanmış satır yalnız "Geri al" gösteriyor, tabloya metin sızmıyor');
-await resim(sayfa, '8-recete-karsilama.png', { fullPage: true });
-
-// --- Geri alma stoğu iade eder
-await sayfa.click(`.tablo tbody tr:has-text("Nurofen") button:has-text("${T('recete.geri_al')}")`);
-await sayfa.click(`.ortu button:has-text("${T('recete.geri_al')}")`);
-await sayfa.waitForSelector('.tablo tbody tr:has-text("Nurofen") .rozet--gri');
-const nurofenGeri = await stokOku('Nurofen');
-if (nurofenGeri !== nurofenOnce) throw new Error(`iade sonrası stok ${nurofenGeri}, ${nurofenOnce} olmalıydı`);
-ok(`geri alma stoğu iade etti: ${nurofenSonra} → ${nurofenGeri}`);
+// Karşılamadan kalan hiçbir şey olmamalı: satır tablosunda düğme yok,
+// sözlükte de "ver / verilemedi / geri al" anahtarları kalmadı.
+const satirDugmesi = await sayfa.locator(`.kart:has(h2:text-is("${T('nav.ilaclar')}")) .tablo button`).count();
+if (satirDugmesi) throw new Error(`reçete satırlarında ${satirDugmesi} düğme kaldı`);
+for (const anahtar of ['recete.ver', 'recete.verilemedi', 'recete.geri_al', 'stok.hareketler', 'ilac.stok']) {
+  if (anahtar in sozluk) throw new Error(`sözlükte karşılama/stok anahtarı kaldı: ${anahtar}`);
+}
+ok('karşılama yok: satır tablosunda düğme, sözlükte stok anahtarı kalmamış');
+await resim(sayfa, '8-recete-karti.png', { fullPage: true });
 
 // --- Yazdırma alanı: ekranda gizli, içeriği eksiksiz
 const yazdirMetni = await sayfa.textContent('.yazdir-alan');
 const bolumler = [
-  ['doktor adı', 'فدامحمد «احسان»'], ['latin ad', 'Dr. Fida Mohammad (Ehsan)'],
+  ['doktor adı', 'نمونه احمدی'], ['latin ad', 'Dr. Nemuna Ahmadi'],
   ['ünvan şeridi', 'معالج امراض داخله'], ['slogan', 'سلامتی شما'],
   ['hizmet', '(ECG)'], ['ilgi alanları', '(قلب ، شش'], ['sabıka', 'سابقه کاری'],
   ['hasta', 'Zeynep Kaya'], ['tanı', 'J06.9'], ['ilaç', 'Nurofen'],
-  ['alerji', T('hasta.alerji')], ['adres', 'کندز'], ['telefon', '0791448001'],
+  ['alerji', T('hasta.alerji')], ['adres', 'کابل'], ['telefon', '0700000000'],
   ['Clinical başlığı', 'Clinical'], ['ölçüm etiketi', 'BP :'],
 ];
 for (const [ad, beklenen] of bolumler) {
@@ -347,7 +278,7 @@ const bosKagit = await sayfa.evaluate(async () => {
   };
 });
 if (bosKagit.cizgi < 8) throw new Error(`boş kâğıtta doldurma çizgisi eksik: ${bosKagit.cizgi}`);
-for (const beklenen of ['فدامحمد «احسان»', 'سلامتی شما', 'سابقه کاری', 'Clinical', 'BP :', '℞']) {
+for (const beklenen of ['نمونه احمدی', 'سلامتی شما', 'سابقه کاری', 'Clinical', 'BP :', '℞']) {
   if (!bosKagit.metin.includes(beklenen)) throw new Error(`boş kâğıtta "${beklenen}" yok`);
 }
 if (bosKagit.metin.includes('Zeynep')) throw new Error('boş kâğıtta hasta bilgisi sızmış');
@@ -430,9 +361,9 @@ ok('adet 2 → 20 yapılan reçete yakalandı: kod tutmadı');
 await sayfa.click('#kenar-menu a[href="#/receteler"]');
 await sayfa.waitForSelector(`h1:has-text("${T('nav.receteler')}")`);
 await sayfa.waitForSelector('.tablo tbody tr:has-text("Zeynep Kaya")');
-await sayfa.selectOption('#sayfa select', { label: T('recete.suzgec.acik') });
+await sayfa.selectOption('#sayfa select', { label: T('recete.suzgec.bugun') });
 await sayfa.waitForFunction(() => document.querySelectorAll('.tablo tbody tr').length === 1);
-ok('reçete listede göründü, "bekleyen ve kısmi" süzgeci onu buldu');
+ok('reçete listede göründü, "bugün yazılanlar" süzgeci onu buldu');
 
 // --- Panel dolu haliyle
 await sayfa.click('#kenar-menu a[href="#/panel"]');
@@ -459,7 +390,8 @@ const belge = JSON.parse(await readFile(yol, 'utf8'));
 if (belge.bicim !== 'eczane-yedek' || belge.koleksiyonlar.ilaclar.length !== 9) {
   throw new Error('yedek içeriği beklenmedik: ' + JSON.stringify(Object.keys(belge)));
 }
-ok(`yedek indirildi (${dosya.suggestedFilename()}): 9 ilaç, ${belge.koleksiyonlar.hastalar.length} hasta, ${belge.koleksiyonlar.hareketler.length} hareket`);
+ok(`yedek indirildi (${dosya.suggestedFilename()}): 9 ilaç, ${belge.koleksiyonlar.hastalar.length} hasta, ${belge.koleksiyonlar.receteler.length} reçete`);
+if ('hareketler' in belge.koleksiyonlar) throw new Error('yedekte stok hareketleri koleksiyonu duruyor');
 
 // --- Arayüz tek dilli: Farsça ve sağdan sola
 const yon = await sayfa.evaluate(() => [document.documentElement.dir, document.documentElement.lang]);
@@ -471,8 +403,8 @@ for (const anahtar of ['nav.panel', 'nav.ilaclar', 'nav.hastalar', 'nav.recetele
 }
 // Koddaki Türkçe yedekler ekrana düşmemeli. Uyarı, hata ve tarih cümleleri
 // saf modüllerde kod olarak durup arayüzde çevrildiği için asıl sınav burada:
-// stok ve son kullanma uyarısı olan ilaç kartı ile reçete kartı taranır.
-const TURKCE = ['Stok', 'İlaç', 'Hasta', 'Reçete', 'Bekleyen', 'Kaydet', 'gün önce', 'gün sonra', 'Son kullanma', 'Alerji', 'yaş'];
+// alerji uyarısı taşıyan hasta kartı ile reçete kartı taranır.
+const TURKCE = ['Stok', 'İlaç', 'Hasta', 'Reçete', 'Kaydet', 'gün önce', 'gün sonra', 'Alerji', 'yaş'];
 const turkceAra = async (nerede) => {
   const metin = await sayfa.textContent('#sayfa');
   for (const turkce of TURKCE) {
@@ -485,13 +417,19 @@ await sayfa.click('#kenar-menu a[href="#/ilaclar"]');
 await sayfa.waitForSelector('.tablo tbody tr');
 await turkceAra('ilaç listesi');
 await sayfa.click('.tablo tbody tr:has-text("Majezik")');
-await sayfa.waitForSelector('.uyari');
+await sayfa.waitForSelector('h1:has-text("Majezik")');
 await turkceAra('ilaç kartı');
+
+await sayfa.click('#kenar-menu a[href="#/hastalar"]');
+await sayfa.waitForSelector('.liste__satir');
+await sayfa.click('.liste__satir:has-text("Ayşe Yılmaz")');
+await sayfa.waitForSelector('.uyari');
+await turkceAra('hasta kartı (alerji şeridi)');
 
 await sayfa.click('#kenar-menu a[href="#/receteler"]');
 await sayfa.waitForSelector('.tablo tbody tr');
 await sayfa.click('.tablo tbody tr');
-await sayfa.waitForSelector(`h2:has-text("${T('recete.karsilama')}")`);
+await sayfa.waitForSelector(`h2:has-text("${T('nav.ilaclar')}")`);
 await turkceAra('reçete kartı');
 ok('arayüz tek dilli: Farsça, sağdan sola, dil seçici yok; uyarı ve tarih cümleleri dahil hiçbir yerde Türkçe kalmamış');
 await resim(sayfa, '10-farsca.png', { fullPage: true });
