@@ -4,7 +4,10 @@
 import { KOLEKSIYONLAR, DUSEN_KOLEKSIYONLAR, SEMA_SURUMU, YEDEKLENEN } from './sema.js';
 import { simdi } from '../paylasilan/kimlik.js';
 
-export const YEDEK_BICIMI = 'eczane-yedek';
+export const YEDEK_BICIMI = 'shafa-yedek';
+/** Uygulama "Eczane" adıyla çıkmıştı; o sürümün yedekleri hâlâ kabul edilir.
+ *  Kullanıcının elindeki dosyayı adı değişti diye reddetmek olmaz. */
+const ESKI_BICIMLER = ['eczane-yedek'];
 
 export async function yedekOlustur(depo) {
   const koleksiyonlar = {};
@@ -24,7 +27,7 @@ export function yedekDogrula(belge) {
   const hatalar = [];
   if (!belge || typeof belge !== 'object') hatalar.push('Dosya okunamadı.');
   else {
-    if (belge.bicim !== YEDEK_BICIMI) hatalar.push('Bu dosya bir Eczane yedeği değil.');
+    if (belge.bicim !== YEDEK_BICIMI && !ESKI_BICIMLER.includes(belge.bicim)) hatalar.push('Bu dosya bir Shafa yedeği değil.');
     if (!belge.koleksiyonlar || typeof belge.koleksiyonlar !== 'object') hatalar.push('Yedekte koleksiyon yok.');
     else {
       for (const ad of Object.keys(belge.koleksiyonlar)) {
@@ -80,7 +83,7 @@ export function hatirlatmaGerekli(meta) {
 
 export function dosyaAdi(tarih = new Date()) {
   const p = (n) => String(n).padStart(2, '0');
-  return `eczane-yedek-${tarih.getFullYear()}${p(tarih.getMonth() + 1)}${p(tarih.getDate())}.json`;
+  return `shafa-yedek-${tarih.getFullYear()}${p(tarih.getMonth() + 1)}${p(tarih.getDate())}.json`;
 }
 
 /** Tarayıcıda indirme başlatır. */

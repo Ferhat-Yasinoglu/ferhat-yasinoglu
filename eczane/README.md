@@ -1,6 +1,7 @@
-# Eczane Yönetim
+# Shafa — Reçete
 
-İlaç stoğu, hasta kayıtları ve reçete takibi için çerçevesiz, derleme adımsız bir PWA.
+Klinikte çalışan bir hekim için reçete yazma ve hasta kaydı: çerçevesiz,
+derleme adımsız bir PWA.
 Bütün veriler tarayıcıda (IndexedDB) durur: sunucu yok, hesap yok, hiçbir kayıt
 cihazdan çıkmaz. İnternet olmadan da tam çalışır.
 
@@ -53,7 +54,7 @@ kurulu değilse betik kendini atlar:
 | **İlaçlar** | Künye: ad, etken madde, şekil, doz, barkod, üretici; muadil bulma |
 | **Hastalar** | Kayıt, alerjiler, kronik hastalıklar, sürekli ilaçlar, reçete geçmişi |
 | **Reçete yazma** | Hasta ve ilaç seçimi, tanı/ICD, kullanım ve süre; alerji ve çift etken madde uyarıları |
-| **Reçete kâğıdı** | Doktorun kullandığı basılı kâğıdın aynısı: mavi antet (ad, ünvan şeridi), hizmet satırları, sabıka şeridi, Name/Age/Date şeridi, solda Clinical sütunu (BP · PR · RR · BW · Temperature), sağda ℞ alanı, altta rozetler ve iletişim |
+| **Reçete kâğıdı** | Üç stil (modern / klasik / sade): antet (ad, ünvan), hizmet satırları, sabıka şeridi, Name/Age/Date şeridi, solda Clinical sütunu (BP · PR · RR · BW · Temperature), sağda ℞ alanı, altta rozetler ve iletişim |
 | **Boş kâğıt** | Aynı kâğıdı boş bastırıp elle doldurma — tomar halinde çıkar, alanlar çizgili gelir |
 | **Gönderme** | WhatsApp, e-posta, panoya kopyalama ve cihazın kendi paylaşma penceresi |
 | **Doğrulama** | Her reçete kâğıda basılan sekiz harflik bir kod taşır; kâğıtta oynanmışsa kod tutmaz |
@@ -85,7 +86,26 @@ yok, çevrimdışı çalışır. İçeriği ayarlardan seçilir: doktorun WhatsA
 (hasta okutup yazar) ya da reçetenin metni (okutunca telefonda açılır).
 Doğruluğu bağımsız bir QR çözücüyle test ediliyor.
 
-## Arayüz
+## Marka ve arayüz
+
+**Adı Shafa** (شفا — şifa). İşaret ℞'dir: reçetenin evrensel sembolü, harf
+değil çizgi olarak kuruldu (gövde, kâse, çapraz kuyruk) — font kullanılsaydı
+cihazdan cihaza değişirdi. 16 pikselde de okunuyor, tek renkli sürümü kâğıt
+için var (`app/img/`).
+
+**Renk klinik turkuazı.** Uygulamayı hekim muayene sırasında, hastayla
+konuşurken, çoğu zaman telefonda kullanıyor; bu yüzden palet sakin ve dikkat
+çeken tek şey uyarılar. Karanlık tema gece nöbeti için.
+
+**Hareket ölçülü.** Tek bir yay eğrisi bütün arayüzde, süreler 120–320 ms:
+sayfa girişi, liste satırlarının sırayla belirmesi, sayaçların sıfırdan
+sayması, grafik sütunlarının yükselmesi, modalin yaylanarak açılması, düğmenin
+basılınca hafifçe küçülmesi. Hepsi `prefers-reduced-motion` ile kapanıyor.
+Arayüz "animasyonlu" değil, çevik hissetsin diye kısa tutuldu.
+
+**Panelde grafik var:** son 14 günün reçete sayısı. Dışarıdan kütüphane yok,
+yalnız div'ler ve CSS. Sıfır olan gün ince bir çizgi olarak duruyor ki "veri
+yok" ile "o gün yazılmamış" birbirine karışmasın.
 
 **Yazı tipi Vazirmatn** (`app/yazi/`, OFL lisansı, tek değişken dosya 111 KB).
 Sistem yazı tipleri Arap harflerini genelde ikinci sınıf taşıyor: harf
@@ -105,6 +125,21 @@ kalıyordu; telefonda dört kocaman kutuyu geçmeden içeriğe ulaşılamıyordu
 Düzen yalnız mantıksal yön özellikleriyle kurulu (`margin-inline-start` gibi),
 bu yüzden sağdan sola akış kendiliğinden çıkıyor — ayrı bir RTL sayfası yok.
 `npm run kontrol` fiziksel yön özelliği kullanıldığında uyarıyor.
+
+## Reçete kâğıdı
+
+Üç stil var, Ayarlar'dan seçilir:
+
+| Stil | Ne zaman |
+|---|---|
+| **Modern** (varsayılan) | Beyaz zemin, üstte tek bir turkuaz çizgi, ince kurallar ve boşluk. Az mürekkep yer, fotokopide dağılmaz, klinik evrakı gibi durur |
+| **Klasik** | Hekimin hâlihazırda kullandığı basılı kâğıdın aynısı: koyu mavi antet, renk bantları |
+| **Sade** | Siyah-beyaz, en az mürekkep |
+
+Üçü de aynı düzeni taşıyor — alanların yeri, QR ve doğrulama kodu değişmiyor.
+Antetteki her satır (ad, ünvan, slogan, hizmetler, sabıka, adres, telefon, alt
+rozetler) Ayarlar'dan girilir; kâğıt kimseye gömülü değildir, başka bir hekim
+kendi bilgilerini yazınca kendi kâğıdı çıkar.
 
 ## Sahteciliğe karşı
 

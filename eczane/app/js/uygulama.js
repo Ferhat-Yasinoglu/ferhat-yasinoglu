@@ -18,7 +18,7 @@ export const UYGULAMA_SURUMU = '0.2.0';
 globalThis.UYGULAMA_SURUMU = UYGULAMA_SURUMU;
 
 const MENU = [
-  { grup: 'Eczane', anahtar: 'nav.grup.eczane', ogeler: [
+  { grup: 'Klinik', anahtar: 'nav.grup.klinik', ogeler: [
     { yol: '/panel', ad: 'Panel', anahtar: 'nav.panel', simge: 'panel', alt: true },
     { yol: '/ilaclar', ad: 'İlaçlar', anahtar: 'nav.ilaclar', simge: 'ilac', alt: true, sayac: 'ilaclar' },
     { yol: '/hastalar', ad: 'Hastalar', anahtar: 'nav.hastalar', simge: 'hasta', alt: true, sayac: 'hastalar' },
