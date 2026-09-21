@@ -1,0 +1,172 @@
+/* Yazdırma: ekranda gezinme olan her şey kâğıda çıkmaz.
+   Reçete çıktısı bu kurallarla A4/A5 kâğıda sığar. */
+@media print {
+  .ust, .kenar, .alt, .bantlar, .sayfa-bas__eylem, .bildirimler, .sekmeler, .yazdirma-disi { display: none !important; }
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .govde, .icerik { display: block; padding: 0; margin: 0; max-inline-size: none; }
+  .kart { box-shadow: none; border: 1px solid #999; break-inside: avoid; margin-block-end: 8mm; }
+  .tablo-kap { border: none; overflow: visible; }
+  .tablo th { background: #eee !important; color: #000; }
+  .tablo th, .tablo td { border-block-end: 1px solid #bbb; padding: 3mm 2mm; }
+  a { color: #000; text-decoration: none; }
+  .rozet { border: 1px solid #999; background: none !important; color: #000 !important; }
+  @page { size: A4; margin: 14mm; }
+}
+
+/* Reçete kâğıdı. Ekranda gizlidir; yazdırılırken sayfadaki tek görünen şeydir.
+   Düzen ve renkler doktorun kullandığı basılı kâğıttan alındı: koyu mavi antet,
+   ünvan şeridi, hizmet satırları, Name/Age/Date şeridi, solda Clinical sütunu,
+   sağda ℞ alanı, altta rozetler ve iletişim.
+
+   Zemin renkleri yazdırmada ancak print-color-adjust: exact ile çıkar; bu
+   olmadan tarayıcı bütün dolguları atıyor ve kâğıt bembeyaz iniyordu.
+   Mürekkep derdi olanlar için Ayarlar'da "sade" stili var: aynı düzen, renksiz. */
+.yazdir-alan { display: none; }
+
+@media print {
+  #sayfa:has(.yazdir-alan) > *:not(.yazdir-alan) { display: none !important; }
+
+  .kagit {
+    --mavi-koyu: #123a78;
+    --mavi: #1b57a8;
+    --mavi-acik: #d9e7f8;
+    --mavi-cok-acik: #eef4fc;
+    --kagit-metin: #0f2647;
+
+    display: flex; flex-direction: column; min-block-size: 100%;
+    color: var(--kagit-metin); font-size: 10pt; line-height: 1.35;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .kagit * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* ---------- Antet ---------- */
+  .kagit__antet {
+    display: flex; align-items: center; gap: 4mm;
+    background: linear-gradient(100deg, var(--mavi) 0%, var(--mavi-koyu) 55%, #0c2c5e 100%);
+    color: #fff; padding: 3mm 5mm; border-radius: 2mm 2mm 0 0;
+  }
+  .kagit__ad-blok { flex: 1; min-inline-size: 0; }
+  .kagit__doktor { font-size: 17pt; font-weight: 700; line-height: 1.2; }
+  .kagit__doktor-alt { font-size: 13pt; font-weight: 600; line-height: 1.25; }
+  .kagit__amblem {
+    inline-size: 17mm; block-size: 17mm; flex-shrink: 0; border-radius: 50%;
+    background: rgb(255 255 255 / .14); border: 0.8pt solid rgb(255 255 255 / .55);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .kagit__amblem-cizim { inline-size: 13mm; block-size: 13mm; color: #fff; }
+  .kagit__klinik-ad { font-size: 8pt; font-weight: 600; opacity: .85; }
+  .kagit__slogan {
+    display: flex; flex-direction: column; align-items: center; gap: 1mm;
+    font-size: 9pt; font-weight: 600; text-align: center; inline-size: 34mm; flex-shrink: 0;
+  }
+
+  /* ---------- Ünvan şeridi ---------- */
+  .kagit__unvan { display: flex; justify-content: center; }
+  .kagit__unvan span {
+    background: var(--mavi-koyu); color: #fff;
+    font-size: 11pt; font-weight: 700;
+    padding: 1.2mm 8mm; border-radius: 0 0 2mm 2mm;
+  }
+
+  /* ---------- Hizmetler ---------- */
+  .kagit__hizmet {
+    background: var(--mavi-cok-acik); padding: 2mm 5mm;
+    display: flex; flex-direction: column; gap: 1mm; align-items: center;
+    font-size: 9.5pt; font-weight: 600;
+  }
+  .kagit__hizmet-satir { display: flex; flex-wrap: wrap; justify-content: center; gap: 1mm 7mm; }
+  .kagit__hizmet-oge { display: inline-flex; align-items: center; gap: 1.5mm; }
+  .kagit__hizmet-oge .simge { color: var(--mavi); }
+  .kagit__hizmet-alan { font-size: 9pt; font-weight: 600; }
+
+  /* ---------- Sabıka ---------- */
+  .kagit__deneyim {
+    background: var(--mavi-acik); padding: 1.5mm 5mm;
+    font-size: 9pt; font-weight: 600; text-align: center;
+  }
+
+  /* ---------- Hasta şeridi ---------- */
+  .kagit__serit {
+    display: flex; flex-wrap: wrap; gap: 1.5mm 7mm;
+    padding: 2.5mm 5mm; font-size: 10pt;
+    border-block: 0.8pt solid var(--mavi);
+  }
+  .kagit__alan { display: inline-flex; align-items: flex-end; gap: 1.5mm; }
+  .kagit__cizgi { border-block-end: 0.6pt solid #7f93b4; min-inline-size: 20mm; display: inline-block; }
+
+  /* ---------- Gövde: ℞ (sağ) + Clinical (sol) ---------- */
+  .kagit__govde { display: flex; flex: 1; gap: 3mm; padding: 3mm 5mm; min-block-size: var(--rx-boy, 150mm); }
+
+  .kagit__rx {
+    position: relative; flex: 1;
+    border: 1pt solid var(--mavi); border-radius: 2mm; padding: 3mm;
+    overflow: hidden;
+  }
+  .kagit__filigran {
+    position: absolute; inset-block-start: 50%; inset-inline-start: 50%;
+    transform: translate(50%, -50%);
+    inline-size: 75%; color: var(--mavi-acik); opacity: .85;
+  }
+  /* ℞ basılı kâğıtta olduğu gibi sol üst köşede durur. */
+  .kagit__rx-isaret {
+    position: absolute; inset-block-start: 2.5mm; inset-inline-start: 3mm;
+    font-size: 22pt; font-weight: 700; line-height: 1; color: var(--mavi-koyu);
+  }
+  .kagit__rx-govde { position: relative; margin-block-start: 11mm; }
+  .kagit__tani { font-size: 9.5pt; margin-block-end: 1.5mm; }
+  .kagit__alerji {
+    border: 1.2pt solid #b3321f; color: #8f2517;
+    padding: 1mm 2mm; margin-block-end: 2mm; font-size: 9.5pt; border-radius: 1mm;
+  }
+  .kagit__ilaclar { margin: 0; padding-inline-start: 6mm; }
+  .kagit__ilaclar li { margin-block-end: 3.5mm; break-inside: avoid; }
+  .kagit__ilac-ad { display: flex; gap: 2mm; align-items: baseline; font-size: 10.5pt; }
+  .kagit__adet { font-size: 9.5pt; }
+  .kagit__kullanim { font-size: 9pt; }
+  .kagit__not { font-size: 9pt; margin-block-start: 2mm; }
+
+  .kagit__klinik-sutun {
+    inline-size: 42mm; flex-shrink: 0;
+    background: var(--mavi-cok-acik); border: 1pt solid var(--mavi-acik); border-radius: 2mm;
+    padding: 3mm; display: flex; flex-direction: column;
+  }
+  .kagit__sutun-bas {
+    display: flex; align-items: center; justify-content: space-between; gap: 2mm; flex-direction: row-reverse;
+    font-size: 13pt; font-weight: 700; color: var(--mavi-koyu);
+    padding-block-end: 2mm; border-block-end: 0.8pt solid var(--mavi-acik);
+  }
+  .kagit__olcumler { display: flex; flex-direction: column; gap: 4.5mm; padding-block-start: 4mm; }
+  /* Uzun değer (110/70 mmHg) dar sütunda ortadan bölünmesin: satır sarar,
+     ama etiket ve değer kendi içinde bütün kalır. */
+  .kagit__olcum { display: flex; flex-wrap: wrap; gap: 0 1.5mm; align-items: flex-end; font-size: 10pt; font-weight: 700; }
+  .kagit__olcum b, .kagit__olcum span:not(.kagit__cizgi) { white-space: nowrap; }
+  .kagit__olcum .kagit__cizgi { flex: 1; min-inline-size: 12mm; }
+  .kagit__kod { margin-block-start: 3mm; font-size: 8.5pt; line-height: 1.3; }
+  .kagit__kod span { letter-spacing: .06em; font-weight: 700; }
+  .kagit__sutun-ayak { margin-block-start: auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 2mm; padding-block-start: 4mm; }
+  .kagit__qr { inline-size: 20mm; block-size: 20mm; }
+  .kagit__sutun-resim { display: flex; align-items: flex-end; gap: 1mm; color: var(--mavi-acik); }
+
+  /* ---------- Ayak ---------- */
+  .kagit__ayak {
+    display: flex; align-items: center; justify-content: space-between; gap: 5mm;
+    background: linear-gradient(100deg, #0c2c5e 0%, var(--mavi-koyu) 45%, var(--mavi) 100%);
+    color: #fff; padding: 2.5mm 5mm; border-radius: 0 0 2mm 2mm;
+  }
+  .kagit__iletisim { display: flex; flex-direction: column; gap: 1mm; font-size: 9pt; }
+  .kagit__iletisim-satir { display: flex; align-items: center; gap: 1.5mm; }
+  .kagit__rozetler { display: flex; gap: 4mm; }
+  .kagit__rozet { display: flex; flex-direction: column; align-items: center; gap: 0.8mm; font-size: 8pt; font-weight: 600; }
+  .kagit__rozet-daire {
+    inline-size: 9mm; block-size: 9mm; border-radius: 50%;
+    background: rgb(255 255 255 / .16); border: 0.7pt solid rgb(255 255 255 / .5);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ---------- Sade (renksiz) stil ---------- */
+  .kagit--sade { --mavi-koyu: #000; --mavi: #000; --mavi-acik: #d8d8d8; --mavi-cok-acik: #f2f2f2; --kagit-metin: #000; }
+  .kagit--sade .kagit__antet, .kagit--sade .kagit__ayak { background: none; color: #000; border-block: 1.5pt solid #000; border-radius: 0; }
+  .kagit--sade .kagit__unvan span { background: none; color: #000; border: 1pt solid #000; }
+  .kagit--sade .kagit__amblem, .kagit--sade .kagit__rozet-daire { border-color: #000; background: none; }
+  .kagit--sade .kagit__alerji { border-color: #000; color: #000; }
+}
