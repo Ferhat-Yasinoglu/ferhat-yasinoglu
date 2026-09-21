@@ -8,6 +8,7 @@ import { KOLEKSIYONLAR } from '../depo/sema.js';
 import { trTarihSaat } from '../paylasilan/tarih.js';
 import { sayiMetni, bicimAyarla, PARA_BIRIMLERI } from '../paylasilan/metin.js';
 import { t } from '../i18n.js';
+import { sablonListesi } from '../sablon-arayuz.js';
 import { kagidiYazdir } from '../kagit.js';
 import { hataMetni } from '../hatalar.js';
 import { metniDogrula } from '../depo/dogrulama.js';
@@ -102,6 +103,7 @@ export default {
       const ayar = await depo.ayarlar();
       const h = hatirlatmaGerekli(meta);
       const kapasite = depo.kapasite ? await depo.kapasite() : null;
+      const sablonlar = await depo.listele('sablonlar', { sirala: 'ad' });
       const sayilar = {};
       for (const ad of Object.keys(KOLEKSIYONLAR)) {
         if (ad === 'meta' || ad === 'ayarlar') continue;
@@ -249,6 +251,13 @@ export default {
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' }, el('h2', {}, t('ayar.gorunum', 'Görünüm'))),
         el('div', { class: 'izgara izgara--form' }, alan(t('ayar.tema', 'Tema'), temaSecimi))));
+
+      /* --- Reçete şablonları --- */
+      kok.appendChild(kart({},
+        el('div', { class: 'kart__bas' },
+          el('h2', {}, t('sablon.baslik', 'Reçete şablonları')),
+          el('span', { class: 'kart__alt' }, t('sablon.baslik_alt', 'Tekrar yazdığın ilaç kümelerini bir kez kaydet.'))),
+        sablonListesi(ctx, sablonlar, ciz)));
 
       /* --- Tehlikeli bölge --- */
       kok.appendChild(kart({ style: { borderColor: 'rgb(var(--kirmizi) / .4)' } },

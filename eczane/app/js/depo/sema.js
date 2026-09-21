@@ -1,11 +1,12 @@
 // Şema: koleksiyonlar, sürüm ve IndexedDB yükseltmesi.
 // Sürüm artınca idbYukselt her eski sürümden yeniye taşır; veri silinmez.
-export const SEMA_SURUMU = 2;
+export const SEMA_SURUMU = 3;
 
 export const KOLEKSIYONLAR = {
   ilaclar: { onek: 'ila', yedek: true, indeksler: { barkod: 'barkod', ad: 'ad' } },
   hastalar: { onek: 'has', yedek: true, indeksler: { kimlikNo: 'kimlikNo', soyad: 'soyad' } },
   receteler: { onek: 'rec', yedek: true, indeksler: { hastaId: 'hastaId', tarih: 'tarih' } },
+  sablonlar: { onek: 'sab', yedek: true, indeksler: { ad: 'ad' } },
   ayarlar: { onek: 'ayr', yedek: true },
   meta: { onek: 'met', yedek: false },
 };
@@ -32,6 +33,11 @@ export function idbYukselt(db, tx, eskiSurum) {
     for (const ad of DUSEN_KOLEKSIYONLAR) {
       if (db.objectStoreNames.contains(ad)) db.deleteObjectStore(ad);
     }
+  }
+  // 3: reçete şablonları. Yeni mağaza; eski kayıtlara dokunulmuyor.
+  if (eskiSurum < 3 && !db.objectStoreNames.contains('sablonlar')) {
+    const magaza = db.createObjectStore('sablonlar', { keyPath: 'id' });
+    magaza.createIndex('ad', 'ad', { unique: false });
   }
 }
 

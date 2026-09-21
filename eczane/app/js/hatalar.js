@@ -13,6 +13,8 @@ const DOGRULAMA = {
   eposta_gecersiz: 'E-posta geçersiz.',
   hasta_gerekli: 'Hasta seçilmeli.',
   ilac_gerekli: 'En az bir ilaç eklenmeli.',
+  sablon_ad_gerekli: 'Şablon adı gerekli.',
+  sablon_ad_tekrar: 'Aynı adla bir şablon zaten var.',
   adet_gecersiz: 'Her satırın adedi sıfırdan büyük olmalı.',
 };
 

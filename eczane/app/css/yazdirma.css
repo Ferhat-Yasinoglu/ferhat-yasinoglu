@@ -85,6 +85,17 @@
     font-size: 9pt; font-weight: 600; text-align: center;
   }
 
+  /* ---------- İmza yeri ---------- */
+  /* ℞ alanının bitiş kenarında, altta. Sayfanın kalanı ne kadar boş olursa
+     olsun imza hep en altta dursun diye mutlak konumlandırıldı. */
+  .kagit__imza {
+    position: absolute; inset-block-end: 4mm; inset-inline-end: 4mm;
+    display: flex; flex-direction: column; align-items: center; gap: 1mm;
+    inline-size: 42mm;
+  }
+  .kagit__imza-cizgi { display: block; inline-size: 100%; border-block-end: 0.6pt solid var(--mavi-koyu); }
+  .kagit__imza-etiket { font-size: 8.5pt; font-weight: 600; color: var(--mavi-koyu); }
+
   /* ---------- Kâğıda ait sabit satır ---------- */
   .kagit__vecize {
     background: var(--mavi-cok-acik); color: var(--mavi-koyu);
@@ -176,6 +187,8 @@
   .kagit--sade .kagit__unvan span { background: none; color: #000; border: 1pt solid #000; }
   .kagit--sade .kagit__amblem, .kagit--sade .kagit__rozet-daire { border-color: #000; background: none; }
   .kagit--sade .kagit__vecize { background: none; color: #000; border-block: 0.6pt solid #000; }
+  .kagit--sade .kagit__imza-cizgi { border-block-end-color: #000; }
+  .kagit--sade .kagit__imza-etiket { color: #000; }
   .kagit--sade .kagit__alerji { border-color: #000; color: #000; }
 }
 
@@ -241,6 +254,9 @@
     background: none; text-align: start; padding: .5mm 5mm 3mm;
     font-size: 8.5pt; font-weight: 500; color: var(--m-sessiz);
   }
+
+  .kagit--modern .kagit__imza-cizgi { border-block-end-color: #9bb3b5; }
+  .kagit--modern .kagit__imza-etiket { color: var(--m-sessiz); font-weight: 500; }
 
   /* Sabit satır modern kâğıtta sessiz: ince kurallar arasında ortalanmış. */
   .kagit--modern .kagit__vecize {
