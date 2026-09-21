@@ -40,7 +40,7 @@ kurulu değilse betik kendini atlar:
 | **Hastalar** | Kayıt, alerjiler, kronik hastalıklar, sürekli ilaçlar, reçete geçmişi |
 | **Reçete yazma** | Hasta ve ilaç seçimi, tanı/ICD, kullanım ve süre; alerji, stok, son kullanma ve çift etken madde uyarıları |
 | **Karşılama** | Satır satır verildi / kısmi / verilemedi (sebepli); verilen stoktan düşer, geri alınınca iade edilir |
-| **Reçete kâğıdı** | Antetli çıktı (A4/A5): solda klinik ölçüm sütunu (BP · PR · RR · BW · Ateş), sağda ℞ alanı, altta QR ve imza kutusu |
+| **Reçete kâğıdı** | Doktorun kullandığı basılı kâğıdın aynısı: mavi antet (ad, ünvan şeridi), hizmet satırları, sabıka şeridi, Name/Age/Date şeridi, solda Clinical sütunu (BP · PR · RR · BW · Temperature), sağda ℞ alanı, altta rozetler ve iletişim |
 | **Boş kâğıt** | Aynı kâğıdı boş bastırıp elle doldurma — tomar halinde çıkar, alanlar çizgili gelir |
 | **Gönderme** | WhatsApp, e-posta, panoya kopyalama ve cihazın kendi paylaşma penceresi |
 | **Ayarlar** | Reçete anteti, para birimi, kâğıt boyutu, QR içeriği, yedek al/geri yükle, örnek veri, depolama durumu, tema |
@@ -50,10 +50,19 @@ hareketi bırakır ve hareket reçete numarasıyla etiketlenir; satır geri alı
 iade hareketiyle stoğa döner. "Ne verildi" reçetede, "stok neden düştü" hareket
 geçmişinde durur ve ikisi hep birbirini tutar.
 
-**Kâğıt iki türlü çalışır.** Doktor ya uygulamadan doldurup basar, ya da boş
-kâğıdı tomar halinde bastırıp üzerine kalemle yazar; ikisi de aynı antetle çıkar.
+**Kâğıt, doktorun hâlihazırda kullandığı basılı reçetenin birebir aynısı.**
+Antetteki her satır (ad, ünvan şeridi, slogan, hizmetler, ilgi alanları, sabıka,
+adres, telefon, alt rozetler) Ayarlar'dan girilir; kâğıt kimseye gömülü değildir,
+başka bir hekim kendi bilgilerini yazınca kendi kâğıdı çıkar.
+
+**İki türlü çalışır.** Doktor ya uygulamadan doldurup basar, ya da boş kâğıdı
+tomar halinde bastırıp üzerine kalemle yazar; ikisi de aynı antetle çıkar.
 Dolu basılan kâğıtta bile girilmemiş klinik ölçümler çizgi olarak basılır —
-sonradan elle tamamlanabilsin diye.
+sonradan elle tamamlanabilsin diye. Renkli basmak mürekkep yiyorsa Ayarlar'da
+"sade" stili var: aynı düzen, siyah-beyaz.
+
+Zemin renkleri `print-color-adjust: exact` ile basılır; bu olmadan tarayıcı
+bütün dolguları atıyor ve kâğıt bembeyaz iniyor.
 
 **QR kodu kendi ürettiğimiz koddur** (`paylasilan/qr.js`); dışarıdan kütüphane
 yok, çevrimdışı çalışır. İçeriği ayarlardan seçilir: doktorun WhatsApp bağlantısı
@@ -89,7 +98,9 @@ diploma no ve kurumu Ayarlar'dan gelir ve kaydedilirken reçeteye işlenir.
 Satırda: ilaç, adet, kullanım şekli, süre, not.
 
 Klinik ölçümler ayrı tutulur: kan basıncı, nabız, solunum, kilo, ateş
-(`paylasilan/recete.js` içindeki `OLCUMLER`).
+(`paylasilan/recete.js` içindeki `OLCUMLER`). Kâğıtta bunların etiketleri
+İngilizce durur (BP · PR · RR · BW · Temperature) — basılı kâğıt da böyle ve
+bunlar hekimlikte evrensel kısaltmalar.
 
 Alan eklemek için üç yer: `paylasilan/recete.js` içindeki `bosRecete`,
 `sayfalar/recete-yeni.js` içindeki form ızgarası ve `kagit.js` içindeki kâğıt

@@ -27,12 +27,35 @@ export const ORNEK_HASTALAR = [
   { ad: 'Zeynep', soyad: 'Kaya', kimlikNo: '', dogumTarihi: '2016-07-21', cinsiyet: 'kadin', telefon: '0535 000 00 03', kanGrubu: 'B Rh−', alerjiler: ['İbuprofen'], kronikHastaliklar: ['Astım'], surekliIlaclar: ['Salbutamol sprey'], sigorta: 'sgk', adres: 'Konak / İzmir', notlar: 'Çocuk hasta — şurup formları tercih ediliyor.' },
 ];
 
+/** Örnek antet: reçete kâğıdının nasıl doldurulduğunu göstermek için.
+ *  Kurgusal bir hekime aittir — gerçek kimse değildir. Ayarlardaki antet boşsa
+ *  örnek veriyle birlikte yüklenir, doktor kendi bilgilerini üstüne yazar. */
+export const ORNEK_ANTET = {
+  doktorUnvan: 'داکتر',
+  doktorAd: 'نمونه احمدی',
+  doktorAdAlt: 'Dr. Nemuna Ahmadi',
+  uzmanlik: 'معالج امراض داخله عمومی و اطفال',
+  slogan: 'سلامتی شما\nهدف ماست',
+  hizmetler: 'ثبت و تشخیص گراف برقی قلب (ECG)\nماهر معاینات تلویزیونی (التراساند)',
+  hizmetAlanlari: '(قلب ، شش ، معده ، گرده ، شکر ، روماتیزم ، سردردی دوامدار)',
+  deneyim: 'سابقه کاری : شفاخانه نمونه و کلینیک تشخیصیه نمونه',
+  adres: 'کابل، افغانستان',
+  telefon: '0700000000',
+  ulkeKodu: '93',
+  ayakEtiketleri: 'قلب, شش, معده, اطفال',
+};
+
 /** Örnek kayıtları yükler. Zaten yüklüyse hiçbir şey yapmaz. */
 export async function ornekYukle(depo) {
   const meta = await depo.meta();
   if (meta.ornekYuklendi) return { ilac: 0, hasta: 0 };
   for (const i of ORNEK_ILACLAR) await depo.kaydet('ilaclar', { ...i, ornek: 1, notlar: '' });
   for (const h of ORNEK_HASTALAR) await depo.kaydet('hastalar', { ...h, ornek: 1 });
+
+  // Antet yalnız boşsa doldurulur: doktor kendi bilgilerini girdiyse silinmez.
+  const ayar = await depo.ayarlar();
+  if (!String(ayar.doktorAd ?? '').trim()) await depo.ayarKaydet(ORNEK_ANTET);
+
   await depo.metaKaydet({ ornekYuklendi: 1 });
   return { ilac: ORNEK_ILACLAR.length, hasta: ORNEK_HASTALAR.length };
 }

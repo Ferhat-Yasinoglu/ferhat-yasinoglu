@@ -176,20 +176,24 @@ await resim(sayfa, '3-hasta-karti.png');
 
 // --- Eczane ve doktor bilgileri (reçete antedine düşecek)
 await sayfa.click('#kenar-menu a[href="#/ayarlar"]');
-await sayfa.waitForSelector('input[name=klinikAdi]');
+await sayfa.waitForSelector('input[name=doktorAd]');
+// Örnek veriyle gelen antetin üstüne denemenin kendi bilgileri yazılır.
+await sayfa.fill('input[name=doktorUnvan]', 'الحاج داکتر');
+await sayfa.fill('input[name=doktorAd]', 'فدامحمد «احسان»');
+await sayfa.fill('input[name=doktorAdAlt]', 'Dr. Fida Mohammad (Ehsan)');
+await sayfa.fill('input[name=uzmanlik]', 'معالج امراض داخله عمومی و اطفال');
+await sayfa.fill('textarea[name=slogan]', 'سلامتی شما\nهدف ماست');
 await sayfa.fill('input[name=klinikAdi]', 'Deneme Eczanesi');
-await sayfa.fill('input[name=klinikAdiAlt]', 'Sample Pharmacy');
-await sayfa.fill('input[name=doktorUnvan]', 'Dr.');
-await sayfa.fill('input[name=doktorAd]', 'Ahmet Yılmaz');
-await sayfa.fill('input[name=doktorAdAlt]', 'د. احمد یلماز');
-await sayfa.fill('input[name=uzmanlik]', 'Dahiliye');
-await sayfa.fill('input[name=diplomaNo]', '123456');
-await sayfa.fill('input[name=telefon]', '0702397511');
+await sayfa.fill('textarea[name=hizmetler]', 'ثبت و تشخیص گراف برقی قلب (ECG)\nماهر معاینات تلویزیونی (التراساند)');
+await sayfa.fill('input[name=hizmetAlanlari]', '(قلب ، شش ، معده ، گرده)');
+await sayfa.fill('input[name=deneyim]', 'سابقه کاری : شفاخانه نمونه');
+await sayfa.fill('input[name=ayakEtiketleri]', 'قلب, شش, معده, اطفال');
+await sayfa.fill('input[name=telefon]', '0791448001');
 await sayfa.fill('input[name=ulkeKodu]', '93');
-await sayfa.fill('input[name=adres]', 'Kabil, Afganistan');
+await sayfa.fill('input[name=adres]', 'کندز، افغانستان');
 await sayfa.click(`button:has-text("${T('ayar.antet_kaydet')}")`);
 await sayfa.waitForSelector('.bildirim--basari');
-ok('reçete anteti (klinik, doktor, iletişim) kaydedildi');
+ok('reçete anteti kaydedildi (ad, ünvan şeridi, slogan, hizmetler, sabıka, rozetler, iletişim)');
 
 // --- Hasta kartından reçete yazma (Zeynep'in ibuprofen alerjisi var)
 await sayfa.click('#kenar-menu a[href="#/hastalar"]');
@@ -295,11 +299,21 @@ ok(`geri alma stoğu iade etti: ${nurofenSonra} → ${nurofenGeri}`);
 
 // --- Yazdırma alanı: ekranda gizli, içeriği eksiksiz
 const yazdirMetni = await sayfa.textContent('.yazdir-alan');
-for (const beklenen of ['Deneme Eczanesi', 'Sample Pharmacy', 'Dr. Ahmet Yılmaz', '123456', 'Zeynep Kaya', 'J06.9', 'Nurofen', T('hasta.alerji')]) {
-  if (!yazdirMetni.includes(beklenen)) throw new Error(`reçete çıktısında "${beklenen}" yok`);
+const bolumler = [
+  ['doktor adı', 'فدامحمد «احسان»'], ['latin ad', 'Dr. Fida Mohammad (Ehsan)'],
+  ['ünvan şeridi', 'معالج امراض داخله'], ['slogan', 'سلامتی شما'],
+  ['hizmet', '(ECG)'], ['ilgi alanları', '(قلب ، شش'], ['sabıka', 'سابقه کاری'],
+  ['hasta', 'Zeynep Kaya'], ['tanı', 'J06.9'], ['ilaç', 'Nurofen'],
+  ['alerji', T('hasta.alerji')], ['adres', 'کندز'], ['telefon', '0791448001'],
+  ['Clinical başlığı', 'Clinical'], ['ölçüm etiketi', 'BP :'],
+];
+for (const [ad, beklenen] of bolumler) {
+  if (!yazdirMetni.includes(beklenen)) throw new Error(`reçete çıktısında ${ad} yok ("${beklenen}")`);
 }
+const rozetSayisi = await sayfa.locator('.kagit__rozet').count();
+if (rozetSayisi !== 4) throw new Error(`ayakta 4 rozet bekleniyordu, ${rozetSayisi} var`);
 if (await sayfa.isVisible('.yazdir-alan')) throw new Error('yazdırma alanı ekranda görünüyor');
-ok('reçete çıktısı antet, hasta, tanı ve alerjiyle hazır (ekranda gizli)');
+ok(`reçete kâğıdı eksiksiz: antet, ünvan şeridi, hizmetler, sabıka, Clinical sütunu, ${rozetSayisi} rozet, iletişim`);
 
 // --- QR ve klinik ölçüm sütunu kâğıtta yerinde mi?
 const qrModulSayisi = await sayfa.locator('.kagit__qr path').count();
@@ -325,16 +339,34 @@ const bosKagit = await sayfa.evaluate(async () => {
   const kagit = kagitCiz({ ayar: await depo.ayarlar(), bos: true });
   return {
     metin: kagit.textContent,
-    bosSatir: kagit.querySelectorAll('.kagit__bos-satir').length,
+    rozet: kagit.querySelectorAll('.kagit__rozet').length,
     cizgi: kagit.querySelectorAll('.kagit__cizgi').length,
     qr: kagit.querySelectorAll('.kagit__qr').length,
   };
 });
-if (bosKagit.bosSatir < 5) throw new Error('boş kâğıtta yazı satırı yok');
-if (!bosKagit.cizgi) throw new Error('boş kâğıtta doldurulacak çizgiler yok');
-if (!bosKagit.metin.includes('Deneme Eczanesi')) throw new Error('boş kâğıtta antet yok');
+if (bosKagit.cizgi < 8) throw new Error(`boş kâğıtta doldurma çizgisi eksik: ${bosKagit.cizgi}`);
+for (const beklenen of ['فدامحمد «احسان»', 'سلامتی شما', 'سابقه کاری', 'Clinical', 'BP :', '℞']) {
+  if (!bosKagit.metin.includes(beklenen)) throw new Error(`boş kâğıtta "${beklenen}" yok`);
+}
 if (bosKagit.metin.includes('Zeynep')) throw new Error('boş kâğıtta hasta bilgisi sızmış');
-ok(`boş kâğıt hazır: antet duruyor, ${bosKagit.bosSatir} yazı satırı + ${bosKagit.cizgi} doldurma çizgisi, hasta bilgisi yok`);
+if (bosKagit.metin.includes('Nurofen')) throw new Error('boş kâğıtta ilaç sızmış');
+ok(`boş kâğıt hazır: antet ve Clinical sütunu duruyor, ${bosKagit.cizgi} doldurma çizgisi, hasta ve ilaç yok`);
+
+// Boş kâğıdın çıktısı da görülsün: sayfadaki kâğıt geçici olarak boşuyla değişir.
+if (EKRAN) {
+  await sayfa.evaluate(async () => {
+    const { kagitCiz } = await import('./js/kagit.js');
+    const { yerelDepoAc } = await import('./js/depo/idb.js');
+    const depo = await yerelDepoAc();
+    const eski = document.querySelector('.yazdir-alan');
+    window.__doluKagit = eski;
+    eski.replaceWith(kagitCiz({ ayar: await depo.ayarlar(), bos: true }));
+  });
+  await sayfa.emulateMedia({ media: 'print' });
+  await resim(sayfa, '11-bos-kagit.png', { fullPage: true });
+  await sayfa.emulateMedia({ media: 'screen' });
+  await sayfa.evaluate(() => { document.querySelector('.yazdir-alan').replaceWith(window.__doluKagit); });
+}
 
 // --- Gönder: WhatsApp bağlantısı ve metin
 await sayfa.evaluate(() => { window.__acilan = null; window.open = (u) => { window.__acilan = u; return null; }; });

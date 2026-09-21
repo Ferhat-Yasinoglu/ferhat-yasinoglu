@@ -1,6 +1,6 @@
 // Ayarlar: reçete antedi, yedek, örnek veri, depolama, görünüm ve tehlikeli bölge.
 // Antet bilgileri hem yeni reçetelere düşer hem de basılan kâğıdın başlığını kurar.
-import { el, temizle, btn, btnS, girdi, secim, alan, kart, rozet, sayfaBas } from '../cekirdek/dom.js';
+import { el, temizle, btn, btnS, girdi, secim, metinAlani, alan, kart, rozet, sayfaBas } from '../cekirdek/dom.js';
 import { simge } from '../cekirdek/simge.js';
 import { yedekOlustur, iceAktar, yedekDogrula, indir, hatirlatmaGerekli } from '../depo/yedek.js';
 import { ornekYukle } from '../depo/ornek.js';
@@ -14,22 +14,26 @@ import { hataMetni } from '../hatalar.js';
 const KOL_ANAHTARI = { ilaclar: 'nav.ilaclar', hastalar: 'nav.hastalar', receteler: 'nav.receteler', hareketler: 'stok.hareketler', ayarlar: 'nav.ayarlar' };
 const KOL_ADI = { ilaclar: 'İlaç', hastalar: 'Hasta', receteler: 'Reçete', hareketler: 'Stok hareketi', ayarlar: 'Ayar' };
 
-/** Antet alanları: [anahtar, Türkçe etiket, ipucu] */
+/** Antet alanları: [anahtar, Türkçe etiket, ipucu, çokSatır?]
+ *  Sıra kâğıttaki sırayla aynı: ad, ünvan, slogan, hizmetler, sabıka, iletişim. */
 const ANTET_ALANLARI = [
-  ['klinikAdi', 'Klinik / eczane adı', 'Kâğıdın sol üstünde, ilk satır'],
-  ['klinikAdiAlt', 'İkinci satır', 'Örneğin aynı adın İngilizcesi'],
-  ['adres', 'Adres', ''],
-  ['calismaSaatleri', 'Çalışma saatleri', ''],
-  ['telefon', 'Telefon', ''],
+  ['doktorUnvan', 'Ünvan', 'الحاج داکتر · Dr.'],
+  ['doktorAd', 'Doktor adı', 'Antetin en üstünde, büyük punto'],
+  ['doktorAdAlt', 'İkinci satır', 'Örneğin aynı adın Latin harfleriyle yazılışı'],
+  ['uzmanlik', 'Ünvan şeridi', 'Adın altındaki koyu şerit — uzmanlık alanı'],
+  ['slogan', 'Slogan', 'Antetin köşesinde; her satır ayrı yazılır', 'cok'],
+  ['klinikAdi', 'Klinik / eczane adı', 'Sloganın altında küçük satır; boş bırakılabilir'],
+  ['hizmetler', 'Hizmetler', 'Her satır ayrı bir hizmet; sırayla EKG ve ultrason simgesi alır', 'cok'],
+  ['hizmetAlanlari', 'İlgi alanları', 'Hizmetlerin altındaki parantezli satır'],
+  ['deneyim', 'Sabıka / çalışma geçmişi', 'Hizmetlerin altındaki açık mavi şerit'],
+  ['adres', 'Adres', 'Kâğıdın altında'],
+  ['telefon', 'Telefon', 'Kâğıdın altında'],
   ['whatsapp', 'WhatsApp numarası', 'Boşsa telefon kullanılır'],
   ['ulkeKodu', 'Ülke kodu', 'Afganistan 93 · Türkiye 90'],
   ['eposta', 'E-posta', ''],
-  ['doktorUnvan', 'Ünvan', 'Dr. · داکتر'],
-  ['doktorAd', 'Doktor adı', 'Kâğıdın sağ üstünde, ilk satır'],
-  ['doktorAdAlt', 'İkinci satır', 'Örneğin aynı adın İngilizcesi'],
-  ['uzmanlik', 'Uzmanlık', ''],
-  ['diplomaNo', 'Diploma no', ''],
-  ['kurum', 'Kurum / hastane', ''],
+  ['ayakEtiketleri', 'Alt rozetler', 'Virgülle ayrılmış en çok dört etiket (kalp, akciğer, mide, çocuk simgeleriyle)'],
+  ['diplomaNo', 'Diploma no', 'Yalnız kayıtlarda tutulur'],
+  ['kurum', 'Kurum / hastane', 'Yalnız kayıtlarda tutulur'],
 ];
 
 const QR_SECENEKLERI = [
@@ -107,10 +111,16 @@ export default {
 
       /* --- Reçete antedi --- */
       const antet = {};
-      for (const [anahtar] of ANTET_ALANLARI) {
-        antet[anahtar] = girdi({ name: anahtar, value: ayar[anahtar] ?? (anahtar === 'klinikAdi' ? ayar.eczaneAdi || '' : '') });
+      for (const [anahtar, , , cokSatir] of ANTET_ALANLARI) {
+        antet[anahtar] = cokSatir
+          ? metinAlani({ name: anahtar, rows: 2, value: ayar[anahtar] ?? '' })
+          : girdi({ name: anahtar, value: ayar[anahtar] ?? '' });
       }
       const boyut = secim([['A4', 'A4'], ['A5', 'A5']], { name: 'yazdirmaBoyutu', value: ayar.yazdirmaBoyutu || 'A4' });
+      const stil = secim([
+        ['renkli', t('ayar.stil_renkli', 'Renkli (basılı kâğıdın aynısı)')],
+        ['sade', t('ayar.stil_sade', 'Sade (siyah-beyaz, az mürekkep)')],
+      ], { name: 'kagitStili', value: ayar.kagitStili || 'renkli' });
       const qr = secim(QR_SECENEKLERI.map(([k, ad]) => [k, t('ayar.qr.' + k, ad)]), { name: 'qrIcerik', value: ayar.qrIcerik || 'whatsapp' });
       const para = secim(PARA_BIRIMLERI, { name: 'paraBirimi', value: ayar.paraBirimi || 'AFN' });
 
@@ -121,11 +131,12 @@ export default {
           ...ANTET_ALANLARI.map(([anahtar, etiket, ipucu]) =>
             alan(t('ayar.' + anahtar, etiket), antet[anahtar], ipucu ? { ipucu: t('ayar.' + anahtar + '_ipucu', ipucu) } : {})),
           alan(t('ayar.kagit', 'Reçete kâğıdı'), boyut),
+          alan(t('ayar.kagit_stili', 'Kâğıt stili'), stil),
           alan(t('ayar.qr', 'Karekod (QR)'), qr),
           alan(t('ayar.para', 'Para birimi'), para)),
         el('div', { class: 'satir', style: { marginBlockStart: 'var(--b-3)' } },
           btnS('kaydet', t('ayar.antet_kaydet', 'Antet bilgilerini kaydet'), { class: 'btn btn--birincil', onclick: async () => {
-            const v = { yazdirmaBoyutu: boyut.value, qrIcerik: qr.value, paraBirimi: para.value };
+            const v = { yazdirmaBoyutu: boyut.value, kagitStili: stil.value, qrIcerik: qr.value, paraBirimi: para.value };
             for (const [anahtar] of ANTET_ALANLARI) v[anahtar] = antet[anahtar].value.trim();
             await depo.ayarKaydet(v);
             bicimAyarla({ kur: para.value });
