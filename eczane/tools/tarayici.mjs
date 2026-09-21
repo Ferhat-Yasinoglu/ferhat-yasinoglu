@@ -245,6 +245,8 @@ const bolumler = [
   ['hasta', 'Zeynep Kaya'], ['tanı', 'J06.9'], ['ilaç', 'Nurofen'],
   ['alerji', T('hasta.alerji')], ['adres', 'کابل'], ['telefon', '0700000000'],
   ['Clinical başlığı', 'Clinical'], ['ölçüm etiketi', 'BP :'],
+  // Kâğıda ait sabit satır: ayarlardan gelmiyor, her kâğıtta olmalı.
+  ['sabit satır', 'طبیب حقیقی خداوند'],
 ];
 for (const [ad, beklenen] of bolumler) {
   if (!yazdirMetni.includes(beklenen)) throw new Error(`reçete çıktısında ${ad} yok ("${beklenen}")`);
@@ -286,7 +288,7 @@ const bosKagit = await sayfa.evaluate(async () => {
   };
 });
 if (bosKagit.cizgi < 8) throw new Error(`boş kâğıtta doldurma çizgisi eksik: ${bosKagit.cizgi}`);
-for (const beklenen of ['نمونه احمدی', 'سلامتی شما', 'سابقه کاری', 'Clinical', 'BP :', '℞']) {
+for (const beklenen of ['نمونه احمدی', 'سلامتی شما', 'سابقه کاری', 'طبیب حقیقی خداوند', 'Clinical', 'BP :', '℞']) {
   if (!bosKagit.metin.includes(beklenen)) throw new Error(`boş kâğıtta "${beklenen}" yok`);
 }
 if (bosKagit.metin.includes('Zeynep')) throw new Error('boş kâğıtta hasta bilgisi sızmış');

@@ -42,6 +42,10 @@ function amblemCiz() {
 
 /* Klinik alanların etiketleri kâğıtta İngilizce durur: doktorun kendi kâğıdı
    da böyle ve BP/PR/RR/BW hekimlikte evrensel kısaltmalar. */
+/** Kâğıda basılı, değişmeyen satır. Ayarlarda karşılığı yoktur; kaldırmak
+ *  ya da değiştirmek için bu dosyayı düzenlemek gerekir — öyle istendi. */
+const VECIZE = 'طبیب حقیقی خداوند (ج) است';
+
 const KLINIK_ADLARI = { bp: 'BP', pr: 'PR', rr: 'RR', bw: 'BW', temp: 'Temperature' };
 
 const doluMu = (v) => String(v ?? '').trim() !== '';
@@ -125,6 +129,12 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
 
   const deneyim = doluMu(ayar.deneyim) ? el('div', { class: 'kagit__deneyim' }, ayar.deneyim) : null;
 
+  /* ---- Kâğıda ait sabit satır ----
+     Hekimin basılı reçetesinde bu satır var ve kalması istendi. Bilerek
+     ayarlardan gelmiyor ve bilerek koşulsuz basılıyor: kâğıdın parçası,
+     doldurulan bir alan değil. Boş kâğıtta da çıkar. */
+  const vecize = el('div', { class: 'kagit__vecize' }, VECIZE);
+
   /* ---- Hasta şeridi: Name / Age / Date / No ---- */
   const alan = (etiket, deger, genislik) => el('span', { class: 'kagit__alan' },
     el('b', {}, etiket + ':'), bos ? cizgi(genislik) : el('span', { dir: 'auto' }, deger || '—'));
@@ -196,7 +206,7 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false } =
       : null);
 
   return el('div', { class: `yazdir-alan kagit${stilSinifi}` }, stil,
-    antet, unvan, hizmet, deneyim, serit,
+    antet, unvan, hizmet, deneyim, vecize, serit,
     el('div', { class: 'kagit__govde' }, rx, sutun),
     ayak);
 }

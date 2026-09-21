@@ -85,6 +85,13 @@
     font-size: 9pt; font-weight: 600; text-align: center;
   }
 
+  /* ---------- Kâğıda ait sabit satır ---------- */
+  .kagit__vecize {
+    background: var(--mavi-cok-acik); color: var(--mavi-koyu);
+    padding: 1.5mm 5mm; text-align: center;
+    font-size: 10pt; font-weight: 700;
+  }
+
   /* ---------- Hasta şeridi ---------- */
   .kagit__serit {
     display: flex; flex-wrap: wrap; gap: 1.5mm 7mm;
@@ -168,6 +175,7 @@
   .kagit--sade .kagit__antet, .kagit--sade .kagit__ayak { background: none; color: #000; border-block: 1.5pt solid #000; border-radius: 0; }
   .kagit--sade .kagit__unvan span { background: none; color: #000; border: 1pt solid #000; }
   .kagit--sade .kagit__amblem, .kagit--sade .kagit__rozet-daire { border-color: #000; background: none; }
+  .kagit--sade .kagit__vecize { background: none; color: #000; border-block: 0.6pt solid #000; }
   .kagit--sade .kagit__alerji { border-color: #000; color: #000; }
 }
 
@@ -232,6 +240,13 @@
   .kagit--modern .kagit__deneyim {
     background: none; text-align: start; padding: .5mm 5mm 3mm;
     font-size: 8.5pt; font-weight: 500; color: var(--m-sessiz);
+  }
+
+  /* Sabit satır modern kâğıtta sessiz: ince kurallar arasında ortalanmış. */
+  .kagit--modern .kagit__vecize {
+    background: none; color: var(--m-vurgu);
+    border-block: 0.5pt solid var(--m-cizgi);
+    padding: 1.8mm 5mm; font-size: 9.5pt; font-weight: 600;
   }
 
   /* ---------- Hasta şeridi: açık zemin, ince kurallar ---------- */
