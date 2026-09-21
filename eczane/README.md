@@ -13,6 +13,21 @@ eklemek `DILLER`'e bir satır ve `app/i18n/<kod>.json` dosyası eklemekten ibare
 bu yüzden veri cihazda tutulur ve tek güvence yedektir. Uygulama yedek almayı
 hatırlatır, yedek tek JSON dosyasıdır.
 
+## Adres
+
+`main`'e giren her değişiklik GitHub Pages'e çıkar:
+
+**<https://ferhat-yasinoglu.github.io/ferhat-yasinoglu/eczane/>**
+
+Telefonda açılıp "ana ekrana ekle" denince uygulama gibi kurulur ve ondan sonra
+internetsiz de açılır. Adres herkese açık, **veri değil**: her cihaz yalnız kendi
+kayıtlarını görür, adresi bilen kimse kimsenin hastalarına erişemez. Antet de
+kodda gömülü değil, her hekim Ayarlar'dan kendi bilgilerini girer.
+
+Yayın `.github/workflows/site.yml` ile yapılır. Service worker'ın önbellek
+anahtarı dağıtımın kısa SHA'sıyla damgalanır (`sw.js` içindeki `__SURUM__`);
+bu olmadan tarayıcı eski dosyaları süresiz tutar ve güncelleme hekime ulaşmaz.
+
 ## Çalıştırma
 
 ```bash
