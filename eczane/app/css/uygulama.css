@@ -6,8 +6,12 @@ body {
   font-family: var(--yazi); font-size: var(--f-m); line-height: var(--satir-yazi);
   -webkit-text-size-adjust: 100%;
   text-rendering: optimizeLegibility;
+  /* Sayfanın üstünde çok hafif bir ışık: düz gri zemin ucuz duruyordu.
+     Kaydırıldığında yerinde kalsın diye fixed. */
+  background-image: radial-gradient(1200px 420px at 70% -120px, rgb(var(--vurgu) / .07), transparent 70%);
+  background-attachment: fixed;
 }
-h1, h2, h3 { line-height: var(--satir-baslik); letter-spacing: -.005em; }
+h1, h2, h3 { line-height: var(--satir-baslik); letter-spacing: -.01em; }
 h1 { font-size: var(--f-xl); margin-block: 0 var(--b-1); font-weight: 700; }
 h2 { font-size: var(--f-l); margin-block: var(--b-5) var(--b-2); font-weight: 700; }
 a { color: rgb(var(--vurgu)); }
@@ -19,13 +23,14 @@ a { color: rgb(var(--vurgu)); }
   position: sticky; inset-block-start: 0; z-index: 40;
   display: flex; align-items: center; gap: var(--b-3);
   block-size: var(--ust-cubuk); padding-inline: var(--b-4);
-  background: rgb(var(--yuzey) / .88); backdrop-filter: blur(10px);
+  background: rgb(var(--yuzey) / .82); backdrop-filter: saturate(160%) blur(12px);
   border-block-end: var(--kenarlik);
 }
 .ust__logo { display: flex; align-items: center; gap: var(--b-2); text-decoration: none; color: inherit; flex-shrink: 0; }
-.ust__logo img { inline-size: 30px; block-size: 30px; }
+.ust__logo img { inline-size: 32px; block-size: 32px; border-radius: 8px; transition: transform var(--hiz-2) var(--egri-yay); }
+.ust__logo:hover img { transform: rotate(-6deg) scale(1.06); }
 .ust__ad { display: flex; flex-direction: column; line-height: 1.15; }
-.ust__ad b { font-size: var(--f-m); letter-spacing: -.01em; }
+.ust__ad b { font-size: var(--f-l); letter-spacing: -.02em; }
 .ust__ad span { font-size: var(--f-xs); color: rgb(var(--metin-3)); }
 /* Arama kutusu ortada yüzmesin: sınırlı genişlikte, başlıktan sonra. */
 .ust__ara { flex: 1; max-inline-size: 360px; }
@@ -35,7 +40,7 @@ a { color: rgb(var(--vurgu)); }
 .govde { display: flex; min-block-size: calc(100vh - var(--ust-cubuk)); }
 .kenar {
   inline-size: var(--kenar); flex-shrink: 0; padding: var(--b-4) var(--b-3);
-  border-inline-end: var(--kenarlik); background: rgb(var(--yuzey));
+  border-inline-end: var(--kenarlik); background: rgb(var(--yuzey) / .6);
   position: sticky; inset-block-start: var(--ust-cubuk); block-size: calc(100vh - var(--ust-cubuk));
   overflow-y: auto;
 }
@@ -47,13 +52,24 @@ a { color: rgb(var(--vurgu)); }
 }
 .menu__grup:first-child { margin-block-start: 0; }
 .menu a {
+  position: relative; overflow: hidden;
   display: flex; align-items: center; gap: var(--b-3);
   padding: var(--b-2) var(--b-3); border-radius: var(--r-kucuk);
   color: rgb(var(--metin-2)); text-decoration: none; font-weight: 600; font-size: var(--f-m);
-  transition: background var(--gecis), color var(--gecis);
+  transition: background var(--hiz-1) var(--egri), color var(--hiz-1) var(--egri);
 }
 .menu a:hover { background: rgb(var(--yuzey-2)); color: rgb(var(--metin)); }
-.menu a[aria-current="page"] { background: rgb(var(--vurgu) / .12); color: rgb(var(--vurgu)); font-weight: 700; }
+.menu a[aria-current="page"] { background: rgb(var(--vurgu) / .1); color: rgb(var(--vurgu)); font-weight: 700; }
+/* Seçili öğenin başlangıç kenarında ince bir işaret. Sahte öğe kullanıldı:
+   border-inline-start metni kaydırıyordu. */
+.menu a[aria-current="page"]::before {
+  content: ''; position: absolute; inset-inline-start: 0; inset-block: 20%;
+  inline-size: 3px; border-radius: var(--r-tam); background: rgb(var(--vurgu));
+  animation: isaret-bit var(--hiz-2) var(--egri);
+}
+@keyframes isaret-bit { from { transform: scaleY(0); opacity: 0; } }
+.menu .simge { transition: transform var(--hiz-2) var(--egri-yay); }
+.menu a:hover .simge { transform: scale(1.12); }
 /* Sayı etiketi menünün bitiş kenarında, okunur bir hap olarak durur. */
 .menu__sayi {
   margin-inline-start: auto; min-inline-size: 22px; text-align: center;
@@ -68,9 +84,9 @@ a { color: rgb(var(--vurgu)); }
 .bant {
   display: flex; align-items: center; gap: var(--b-2); flex-wrap: wrap;
   padding: var(--b-3) var(--b-4); border-radius: var(--r); font-size: var(--f-s); font-weight: 600;
-  background: rgb(var(--sari) / .1); color: rgb(var(--sari)); border: 1px solid rgb(var(--sari) / .26);
+  background: rgb(var(--sari) / .09); color: rgb(var(--sari)); border: 1px solid rgb(var(--sari) / .25);
 }
-.bant--hata { background: rgb(var(--kirmizi) / .1); color: rgb(var(--kirmizi)); border-color: rgb(var(--kirmizi) / .26); }
+.bant--hata { background: rgb(var(--kirmizi) / .09); color: rgb(var(--kirmizi)); border-color: rgb(var(--kirmizi) / .25); }
 .bant .btn { margin-inline-start: auto; }
 
 /* ---------- Sayfa başlığı ---------- */
@@ -83,15 +99,18 @@ a { color: rgb(var(--vurgu)); }
 .alt { display: none; }
 
 /* ---------- Hareket ---------- */
-.sayfa-giris { animation: sayfa-gir 200ms cubic-bezier(.2, .6, .2, 1); }
-@keyframes sayfa-gir { from { opacity: 0; transform: translateY(6px); } }
-/* Sıra gecikmesi kısa: uzun listede satırlar tek tek belirince sayfa
-   yavaş açılıyormuş gibi oluyordu. */
-.sirali > * { animation: sira-gir 200ms cubic-bezier(.2, .6, .2, 1) backwards; animation-delay: calc(var(--i, 0) * 14ms); }
-@keyframes sira-gir { from { opacity: 0; transform: translateY(4px); } }
+/* Sayfa girişi: kısa ve yukarı doğru. Uzun ya da yaylı olursa her gezinme
+   yavaş hissettiriyor — gün boyu kullanılan bir arayüzde bu yorucu. */
+.sayfa-giris { animation: sayfa-gir var(--hiz-2) var(--egri); }
+@keyframes sayfa-gir { from { opacity: 0; transform: translateY(8px); } }
+/* Sıra gecikmesi kısa: uzun listede satırlar tek tek belirince sayfa yavaş
+   açılıyormuş gibi oluyordu. */
+.sirali > * { animation: sira-gir var(--hiz-2) var(--egri) backwards; animation-delay: calc(var(--i, 0) * 14ms); }
+@keyframes sira-gir { from { opacity: 0; transform: translateY(5px); } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+  .ust__logo:hover img, .menu a:hover .simge, a.sayac:hover { transform: none; }
 }
 
 /* ---------- Dar ekran ---------- */
@@ -104,7 +123,7 @@ a { color: rgb(var(--vurgu)); }
   .ust__ara { max-inline-size: none; }
   .alt {
     display: flex; position: fixed; inset-block-end: 0; inset-inline: 0; z-index: 40;
-    block-size: var(--alt-cubuk); background: rgb(var(--yuzey) / .94); backdrop-filter: blur(10px);
+    block-size: var(--alt-cubuk); background: rgb(var(--yuzey) / .9); backdrop-filter: saturate(160%) blur(12px);
     border-block-start: var(--kenarlik);
     padding-block-end: env(safe-area-inset-bottom);
   }
@@ -113,22 +132,25 @@ a { color: rgb(var(--vurgu)); }
     flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
     border: none; background: none; color: rgb(var(--metin-3)); text-decoration: none;
     font: inherit; font-size: var(--f-xs); font-weight: 600; cursor: pointer;
+    transition: color var(--hiz-1) var(--egri);
   }
   .alt a[aria-current="page"] { color: rgb(var(--vurgu)); }
+  .alt .simge { transition: transform var(--hiz-2) var(--egri-yay); }
+  .alt a[aria-current="page"] .simge { transform: translateY(-1px) scale(1.1); }
   /* Seçili sekmenin üstünde ince bir çizgi: renk tek başına, özellikle
      karanlık temada ve küçük simgelerde yeterince belli olmuyordu. */
   .alt a[aria-current="page"]::before {
     content: ''; position: absolute; inset-block-start: 0; inset-inline: 22%;
     block-size: 2px; border-radius: var(--r-tam); background: rgb(var(--vurgu));
+    animation: isaret-bit var(--hiz-2) var(--egri);
   }
-  /* Eylem düğmeleri ikili ızgara; asıl eylem tam satır. flex ile
-     dizildiğinde üçüncü düğme tek başına alt satıra düşüp boydan boya
-     uzuyordu — ikincil bir düğme asıl düğmeden iri görünüyordu. */
+  /* Eylem düğmeleri ikili ızgara; asıl eylem tam satır. flex ile dizildiğinde
+     üçüncü düğme tek başına alt satıra düşüp boydan boya uzuyor, ikincil bir
+     düğme asıl düğmeden iri görünüyordu. */
   .sayfa-bas__eylem {
     margin-inline-start: 0; inline-size: 100%;
     display: grid; grid-template-columns: 1fr 1fr; gap: var(--b-2);
   }
-  .sayfa-bas__eylem > .btn { justify-content: center; }
   .sayfa-bas__eylem > .btn--birincil { grid-column: 1 / -1; }
   /* Bildirimler alt gezinme çubuğunun üstünde durur; yoksa düğmeleri örtüyordu. */
   .bildirimler { inset-block-end: calc(var(--alt-cubuk) + var(--b-2)); inset-inline: var(--b-3) var(--b-3); }

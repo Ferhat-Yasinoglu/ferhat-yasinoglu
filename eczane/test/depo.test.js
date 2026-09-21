@@ -160,6 +160,13 @@ describe('düşmüş koleksiyon taşıyan eski yedek', () => {
 
   it('geçerli sayılır', () => expect(yedekDogrula(eskiYedek()).gecerli).toBe(true));
 
+  it('eski "eczane-yedek" biçim adı hâlâ kabul edilir', () => {
+    // Uygulamanın adı Shafa oldu; kullanıcının elindeki eski dosya
+    // adı değişti diye reddedilmemeli.
+    expect(yedekDogrula({ ...eskiYedek(), bicim: 'eczane-yedek' }).gecerli).toBe(true);
+    expect(yedekDogrula({ ...eskiYedek(), bicim: 'baska-sey' }).gecerli).toBe(false);
+  });
+
   it('ilaçlar gelir, hareketler atlanır', async () => {
     const r = await iceAktar(depo, eskiYedek());
     expect(r.ok).toBe(true);

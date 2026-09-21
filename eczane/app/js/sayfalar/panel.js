@@ -1,8 +1,8 @@
 // Panel: reçete odaklı özet. İşin merkezi reçete yazmak; sayaçlar ve listeler
 // de onu anlatıyor — bugün kaç reçete yazıldı, son reçeteler, son hastalar.
-import { el, temizle, btnS, kart, sayacKutusu, sayfaBas, bosDurum, sirala } from '../cekirdek/dom.js';
+import { el, temizle, btnS, kart, sayacKutusu, sayfaBas, bosDurum, sirala, sutunGrafik } from '../cekirdek/dom.js';
 import { simge } from '../cekirdek/simge.js';
-import { trTarih, bugun, goreliGun } from '../paylasilan/tarih.js';
+import { trTarih, bugun, isoGun, goreliGun } from '../paylasilan/tarih.js';
 import { tamAd } from '../paylasilan/hasta.js';
 import { basHarfler } from '../paylasilan/metin.js';
 import { receteOzet } from '../paylasilan/recete.js';
@@ -45,6 +45,22 @@ export default {
       const bugunku = receteler.filter((r) => String(r.tarih).slice(0, 10) === bugun());
       const hastaAdi = (id) => tamAd(hastalar.find((h) => h.id === id)) || t('nav.hasta', 'Hasta');
 
+      // Son 14 gün: hangi gün kaç reçete yazılmış? Hekimin kendi temposunu
+      // görmesi için — sayı değil, şekil bilgi veriyor.
+      const GUN_SAYISI = 14;
+      const gunler = [];
+      for (let i = GUN_SAYISI - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const iso = isoGun(d);
+        gunler.push({
+          etiket: String(d.getDate()),
+          deger: receteler.filter((r) => String(r.tarih).slice(0, 10) === iso).length,
+          bugun: i === 0,
+        });
+      }
+      const ikiHaftalik = gunler.reduce((a, g) => a + g.deger, 0);
+
       kok.append(sayfaBas(t('nav.panel', 'Panel'), {
         alt: t('panel.alt', 'Reçeteler, hastalar ve ilaç listesi.'),
         eylemler: [
@@ -59,6 +75,12 @@ export default {
         sayacKutusu({ baslik: t('nav.receteler', 'Reçeteler'), deger: receteler.length, alt: t('panel.kayitli', 'kayıtlı'), simge: 'recete', tur: 'notr', yol: '/receteler' }),
         sayacKutusu({ baslik: t('nav.hasta', 'Hasta'), deger: hastalar.length, alt: t('panel.kayitli', 'kayıtlı'), simge: 'hasta', tur: 'vurgu', yol: '/hastalar' }),
         sayacKutusu({ baslik: t('panel.ilac_cesidi', 'İlaç çeşidi'), deger: ilaclar.length, alt: t('panel.listede', 'listede'), simge: 'ilac', tur: 'notr', yol: '/ilaclar' })));
+
+      kok.appendChild(kart({},
+        el('div', { class: 'kart__bas' },
+          el('h2', {}, t('panel.son_gunler', 'Son 14 gün')),
+          el('span', { class: 'kart__alt' }, t('recete.sayim', '{n} reçete', { n: ikiHaftalik }))),
+        sutunGrafik(gunler, { etiket: t('panel.grafik_etiket', 'Son 14 günde yazılan reçete sayısı') })));
 
       // Panel kartları geniş ekranda iki sütuna dizilir (bkz. .panel-izgara):
       // tek sütunda her kart bin piksele geniyor ve içindeki üç satırın

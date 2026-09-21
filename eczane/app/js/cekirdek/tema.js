@@ -1,6 +1,6 @@
 /* Senkron çalışır (modül değil): sayfa boyanmadan tema ve yazı yönü yerleşir,
    yanıp sönme olmaz. Arayüz Farsça olduğu için belge sağdan sola açılır.
-   Eczane gündüz ışığında kullanılır; varsayılan aydınlık tema. */
+   Muayenede gündüz ışığında kullanılır; varsayılan aydınlık tema. */
 (function () {
   try {
     document.documentElement.setAttribute('data-tema', localStorage.getItem('ecz-tema') || 'aydinlik');

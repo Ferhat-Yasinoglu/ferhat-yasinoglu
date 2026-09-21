@@ -1,16 +1,17 @@
-/* Tasarım tokenları — klinik yeşil, yüksek okunurluk.
-   Eczane tezgâhında gündüz ışığında kullanılır: varsayılan tema aydınlık,
-   karanlık tema gece nöbeti için. Renkler rgb üçlüsü olarak tutulur ki
+/* Tasarım tokenları — klinik turkuazı, yüksek okunurluk.
+   Uygulamayı bir hekim kullanıyor: muayene sırasında, hastayla konuşurken,
+   çoğu zaman telefonda. Renkler bu yüzden sakin; dikkat çeken tek şey
+   uyarılar olsun. Renkler rgb üçlüsü olarak tutulur ki
    rgb(var(--vurgu) / .12) gibi saydamlıklar tek yerden türesin.
    Yalnız mantıksal yön özellikleri kullanılır. */
 
 /* Vazirmatn: Farsça için çizilmiş açık kaynak (OFL) yazı tipi — lisans
    yazi/OFL.txt. Sistem yazı tipleri Arap harflerini genelde ikinci sınıf
-   taşır: harf yükseklikleri oynar, nokta kümeleri birbirine girer, kalınlık
-   sahtelenir. Tek değişken dosya (111 KB) bütün kalınlıkları taşıyor ve
-   service worker'ın önbelleğinde olduğu için ilk açılıştan sonra çevrimdışı
-   da geliyor. font-display: swap — yazı tipi inene kadar metin görünür kalsın,
-   reçete yazan kimse boş ekrana bakmasın. */
+   taşıyor: harf yükseklikleri oynuyor, nokta kümeleri birbirine giriyor,
+   kalınlık sahteleniyor. Tek değişken dosya (111 KB) bütün kalınlıkları
+   taşıyor ve service worker'ın önbelleğinde olduğu için ilk açılıştan sonra
+   çevrimdışı da geliyor. font-display: swap — yazı tipi inene kadar metin
+   görünür kalsın, reçete yazan kimse boş ekrana bakmasın. */
 @font-face {
   font-family: 'Vazirmatn';
   src: url('../yazi/vazirmatn.woff2') format('woff2');
@@ -20,37 +21,39 @@
 }
 
 :root {
-  --bg: 245 248 246;
+  --bg: 246 249 249;
   --yuzey: 255 255 255;
-  --yuzey-2: 240 245 242;
-  --yuzey-3: 227 237 232;
-  --cizgi: 16 44 34;
+  --yuzey-2: 241 246 246;
+  --yuzey-3: 226 235 235;
+  --cizgi: 9 41 44;
 
-  --metin: 13 30 24;
-  --metin-2: 74 96 86;
-  --metin-3: 122 142 132;
+  --metin: 12 29 33;
+  --metin-2: 74 95 99;
+  --metin-3: 124 144 150;
 
-  --vurgu: 11 122 90;          /* eczane yeşili */
-  --vurgu-2: 8 99 73;
+  --vurgu: 15 118 110;         /* klinik turkuazı */
+  --vurgu-2: 11 95 88;
+  --vurgu-3: 20 184 166;       /* açık uç — gradyan ve vurgu ışıkları */
   --vurgu-yz: 255 255 255;
 
-  --kirmizi: 187 40 40;
-  --sari: 161 106 6;
-  --yesil: 22 122 78;
-  --mavi: 30 96 160;
-  --mor: 116 74 172;
+  --kirmizi: 190 18 60;
+  --sari: 180 83 9;
+  --yesil: 21 128 61;
+  --mavi: 29 78 216;
+  --mor: 126 34 206;
 
-  --r-kucuk: 8px; --r: 12px; --r-buyuk: 18px; --r-tam: 999px;
+  --r-kucuk: 9px; --r: 14px; --r-buyuk: 20px; --r-tam: 999px;
   --b-1: 4px; --b-2: 8px; --b-3: 12px; --b-4: 16px; --b-5: 24px; --b-6: 32px; --b-8: 48px;
 
-  /* Gölgeler hafif: yüzeyler kenarlıkla ayrılıyor, gölge yalnız gerçekten
-     yüzen şeylerde (modal, bildirim, açılır) iş görüyor. Her kutuya gölge
-     koymak sayfayı bulanıklaştırıyordu. */
+  /* Gölgeler hafif ve katmanlı: yüzeyler kenarlıkla ayrılıyor, gölge yalnız
+     gerçekten yüzen şeylerde (modal, bildirim, açılır) iş görüyor. Her kutuya
+     gölge koymak sayfayı bulanıklaştırıyordu. */
   --golge-1: 0 1px 2px rgb(var(--cizgi) / .05);
-  --golge-2: 0 4px 14px rgb(var(--cizgi) / .08), 0 1px 3px rgb(var(--cizgi) / .05);
-  --golge-3: 0 20px 48px rgb(var(--cizgi) / .18), 0 4px 12px rgb(var(--cizgi) / .08);
+  --golge-2: 0 4px 14px rgb(var(--cizgi) / .07), 0 1px 3px rgb(var(--cizgi) / .05);
+  --golge-3: 0 24px 56px rgb(var(--cizgi) / .18), 0 4px 12px rgb(var(--cizgi) / .08);
   --kenarlik: 1px solid rgb(var(--cizgi) / .10);
-  --kenarlik-2: 1px solid rgb(var(--cizgi) / .20);
+  --kenarlik-2: 1px solid rgb(var(--cizgi) / .18);
+  --halka: 0 0 0 3px rgb(var(--vurgu) / .18);
 
   --yazi: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Arabic', Tahoma, Roboto, 'Helvetica Neue', Arial, sans-serif;
   --mono: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
@@ -58,38 +61,46 @@
   /* Arap yazısı Latin'den daha çok satır aralığı ister: harfler altına ve
      üstüne uzanıyor, dar satırda birbirine değiyorlar. */
   --satir-yazi: 1.62;
-  --satir-baslik: 1.3;
+  --satir-baslik: 1.28;
 
   --ust-cubuk: 60px; --alt-cubuk: 64px; --kenar: 236px; --icerik-en: 1240px;
-  --gecis: 160ms cubic-bezier(.2, .6, .2, 1);
+
+  /* Hareket: tek bir yay eğrisi bütün arayüzde. Süreler kısa — arayüz
+     "animasyonlu" değil, çevik hissetsin. */
+  --egri: cubic-bezier(.22, .68, .36, 1);
+  --egri-yay: cubic-bezier(.2, .9, .3, 1.2);
+  --hiz-1: 120ms; --hiz-2: 200ms; --hiz-3: 320ms;
+  --gecis: var(--hiz-2) var(--egri);
   color-scheme: light;
 }
 
 :root[data-tema="karanlik"] {
-  --bg: 10 17 15;
-  --yuzey: 18 27 24;
-  --yuzey-2: 25 36 32;
-  --yuzey-3: 34 48 42;
-  --cizgi: 130 205 178;
+  --bg: 10 18 20;
+  --yuzey: 17 28 31;
+  --yuzey-2: 24 38 41;
+  --yuzey-3: 34 52 56;
+  --cizgi: 127 217 208;
 
-  --metin: 228 238 233;
-  --metin-2: 158 180 171;
-  --metin-3: 118 140 131;
+  --metin: 230 240 240;
+  --metin-2: 157 179 181;
+  --metin-3: 114 138 141;
 
-  --vurgu: 52 186 140;
-  --vurgu-2: 96 214 172;
-  --vurgu-yz: 5 24 18;
+  --vurgu: 45 212 191;
+  --vurgu-2: 94 234 212;
+  --vurgu-3: 20 184 166;
+  --vurgu-yz: 4 32 29;
 
-  --kirmizi: 233 112 106;
-  --sari: 224 178 74;
-  --yesil: 88 200 148;
-  --mavi: 122 172 228;
-  --mor: 180 150 220;
+  --kirmizi: 251 113 133;
+  --sari: 251 191 36;
+  --yesil: 74 222 128;
+  --mavi: 147 197 253;
+  --mor: 196 181 253;
 
   --golge-1: 0 1px 2px rgb(0 0 0 / .4);
   --golge-2: 0 4px 16px rgb(0 0 0 / .45);
-  --golge-3: 0 20px 48px rgb(0 0 0 / .6), 0 4px 12px rgb(0 0 0 / .4);
-  --kenarlik: 1px solid rgb(var(--cizgi) / .14);
-  --kenarlik-2: 1px solid rgb(var(--cizgi) / .26);
+  --golge-3: 0 24px 56px rgb(0 0 0 / .6), 0 4px 12px rgb(0 0 0 / .4);
+  --kenarlik: 1px solid rgb(var(--cizgi) / .13);
+  --kenarlik-2: 1px solid rgb(var(--cizgi) / .24);
+  --halka: 0 0 0 3px rgb(var(--vurgu) / .22);
   color-scheme: dark;
 }
