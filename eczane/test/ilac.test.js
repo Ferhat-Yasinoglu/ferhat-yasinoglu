@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ilacEtiketi, ilacAra, muadiller, ilacDogrula } from '../app/js/paylasilan/ilac.js';
+import { ilacEtiketi, ilacAra, muadiller, ilacDogrula, formKisa, ilacAdiFormsuz } from '../app/js/paylasilan/ilac.js';
 
 const ilac = (o) => ({ id: 'ila_1', ad: 'Parol', doz: '500 mg', form: 'tablet', ...o });
 
@@ -33,3 +33,26 @@ describe('ilacDogrula', () => {
   it('doğru kaydı geçirir', () => expect(ilacDogrula({ ad: 'Parol', barkod: '8699514013059' })).toEqual({}));
 });
 
+
+describe('formKisa / ilacAdiFormsuz — kâğıttaki ilaç satırı', () => {
+  it('bilinen şeklin Latin kısaltmasını verir', () => {
+    expect(formKisa('tablet')).toBe('Tab');
+    expect(formKisa('kapsul')).toBe('Cap');
+    expect(formKisa('ampul')).toBe('Amp');
+  });
+  it('bilinmeyen şekilde önek basılmaz', () => {
+    expect(formKisa('diger')).toBe('');
+    expect(formKisa('')).toBe('');
+    expect(formKisa(undefined)).toBe('');
+  });
+  it('şekil önek olacağı için addan düşer', () => {
+    expect(ilacAdiFormsuz('Nurofen 400 mg Tablet', 'tablet')).toBe('Nurofen 400 mg');
+  });
+  it('şekil bilinmiyorsa ada dokunmaz — eski reçeteler', () => {
+    expect(ilacAdiFormsuz('Nurofen 400 mg Tablet', '')).toBe('Nurofen 400 mg Tablet');
+  });
+  it('ad zaten şekille bitmiyorsa dokunmaz', () => {
+    expect(ilacAdiFormsuz('Nurofen 400 mg', 'tablet')).toBe('Nurofen 400 mg');
+  });
+  it('boş adda patlamaz', () => expect(ilacAdiFormsuz(undefined, 'tablet')).toBe(''));
+});

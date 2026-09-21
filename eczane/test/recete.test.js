@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   receteOzet, receteNoUret, receteDogrula, bosRecete,
-  receteUyarilari, receteMetni, doluOlcumler, OLCUMLER,
+  receteUyarilari, receteMetni, doluOlcumler, OLCUMLER, sikIlaclar, SURE_ONERILERI,
 } from '../app/js/paylasilan/recete.js';
 
 const satir = (o) => ({ adet: 2, ...o });
@@ -120,6 +120,38 @@ describe('doluOlcumler', () => {
     expect(doluOlcumler(null)).toEqual([]);
   });
   it('OLCUMLER kısaltmaları sabittir (çıktıda değişmez)', () => {
-    expect(OLCUMLER.map(([, , k]) => k)).toEqual(['BP', 'PR', 'RR', 'BW', 'T']);
+    expect(OLCUMLER.map(([, , k]) => k)).toEqual(['BP', 'PR', 'RR', 'BW', 'T', 'SpO₂', 'Ht']);
+  });
+});
+
+describe('sikIlaclar', () => {
+  const ilaclar = [{ id: 'a', ad: 'A' }, { id: 'b', ad: 'B' }, { id: 'c', ad: 'C' }];
+  const receteler = [
+    { satirlar: [{ ilacId: 'a' }, { ilacId: 'b' }] },
+    { satirlar: [{ ilacId: 'a' }] },
+    { satirlar: [{ ilacId: 'a' }, { ilacId: 'c' }] },
+    { satirlar: [{ ilacId: 'b' }] },
+  ];
+
+  it('çok yazılandan aza sıralar', () =>
+    expect(sikIlaclar(receteler, ilaclar).map((x) => x.id)).toEqual(['a', 'b', 'c']));
+
+  it('hiç yazılmamışı listelemez', () =>
+    expect(sikIlaclar([{ satirlar: [{ ilacId: 'c' }] }], ilaclar).map((x) => x.id)).toEqual(['c']));
+
+  it('silinmiş ilacı atar — oradan zaten seçilemez', () =>
+    expect(sikIlaclar([{ satirlar: [{ ilacId: 'yok' }] }], ilaclar)).toEqual([]));
+
+  it('sınırı aşmaz', () => expect(sikIlaclar(receteler, ilaclar, 2)).toHaveLength(2));
+
+  it('reçete yoksa boş', () => expect(sikIlaclar([], ilaclar)).toEqual([]));
+
+  it('satırsız reçetede patlamaz', () => expect(sikIlaclar([{}, { satirlar: null }], ilaclar)).toEqual([]));
+});
+
+describe('SURE_ONERILERI', () => {
+  it('ilaçla eşleştirilmiş değil — sadece yazım kısayolu', () => {
+    for (const x of SURE_ONERILERI) expect(typeof x).toBe('string');
+    expect(new Set(SURE_ONERILERI).size).toBe(SURE_ONERILERI.length);
   });
 });

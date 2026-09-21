@@ -13,6 +13,27 @@ export const FORMLAR = [
 ];
 export const formAdi = (k) => FORMLAR.find(([v]) => v === k)?.[1] || '';
 
+/** Reçete kâğıdındaki Latin kısaltma: "1- Cap: Amoxicillin 500 mg".
+ *  Hekimin ve eczacının alışık olduğu biçim bu; kâğıt Farsça ama ilaç
+ *  satırı Latin yazılıyor. Tanınmayan şekilde önek basılmaz. */
+const FORM_KISALTMALARI = {
+  tablet: 'Tab', kapsul: 'Cap', surup: 'Syr', ampul: 'Amp', krem: 'Oint',
+  damla: 'Drop', sprey: 'Spray', fitil: 'Supp', posetl: 'Sach',
+};
+export const formKisa = (k) => FORM_KISALTMALARI[k] || '';
+
+/**
+ * Kâğıtta şekil ÖNEK olarak basılıyor ("Tab: …"), o yüzden adın sonundaki
+ * şekil adı düşer: "Nurofen 400 mg Tablet" → "Nurofen 400 mg".
+ * Yoksa "Tab: Nurofen 400 mg Tablet" çıkıyordu — şekil iki kez.
+ * Şekli bilinmeyen eski reçetede ad olduğu gibi kalır.
+ */
+export function ilacAdiFormsuz(ilacAdi, form) {
+  const ad = String(ilacAdi ?? '').trim();
+  const f = formAdi(form);
+  return f && ad.endsWith(f) ? ad.slice(0, -f.length).trim() : ad;
+}
+
 /** Listede ve reçetede gösterilen tek satırlık ad: "Parol 500 mg Tablet". */
 export function ilacEtiketi(ilac) {
   if (!ilac) return '';
