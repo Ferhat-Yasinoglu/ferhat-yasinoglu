@@ -69,9 +69,12 @@ jobs:
       - name: Siteyi hazirla
         run: |
           set -euo pipefail
-          mkdir -p site/sosyal-studyo site/eczane
+          mkdir -p site/sosyal-studyo site/eczane site/shafa
           cp -r sosyal-studyo/app/. site/sosyal-studyo/
           cp -r eczane/app/. site/eczane/
+          # Shafa'nın tanıtım sayfası; uygulamanın kendisi site/eczane/ altında
+          # kalıyor (yayındaki adresi kırmamak için).
+          cp -r eczane/tanitim/. site/shafa/
           cp .github/site/index.html site/index.html
           # Pages, bilinmeyen her yol icin kokteki 404.html'i verir. Bu yuzden
           # icindeki baglantilar goreli degil mutlak: /a/b/c gibi derin bir
