@@ -428,16 +428,19 @@ const olcumBekleneni = await sayfa.evaluate(async () => {
   const { OLCUMLER } = await import('./js/paylasilan/recete.js');
   return OLCUMLER.length;
 });
-const olcumSayisi = await sayfa.locator('.kagit__olcum').count();
+const olcumSayisi = await sayfa.locator('.kagit__olcum:not(.kagit__olcum--kan)').count();
 if (olcumSayisi !== olcumBekleneni) throw new Error(`klinik sütunda ${olcumBekleneni} ölçüm bekleniyordu, ${olcumSayisi} var`);
 const olcumMetni = await sayfa.textContent('.kagit__klinik-sutun');
 if (!olcumMetni.includes('110/70 mmHg') || !olcumMetni.includes('38.2 °C')) {
   throw new Error('girilen ölçümler kâğıda basılmamış: ' + olcumMetni.replace(/\s+/g, ' '));
 }
 // Girilmeyen ölçümler elle yazılsın diye çizgi olarak basılır: 2 tanesi dolu.
-const bosOlcum = await sayfa.locator('.kagit__olcum .kagit__cizgi').count();
+const bosOlcum = await sayfa.locator('.kagit__olcum:not(.kagit__olcum--kan) .kagit__cizgi').count();
 if (bosOlcum !== olcumBekleneni - 2) throw new Error(`boş ölçümlerde ${olcumBekleneni - 2} çizgi bekleniyordu, ${bosOlcum} var`);
-ok(`kâğıtta QR (${qrYolu.length} karakterlik yol), ${olcumBekleneni} ölçümün 2'si yazılı, ${bosOlcum}'ü elle doldurulmak üzere çizgili`);
+// Kan grubu ölçüm değil, hastanın künyesi: kendi satırında.
+const kanSatiri = await sayfa.locator('.kagit__olcum--kan').count();
+if (kanSatiri !== 1) throw new Error(`kâğıtta kan grubu satırı bekleniyordu, ${kanSatiri} var`);
+ok(`kâğıtta QR (${qrYolu.length} karakterlik yol), ${olcumBekleneni} ölçümün 2'si yazılı, ${bosOlcum}'ü çizgili, kan grubu satırı ayrı`);
 
 // --- Kâğıtta belirti, laboratuvar ve yeni ilaç satırı biçimi
 const rxMetni = (await sayfa.textContent('.kagit__rx-govde')).replace(/\s+/g, ' ');

@@ -47,7 +47,7 @@ export const KULLANIM_ONERILERI = [
 export function bosRecete(ayar = {}, gun = '') {
   return {
     receteNo: '', tarih: gun, tur: 'normal', hastaId: '',
-    belirtiler: '', tani: '', taniKodu: '', laboratuvar: '', protokolNo: '', notlar: '', satirlar: [],
+    belirtiler: '', tani: '', taniKodu: '', laboratuvar: '', kanGrubu: '', protokolNo: '', notlar: '', satirlar: [],
     olcumler: {},
     doktorAd: ayar.doktorAd || '', doktorUnvan: ayar.doktorUnvan || '',
     diplomaNo: ayar.diplomaNo || '', kurum: ayar.kurum || '',
@@ -56,6 +56,13 @@ export function bosRecete(ayar = {}, gun = '') {
 
 /** Reçete kâğıdının sol sütunundaki klinik ölçümler.
  *  [anahtar, Türkçe ad, kısaltma, birim] — kısaltma çıktıda değişmez. */
+/** Kan grupları. Hastanın kaydında da duruyor; reçeteye SEÇİLDİĞİ ANDAKİ
+ *  hâliyle mühürleniyor — doktor bilgileri gibi. Sonradan hasta kaydı
+ *  değişse bile basılmış reçete o günkü bilgiyi taşır. */
+export const KAN_GRUPLARI = [
+  'A Rh+', 'A Rh−', 'B Rh+', 'B Rh−', 'AB Rh+', 'AB Rh−', '0 Rh+', '0 Rh−',
+];
+
 /** İlacın veriliş yolu. Şekil çoğu zaman yolu ima ediyor ama ampulde
  *  (عضلی mi وریدی mi) ima etmiyor; hekim seçsin diye duruyor. */
 export const YOLLAR = [
