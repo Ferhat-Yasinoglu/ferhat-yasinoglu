@@ -940,13 +940,18 @@ if (aktifler.length !== 1 || aktifler[0] !== '#/recete/kagit') {
   throw new Error('aktif menü kalemi tek değil: ' + aktifler.join(' '));
 }
 // Başlığın odak halkası ekranın tepesinde turkuaz bir kutu bırakıyordu.
-await sayfa.goto(KOK + '#/receteler', { waitUntil: 'networkidle' });
-await sayfa.keyboard.press('Tab');
-await sayfa.goto(KOK + '#/hastalar', { waitUntil: 'networkidle' });
-const halka = await sayfa.$eval('#sayfa h1', (h) => {
-  h.focus();
-  return { gorunur: h.matches(':focus-visible'), cizgi: getComputedStyle(h).outlineStyle };
-});
+let halka = null;
+for (let deneme = 0; deneme < 3 && !halka?.gorunur; deneme++) {
+  await sayfa.goto(KOK + '#/receteler', { waitUntil: 'networkidle' });
+  await sayfa.waitForSelector('#sayfa h1');
+  await sayfa.keyboard.press('Tab');
+  await sayfa.goto(KOK + '#/hastalar', { waitUntil: 'networkidle' });
+  await sayfa.waitForSelector('#sayfa .liste__satir, #sayfa .durum');
+  halka = await sayfa.$eval('#sayfa h1', (h) => {
+    h.focus();
+    return { gorunur: h.matches(':focus-visible'), cizgi: getComputedStyle(h).outlineStyle };
+  });
+}
 if (!halka.gorunur) throw new Error('başlık :focus-visible değil, halka denetimi boşa dönüyor');
 if (halka.cizgi !== 'none') throw new Error('başlıkta odak halkası görünüyor: ' + halka.cizgi);
 ok('tek aktif menü kalemi, yönlendirme odağı başlıkta ama halka çizilmiyor');
@@ -1023,6 +1028,107 @@ if (!bosSayfaKagidi.antet || bosSayfaKagidi.ilac !== 0 || adetSecenekleri !== 5)
   throw new Error('boş kâğıt sayfası: ' + JSON.stringify({ ...bosSayfaKagidi, adetSecenekleri }));
 }
 ok(`boş kâğıt sayfası hazır: antet basılı, ${bosSayfaKagidi.cizgi} doldurma çizgisi, ilaç satırı yok, ${adetSecenekleri} adet seçeneği`);
+
+/* --- Şemsi tarih seçici --- */
+await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.recete-duzen .kagit');
+const tarihOku = () => sayfa.evaluate(() => ({
+  yazi: document.querySelector('.tarih-secici input[type=text]')?.value,
+  iso: document.querySelector('.tarih-secici input[type=hidden]')?.value,
+  // Kâğıda basılan tarih: kutu ile kâğıt ayrışırsa hekim gördüğünden başka
+  // bir tarih bastırır.
+  kagit: document.querySelector('.kagit-tuval')?.textContent.match(/Date\s*:\s*([0-9/]+)/)?.[1],
+}));
+const ilkTarih = await tarihOku();
+if (!/^\d{4}\/\d{2}\/\d{2}$/.test(ilkTarih.yazi || '') || !/^\d{4}-\d{2}-\d{2}$/.test(ilkTarih.iso || '')
+    || ilkTarih.yazi !== ilkTarih.kagit) {
+  throw new Error('tarih kutusu: ' + JSON.stringify(ilkTarih));
+}
+ok(`tarih kutusu şemsi (${ilkTarih.yazi}), depoya giden değer miladi (${ilkTarih.iso}), kâğıt ikisiyle aynı`);
+
+// Takvim: ay adı Afganistan'ınki, hafta شنبه ile başlıyor, gün sayısı doğru.
+await sayfa.click('.tarih-secici__dugme');
+await sayfa.waitForSelector('.tarih-kutu');
+await sayfa.waitForTimeout(260);
+const takvim = await sayfa.evaluate(() => {
+  const a = document.querySelector('.tarih-secici').getBoundingClientRect();
+  const k = document.querySelector('.tarih-kutu').getBoundingClientRect();
+  return {
+    ay: document.querySelector('.tarih-kutu__ad b')?.textContent,
+    gunler: document.querySelectorAll('.tarih-kutu__gun').length,
+    gunAdlari: [...document.querySelectorAll('.tarih-kutu__gunadi')].map((e) => e.textContent).join(''),
+    // RTL'de kutu alanın SAĞ kenarına hizalanır; bir kez soluna açılmıştı.
+    hizali: Math.abs(k.right - a.right) < 2,
+    ekranIcinde: k.left >= 0 && k.right <= innerWidth && k.top >= 0 && k.bottom <= innerHeight,
+  };
+});
+const AFGAN_AYLARI = ['حمل', 'ثور', 'جوزا', 'سرطان', 'اسد', 'سنبله', 'میزان', 'عقرب', 'قوس', 'جدی', 'دلو', 'حوت'];
+if (!AFGAN_AYLARI.includes(takvim.ay) || takvim.gunAdlari !== 'شیدسچپج'
+    || ![29, 30, 31].includes(takvim.gunler) || !takvim.hizali || !takvim.ekranIcinde) {
+  throw new Error('takvim: ' + JSON.stringify(takvim));
+}
+ok(`takvim açıldı: ay «${takvim.ay}» (Afganistan adı), ${takvim.gunler} gün, hafta شنبه ile başlıyor, alana hizalı`);
+
+// Gün seçmek kâğıdı da değiştiriyor mu?
+await sayfa.click('.tarih-kutu__gun >> text="15"');
+await sayfa.waitForTimeout(420);
+const secildi = await tarihOku();
+if (!secildi.yazi.endsWith('/15') || secildi.yazi !== secildi.kagit) {
+  throw new Error('gün seçimi: ' + JSON.stringify(secildi));
+}
+ok(`takvimden 15 seçildi: kutu ${secildi.yazi}, depo ${secildi.iso}, kâğıt aynı anda yenilendi`);
+
+// Farsça rakamla elle yazma + olmayan günün yakalanması
+await sayfa.fill('.tarih-secici input[type=text]', '');
+await sayfa.type('.tarih-secici input[type=text]', '۱۴۰۵/۰۷/۰۱');
+await sayfa.waitForTimeout(320);
+const farsca = await tarihOku();
+await sayfa.fill('.tarih-secici input[type=text]', '1405/12/31');   // حوت 29 çekiyor
+await sayfa.waitForTimeout(260);
+const olmayan = await sayfa.evaluate(() => ({
+  kirmizi: document.querySelector('.tarih-secici input[type=text]').classList.contains('input--hata'),
+  iso: document.querySelector('.tarih-secici input[type=hidden]').value,
+}));
+if (farsca.iso !== '2026-09-23' || !olmayan.kirmizi || olmayan.iso !== farsca.iso) {
+  throw new Error('elle yazma: ' + JSON.stringify({ farsca, olmayan }));
+}
+// Alandan çıkınca son geçerli değere dönmeli: yoksa ekranda bir tarih,
+// kâğıtta başka bir tarih kalırdı.
+await sayfa.click('.recete-form h2');
+await sayfa.waitForTimeout(260);
+const donen = await tarihOku();
+if (donen.yazi !== '1405/07/01' || donen.yazi !== donen.kagit) throw new Error('geri dönüş: ' + JSON.stringify(donen));
+ok(`Farsça rakamla yazıldı (۱۴۰۵/۰۷/۰۱ → ${farsca.iso}); olmayan gün (31 حوت) kırmızıya döndü, odaktan çıkınca son geçerli tarihe döndü`);
+
+// Hastanın doğum tarihi de şemsi: hekim doğum gününü şemsi biliyor.
+await sayfa.goto(KOK + '#/hastalar', { waitUntil: 'networkidle' });
+await sayfa.click(`button:has-text("${T('hasta.ekle')}")`);
+await sayfa.waitForSelector('.modal');
+const dogumSecici = await sayfa.$$eval('.modal .tarih-secici input[type=hidden]', (n) => n.map((x) => x.name));
+const miladiKutu = await sayfa.$$eval('.modal input[type=date]', (n) => n.length);
+if (!dogumSecici.includes('dogumTarihi') || miladiKutu !== 0) {
+  throw new Error(`doğum tarihi alanı: gizli=${dogumSecici.join(',')} miladiKutu=${miladiKutu}`);
+}
+await sayfa.fill('.modal .tarih-secici input[type=text]', '1365/03/12');
+await sayfa.waitForTimeout(300);
+const dogumIso = await sayfa.$eval('.modal .tarih-secici input[type=hidden]', (e) => e.value);
+if (dogumIso !== '1986-06-02') throw new Error('doğum tarihi çevrimi: ' + dogumIso);
+await sayfa.keyboard.press('Escape');
+await sayfa.waitForTimeout(200);
+ok(`doğum tarihi de şemsi seçici (miladi kutu kalmamış): 1365/03/12 → ${dogumIso}`);
+
+// Takvim açıkken sayfa değişirse ortada kalmamalı: gövdeye ekleniyor, alan
+// ise sayfanın içinde. Bir süre öyleydi; takvim de pencere dinleyicileri de
+// asılı kalıyordu.
+await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.recete-duzen .kagit');
+await sayfa.click('.tarih-secici__dugme');
+await sayfa.waitForSelector('.tarih-kutu');
+await sayfa.goto(KOK + '#/receteler', { waitUntil: 'networkidle' });
+await sayfa.waitForTimeout(350);
+const kalanTakvim = await sayfa.$$eval('.tarih-kutu', (n) => n.length);
+if (kalanTakvim !== 0) throw new Error(`sayfa değişti ama ${kalanTakvim} takvim ortada kaldı`);
+ok('takvim açıkken sayfa değişince takvim de dinleyicileri de temizleniyor');
 
 await tarayici.close();
 kapat();

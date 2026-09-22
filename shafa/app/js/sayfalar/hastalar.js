@@ -1,5 +1,6 @@
 // Hastalar: kayıt listesi, arama ve hasta kartı ekleme/düzenleme.
 import { el, temizle, btn, btnS, girdi, secim, metinAlani, alan, rozet, sayfaBas, bosDurum, sirala } from '../cekirdek/dom.js';
+import { tarihSecici } from '../cekirdek/tarih-secici.js';
 import { CINSIYETLER, KAN_GRUPLARI, SIGORTALAR, tamAd, hastaYasi, hastaAra, bosHasta, hastaDogrula, listeyeCevir, tcGecerli } from '../paylasilan/hasta.js';
 import { basHarfler } from '../paylasilan/metin.js';
 import { t, secenekleriCevir } from '../i18n.js';
@@ -25,7 +26,7 @@ export async function hastaKutusu(ctx, mevcut = null) {
       ad: girdi({ name: 'ad', value: deger.ad, autocomplete: 'off' }),
       soyad: girdi({ name: 'soyad', value: deger.soyad, autocomplete: 'off' }),
       kimlikNo: girdi({ name: 'kimlikNo', value: deger.kimlikNo, inputmode: 'numeric', autocomplete: 'off' }),
-      dogumTarihi: girdi({ name: 'dogumTarihi', value: String(deger.dogumTarihi || '').slice(0, 10), type: 'date' }),
+      dogumTarihi: tarihSecici({ name: 'dogumTarihi', value: String(deger.dogumTarihi || '').slice(0, 10) }),
       cinsiyet: secim(secenekleriCevir(CINSIYETLER, 'cinsiyet'), { name: 'cinsiyet', value: deger.cinsiyet }),
       telefon: girdi({ name: 'telefon', value: deger.telefon, type: 'tel', autocomplete: 'off' }),
       eposta: girdi({ name: 'eposta', value: deger.eposta, type: 'email', autocomplete: 'off' }),
