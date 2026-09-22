@@ -2,7 +2,7 @@
 import { el, temizle, btn, btnS, kart, rozet, sayfaBas, bosDurum, uyariSeridi } from '../cekirdek/dom.js';
 import { simge } from '../cekirdek/simge.js';
 import { CINSIYETLER, SIGORTALAR, tamAd, hastaYasi } from '../paylasilan/hasta.js';
-import { trTarih, trTarihSaat } from '../paylasilan/tarih.js';
+import { tarihMetni, tarihSaatMetni } from '../paylasilan/tarih.js';
 import { receteOzet } from '../paylasilan/recete.js';
 import { hastaKutusu } from './hastalar.js';
 import { t, secenekAdi } from '../i18n.js';
@@ -48,14 +48,14 @@ export default {
       if (seridi) kok.appendChild(seridi);
 
       const kunye = [
-        [t('hasta.dogum', 'Doğum tarihi'), trTarih(hasta.dogumTarihi)],
+        [t('hasta.dogum', 'Doğum tarihi'), tarihMetni(hasta.dogumTarihi)],
         [t('hasta.kimlik_no', 'Kimlik no'), hasta.kimlikNo || '—'],
         [t('genel.telefon', 'Telefon'), hasta.telefon || '—'],
         [t('genel.eposta', 'E-posta'), hasta.eposta || '—'],
         [t('hasta.kan_grubu', 'Kan grubu'), hasta.kanGrubu || '—'],
         [t('hasta.sigorta', 'Sigorta'), secenekAdi(SIGORTALAR, hasta.sigorta, 'sigorta')],
         [t('genel.adres', 'Adres'), hasta.adres || '—'],
-        [t('genel.kayit', 'Kayıt'), trTarihSaat(hasta.olusturuldu)],
+        [t('genel.kayit', 'Kayıt'), tarihSaatMetni(hasta.olusturuldu)],
       ];
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' }, el('h2', {}, t('genel.kunye', 'Künye')), hasta.ornek ? rozet(t('genel.ornek_kayit', 'örnek kayıt'), 'mor') : null),
@@ -81,8 +81,8 @@ export default {
           return el('a', { class: 'liste__satir', href: `#/recete/${r.id}` },
             el('span', { class: 'avatar' }, simge('recete', { boy: 18 })),
             el('div', { class: 'liste__govde' },
-              el('div', { class: 'liste__baslik' }, r.receteNo || trTarih(r.tarih)),
-              el('div', { class: 'liste__alt' }, `${trTarih(r.tarih)} · ${t('recete.ilac_sayisi', '{n} ilaç', { n: o.toplam })}`)));
+              el('div', { class: 'liste__baslik' }, r.receteNo || tarihMetni(r.tarih)),
+              el('div', { class: 'liste__alt' }, `${tarihMetni(r.tarih)} · ${t('recete.ilac_sayisi', '{n} ilaç', { n: o.toplam })}`)));
         }))
         : bosDurum({ simge: 'recete', baslik: t('recete.yok', 'Reçete yok'), alt: t('recete.hasta_bos', 'Bu hastaya henüz reçete yazılmamış.') });
 

@@ -5,7 +5,7 @@ import { simge } from '../cekirdek/simge.js';
 import { RECETE_TURLERI, doluOlcumler, receteUyarilari, receteMetni } from '../paylasilan/recete.js';
 import { tamAd, hastaYasi, alerjiCakismasi } from '../paylasilan/hasta.js';
 import { basHarfler, telefonNormalize } from '../paylasilan/metin.js';
-import { trTarih, trTarihSaat } from '../paylasilan/tarih.js';
+import { tarihMetni, tarihSaatMetni } from '../paylasilan/tarih.js';
 import { t, secenekAdi } from '../i18n.js';
 import { kagitCiz, kagidiYazdir } from '../kagit.js';
 import { uyariMetni } from '../hatalar.js';
@@ -106,7 +106,7 @@ export default {
 
       temizle(kok);
       kok.append(sayfaBas(recete.receteNo || t('nav.recete', 'Reçete'), {
-        alt: [trTarih(recete.tarih), secenekAdi(RECETE_TURLERI, recete.tur, 'recete.tur'), tamAd(hasta)].filter(Boolean).join(' · '),
+        alt: [tarihMetni(recete.tarih), secenekAdi(RECETE_TURLERI, recete.tur, 'recete.tur'), tamAd(hasta)].filter(Boolean).join(' · '),
         geri: () => git('/receteler'),
         eylemler: [
           btnS('telefon', t('paylas.gonder', 'Gönder'), { class: 'btn btn--birincil', onclick: () => paylasKutusu(ctx, recete, hasta, ayar) }),
@@ -138,7 +138,7 @@ export default {
           ...[[t('recete.tani', 'Tanı'), [recete.tani, recete.taniKodu].filter(Boolean).join(' · ') || '—'],
             [t('recete.protokol', 'Protokol no'), recete.protokolNo || '—'],
             [t('recete.yazan', 'Yazan'), [recete.doktorUnvan, recete.doktorAd].filter(Boolean).join(' ') || '—'],
-            [t('recete.yazildigi_an', 'Yazıldığı an'), trTarihSaat(recete.olusturuldu)]]
+            [t('recete.yazildigi_an', 'Yazıldığı an'), tarihSaatMetni(recete.olusturuldu)]]
             .map(([b, d]) => el('div', {}, el('div', { class: 'alan__etiket' }, b), el('div', {}, d)))),
         recete.notlar ? el('p', { class: 'kart__alt', style: { marginBlockStart: 'var(--b-3)' } }, recete.notlar) : null));
 

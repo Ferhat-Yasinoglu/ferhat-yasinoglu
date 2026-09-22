@@ -3,7 +3,7 @@
 import { el, temizle, btn, btnS, kart, sayfaBas, bosDurum } from '../cekirdek/dom.js';
 import { simge } from '../cekirdek/simge.js';
 import { ilacEtiketi, FORMLAR, muadiller } from '../paylasilan/ilac.js';
-import { trTarih } from '../paylasilan/tarih.js';
+import { tarihMetni } from '../paylasilan/tarih.js';
 import { ilacKutusu, ilacRozetleri } from './ilaclar.js';
 import { t, secenekAdi } from '../i18n.js';
 
@@ -75,8 +75,8 @@ export default {
           el('a', { class: 'liste__satir', href: `#/recete/${r.id}` },
             el('span', { class: 'avatar' }, simge('recete', { boy: 18 })),
             el('div', { class: 'liste__govde' },
-              el('div', { class: 'liste__baslik' }, r.receteNo || trTarih(r.tarih)),
-              el('div', { class: 'liste__alt' }, trTarih(r.tarih))))))
+              el('div', { class: 'liste__baslik' }, r.receteNo || tarihMetni(r.tarih)),
+              el('div', { class: 'liste__alt' }, tarihMetni(r.tarih))))))
         : bosDurum({ simge: 'recete', baslik: t('ilac.recete_yok', 'Bu ilaç henüz hiçbir reçetede yok') });
 
       kok.appendChild(kart({}, el('div', { class: 'kart__bas' }, el('h2', {}, t('ilac.gectigi_receteler', 'Yazıldığı reçeteler'))), receteGovdesi));

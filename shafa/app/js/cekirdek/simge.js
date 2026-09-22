@@ -37,6 +37,19 @@ const SIMGELER = {
   telefon: [['path', { d: 'M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z' }]],
   kilit: [['rect', { x: 4, y: 11, width: 16, height: 10, rx: 2 }], ['path', { d: 'M8 11V7a4 4 0 0 1 8 0v4' }]],
   kalp: [['path', { d: 'M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 2.6C19 15.6 12 20 12 20z' }]],
+  /* Marka simgesi: kalbin içinden geçen nabız çizgisi. Düz kalp tek başına
+     bir sağlık uygulamasından çok bir "beğen" düğmesi gibi duruyordu. */
+  'nabiz-kalp': [
+    ['path', { d: 'M12 20.4s-7.6-4.8-7.6-10.2A4.2 4.2 0 0 1 12 7.2a4.2 4.2 0 0 1 7.6 3C19.6 15.6 12 20.4 12 20.4z' }],
+    ['path', { d: 'M4.8 12.6h3.1l1.5-3 2.2 5.4 1.6-3.4 1 1h4.8' }],
+  ],
+  /* Laboratuvar: deney tüpü. Yarısına kadar dolu — boş tüp ekranda düz bir
+     dikdörtgene iniyordu. */
+  tup: [
+    ['path', { d: 'M9 3v13.2a3.2 3.2 0 0 0 6.4 0V3' }],
+    ['path', { d: 'M7.6 3h9.2' }],
+    ['path', { d: 'M9 11.4h6.4' }],
+  ],
   filtre: [['path', { d: 'M3 5h18l-7 8v6l-4 2v-8z' }]],
   kaydet: [['path', { d: 'M5 3h11l3 3v15H5z' }], ['path', { d: 'M8 3v6h7V3M8 14h8v7H8z' }]],
   gece: [['path', { d: 'M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z' }]],
@@ -87,14 +100,15 @@ const SIMGELER = {
     ['path', { d: 'M9.4 14.6a2.6 2.6 0 0 0 2.6 2.6' }],
   ],
   boy: [
-    ['path', { d: 'M5 4h14M5 20h14' }],
-    ['path', { d: 'M12 7v10' }],
-    ['path', { d: 'M9.2 9.8 12 7l2.8 2.8M9.2 14.2 12 17l2.8-2.8' }],
+    ['circle', { cx: 10, cy: 4.8, r: 2 }],
+    ['path', { d: 'M10 7.2v6M7.2 9.6h5.6M8 20v-6.8M12 20v-6.8' }],
+    ['path', { d: 'M18 3.4v17.2M16.2 3.4h3.6M16.2 20.6h3.6' }],
   ],
   tarti: [
-    ['path', { d: 'M5 20h14l-1.6-9.4a2 2 0 0 0-2-1.6H8.6a2 2 0 0 0-2 1.6z' }],
-    ['path', { d: 'M9 9a3 3 0 0 1 6 0' }],
-    ['path', { d: 'M12 13v3' }],
+    ['rect', { x: 3.4, y: 6.4, width: 17.2, height: 13.2, rx: 2.4 }],
+    ['path', { d: 'M9.2 12.6a3.4 3.4 0 0 1 5.6 0' }],
+    ['path', { d: 'M12 12.4l2-1.6' }],
+    ['path', { d: 'M8.6 6.4V5a1.6 1.6 0 0 1 1.6-1.6h3.6A1.6 1.6 0 0 1 15.4 5v1.4' }],
   ],
 
   /* Reçete ayağındaki uzmanlık rozetleri için ek simgeler. */

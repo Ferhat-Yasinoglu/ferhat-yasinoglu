@@ -223,13 +223,22 @@ const alanlar = await sayfa.$$eval('.kagit-tuval [data-alan]', (e) => e.map((x) 
 for (const beklenen of ['hasta', 'tarih', 'kanGrubu', 'tani', 'belirtiler', 'laboratuvar', 'ilac-ekle', 'notlar', 'olcum:bp']) {
   if (!alanlar.includes(beklenen)) throw new Error(`kâğıtta "${beklenen}" alanı dokunulabilir değil: ${alanlar.join(', ')}`);
 }
-// Eski formdan tek bir kutu bile kalmamalı: kâğıt tek yazma yüzeyi.
-for (const eski of ['tani', 'taniKodu', 'belirtiler', 'laboratuvar', 'olcum_bp']) {
-  if (await sayfa.locator(`#sayfa input[name=${eski}]`).count()) {
-    throw new Error(`eski reçete formu hâlâ çiziliyor: input[name=${eski}]`);
-  }
-}
-ok(`kâğıt üzerinde ${alanlar.length} alan dokunulabilir, ayrı reçete formu kalmamış`);
+ok(`kâğıt üzerinde ${alanlar.length} alan dokunulabilir`);
+
+// --- İki sütunlu düzen: solda form, sağda CANLI kâğıt.
+// "Birinci sayfayı doldur, ikinci sayfa olarak yazılsın": soldaki alana
+// yazılan değer sağdaki kâğıda geçmeli. Kâğıt sayfanın tek kopyası, yani
+// önizleme ile basılan aynı şey.
+if (!(await sayfa.locator('.recete-duzen .recete-form').count())) throw new Error('sol sütundaki form yok');
+if (!(await sayfa.locator('.recete-duzen .recete-onizleme .kagit-tuval').count())) throw new Error('sağ sütundaki canlı kâğıt yok');
+await sayfa.fill('#sayfa input[name=olcum_bp]', '118/76');
+// Tazeleme gecikmeli (her tuşta QR üretmemek için): kâğıtta belirmesini bekle.
+await sayfa.waitForSelector('.kagit__klinik-sutun:has-text("118/76")', { timeout: 5000 });
+ok('solda yazılan kan basıncı sağdaki kâğıda anında geçti: 118/76');
+// Kalan adımlar kâğıttan sürüyor; bu değeri geri al ki sonraki ölçüm adımı
+// kendi değerini yazdığında karışmasın.
+await sayfa.fill('#sayfa input[name=olcum_bp]', '');
+await sayfa.waitForSelector('.kagit__klinik-sutun:has-text("118/76")', { state: 'detached', timeout: 5000 });
 
 // --- Alerjili ilaç: uyarı, satır eklenmeden önce kutunun içinde çıkmalı
 await sayfa.click(kagitAlan('ilac-ekle'));
@@ -453,7 +462,9 @@ for (const anahtar of ['recete.ver', 'recete.verilemedi', 'recete.geri_al', 'sto
 }
 // Eski form gittiyse ona ait anahtarlar da gitmiş olmalı: sözlükte öksüz
 // kayıt kalması, kaldırma işinin yarım bittiğinin en sessiz işareti.
-for (const anahtar of ['recete.yeni_alt', 'recete.bilgiler', 'recete.tani_kodu', 'recete.sec_ipucu', 'klinik.hepsi']) {
+// recete.yeni_alt listeden ÇIKARILDI: iki sütunlu düzen geldiğinde yeni
+// metniyle geri kullanılmaya başladı. Kalanlar hâlâ öksüz olmalı.
+for (const anahtar of ['recete.bilgiler', 'recete.tani_kodu', 'recete.sec_ipucu', 'klinik.hepsi']) {
   if (anahtar in sozluk) throw new Error(`sözlükte eski formun anahtarı kaldı: ${anahtar}`);
 }
 ok('karşılama yok, eski formun sözlük anahtarları da temizlenmiş');
@@ -900,6 +911,118 @@ await sayfa.goto(KOK + '#/ilaclar', { waitUntil: 'networkidle' });
 const ikinciSayim = await ilacSayisiniOku();
 if (ikinciSayim !== listeSonrasi) throw new Error(`ikinci yükleme kopya oluşturdu: ${listeSonrasi} → ${ikinciSayim}`);
 ok('ikinci kez yüklemek kopya oluşturmadı');
+
+/* --- Kenar çubuğu, üst çubuk ve yeni sayfalar --- */
+await sayfa.goto(KOK + '#/panel', { waitUntil: 'networkidle' });
+const kenarOgeleri = await sayfa.$$eval('#kenar-menu a', (as) => as.map((a) => a.getAttribute('href')));
+const beklenenMenu = ['#/panel', '#/hastalar', '#/recete/kagit', '#/recete/bos', '#/receteler',
+  '#/ilaclar', '#/tanilar', '#/laboratuvar', '#/raporlar', '#/ayarlar'];
+if (JSON.stringify(kenarOgeleri) !== JSON.stringify(beklenenMenu)) {
+  throw new Error('menü sırası beklenenden farklı: ' + kenarOgeleri.join(' '));
+}
+// Marka, slogan ve sürüm şeridi kenar çubuğunda; üst çubuktaki marka kopyası
+// geniş ekranda GİZLİ olmalı — iki yerde birden yazınca ad tekrarlanıyordu.
+const marka = (await sayfa.textContent('.kenar__marka')).replace(/\s+/g, ' ').trim();
+const ayakMetni = (await sayfa.textContent('.kenar__ayak')).replace(/\s+/g, ' ').trim();
+const sloganVar = await sayfa.isVisible('.kenar__slogan-fa');
+const ustMarkaGorunur = await sayfa.isVisible('.ust__logo');
+if (!marka.includes('Shafa') || !ayakMetni.includes('v') || !sloganVar || ustMarkaGorunur) {
+  throw new Error(`kenar çubuğu eksik: marka="${marka}" ayak="${ayakMetni}" slogan=${sloganVar} üstMarka=${ustMarkaGorunur}`);
+}
+ok(`kenar çubuğu tasarımdaki gibi: ${beklenenMenu.length} kalem, marka "${marka}", ayakta "${ayakMetni}", slogan yerinde`);
+
+// Aktif kalem TEK olmalı: /recete/kagit'teyken "لیست نسخه‌ها" da işaretliyse
+// hekim hangi ekranda olduğunu göremiyor (bir kez öyle oldu).
+await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.recete-duzen .kagit');
+const aktifler = await sayfa.$$eval('#kenar-menu a[aria-current="page"]', (as) => as.map((a) => a.getAttribute('href')));
+if (aktifler.length !== 1 || aktifler[0] !== '#/recete/kagit') {
+  throw new Error('aktif menü kalemi tek değil: ' + aktifler.join(' '));
+}
+// Başlığın odak halkası ekranın tepesinde turkuaz bir kutu bırakıyordu.
+await sayfa.goto(KOK + '#/receteler', { waitUntil: 'networkidle' });
+await sayfa.keyboard.press('Tab');
+await sayfa.goto(KOK + '#/hastalar', { waitUntil: 'networkidle' });
+const halka = await sayfa.$eval('#sayfa h1', (h) => {
+  h.focus();
+  return { gorunur: h.matches(':focus-visible'), cizgi: getComputedStyle(h).outlineStyle };
+});
+if (!halka.gorunur) throw new Error('başlık :focus-visible değil, halka denetimi boşa dönüyor');
+if (halka.cizgi !== 'none') throw new Error('başlıkta odak halkası görünüyor: ' + halka.cizgi);
+ok('tek aktif menü kalemi, yönlendirme odağı başlıkta ama halka çizilmiyor');
+
+// Üst çubuk: büyüteç arama kutusunun İÇİNDE, kısayol ayrı rozette, şemsi tarih.
+const kutuIcinde = await sayfa.isVisible('.ara-kutu .ara-kutu__simge');
+const kisayol = (await sayfa.textContent('.ara-kutu__kisayol')).trim();
+const ustTarih = (await sayfa.textContent('.ust__tarih')).trim();
+if (!kutuIcinde || kisayol !== 'Ctrl K' || !/^\d{4}\/\d{2}\/\d{2}$/.test(ustTarih)) {
+  throw new Error(`üst çubuk beklendiği gibi değil: simge=${kutuIcinde} kısayol="${kisayol}" tarih="${ustTarih}"`);
+}
+ok(`üst çubukta büyüteç kutunun içinde, "${kisayol}" rozeti ayrı, şemsi tarih ${ustTarih}`);
+
+await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.recete-duzen .kagit');
+// Clinical ve ℞ kartları: birimler İngilizce, ℞ satırları kendi kutusunda.
+const bpYer = await sayfa.getAttribute('input[name="olcum_bp"]', 'placeholder');
+const prYer = await sayfa.getAttribute('input[name="olcum_pr"]', 'placeholder');
+if (bpYer !== 'mmHg / mmHg' || prYer !== '/min') throw new Error(`ölçüm birimleri: "${bpYer}" "${prYer}"`);
+const rxKutulari = await sayfa.$$eval('.rx-satir', (ds) => ds.map((d) => ({
+  cerceve: getComputedStyle(d).borderTopWidth, ayrac: !!d.querySelector('.rx-satir__ayrac'),
+})));
+if (rxKutulari.length !== 5 || rxKutulari.some((x) => x.cerceve === '0px' || !x.ayrac)) {
+  throw new Error('℞ satırları kutulu değil: ' + JSON.stringify(rxKutulari));
+}
+// Tablo başlığı liste BOŞKEN de duruyor mu?
+const ilacBasliklari = await sayfa.$$eval('.tablo--ilac thead th', (ts) => ts.map((x) => x.textContent.trim()));
+const eylemSayisi = await sayfa.$$eval('.recete-eylem .btn', (bs) => bs.length);
+if (ilacBasliklari.length !== 6 || eylemSayisi !== 3) {
+  throw new Error(`ilaç tablosu/düğmeler: ${ilacBasliklari.length} başlık, ${eylemSayisi} düğme`);
+}
+ok(`Clinical birimleri İngilizce (${bpYer}, ${prYer}), 5 ℞ satırı kutulu, ilaç tablosu boşken de ${ilacBasliklari.length} başlıklı, 3 eşit düğme`);
+
+// Tanı ve laboratuvar sözlükleri
+for (const [yol, anahtar] of [['#/tanilar', 'sozluk.tanilar'], ['#/laboratuvar', 'sozluk.laboratuvar']]) {
+  await sayfa.goto(KOK + yol, { waitUntil: 'networkidle' });
+  await sayfa.waitForSelector('.sozluk-grup .liste__satir');
+  const toplam = await sayfa.$$eval('.sozluk-grup .liste__satir', (rs) => rs.length);
+  await sayfa.fill('input[name="sozlukArama"]', 'zzzzz');
+  await sayfa.waitForSelector(`.durum__baslik:text-is("${T('sozluk.bos')}")`);
+  await sayfa.fill('input[name="sozlukArama"]', '');
+  await sayfa.waitForSelector('.sozluk-grup .liste__satir');
+  if (toplam < 50) throw new Error(`${yol}: yalnız ${toplam} kayıt çizildi`);
+  ok(`${T(anahtar)} sözlüğü açıldı: ${toplam} kayıt, arama süzüyor`);
+}
+
+// Raporlar: bir reçete yazılmış durumda sayımlar dolu gelmeli.
+await sayfa.goto(KOK + '#/raporlar', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.izgara--sayac .sayac');
+await sayfa.waitForFunction(() => {
+  const oku = () => [...document.querySelectorAll('.izgara--sayac .sayac__deger')].map((d) => d.textContent).join();
+  const simdi = oku();
+  const durdu = globalThis.__sayacOnceki === simdi && simdi.length;
+  globalThis.__sayacOnceki = simdi;
+  return durdu;
+}, null, { polling: 120 });
+const raporSayaclari = await sayfa.$$eval('.izgara--sayac .sayac__deger', (ds) => ds.map((d) => d.textContent.trim()));
+const grafikSayisi = await sayfa.$$eval('#sayfa .yatay-grafik, #sayfa .grafik', (gs) => gs.length);
+if (raporSayaclari.length !== 4 || raporSayaclari[0] === '0' || grafikSayisi < 2) {
+  throw new Error(`raporlar boş geldi: sayaçlar=${raporSayaclari.join(',')} grafik=${grafikSayisi}`);
+}
+ok(`raporlar doldu: ${raporSayaclari.length} sayaç (${raporSayaclari.join(' · ')}), ${grafikSayisi} grafik`);
+
+// Boş kâğıt sayfası: antet basılı, hasta ve ilaç satırı yok.
+await sayfa.goto(KOK + '#/recete/bos', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.kagit-tuval .kagit');
+const bosSayfaKagidi = await sayfa.$eval('.kagit-tuval .kagit', (k) => ({
+  antet: !!k.querySelector('.kagit__doktor'),
+  cizgi: k.querySelectorAll('.kagit__cizgi').length,
+  ilac: k.querySelectorAll('.kagit__ilac').length,
+}));
+const adetSecenekleri = await sayfa.$$eval('select[name="adet"] option', (os) => os.length);
+if (!bosSayfaKagidi.antet || bosSayfaKagidi.ilac !== 0 || adetSecenekleri !== 5) {
+  throw new Error('boş kâğıt sayfası: ' + JSON.stringify({ ...bosSayfaKagidi, adetSecenekleri }));
+}
+ok(`boş kâğıt sayfası hazır: antet basılı, ${bosSayfaKagidi.cizgi} doldurma çizgisi, ilaç satırı yok, ${adetSecenekleri} adet seçeneği`);
 
 await tarayici.close();
 kapat();

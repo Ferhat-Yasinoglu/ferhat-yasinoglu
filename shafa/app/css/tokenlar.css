@@ -63,7 +63,20 @@
   --satir-yazi: 1.62;
   --satir-baslik: 1.28;
 
-  --ust-cubuk: 60px; --alt-cubuk: 64px; --kenar: 236px; --icerik-en: 1240px;
+  --ust-cubuk: 60px; --alt-cubuk: 64px; --kenar: 208px; --icerik-en: 1240px;
+
+  /* Kenar çubuğu iki temada da koyu lacivert. Açık temada beyaz bırakılınca
+     sayfa iki beyaz bloğa bölünüyor ve menü içerikten ayırt edilemiyordu;
+     koyu kolon aynı zamanda markanın taşıyıcısı. */
+  --kenar-zemin: 21 43 60;
+  --kenar-zemin-2: 14 31 45;
+  --kenar-cizgi: 255 255 255;
+  --kenar-metin: 205 220 230;
+  --kenar-metin-2: 133 159 176;
+  --kenar-vurgu: 54 205 217;
+  --kenar-vurgu-2: 13 124 135;
+  /* Gradyanların yönü mantıksal değil: RTL'de elle çevriliyor. */
+  --kenar-yon: right;
 
   /* Hareket: tek bir yay eğrisi bütün arayüzde. Süreler kısa — arayüz
      "animasyonlu" değil, çevik hissetsin. */

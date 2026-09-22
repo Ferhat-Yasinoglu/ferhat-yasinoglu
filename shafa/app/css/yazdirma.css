@@ -67,6 +67,9 @@
   @media print {
     #sayfa:has(.yazdir-alan) > *:not(.yazdir-alan) { display: none !important; }
     .yazdir-alan { display: flex; }
+    /* Tomar halinde basarken her kopya kendi sayfasına. Sonuncuda bu sınıf
+       yok: olsaydı sona boş bir sayfa daha eklenirdi. */
+    .yazdir-alan--kopya { break-after: page; page-break-after: always; }
   }
 
   .kagit {

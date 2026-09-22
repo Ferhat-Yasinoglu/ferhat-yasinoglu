@@ -347,3 +347,113 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 .sessiz { color: rgb(var(--metin-3)); }
 .sayi-yazi { font-variant-numeric: tabular-nums; }
 .simge { flex-shrink: 0; }
+
+/* ---------- Reçete yazma: solda form, sağda canlı kâğıt ----------
+   Hekim soldaki alanları doldurdukça sağdaki kâğıt yazılıyor. Dar ekranda
+   tek sütuna iniyor ve kâğıt formun ALTINA geçiyor: telefonda yan yana iki
+   sütun ikisini de okunmaz yapıyor. */
+.recete-duzen {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--b-4); align-items: start;
+}
+@media (max-width: 1100px) { .recete-duzen { grid-template-columns: 1fr; } }
+
+.recete-form { display: flex; flex-direction: column; gap: var(--b-4); min-inline-size: 0; }
+.recete-form > .kart { margin-block-end: 0; }
+/* Clinical ve ℞ kartları yan yana; dar alanda alt alta. */
+.recete-ikili { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: var(--b-4); align-items: start; }
+@media (max-width: 760px) { .recete-ikili { grid-template-columns: 1fr; } }
+.recete-ikili > .kart { margin-block-end: 0; }
+
+/* Önizleme geniş ekranda kaydırmayla birlikte yukarıda kalıyor: hekim
+   formu doldururken kâğıdı görmeye devam etsin. */
+.recete-onizleme { min-inline-size: 0; position: sticky; inset-block-start: var(--b-3); }
+@media (max-width: 1100px) { .recete-onizleme { position: static; } }
+.recete-onizleme__bas {
+  display: flex; align-items: center; gap: var(--b-2);
+  font-size: .85rem; font-weight: 600; color: rgb(var(--metin-2));
+  margin-block-end: var(--b-2);
+}
+.recete-onizleme .kagit-tuval { padding-block: 0; }
+
+/* Hasta kartı: dört alan tek satırda, genişlikleri içeriğe göre.
+   Eşit dört sütunda "Yaş" için ayrılan yerin yarısı boşa gidiyordu. */
+.izgara--hasta { grid-template-columns: 2fr .8fr 1.4fr 1.2fr; }
+@media (max-width: 720px) { .izgara--hasta { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); } }
+
+/* Şeritli kart başlığı: simge kutusu + başlık, kendi zemininde.
+   İnce gri çizgi tek başına başlığı gövdeden ayırmıyordu. */
+.kart__bas--serit {
+  background: linear-gradient(to bottom, rgb(var(--vurgu) / .1), rgb(var(--vurgu) / .04));
+  border-block-end: 1px solid rgb(var(--vurgu) / .16);
+  gap: var(--b-3);
+}
+.kart__bas--serit h2 { font-size: var(--f-xl); font-weight: 700; color: rgb(var(--vurgu-2)); margin: 0; }
+.kart__bas-simge {
+  display: grid; place-items: center; flex-shrink: 0;
+  inline-size: 38px; block-size: 38px; border-radius: var(--r-kucuk);
+  background: rgb(var(--vurgu)); color: rgb(var(--vurgu-yz));
+  box-shadow: var(--golge-1);
+}
+.kart__bas--cizgisiz { border-block-end: none; padding-block-end: 0; }
+
+/* Clinical satırı: simge, kısa ad, değer kutusu.
+   Etiket SİMGEYE bitişik, esnek boşluk etiketle kutu arasında: etiketler
+   kutuya yaslanınca simgeyle aralarındaki boşluk satır satır değişiyordu. */
+.olcum-liste { display: flex; flex-direction: column; gap: var(--b-2); }
+.olcum-satir { display: flex; align-items: center; gap: var(--b-2); }
+.olcum-satir__simge { display: inline-flex; flex-shrink: 0; color: rgb(var(--vurgu-2)); }
+.olcum-satir__ad { font-size: .86rem; font-weight: 500; color: rgb(var(--vurgu-2)); white-space: nowrap; }
+/* Kutu kalan yeri doldurur; hepsi kartın iç kenarında aynı hizada biter. */
+.olcum-satir .input { flex: 1; min-inline-size: 0; margin-inline-start: auto; max-inline-size: 11rem; }
+
+/* ℞ alanları: her satır kendi kutusu. Çerçevesiz satırlar boş zemine
+   serpilmiş duruyordu ve nereye dokunulacağı belli değildi. */
+.kart--rx { display: flex; flex-direction: column; }
+.kart__bas .rx-baslik {
+  font-family: Georgia, "Times New Roman", serif; font-style: italic;
+  font-size: 2.25rem; line-height: 1; color: rgb(var(--vurgu-2)); margin: 0;
+}
+/* Başlık şeridi sembole göre alçalsın: ℞ dışında bir şey taşımıyor. */
+.kart--rx .kart__bas { padding-block: var(--b-2) 0; }
+.rx-satir {
+  display: flex; align-items: center; gap: var(--b-2);
+  padding-block: var(--b-2); padding-inline: var(--b-3);
+  margin-block-start: var(--b-2);
+  background: rgb(var(--yuzey)); border: var(--kenarlik-2); border-radius: var(--r-kucuk);
+  cursor: pointer; text-align: start;
+  transition: border-color var(--hiz-1) var(--egri), background var(--hiz-1) var(--egri);
+}
+.rx-satir:hover { border-color: rgb(var(--vurgu) / .5); background: rgb(var(--vurgu) / .04); }
+.rx-satir:focus-visible { outline: 2px solid rgb(var(--vurgu)); outline-offset: 2px; }
+.rx-satir__etiket { font-weight: 600; font-size: .88rem; color: rgb(var(--vurgu-2)); flex-shrink: 0; }
+/* Değer/yer tutucu satırın öteki ucuna yaslanır, aradaki boşluk esner. */
+.rx-satir__deger {
+  font-size: .85rem; overflow-wrap: anywhere; margin-inline-start: auto;
+  text-align: end; color: rgb(var(--metin-2));
+}
+.rx-satir__deger.sessiz { color: rgb(var(--vurgu) / .55); }
+/* Yer tutucu ile "+" arasında ince dikey çizgi. */
+.rx-satir__ayrac { flex-shrink: 0; inline-size: 1px; block-size: 20px; background: rgb(var(--cizgi) / .2); }
+.rx-satir__arti {
+  flex-shrink: 0;
+  inline-size: 26px; block-size: 26px; min-inline-size: 26px; min-height: 26px;
+  padding: 0;
+  background: rgb(var(--vurgu) / .1); border: 1px solid rgb(var(--vurgu) / .28);
+  color: rgb(var(--vurgu-2));
+}
+.rx-satir__arti .simge { inline-size: 15px; block-size: 15px; }
+.rx-satir:hover .rx-satir__arti { background: rgb(var(--vurgu) / .18); }
+
+/* İlaç tablosu liste boşken de duruyor; boş satır tabloyu doldurmasın. */
+.tablo__bos td { text-align: center; color: rgb(var(--metin-3)); font-weight: 500; padding-block: var(--b-5); }
+.tablo__bos .simge { display: block; margin-inline: auto; margin-block-end: var(--b-2); color: rgb(var(--metin-3)); }
+
+/* Alt düğmeler: üçü eşit genişlikte, kart genişliğine yayılı.
+   İçerik kadar dar dururlarken satırın bir ucunda geniş boşluk kalıyordu. */
+.recete-eylem { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--b-2); }
+.recete-eylem .btn { inline-size: 100%; justify-content: center; }
+@media (max-width: 560px) { .recete-eylem { grid-template-columns: 1fr; } }
+
+/* Seçim alanı: hasta gibi listeden seçilen alanlar girdi gibi görünsün. */
+.secim-alani { inline-size: 100%; justify-content: flex-start; font-weight: 500; }

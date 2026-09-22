@@ -26,58 +26,145 @@ a { color: rgb(var(--vurgu)); }
   background: rgb(var(--yuzey) / .82); backdrop-filter: saturate(160%) blur(12px);
   border-block-end: var(--kenarlik);
 }
-.ust__logo { display: flex; align-items: center; gap: var(--b-2); text-decoration: none; color: inherit; flex-shrink: 0; }
+/* Marka geniş ekranda kenar çubuğunda; üst çubuktaki kopyası yalnız kenar
+   çubuğu gizlendiğinde (dar ekran) görünür — iki yerde birden durunca
+   sayfanın üstünde aynı ad iki kez yazıyordu. */
+.ust__logo { display: none; align-items: center; gap: var(--b-2); text-decoration: none; color: inherit; flex-shrink: 0; }
 .ust__logo img { inline-size: 32px; block-size: 32px; border-radius: 8px; transition: transform var(--hiz-2) var(--egri-yay); }
 .ust__logo:hover img { transform: rotate(-6deg) scale(1.06); }
 .ust__ad { display: flex; flex-direction: column; line-height: 1.15; }
 .ust__ad b { font-size: var(--f-l); letter-spacing: -.02em; }
 .ust__ad span { font-size: var(--f-xs); color: rgb(var(--metin-3)); }
 /* Arama kutusu ortada yüzmesin: sınırlı genişlikte, başlıktan sonra. */
-.ust__ara { flex: 1; max-inline-size: 360px; }
-.ust__sag { margin-inline-start: auto; display: flex; align-items: center; gap: var(--b-1); }
+.ust__ara { flex: 1; max-inline-size: 420px; }
+.ust__sag { margin-inline-start: auto; display: flex; align-items: center; gap: var(--b-2); }
+
+/* Büyüteç ve kısayol rozeti kutunun İÇİNDE; girdi ikisinin arasında akar. */
+.ara-kutu {
+  display: flex; align-items: center; gap: var(--b-2);
+  padding-inline: var(--b-3); block-size: 38px;
+  background: rgb(var(--yuzey)); border: var(--kenarlik-2); border-radius: var(--r-kucuk);
+  transition: border-color var(--hiz-1) var(--egri), box-shadow var(--hiz-1) var(--egri);
+}
+.ara-kutu:focus-within { border-color: rgb(var(--vurgu)); box-shadow: var(--halka); }
+.ara-kutu__simge { display: flex; color: rgb(var(--metin-3)); cursor: text; flex-shrink: 0; }
+/* Girdinin kendi kutusu yok: çerçeve dıştaki kapta. */
+.ara-kutu input {
+  flex: 1; min-inline-size: 0; border: none; background: none; padding: 0; margin: 0;
+  font: inherit; font-size: var(--f-s); color: inherit; block-size: 100%;
+}
+.ara-kutu input:focus { outline: none; }
+.ara-kutu input::-webkit-search-cancel-button { display: none; }
+.ara-kutu__kisayol {
+  flex-shrink: 0; padding-block: 2px; padding-inline: 6px; border-radius: 6px;
+  background: rgb(var(--yuzey-2)); border: var(--kenarlik);
+  font-family: inherit; font-size: var(--f-xs); font-weight: 600; color: rgb(var(--metin-3));
+}
+
+/* Bugünün tarihi — yazı, seçici değil. */
+.ust__tarih {
+  display: flex; align-items: center; gap: 6px;
+  padding-block: 6px; padding-inline: var(--b-3);
+  border: var(--kenarlik-2); border-radius: var(--r-kucuk);
+  font-size: var(--f-s); font-weight: 600; color: rgb(var(--metin-2));
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.ust__tarih .simge { color: rgb(var(--vurgu)); }
+
+/* Hekim bloğu: ad + alt satır, yanında baş harfler. */
+.ust__hesap { display: flex; align-items: center; gap: var(--b-2); }
+.ust__hesap-ad { display: flex; flex-direction: column; line-height: 1.2; text-decoration: none; color: inherit; max-inline-size: 180px; }
+.ust__hesap-ad b { font-size: var(--f-s); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ust__hesap-ad span { font-size: var(--f-xs); color: rgb(var(--metin-3)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.avatar--ust { inline-size: 36px; block-size: 36px; flex-shrink: 0; text-decoration: none; }
 
 /* ---------- Gövde ---------- */
 .govde { display: flex; min-block-size: calc(100vh - var(--ust-cubuk)); }
 .kenar {
-  inline-size: var(--kenar); flex-shrink: 0; padding: var(--b-4) var(--b-3);
-  border-inline-end: var(--kenarlik); background: rgb(var(--yuzey) / .6);
-  position: sticky; inset-block-start: var(--ust-cubuk); block-size: calc(100vh - var(--ust-cubuk));
+  /* Koyu kolon: marka üstte, menü ortada, slogan ve sürüm şeridi altta.
+     Flex sütun ki slogan `margin-block-start: auto` ile dibe yaslanabilsin. */
+  inline-size: var(--kenar); flex-shrink: 0;
+  display: flex; flex-direction: column;
+  background: rgb(var(--kenar-zemin)); color: rgb(var(--kenar-metin));
+  position: sticky; inset-block-start: var(--ust-cubuk);
+  block-size: calc(100vh - var(--ust-cubuk));
   overflow-y: auto;
 }
-.menu { display: flex; flex-direction: column; gap: 2px; }
-.menu__grup {
-  font-size: var(--f-xs); text-transform: uppercase; letter-spacing: .1em;
-  color: rgb(var(--metin-3)); font-weight: 700;
-  margin-block: var(--b-4) var(--b-2); padding-inline: var(--b-3);
+[dir="rtl"] .kenar { --kenar-yon: left; }
+
+/* ---------- Marka bloğu ---------- */
+.kenar__marka {
+  display: flex; align-items: center; gap: var(--b-2);
+  padding: var(--b-4) var(--b-3);
+  border-block-end: 1px solid rgb(var(--kenar-cizgi) / .08);
+  color: inherit; text-decoration: none;
 }
-.menu__grup:first-child { margin-block-start: 0; }
+.kenar__marka-simge {
+  display: grid; place-items: center; flex-shrink: 0;
+  inline-size: 38px; block-size: 38px; border-radius: var(--r-kucuk);
+  background: rgb(var(--kenar-vurgu) / .13); color: rgb(var(--kenar-vurgu));
+  border: 1px solid rgb(var(--kenar-vurgu) / .28);
+  transition: transform var(--hiz-2) var(--egri-yay);
+}
+.kenar__marka:hover .kenar__marka-simge { transform: scale(1.06); }
+/* Marka adı Latin: RTL gövdede kendi yönünü taşısın. */
+.kenar__marka-ad { display: flex; flex-direction: column; line-height: 1.2; min-inline-size: 0; direction: ltr; text-align: start; }
+.kenar__marka-ad b { font-size: var(--f-xl); font-weight: 800; letter-spacing: -.02em; color: rgb(var(--kenar-vurgu)); }
+.kenar__marka-ad span { font-size: var(--f-xs); color: rgb(var(--kenar-metin-2)); }
+
+/* ---------- Menü ---------- */
+.menu { display: flex; flex-direction: column; gap: 2px; padding-block: var(--b-3); }
 .menu a {
   position: relative; overflow: hidden;
   display: flex; align-items: center; gap: var(--b-3);
-  padding: var(--b-2) var(--b-3); border-radius: var(--r-kucuk);
-  color: rgb(var(--metin-2)); text-decoration: none; font-weight: 600; font-size: var(--f-m);
+  min-block-size: 42px;
+  padding-block: var(--b-2); padding-inline: var(--b-4) var(--b-3);
+  /* Tam genişlikte: yalnız iç uç yuvarlatılıyor, dış uç kenara dayanıyor. */
+  border-start-end-radius: var(--r-tam); border-end-end-radius: var(--r-tam);
+  color: rgb(var(--kenar-metin)); text-decoration: none; font-weight: 600; font-size: var(--f-m);
   transition: background var(--hiz-1) var(--egri), color var(--hiz-1) var(--egri);
 }
-.menu a:hover { background: rgb(var(--yuzey-2)); color: rgb(var(--metin)); }
-.menu a[aria-current="page"] { background: rgb(var(--vurgu) / .1); color: rgb(var(--vurgu)); font-weight: 700; }
-/* Seçili öğenin başlangıç kenarında ince bir işaret. Sahte öğe kullanıldı:
+.menu a:hover { background: rgb(var(--kenar-cizgi) / .07); color: rgb(var(--kenar-cizgi)); }
+.menu a[aria-current="page"] {
+  background-image: linear-gradient(to var(--kenar-yon), rgb(var(--kenar-vurgu-2)), rgb(var(--kenar-vurgu-2) / .32));
+  color: rgb(var(--kenar-cizgi)); font-weight: 700;
+}
+/* Seçili öğenin DIŞ kenarında parlak şerit. Sahte öğe kullanıldı:
    border-inline-start metni kaydırıyordu. */
 .menu a[aria-current="page"]::before {
-  content: ''; position: absolute; inset-inline-start: 0; inset-block: 20%;
-  inline-size: 3px; border-radius: var(--r-tam); background: rgb(var(--vurgu));
+  content: ''; position: absolute; inset-inline-start: 0; inset-block: 0;
+  inline-size: 4px; background: rgb(var(--kenar-vurgu));
   animation: isaret-bit var(--hiz-2) var(--egri);
 }
 @keyframes isaret-bit { from { transform: scaleY(0); opacity: 0; } }
-.menu .simge { transition: transform var(--hiz-2) var(--egri-yay); }
+.menu .simge { flex-shrink: 0; color: rgb(var(--kenar-vurgu)); transition: transform var(--hiz-2) var(--egri-yay); }
 .menu a:hover .simge { transform: scale(1.12); }
+.menu a[aria-current="page"] .simge { color: rgb(var(--kenar-cizgi)); }
+.menu a > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Sayı etiketi menünün bitiş kenarında, okunur bir hap olarak durur. */
 .menu__sayi {
-  margin-inline-start: auto; min-inline-size: 22px; text-align: center;
+  margin-inline-start: auto; flex-shrink: 0; min-inline-size: 22px; text-align: center;
   padding-block: 1px; padding-inline: 6px; border-radius: var(--r-tam);
-  background: rgb(var(--metin-3) / .14); color: rgb(var(--metin-2));
+  background: rgb(var(--kenar-cizgi) / .1); color: rgb(var(--kenar-metin-2));
   font-size: var(--f-xs); font-weight: 700; font-variant-numeric: tabular-nums;
 }
-.menu a[aria-current="page"] .menu__sayi { background: rgb(var(--vurgu) / .18); color: rgb(var(--vurgu)); }
+.menu a[aria-current="page"] .menu__sayi { background: rgb(var(--kenar-cizgi) / .22); color: rgb(var(--kenar-cizgi)); }
+
+/* ---------- Slogan ve sürüm şeridi ---------- */
+/* `auto` üst boşluk: menü kısa olsa da blok hep dibe yaslanır. */
+.kenar__slogan { margin-block-start: auto; padding: var(--b-5) var(--b-3) var(--b-4); text-align: center; }
+.kenar__slogan-fa { font-size: var(--f-l); font-weight: 700; line-height: 1.55; color: rgb(var(--kenar-vurgu) / .95); }
+.kenar__slogan-lat { margin-block-start: 6px; font-size: var(--f-xs); line-height: 1.5; color: rgb(var(--kenar-metin-2)); }
+.kenar__ayak {
+  display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap;
+  padding: var(--b-3) var(--b-2);
+  background: rgb(var(--kenar-zemin-2));
+  border-block-start: 1px solid rgb(var(--kenar-cizgi) / .07);
+  font-size: var(--f-xs); color: rgb(var(--kenar-metin-2));
+}
+.kenar__ayak .simge { color: rgb(var(--kenar-vurgu)); }
+.kenar__ayak b { font-weight: 600; color: rgb(var(--kenar-metin)); }
+.kenar__surum { font-variant-numeric: tabular-nums; opacity: .75; }
 
 .icerik { flex: 1; min-inline-size: 0; padding: var(--b-5) var(--b-6); padding-block-end: var(--b-8); max-inline-size: var(--icerik-en); }
 .bantlar { display: flex; flex-direction: column; gap: var(--b-2); margin-block-end: var(--b-4); }
@@ -116,6 +203,10 @@ a { color: rgb(var(--vurgu)); }
 /* ---------- Dar ekran ---------- */
 @media (max-width: 860px) {
   .kenar { display: none; }
+  .ust__logo { display: flex; }
+  /* Telefonda üst çubukta yalnız marka, arama ve tema kalır: tarih ve
+     hekim adı satırı taşırıyordu, ikisi de başka yerde yazılı. */
+  .ust__tarih, .ust__hesap-ad { display: none; }
   .icerik { padding: var(--b-4); padding-block-end: calc(var(--alt-cubuk) + var(--b-5)); }
   .ust { padding-inline: var(--b-3); gap: var(--b-2); }
   .ust__ad span { display: none; }
@@ -156,3 +247,10 @@ a { color: rgb(var(--vurgu)); }
   .bildirimler { inset-block-end: calc(var(--alt-cubuk) + var(--b-2)); inset-inline: var(--b-3) var(--b-3); }
   .bildirim { max-inline-size: none; }
 }
+
+/* Yönlendirme sonrası başlığa verilen odak GÖRÜNMESİN: odak ekran okuyucu
+   için gerekli ama tarayıcı programla verilen bu odağı klavye odağı sayıp
+   halkayı çiziyor, sayfanın üstünde sebepsiz bir çerçeve olarak görünüyordu.
+   Klavyeyle gerçekten gelinirse işaret kalkıyor ve halka yine çıkıyor. */
+[data-yonlendirme-odagi]:focus,
+[data-yonlendirme-odagi]:focus-visible { outline: none; }

@@ -13,7 +13,7 @@ import { tamAd, hastaYasi } from './paylasilan/hasta.js';
 import { OLCUMLER } from './paylasilan/recete.js';
 import { formKisa, ilacAdiFormsuz } from './paylasilan/ilac.js';
 import { ozetMetni, kodSatiri } from './paylasilan/dogrulama.js';
-import { trTarih } from './paylasilan/tarih.js';
+import { tarihMetni } from './paylasilan/tarih.js';
 import { telefonNormalize } from './paylasilan/metin.js';
 
 /** Antet amblemi: kanatlı kadüse — hekimin basılı kâğıdındaki amblem.
@@ -374,7 +374,7 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
   const serit = el('div', { class: 'kagit__serit', dir: 'ltr' },
     alan('Name', tamAd(hasta), '52mm', SERIT_SIMGELERI[0], 'hasta'),
     alan('Age', yas !== null ? String(yas) : '', '18mm', SERIT_SIMGELERI[1], null),
-    alan('Date', bos ? '' : trTarih(recete.tarih), '30mm', SERIT_SIMGELERI[2], 'tarih'),
+    alan('Date', bos ? '' : tarihMetni(recete.tarih), '30mm', SERIT_SIMGELERI[2], 'tarih'),
     alan('No', bos ? '' : recete.receteNo, '28mm', SERIT_SIMGELERI[3], null));
 
   /* ---- Clinical sütunu: ölçümler, altta stetoskop ve QR ---- */
@@ -518,14 +518,51 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
     ayak);
 }
 
+/** Kâğıt A4 genişliğinde sabit (210 mm, 96 dpi); kabına göre ölçeklenir. */
+export const KAGIT_PX = 794;
+
+/**
+ * Ekrandaki kâğıdı kabına sığdırır ve kap yeniden boyutlandıkça korur.
+ * `gozlenen` genelde sayfa kökü: kenar çubuğu açılıp kapanınca da ölçüm
+ * yenilensin.
+ */
+export function kagidiOlcekle(tuval, kagit, gozlenen = null) {
+  const uygula = () => {
+    if (!tuval.isConnected) return;
+    const olcek = Math.min(1, Math.max(0.2, (tuval.clientWidth - 8) / KAGIT_PX));
+    tuval.style.setProperty('--olcek', String(olcek));
+    // Ölçeklenen öğe yerinde yer kaplamıyor; boyu elle veriliyor.
+    tuval.style.blockSize = Math.ceil(kagit.offsetHeight * olcek) + 'px';
+  };
+  // İlk ölçüm yerleşimden SONRA: hemen ölçünce kap daha dar geliyor.
+  requestAnimationFrame(uygula);
+  // TUVALİN KENDİSİ İZLENMİYOR: boyunu burada değiştiriyoruz, izleseydik
+  // kendi kendini tetikleyen bir döngü olurdu.
+  const gozcu = new ResizeObserver(uygula);
+  if (gozlenen) gozcu.observe(gozlenen);
+  gozcu.observe(kagit);
+  return () => gozcu.disconnect();
+}
+
 /**
  * Kâğıdı yazdırır. Sayfada duran kâğıt geçici olarak değiştirilir, yazdırma
  * bitince eski hale döner — böylece boş kâğıt da aynı düzenle basılır.
  */
-export function kagidiYazdir(secenekler) {
-  const eski = document.querySelector('.yazdir-alan');
-  const yeni = kagitCiz(secenekler);
-  if (eski) eski.replaceWith(yeni); else document.getElementById('sayfa').appendChild(yeni);
+export function kagidiYazdir({ tekrar = 1, ...secenekler } = {}) {
+  const sayfa = document.getElementById('sayfa');
+  const n = Math.max(1, Math.min(20, Math.trunc(Number(tekrar)) || 1));
+  /* Yalnız #sayfa'nın DOĞRUDAN çocuğu olan kâğıt yerinde değiştirilir
+     (reçete kaydı sayfası böyle). Tuvalin içindeki önizleme kâğıdı yerinde
+     DEĞİŞTİRİLEMEZ: yazdırma kuralı kâğıttan başka her doğrudan çocuğu
+     gizliyor, önizlemeyi saran kart da gidiyor ve çıktı bembeyaz iniyordu.
+     Orada kâğıt #sayfa'ya ekleniyor, basıldıktan sonra kaldırılıyor. */
+  const eski = n === 1 ? [...sayfa.children].find((c) => c.classList.contains('yazdir-alan')) : null;
+  const kagitlar = Array.from({ length: n }, () => kagitCiz(secenekler));
+  // Her kopya kendi sayfasına düşer; sonuncudan sonra boş sayfa çıkmasın.
+  for (const k of kagitlar.slice(0, -1)) k.classList.add('yazdir-alan--kopya');
+  if (eski) eski.replaceWith(kagitlar[0]);
+  else for (const k of kagitlar) sayfa.appendChild(k);
   window.print();
-  if (eski) yeni.replaceWith(eski); else yeni.remove();
+  if (eski) kagitlar[0].replaceWith(eski);
+  else for (const k of kagitlar) k.remove();
 }

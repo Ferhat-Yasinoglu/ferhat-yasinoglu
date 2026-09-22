@@ -2,7 +2,7 @@
 // de onu anlatıyor — bugün kaç reçete yazıldı, son reçeteler, son hastalar.
 import { el, temizle, btn, btnS, kart, sayacKutusu, sayfaBas, bosDurum, sirala, sutunGrafik, yatayGrafik } from '../cekirdek/dom.js';
 import { simge } from '../cekirdek/simge.js';
-import { trTarih, bugun, isoGun, goreliGun } from '../paylasilan/tarih.js';
+import { tarihMetni, bugun, isoGun, goreliGun } from '../paylasilan/tarih.js';
 import { tamAd } from '../paylasilan/hasta.js';
 import { basHarfler } from '../paylasilan/metin.js';
 import { receteOzet } from '../paylasilan/recete.js';
@@ -116,7 +116,7 @@ export default {
           baslik: t('panel.son_receteler', 'Son reçeteler'), simgeAdi: 'recete',
           satirlar: receteler.slice(0, 6).map((r) => ({
             yol: `/recete/${r.id}`, baslik: hastaAdi(r.hastaId),
-            alt: `${r.receteNo || trTarih(r.tarih)} · ${t('recete.ilac_sayisi', '{n} ilaç', { n: receteOzet(r).toplam })} · ${goreliMetni(goreliGun(r.tarih))}`,
+            alt: `${r.receteNo || tarihMetni(r.tarih)} · ${t('recete.ilac_sayisi', '{n} ilaç', { n: receteOzet(r).toplam })} · ${goreliMetni(goreliGun(r.tarih))}`,
           })),
           bos: t('recete.bos', 'Henüz reçete yok'), tumuYol: '/receteler',
         }),
