@@ -98,10 +98,13 @@ export function sikIlaclar(receteler, ilaclar, sinir = 8) {
     .slice(0, sinir);
 }
 
+/* Birimler İNGİLİZCE: Clinical sütunu kâğıtta da ekranda da İngilizce
+   ("BP", "Temperature", "SpO2"). Türkçe "/dk" onların arasında yabancı
+   duruyordu. Kâğıda basılmıyorlar, yalnız form yer tutucusu. */
 export const OLCUMLER = [
-  ['bp', 'Kan basıncı', 'BP', 'mmHg'],
-  ['pr', 'Nabız', 'PR', '/dk'],
-  ['rr', 'Solunum', 'RR', '/dk'],
+  ['bp', 'Kan basıncı', 'BP', 'mmHg / mmHg'],
+  ['pr', 'Nabız', 'PR', '/min'],
+  ['rr', 'Solunum', 'RR', '/min'],
   ['bw', 'Kilo', 'BW', 'kg'],
   ['temp', 'Ateş', 'T', '°C'],
   ['spo2', 'Oksijen', 'SpO₂', '%'],

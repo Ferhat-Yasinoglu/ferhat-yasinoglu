@@ -49,7 +49,19 @@ export class Yonlendirici {
       this.temizleyici = temiz;
       this.kok.classList.remove('sayfa-giris'); void this.kok.offsetWidth; this.kok.classList.add('sayfa-giris');
       const h1 = this.kok.querySelector('h1');
-      if (h1) { h1.setAttribute('tabindex', '-1'); h1.focus({ preventScroll: true }); }
+      // Yeni sayfada odak başlığa: ekran okuyucu nerede olduğunu söylesin.
+      // `data-yonlendirme-odagi` ile işaretleniyor çünkü tarayıcı programla
+      // verilen bu odağı klavye odağı sayıp görünür halkayı çiziyordu —
+      // sayfanın üstünde sebepsiz bir çerçeve olarak görünüyordu. Halka
+      // CSS'te yalnız bu öğe için bastırılıyor; gerçek klavye gezinmesinde
+      // odak yine görünür kalıyor.
+      if (h1) {
+        h1.setAttribute('tabindex', '-1');
+        h1.setAttribute('data-yonlendirme-odagi', '');
+        h1.focus({ preventScroll: true });
+        // İşaret yalnız bu odak için: sonra klavyeyle gelinirse halka çıksın.
+        h1.addEventListener('blur', () => h1.removeAttribute('data-yonlendirme-odagi'), { once: true });
+      }
       window.scrollTo(0, 0);
     } catch (err) {
       if (benim !== this.sira) return;
