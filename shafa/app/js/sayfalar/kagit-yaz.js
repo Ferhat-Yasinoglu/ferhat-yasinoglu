@@ -141,6 +141,10 @@ export default {
         });
         if (g) recete.kanGrubu = g.ad;
       },
+      // Antet ayarlardan geliyor, kâğıt üzerinden yazılmıyor: boş yer tutucuya
+      // dokunmak Ayarlar'a götürüyor. Hekimin kâğıtta gördüğü eksiği
+      // düzeltebileceği tek yer orası.
+      antet: async () => { git('/ayarlar'); },
       belirtiler: () => klinikSec('belirtiler', klinik?.belirtiler, klinik?.gruplar, t('recete.belirtiler', 'Belirti ve bulgular')),
       tani: () => klinikSec('tani', klinik?.tanilar, klinik?.gruplar, t('recete.tani_sec', 'Tanı seç'), 'taniKodu'),
       laboratuvar: () => klinikSec('laboratuvar', klinik?.laboratuvar, klinik?.labGruplari, t('recete.lab_sec', 'Laboratuvar / görüntüleme seç')),

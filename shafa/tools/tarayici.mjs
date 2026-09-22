@@ -193,6 +193,22 @@ ok('reçete anteti kaydedildi (ad, ünvan şeridi, slogan, hizmetler, sabıka, r
 // aşağıdaki adımlar `input[name=...]` değil `[data-alan=...]` sürüyor.
 const kagitAlan = (ad) => `.kagit-tuval [data-alan="${ad}"]`;
 
+// --- Antet boşken kâğıt ne diyor?
+// Hekimin telefonunda antet hiç doldurulmamıştı: kâğıt yarım çiziliyor
+// (süsler var, ad/ünvan/hizmet yok) ve bunu söyleyen hiçbir şey yoktu.
+// Boş antet artık kâğıtta dokunulabilir bir yer tutucu; Ayarlar'a götürüyor.
+{
+  const bosAntet = await sayfa.evaluate(async () => {
+    const { kagitCiz } = await import('./js/kagit.js');
+    const k = kagitCiz({ ayar: {}, duzenlenebilir: true });
+    const yer = k.querySelector('[data-alan="antet"]');
+    return { var: !!yer, metin: yer ? yer.textContent.trim() : '', slogan: k.textContent.includes('سلامتی شما') };
+  });
+  if (!bosAntet.var) throw new Error('antet boşken kâğıtta yer tutucu yok — hekim eksiği göremiyor');
+  if (!bosAntet.slogan) throw new Error('slogan varsayılanı çıkmadı, Latin satır tek başına kalıyor');
+  ok(`antet boşken kâğıt yer tutucu gösteriyor: ${bosAntet.metin}`);
+}
+
 // --- Hasta kartından kâğıda geçiş (زهرا صدیقی'nin ibuprofen alerjisi var)
 await sayfa.click('#kenar-menu a[href="#/hastalar"]');
 await sayfa.click('.liste__satir:has-text("زهرا صدیقی")');
