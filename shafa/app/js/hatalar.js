@@ -29,6 +29,10 @@ const DEPO = {
   tani_okunamadi: 'Tanı listesi okunamadı.',
   tani_bozuk: 'Tanı listesi beklenen biçimde değil.',
   recete_bulunamadi: 'Reçete bulunamadı.',
+  gorsel_yok: 'Dosya seçilmedi.',
+  gorsel_tur: 'Seçilen dosya bir görsel değil.',
+  gorsel_bozuk: 'Görsel açılamadı.',
+  gorsel_buyuk: 'Görsel çok büyük; daha küçük bir fotoğraf seç.',
 };
 
 /** Doğrulama kodunu arayüz metnine çevirir. Kod tanınmazsa olduğu gibi döner. */

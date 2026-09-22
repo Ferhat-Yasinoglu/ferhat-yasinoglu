@@ -1216,6 +1216,122 @@ await sayfa.keyboard.press('Escape');
 await sayfa.waitForSelector('.modal', { state: 'detached' });
 ok(`takvimdeki Escape modalı kapatmıyor (form duruyor); alanın adı görünen etiketten geliyor («${ad.etiket}»); çözülemeyen tarih doğrulamaya taşınıyor`);
 
+/* --- Antet bandı ve Clinical fotoğrafı --- */
+await sayfa.goto(KOK + '#/recete/bos', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.kagit-tuval .kagit');
+await sayfa.waitForTimeout(400);
+const bant = await sayfa.evaluate(() => {
+  const tepe = document.querySelector('.kagit__tepe');
+  if (!tepe) return { yok: true };
+  const parlaklik = (renk) => {
+    const [r, g, b] = (renk.match(/\d+/g) || [0, 0, 0]).map(Number);
+    return Math.round((r * 299 + g * 587 + b * 114) / 1000);
+  };
+  // Bandın zemini GRADYAN: backgroundColor saydam geliyor, rengi
+  // backgroundImage'ın içinden okumak gerekiyor.
+  const zeminParlakligi = (e) => {
+    const g = getComputedStyle(e).backgroundImage;
+    const ilk = g && g !== 'none' ? (g.match(/rgba?\([^)]+\)/) || [])[0] : null;
+    return parlaklik(ilk || getComputedStyle(e).backgroundColor);
+  };
+  const rozet = document.querySelector('.kagit__unvan span');
+  const kagit = document.querySelector('.kagit');
+  const serit = document.querySelector('.kagit__serit');
+  const alanlar = serit ? [...serit.querySelectorAll('.kagit__alan')] : [];
+  return {
+    // Ad, ihtisas rozeti ve hizmetler AYNI bandın içinde olmalı.
+    icinde: ['.kagit__antet', '.kagit__unvan', '.kagit__hizmet']
+      .every((sec) => { const e = document.querySelector(sec); return e && tepe.contains(e); }),
+    bantParlakligi: zeminParlakligi(tepe),
+    adParlakligi: parlaklik(getComputedStyle(document.querySelector('.kagit__doktor')).color),
+    rozetParlakligi: rozet ? parlaklik(getComputedStyle(rozet).backgroundColor) : null,
+    // Hizmetlerin ikinci satırı kırpılmamalı: bant büzülünce kırpıyordu.
+    hizmetTasiyor: (() => { const h = document.querySelector('.kagit__hizmet'); return h ? h.getBoundingClientRect().bottom > tepe.getBoundingClientRect().bottom + 1 : false; })(),
+    // Name/Age/Date/No tek satırda.
+    seritSariyor: alanlar.length > 1
+      && Math.abs(alanlar[0].getBoundingClientRect().top - alanlar[alanlar.length - 1].getBoundingClientRect().top) > 2,
+    // Bandın boyu: ölçülen tek yükseklik bu. Kâğıdın TOPLAM boyu bu adımın
+    // işi değil — A4 taşması bu turdan önce de vardı (354mm → 345mm).
+    bantMm: Math.round(tepe.offsetHeight / 96 * 25.4),
+    kagitVar: Boolean(kagit),
+  };
+});
+// Bant AÇIK (parlak), yazı KOYU, rozet koyu lacivert: önce tersiydi —
+// koyu bir şerit yalnız tepeyi kaplıyor, ad altında beyaz zeminde kalıyordu.
+if (bant.yok || !bant.icinde || bant.bantParlakligi < 200 || bant.adParlakligi > 140
+    || bant.rozetParlakligi > 90 || bant.hizmetTasiyor || bant.seritSariyor || !bant.kagitVar) {
+  throw new Error('antet bandı: ' + JSON.stringify(bant));
+}
+ok(`antet bandı açık zeminli (parlaklık ${bant.bantParlakligi}), ${bant.bantMm}mm; ad, ihtisas rozeti ve hizmetler onun içinde; hasta şeridi tek satır`);
+
+// Clinical sütunundaki fotoğraf: cihazda küçültülüp ayarlara yazılıyor.
+await sayfa.goto(KOK + '#/ayarlar', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.gorsel-secim');
+const buyukPng = await sayfa.evaluate(() => {
+  // Gürültülü: düz renkli bir kare PNG olarak 29 KB'ye iniyor ve "büyük
+  // fotoğraf küçülüyor mu" denetimi anlamını yitiriyordu. Gerçek telefon
+  // fotoğrafı da gürültülüdür.
+  const c = document.createElement('canvas'); c.width = 1200; c.height = 800;
+  const x = c.getContext('2d');
+  const im = x.createImageData(1200, 800);
+  // Gerçekten rastgele: örüntülü gürültüyü de PNG sıkıştırıyordu.
+  for (let i = 0; i < im.data.length; i += 4) {
+    im.data[i] = (Math.random() * 256) | 0; im.data[i + 1] = (Math.random() * 256) | 0;
+    im.data[i + 2] = (Math.random() * 256) | 0; im.data[i + 3] = 255;
+  }
+  x.putImageData(im, 0, 0);
+  return c.toDataURL('image/png');
+});
+const hamPng = Buffer.from(buyukPng.split(',')[1], 'base64');
+await sayfa.setInputFiles('.gorsel-secim input[type=file]', { name: 'stetoskop.png', mimeType: 'image/png', buffer: hamPng });
+// Ya önizleme ya hata bildirimi bekleniyor: küçültme bozulursa görsel boyut
+// sınırını aşıp reddediliyor ve önizleme HİÇ gelmiyor. Yalnız önizlemeyi
+// beklemek 30 saniyelik bir zaman aşımına düşüyor, üstelik neyin bozulduğunu
+// da söylemiyordu.
+await sayfa.waitForSelector('.gorsel-secim__resim, .bildirim--hata', { timeout: 8000 });
+if (!(await sayfa.$('.gorsel-secim__resim'))) {
+  throw new Error('görsel kabul edilmedi: ' + (await sayfa.textContent('.bildirim--hata')).trim());
+}
+const kucuk = await sayfa.$eval('.gorsel-secim__resim', (e) => new Promise((coz) => {
+  const r = new Image();
+  r.onload = () => coz({ jpeg: e.src.startsWith('data:image/jpeg'), kb: Math.round(e.src.length / 1024), en: r.naturalWidth });
+  r.src = e.src;
+}));
+// Sözleşme: girdi ne olursa olsun saklanan görsel JPEG, en çok 360 piksel
+// geniş ve 200 KB altı. Küçültme şart — telefon fotoğrafı olduğu gibi
+// saklanırsa her yedek onunla birlikte şişer.
+const hamKb = Math.round(hamPng.length / 1024);
+if (!kucuk.jpeg || kucuk.kb > 200 || kucuk.en > 360 || kucuk.kb >= hamKb) {
+  throw new Error('görsel küçültme: ' + JSON.stringify({ ...kucuk, hamKb }));
+}
+for (const d of await sayfa.$$('button')) {
+  const m = await d.textContent();
+  if ((m || '').includes(T('ayar.antet_kaydet'))) { await d.click(); break; }
+}
+await sayfa.waitForTimeout(700);
+await sayfa.goto(KOK + '#/recete/bos', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.kagit-tuval .kagit');
+await sayfa.waitForTimeout(400);
+const basildi = await sayfa.evaluate(() => ({
+  foto: document.querySelectorAll('.kagit__saglik-foto').length,
+  cizim: document.querySelectorAll('.kagit__saglik-cizim').length,
+}));
+if (basildi.foto !== 1 || basildi.cizim !== 0) throw new Error('kâğıtta fotoğraf: ' + JSON.stringify(basildi));
+ok(`Clinical fotoğrafı yüklendi: ${hamKb}KB → ${kucuk.kb}KB (JPEG, ${kucuk.en}px), kâğıda basıldı, çizim yerini bıraktı`);
+
+// Görsel olmayan dosya Farsça uyarı vermeli: hata kodu çevrilmezse
+// hataMetni kendi Türkçe mesajına düşer ve bildirimler #sayfa'nın dışında
+// olduğu için tek-dil taraması da görmez.
+await sayfa.goto(KOK + '#/ayarlar', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.gorsel-secim');
+await sayfa.setInputFiles('.gorsel-secim input[type=file]', { name: 'not.txt', mimeType: 'text/plain', buffer: Buffer.from('merhaba') });
+await sayfa.waitForSelector('.bildirim--hata');
+const gorselUyarisi = (await sayfa.textContent('.bildirim--hata')).trim();
+if (/[çğıöşüÇĞİÖŞÜ]|degil|değil|Görsel|Dosya/.test(gorselUyarisi)) {
+  throw new Error('görsel hatası Türkçe kalmış: ' + gorselUyarisi);
+}
+ok(`görsel olmayan dosya Farsça uyarı verdi: ${gorselUyarisi}`);
+
 await tarayici.close();
 kapat();
 

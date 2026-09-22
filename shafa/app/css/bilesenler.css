@@ -535,3 +535,11 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
   padding-block-start: var(--b-2); border-block-start: var(--kenarlik);
 }
 .tarih-kutu__ayak .btn { flex: 1; justify-content: center; }
+
+/* ---------- Görsel seçme (Clinical sütunundaki fotoğraf) ---------- */
+/* Dosya cihazda okunup küçültülüyor; bkz. cekirdek/gorsel.js */
+.gorsel-secim__onizleme { display: flex; align-items: center; gap: var(--b-3); flex-wrap: wrap; }
+.gorsel-secim__resim {
+  inline-size: 84px; block-size: auto; max-block-size: 64px; object-fit: contain;
+  border: var(--kenarlik); border-radius: var(--r-kucuk); background: #fff; padding: 2px;
+}
