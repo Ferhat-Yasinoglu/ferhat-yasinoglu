@@ -109,6 +109,24 @@ for (const f of await dosyalar(KOK, '.html')) {
   }
 }
 
+// 6e. hatalar.js'teki kod → metin haritaları. Bunlar `t('hata.' + e.kod, …)`
+// diye dinamik çağrılıyor, yani (5) numaralı tarama hiçbirini görmüyor: sözlükte
+// karşılığı olmayan bir kod, Farsça arayüzün ortasına Türkçe cümle basıyor ve
+// bu hiçbir yerde patlamıyor. Görsel yükleme eklenirken aynen böyle oldu
+// («Bu bir görsel değil.» diye Türkçe uyarı çıktı). Artık dört harita da
+// burada çözülüp karşılıkları aranıyor.
+const hatalarKaynak = await oku('js/hatalar.js');
+for (const [ad, onek] of [['DOGRULAMA', 'dogrula'], ['DEPO', 'hata'], ['UYARI', 'uyari'], ['GORELI', 'zaman']]) {
+  // Kalıp hem çok satırlı hem tek satırlık haritayı tutmalı: GORELI tek satır
+  // yazılmış ve satır başına dayanan ilk kalıp onu hiç görmedi — denetim de
+  // "okunamadı" diyerek bunu söyledi.
+  const govde = hatalarKaynak.match(new RegExp(`const ${ad}\\s*=\\s*\\{([\\s\\S]*?)\\};`));
+  if (!govde) { hataVer(`hatalar.js: ${ad} haritası okunamadı — hata metinleri doğrulanamıyor`); continue; }
+  const kodlar = [...govde[1].matchAll(/(\w+):\s*'/g)].map((m) => m[1]);
+  if (!kodlar.length) hataVer(`hatalar.js: ${ad} haritası boş görünüyor`);
+  for (const k of kodlar) dinamik.push([`${onek}.${k}`, `hatalar.js ${ad}`]);
+}
+
 // 6d. Menü başlıkları (uygulama.js içindeki `anahtar: '…'`)
 for (const m of (await oku('js/uygulama.js')).matchAll(/anahtar:\s*'([^']+)'/g)) {
   dinamik.push([m[1], 'uygulama.js MENU']);

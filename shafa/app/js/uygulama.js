@@ -329,6 +329,23 @@ async function baslat() {
       });
     } catch (e) { console.warn('SW kaydedilemedi', e); }
   }
+
+  // Eşitleme açıksa açılıştan SONRA sessiz bir tur. İki şey bilerek böyle:
+  //  • dinamik import — eşitleme kapalıyken Google'a ait tek satır bile
+  //    yüklenmiyor, uygulamanın açılışı internetten hiç etkilenmiyor;
+  //  • sessiz — internet yokken ya da Google izin vermediğinde hekim
+  //    uygulamayı her açtığında kırmızı kutu görmesin. Olan biten Ayarlar'daki
+  //    kartta yazıyor, düğmeyle elle denenebiliyor.
+  if (ayar.senkronAcik && navigator.onLine) {
+    setTimeout(async () => {
+      try {
+        const { senkronTuru, senkronOzeti } = await import('./senkron-arayuz.js');
+        const s = await senkronTuru(ctx, { sessiz: true });
+        const inen = (s?.indirildi?.eklendi || 0) + (s?.indirildi?.guncellendi || 0);
+        if (inen) { menuCiz(depo); bildir(senkronOzeti(s)); }
+      } catch (e) { console.warn('Eşitleme olmadı', e); }
+    }, 1500);
+  }
 }
 
 baslat().catch(async (e) => {
