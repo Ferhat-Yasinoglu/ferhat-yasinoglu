@@ -295,21 +295,30 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
   /* Kâğıdın iki yanındaki sabit yazılar. Rozet etiketleri gibi `??` ile:
      ayarda hiç dokunulmamışsa basılı kâğıttakiler çıkıyor, hekim silmek
      isterse alanı boşaltması yetiyor (boş dize '' geçerli bir değer). */
+  const slogan = ayar.slogan ?? t('kagit.slogan', 'سلامتی شما\nهدف ماست');
   const sloganAlt = ayar.sloganAlt ?? t('kagit.slogan_alt', 'Your Health, Our Priority');
   const cagriUst = ayar.cagriUst ?? t('kagit.cagri_ust', 'با ما');
   const cagriAlt = ayar.cagriAlt ?? t('kagit.cagri_alt', 'به سوی زندگی سالم‌تر');
 
   /* ---- Antet: sağda doktorun adı, ortada amblem, solda slogan ---- */
+  // Antet ayarlardan geliyor. Hiç doldurulmamışsa kâğıt yarım kalıyordu:
+  // süsler (slogan rozeti, amblemler) çıkıyor ama ad, ünvan şeridi, hizmetler
+  // ve sabıka satırı yok — dalgaların altında boşluk. Hekime bunu söyleyen
+  // hiçbir şey de yoktu. Düzenleme kipinde boş antet yer tutucu oluyor;
+  // dokununca Ayarlar açılıyor, kâğıdın geri kalanıyla aynı mantık.
+  const doktorAdi = [recete.doktorUnvan || ayar.doktorUnvan, recete.doktorAd || ayar.doktorAd].filter(doluMu).join(' ');
   const antet = el('header', { class: 'kagit__antet' },
     el('div', { class: 'kagit__ad-blok' },
-      el('div', { class: 'kagit__doktor' }, [recete.doktorUnvan || ayar.doktorUnvan, recete.doktorAd || ayar.doktorAd].filter(doluMu).join(' ')),
+      doluMu(doktorAdi)
+        ? el('div', { class: 'kagit__doktor' }, doktorAdi)
+        : (yerTutucu('antet', t('kagit.antet_bos', 'Antet bilgilerini gir')) || el('div', { class: 'kagit__doktor' }, '')),
       doluMu(ayar.doktorAdAlt) ? el('div', { class: 'kagit__doktor-alt' }, ayar.doktorAdAlt) : null),
     el('div', { class: 'kagit__amblem' }, amblemCiz()),
     // Slogan bloğu: basılı kâğıtta yuvarlak bir rozetin içinde kalp+EKG,
     // altında Farsça satırlar, en altta Latin karşılığı.
     el('div', { class: 'kagit__slogan' },
       el('span', { class: 'kagit__slogan-daire' }, sloganAmblemi()),
-      doluMu(ayar.slogan) ? el('div', {}, ...satirlara(ayar.slogan).map((x) => el('div', {}, x))) : null,
+      doluMu(slogan) ? el('div', {}, ...satirlara(slogan).map((x) => el('div', {}, x))) : null,
       doluMu(sloganAlt) ? el('div', { class: 'kagit__slogan-alt', dir: 'ltr' }, sloganAlt) : null,
       doluMu(ayar.klinikAdi) ? el('div', { class: 'kagit__klinik-ad' }, ayar.klinikAdi) : null));
 
