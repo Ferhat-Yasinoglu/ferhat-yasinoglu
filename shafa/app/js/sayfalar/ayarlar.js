@@ -2,6 +2,7 @@
 // Antet bilgileri hem yeni reçetelere düşer hem de basılan kâğıdın başlığını kurar.
 import { el, temizle, btn, btnS, girdi, secim, metinAlani, alan, kart, rozet, sayfaBas } from '../cekirdek/dom.js';
 import { simge } from '../cekirdek/simge.js';
+import { gorseliOku, gorselMi } from '../cekirdek/gorsel.js';
 import { yedekOlustur, iceAktar, yedekDogrula, indir, hatirlatmaGerekli } from '../depo/yedek.js';
 import { ornekYukle, ornekAntetiSil } from '../depo/ornek.js';
 import { hazirListeyiYukle } from '../depo/hazir-ilaclar.js';
@@ -146,6 +147,43 @@ export default {
       const qr = secim(QR_SECENEKLERI.map(([k, ad]) => [k, t('ayar.qr.' + k, ad)]), { name: 'qrIcerik', value: ayar.qrIcerik || 'recete' });
       const para = secim(PARA_BIRIMLERI, { name: 'paraBirimi', value: ayar.paraBirimi || 'AFN' });
 
+      /* Clinical sütununun altındaki fotoğraf. Dosya CİHAZDA okunuyor,
+         küçültülüp ayarlara yazılıyor — hiçbir yere yüklenmiyor. Hekim
+         yüklemezse kâğıtta çizim duruyor. */
+      let saglikGorseli = gorselMi(ayar.saglikGorseli) ? ayar.saglikGorseli : '';
+      const gorselOnizleme = el('div', { class: 'gorsel-secim__onizleme' });
+      const gorselDosyasi = el('input', {
+        type: 'file', accept: 'image/*', hidden: true,
+        onchange: async (e) => {
+          const d = e.target.files?.[0];
+          e.target.value = '';
+          if (!d) return;
+          try {
+            saglikGorseli = await gorseliOku(d);
+            gorseliCiz();
+            uyar(t('ayar.gorsel_kaydet_gerek', 'Görsel seçildi — kaydetmeyi unutma.'));
+          } catch (hataNesnesi) { hata(hataMetni(hataNesnesi)); }
+        },
+      });
+      function gorseliCiz() {
+        temizle(gorselOnizleme);
+        gorselOnizleme.append(
+          saglikGorseli
+            ? el('img', { class: 'gorsel-secim__resim', src: saglikGorseli, alt: '' })
+            : el('span', { class: 'sessiz' }, t('ayar.gorsel_yok', 'Şimdilik çizim basılıyor')),
+          el('div', { class: 'satir' },
+            btnS('yukle', saglikGorseli ? t('ayar.gorsel_degistir', 'Değiştir') : t('ayar.gorsel_sec', 'Fotoğraf seç'),
+              { class: 'btn btn--kucuk', onclick: () => gorselDosyasi.click() }),
+            saglikGorseli
+              ? btnS('cop', t('genel.kaldir', 'Kaldır'), {
+                class: 'btn btn--kucuk btn--sade',
+                onclick: () => { saglikGorseli = ''; gorseliCiz(); uyar(t('ayar.gorsel_kaydet_gerek', 'Görsel seçildi — kaydetmeyi unutma.')); },
+              })
+              : null));
+      }
+      gorseliCiz();
+      const gorselSecim = el('div', { class: 'gorsel-secim' }, gorselDosyasi, gorselOnizleme);
+
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' }, el('h2', {}, t('ayar.antet', 'Reçete antedi'))),
         el('p', { class: 'kart__alt' }, t('ayar.antet_alt', 'Bu bilgiler basılan reçete kâğıdının başlığını kurar ve yeni reçetelere kendiliğinden düşer. Bir reçete kaydedilince doktor bilgileri o günkü haliyle reçeteye işlenir — sonradan burada değişiklik yapsan eski reçeteler bozulmaz.')),
@@ -156,10 +194,14 @@ export default {
           alan(t('ayar.kagit_stili', 'Kâğıt stili'), stil),
           alan(t('ayar.qr', 'Karekod (QR)'), qr),
           alan(t('ayar.para', 'Para birimi'), para)),
+        alan(t('ayar.saglik_gorseli', 'Clinical sütunundaki fotoğraf'), gorselSecim, {
+          ipucu: t('ayar.saglik_gorseli_ipucu', 'Kâğıdın sol altında, «Healthy Life Brighter Tomorrow» yazısının yanında basılır. Bu cihazda kalır, hiçbir yere yüklenmez.'),
+        }),
         el('div', { class: 'satir', style: { marginBlockStart: 'var(--b-3)' } },
           btnS('kaydet', t('ayar.antet_kaydet', 'Antet bilgilerini kaydet'), { class: 'btn btn--birincil', onclick: async () => {
             const v = { yazdirmaBoyutu: boyut.value, kagitStili: stil.value, qrIcerik: qr.value, paraBirimi: para.value };
             for (const [anahtar] of ANTET_ALANLARI) v[anahtar] = antet[anahtar].value.trim();
+            v.saglikGorseli = saglikGorseli;
             await depo.ayarKaydet(v);
             bicimAyarla({ kur: para.value });
             basari(t('ayar.kaydedildi', 'Bilgiler kaydedildi'));

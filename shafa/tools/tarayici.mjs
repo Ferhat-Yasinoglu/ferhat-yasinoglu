@@ -672,7 +672,9 @@ if (EKRAN) {
   });
   await sayfa.emulateMedia({ media: 'print' });
   await resim(sayfa, '11-bos-kagit.png', { fullPage: true });
-  await sayfa.emulateMedia({ media: 'screen' });
+  // `'screen'` DEĞİL: media'yı sabitliyor ve sonraki page.pdf() de
+  // ekran stilleriyle basıyor. `null` varsayılana döndürür.
+  await sayfa.emulateMedia({ media: null });
   await sayfa.evaluate(() => { document.querySelector('.yazdir-alan').replaceWith(window.__doluKagit); });
 }
 
@@ -692,7 +694,9 @@ ok('gönder: WhatsApp bağlantısı hastanın numarasıyla ve reçete metniyle k
 await sayfa.click(`.modal button:has-text("${T('genel.kapat')}")`);
 await sayfa.emulateMedia({ media: 'print' });
 await resim(sayfa, '9-recete-cikti.png', { fullPage: true });
-await sayfa.emulateMedia({ media: 'screen' });
+// `'screen'` DEĞİL: media'yı sabitliyor ve sonraki page.pdf() de
+  // ekran stilleriyle basıyor. `null` varsayılana döndürür.
+  await sayfa.emulateMedia({ media: null });
 
 // --- Doğrulama kodu: kâğıtta basılı mı, QR'da var mı?
 const basiliKod = (await sayfa.textContent('.kagit__kod')).trim();
@@ -940,13 +944,18 @@ if (aktifler.length !== 1 || aktifler[0] !== '#/recete/kagit') {
   throw new Error('aktif menü kalemi tek değil: ' + aktifler.join(' '));
 }
 // Başlığın odak halkası ekranın tepesinde turkuaz bir kutu bırakıyordu.
-await sayfa.goto(KOK + '#/receteler', { waitUntil: 'networkidle' });
-await sayfa.keyboard.press('Tab');
-await sayfa.goto(KOK + '#/hastalar', { waitUntil: 'networkidle' });
-const halka = await sayfa.$eval('#sayfa h1', (h) => {
-  h.focus();
-  return { gorunur: h.matches(':focus-visible'), cizgi: getComputedStyle(h).outlineStyle };
-});
+let halka = null;
+for (let deneme = 0; deneme < 3 && !halka?.gorunur; deneme++) {
+  await sayfa.goto(KOK + '#/receteler', { waitUntil: 'networkidle' });
+  await sayfa.waitForSelector('#sayfa h1');
+  await sayfa.keyboard.press('Tab');
+  await sayfa.goto(KOK + '#/hastalar', { waitUntil: 'networkidle' });
+  await sayfa.waitForSelector('#sayfa .liste__satir, #sayfa .durum');
+  halka = await sayfa.$eval('#sayfa h1', (h) => {
+    h.focus();
+    return { gorunur: h.matches(':focus-visible'), cizgi: getComputedStyle(h).outlineStyle };
+  });
+}
 if (!halka.gorunur) throw new Error('başlık :focus-visible değil, halka denetimi boşa dönüyor');
 if (halka.cizgi !== 'none') throw new Error('başlıkta odak halkası görünüyor: ' + halka.cizgi);
 ok('tek aktif menü kalemi, yönlendirme odağı başlıkta ama halka çizilmiyor');
@@ -1023,6 +1032,369 @@ if (!bosSayfaKagidi.antet || bosSayfaKagidi.ilac !== 0 || adetSecenekleri !== 5)
   throw new Error('boş kâğıt sayfası: ' + JSON.stringify({ ...bosSayfaKagidi, adetSecenekleri }));
 }
 ok(`boş kâğıt sayfası hazır: antet basılı, ${bosSayfaKagidi.cizgi} doldurma çizgisi, ilaç satırı yok, ${adetSecenekleri} adet seçeneği`);
+
+/* --- Şemsi tarih seçici --- */
+await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.recete-duzen .kagit');
+const tarihOku = () => sayfa.evaluate(() => ({
+  yazi: document.querySelector('.tarih-secici input[type=text]')?.value,
+  iso: document.querySelector('.tarih-secici input[type=hidden]')?.value,
+  // Kâğıda basılan tarih: kutu ile kâğıt ayrışırsa hekim gördüğünden başka
+  // bir tarih bastırır.
+  kagit: document.querySelector('.kagit-tuval')?.textContent.match(/Date\s*:\s*([0-9/]+)/)?.[1],
+}));
+const ilkTarih = await tarihOku();
+if (!/^\d{4}\/\d{2}\/\d{2}$/.test(ilkTarih.yazi || '') || !/^\d{4}-\d{2}-\d{2}$/.test(ilkTarih.iso || '')
+    || ilkTarih.yazi !== ilkTarih.kagit) {
+  throw new Error('tarih kutusu: ' + JSON.stringify(ilkTarih));
+}
+ok(`tarih kutusu şemsi (${ilkTarih.yazi}), depoya giden değer miladi (${ilkTarih.iso}), kâğıt ikisiyle aynı`);
+
+// Takvim: ay adı Afganistan'ınki, hafta شنبه ile başlıyor, gün sayısı doğru.
+await sayfa.click('.tarih-secici__dugme');
+await sayfa.waitForSelector('.tarih-kutu');
+await sayfa.waitForTimeout(260);
+const takvim = await sayfa.evaluate(() => {
+  const a = document.querySelector('.tarih-secici').getBoundingClientRect();
+  const k = document.querySelector('.tarih-kutu').getBoundingClientRect();
+  return {
+    ay: document.querySelector('.tarih-kutu__ad b')?.textContent,
+    gunler: document.querySelectorAll('.tarih-kutu__gun').length,
+    gunAdlari: [...document.querySelectorAll('.tarih-kutu__gunadi')].map((e) => e.textContent).join(''),
+    // RTL'de kutu alanın SAĞ kenarına hizalanır; bir kez soluna açılmıştı.
+    hizali: Math.abs(k.right - a.right) < 2,
+    ekranIcinde: k.left >= 0 && k.right <= innerWidth && k.top >= 0 && k.bottom <= innerHeight,
+  };
+});
+const AFGAN_AYLARI = ['حمل', 'ثور', 'جوزا', 'سرطان', 'اسد', 'سنبله', 'میزان', 'عقرب', 'قوس', 'جدی', 'دلو', 'حوت'];
+if (!AFGAN_AYLARI.includes(takvim.ay) || takvim.gunAdlari !== 'شیدسچپج'
+    || ![29, 30, 31].includes(takvim.gunler) || !takvim.hizali || !takvim.ekranIcinde) {
+  throw new Error('takvim: ' + JSON.stringify(takvim));
+}
+ok(`takvim açıldı: ay «${takvim.ay}» (Afganistan adı), ${takvim.gunler} gün, hafta شنبه ile başlıyor, alana hizalı`);
+
+// Gün seçmek kâğıdı da değiştiriyor mu?
+await sayfa.click('.tarih-kutu__gun >> text="15"');
+await sayfa.waitForTimeout(420);
+const secildi = await tarihOku();
+if (!secildi.yazi.endsWith('/15') || secildi.yazi !== secildi.kagit) {
+  throw new Error('gün seçimi: ' + JSON.stringify(secildi));
+}
+ok(`takvimden 15 seçildi: kutu ${secildi.yazi}, depo ${secildi.iso}, kâğıt aynı anda yenilendi`);
+
+// Farsça rakamla elle yazma + olmayan günün yakalanması
+await sayfa.fill('.tarih-secici input[type=text]', '');
+await sayfa.type('.tarih-secici input[type=text]', '۱۴۰۵/۰۷/۰۱');
+await sayfa.waitForTimeout(320);
+const farsca = await tarihOku();
+await sayfa.fill('.tarih-secici input[type=text]', '1405/12/31');   // حوت 29 çekiyor
+await sayfa.waitForTimeout(260);
+const olmayan = await sayfa.evaluate(() => ({
+  kirmizi: document.querySelector('.tarih-secici input[type=text]').classList.contains('input--hata'),
+  iso: document.querySelector('.tarih-secici input[type=hidden]').value,
+}));
+if (farsca.iso !== '2026-09-23' || !olmayan.kirmizi || olmayan.iso !== farsca.iso) {
+  throw new Error('elle yazma: ' + JSON.stringify({ farsca, olmayan }));
+}
+// Alandan çıkınca son geçerli değere dönmeli: yoksa ekranda bir tarih,
+// kâğıtta başka bir tarih kalırdı.
+await sayfa.click('.recete-form h2');
+await sayfa.waitForTimeout(260);
+const donen = await tarihOku();
+if (donen.yazi !== '1405/07/01' || donen.yazi !== donen.kagit) throw new Error('geri dönüş: ' + JSON.stringify(donen));
+ok(`Farsça rakamla yazıldı (۱۴۰۵/۰۷/۰۱ → ${farsca.iso}); olmayan gün (31 حوت) kırmızıya döndü, odaktan çıkınca son geçerli tarihe döndü`);
+
+// Hastanın doğum tarihi de şemsi: hekim doğum gününü şemsi biliyor.
+await sayfa.goto(KOK + '#/hastalar', { waitUntil: 'networkidle' });
+await sayfa.click(`button:has-text("${T('hasta.ekle')}")`);
+await sayfa.waitForSelector('.modal');
+const dogumSecici = await sayfa.$$eval('.modal .tarih-secici input[type=hidden]', (n) => n.map((x) => x.name));
+const miladiKutu = await sayfa.$$eval('.modal input[type=date]', (n) => n.length);
+if (!dogumSecici.includes('dogumTarihi') || miladiKutu !== 0) {
+  throw new Error(`doğum tarihi alanı: gizli=${dogumSecici.join(',')} miladiKutu=${miladiKutu}`);
+}
+await sayfa.fill('.modal .tarih-secici input[type=text]', '1365/03/12');
+await sayfa.waitForTimeout(300);
+const dogumIso = await sayfa.$eval('.modal .tarih-secici input[type=hidden]', (e) => e.value);
+if (dogumIso !== '1986-06-02') throw new Error('doğum tarihi çevrimi: ' + dogumIso);
+await sayfa.keyboard.press('Escape');
+await sayfa.waitForTimeout(200);
+ok(`doğum tarihi de şemsi seçici (miladi kutu kalmamış): 1365/03/12 → ${dogumIso}`);
+
+// Takvim açıkken sayfa değişirse ortada kalmamalı: gövdeye ekleniyor, alan
+// ise sayfanın içinde. Bir süre öyleydi; takvim de pencere dinleyicileri de
+// asılı kalıyordu.
+await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.recete-duzen .kagit');
+await sayfa.click('.tarih-secici__dugme');
+await sayfa.waitForSelector('.tarih-kutu');
+await sayfa.goto(KOK + '#/receteler', { waitUntil: 'networkidle' });
+await sayfa.waitForTimeout(350);
+const kalanTakvim = await sayfa.$$eval('.tarih-kutu', (n) => n.length);
+if (kalanTakvim !== 0) throw new Error(`sayfa değişti ama ${kalanTakvim} takvim ortada kaldı`);
+ok('takvim açıkken sayfa değişince takvim de dinleyicileri de temizleniyor');
+
+/* --- Tarih seçicinin kenarları: karşıt incelemeden çıkanlar --- */
+// Dolu kutuda yılın bir rakamını silmek. Üç haneli yıl kabul edilirken
+// «405/06/31» geçerli sayılıp 1026 yılına çevriliyor, doğrulamayı geçip
+// sessizce kaydediliyordu.
+await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.recete-duzen .kagit');
+const oncekiIso = await sayfa.$eval('.tarih-secici input[type=hidden]', (e) => e.value);
+await sayfa.fill('.tarih-secici input[type=text]', '405/06/31');
+await sayfa.waitForTimeout(300);
+const kisaYil = await sayfa.$eval('.tarih-secici input[type=hidden]', (e) => e.value);
+// Üç haneli yıl 1026'ya çevrilip doğrulamayı geçiyordu. Artık hiç
+// çevrilmiyor: önceki GEÇERLİ değer duruyor.
+if (kisaYil === '1026-09-22' || kisaYil !== oncekiIso) {
+  throw new Error(`üç haneli yıl değeri bozdu: ${oncekiIso} → ${kisaYil}`);
+}
+// Odaktan çıkınca ekran son geçerli tarihe dönüyor: hekim ne kaydedeceğini görüyor.
+await sayfa.click('.recete-form h2');
+await sayfa.waitForTimeout(300);
+const donus = await sayfa.evaluate(() => ({
+  gorunen: document.querySelector('.tarih-secici input[type=text]').value,
+  gizli: document.querySelector('.tarih-secici input[type=hidden]').value,
+}));
+if (donus.gizli !== oncekiIso || !donus.gorunen) throw new Error('geri dönüş: ' + JSON.stringify(donus));
+ok(`üç haneli yıl (405/06/31) çevrilmiyor, önceki tarih korunuyor (${oncekiIso}) ve ekran ona dönüyor`);
+
+// Kâğıdın üstündeki «Date» alanı da şemsi seçici açmalı: soldaki alan
+// çevrilmişti ama bu üçüncü giriş noktası miladi kalmıştı.
+await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.recete-duzen .kagit');
+await sayfa.click('.kagit-tuval [data-alan="tarih"]');
+await sayfa.waitForSelector('.modal');
+const kagitTarihi = await sayfa.evaluate(() => ({
+  miladi: document.querySelectorAll('.modal input[type=date]').length,
+  semsi: document.querySelectorAll('.modal .tarih-secici').length,
+}));
+if (kagitTarihi.miladi !== 0 || kagitTarihi.semsi !== 1) {
+  throw new Error('kâğıttaki Date alanı: ' + JSON.stringify(kagitTarihi));
+}
+await sayfa.keyboard.press('Escape');
+await sayfa.waitForSelector('.modal', { state: 'detached' });
+ok('kâğıttaki «Date» alanı da şemsi seçici açıyor, miladi kutu hiçbir yerde kalmamış');
+
+// Takvim modalın içinde açılabiliyor. Escape durdurulmazsa aynı tuş hem
+// takvimi hem modalı kapatıyor ve yarım doldurulmuş form uyarısız gidiyordu.
+await sayfa.goto(KOK + '#/hastalar', { waitUntil: 'networkidle' });
+await sayfa.click(`button:has-text("${T('hasta.ekle')}")`);
+await sayfa.waitForSelector('.modal');
+await sayfa.fill('.modal input[name=ad]', 'آزمون');
+await sayfa.click('.modal .tarih-secici__dugme');
+await sayfa.waitForSelector('.tarih-kutu');
+await sayfa.keyboard.press('Escape');
+await sayfa.waitForTimeout(320);
+const kacis = await sayfa.evaluate(() => ({
+  takvim: document.querySelectorAll('.tarih-kutu').length,
+  modal: document.querySelectorAll('.modal').length,
+  ad: document.querySelector('.modal input[name=ad]')?.value ?? null,
+}));
+if (kacis.takvim !== 0 || kacis.modal !== 1 || kacis.ad !== 'آزمون') {
+  throw new Error('Escape modalı da kapattı: ' + JSON.stringify(kacis));
+}
+// Doğum tarihi alanının adı görünen etiketten gelmeli: sabit bir aria-label
+// onu eziyordu ve alan «تاریخ تولد» yerine «تاریخ (هجری شمسی)» diye
+// tanıtılıyordu.
+const ad = await sayfa.evaluate(() => {
+  const g = document.querySelector('.modal .tarih-secici input[type=text]');
+  return { ariaLabel: g.getAttribute('aria-label'), etiket: g.closest('.alan')?.querySelector('.alan__etiket')?.textContent.trim() };
+});
+if (ad.ariaLabel || !ad.etiket) throw new Error('doğum tarihi alanının adı: ' + JSON.stringify(ad));
+// Elde son geçerli değer YOKKEN (doğum tarihi boş başlıyor) çözülemeyen bir
+// metin yazılırsa, o metin gizli alana da geçiyor ki hastaDogrula ISO
+// kalıbına uymadığını görsün. Önce gizli alan boş kalıyordu: kutuda tarih
+// görünürken hasta doğum tarihsiz, sessizce kaydediliyordu.
+await sayfa.fill('.modal .tarih-secici input[type=text]', '1405/13/45');
+await sayfa.click('.modal input[name=ad]');
+await sayfa.waitForTimeout(300);
+const bosBaslayan = await sayfa.evaluate(() => ({
+  gorunen: document.querySelector('.modal .tarih-secici input[type=text]').value,
+  gizli: document.querySelector('.modal .tarih-secici input[type=hidden]').value,
+}));
+if (bosBaslayan.gizli !== bosBaslayan.gorunen || !bosBaslayan.gizli) {
+  throw new Error('çözülemeyen tarih sessizce boşa düştü: ' + JSON.stringify(bosBaslayan));
+}
+await sayfa.keyboard.press('Escape');
+await sayfa.waitForSelector('.modal', { state: 'detached' });
+ok(`takvimdeki Escape modalı kapatmıyor (form duruyor); alanın adı görünen etiketten geliyor («${ad.etiket}»); çözülemeyen tarih doğrulamaya taşınıyor`);
+
+/* --- Antet bandı ve Clinical fotoğrafı --- */
+await sayfa.goto(KOK + '#/recete/bos', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.kagit-tuval .kagit');
+await sayfa.waitForTimeout(400);
+const bant = await sayfa.evaluate(() => {
+  const tepe = document.querySelector('.kagit__tepe');
+  if (!tepe) return { yok: true };
+  const parlaklik = (renk) => {
+    const [r, g, b] = (renk.match(/\d+/g) || [0, 0, 0]).map(Number);
+    return Math.round((r * 299 + g * 587 + b * 114) / 1000);
+  };
+  // Bandın zemini GRADYAN: backgroundColor saydam geliyor, rengi
+  // backgroundImage'ın içinden okumak gerekiyor.
+  const zeminParlakligi = (e) => {
+    const g = getComputedStyle(e).backgroundImage;
+    const ilk = g && g !== 'none' ? (g.match(/rgba?\([^)]+\)/) || [])[0] : null;
+    return parlaklik(ilk || getComputedStyle(e).backgroundColor);
+  };
+  const rozet = document.querySelector('.kagit__unvan span');
+  const kagit = document.querySelector('.kagit');
+  const serit = document.querySelector('.kagit__serit');
+  const alanlar = serit ? [...serit.querySelectorAll('.kagit__alan')] : [];
+  return {
+    // Ad, ihtisas rozeti ve hizmetler AYNI bandın içinde olmalı.
+    icinde: ['.kagit__antet', '.kagit__unvan', '.kagit__hizmet']
+      .every((sec) => { const e = document.querySelector(sec); return e && tepe.contains(e); }),
+    bantParlakligi: zeminParlakligi(tepe),
+    adParlakligi: parlaklik(getComputedStyle(document.querySelector('.kagit__doktor')).color),
+    rozetParlakligi: rozet ? parlaklik(getComputedStyle(rozet).backgroundColor) : null,
+    // Hizmetlerin ikinci satırı kırpılmamalı: bant büzülünce kırpıyordu.
+    hizmetTasiyor: (() => { const h = document.querySelector('.kagit__hizmet'); return h ? h.getBoundingClientRect().bottom > tepe.getBoundingClientRect().bottom + 1 : false; })(),
+    // Name/Age/Date/No tek satırda.
+    seritSariyor: alanlar.length > 1
+      && Math.abs(alanlar[0].getBoundingClientRect().top - alanlar[alanlar.length - 1].getBoundingClientRect().top) > 2,
+    // Bandın boyu: ölçülen tek yükseklik bu. Kâğıdın TOPLAM boyu bu adımın
+    // işi değil — A4 taşması bu turdan önce de vardı (354mm → 345mm).
+    bantMm: Math.round(tepe.offsetHeight / 96 * 25.4),
+    kagitVar: Boolean(kagit),
+  };
+});
+// Bant AÇIK (parlak), yazı KOYU, rozet koyu lacivert: önce tersiydi —
+// koyu bir şerit yalnız tepeyi kaplıyor, ad altında beyaz zeminde kalıyordu.
+if (bant.yok || !bant.icinde || bant.bantParlakligi < 200 || bant.adParlakligi > 140
+    || bant.rozetParlakligi > 90 || bant.hizmetTasiyor || bant.seritSariyor || !bant.kagitVar) {
+  throw new Error('antet bandı: ' + JSON.stringify(bant));
+}
+ok(`antet bandı açık zeminli (parlaklık ${bant.bantParlakligi}), ${bant.bantMm}mm; ad, ihtisas rozeti ve hizmetler onun içinde; hasta şeridi tek satır`);
+
+// Clinical sütunundaki fotoğraf: cihazda küçültülüp ayarlara yazılıyor.
+await sayfa.goto(KOK + '#/ayarlar', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.gorsel-secim');
+const buyukPng = await sayfa.evaluate(() => {
+  // Gürültülü: düz renkli bir kare PNG olarak 29 KB'ye iniyor ve "büyük
+  // fotoğraf küçülüyor mu" denetimi anlamını yitiriyordu. Gerçek telefon
+  // fotoğrafı da gürültülüdür.
+  const c = document.createElement('canvas'); c.width = 1200; c.height = 800;
+  const x = c.getContext('2d');
+  const im = x.createImageData(1200, 800);
+  // Gerçekten rastgele: örüntülü gürültüyü de PNG sıkıştırıyordu.
+  for (let i = 0; i < im.data.length; i += 4) {
+    im.data[i] = (Math.random() * 256) | 0; im.data[i + 1] = (Math.random() * 256) | 0;
+    im.data[i + 2] = (Math.random() * 256) | 0; im.data[i + 3] = 255;
+  }
+  x.putImageData(im, 0, 0);
+  return c.toDataURL('image/png');
+});
+const hamPng = Buffer.from(buyukPng.split(',')[1], 'base64');
+await sayfa.setInputFiles('.gorsel-secim input[type=file]', { name: 'stetoskop.png', mimeType: 'image/png', buffer: hamPng });
+// Ya önizleme ya hata bildirimi bekleniyor: küçültme bozulursa görsel boyut
+// sınırını aşıp reddediliyor ve önizleme HİÇ gelmiyor. Yalnız önizlemeyi
+// beklemek 30 saniyelik bir zaman aşımına düşüyor, üstelik neyin bozulduğunu
+// da söylemiyordu.
+await sayfa.waitForSelector('.gorsel-secim__resim, .bildirim--hata', { timeout: 8000 });
+if (!(await sayfa.$('.gorsel-secim__resim'))) {
+  throw new Error('görsel kabul edilmedi: ' + (await sayfa.textContent('.bildirim--hata')).trim());
+}
+const kucuk = await sayfa.$eval('.gorsel-secim__resim', (e) => new Promise((coz) => {
+  const r = new Image();
+  r.onload = () => coz({ jpeg: e.src.startsWith('data:image/jpeg'), kb: Math.round(e.src.length / 1024), en: r.naturalWidth });
+  r.src = e.src;
+}));
+// Sözleşme: girdi ne olursa olsun saklanan görsel JPEG, en çok 360 piksel
+// geniş ve 200 KB altı. Küçültme şart — telefon fotoğrafı olduğu gibi
+// saklanırsa her yedek onunla birlikte şişer.
+const hamKb = Math.round(hamPng.length / 1024);
+if (!kucuk.jpeg || kucuk.kb > 200 || kucuk.en > 360 || kucuk.kb >= hamKb) {
+  throw new Error('görsel küçültme: ' + JSON.stringify({ ...kucuk, hamKb }));
+}
+for (const d of await sayfa.$$('button')) {
+  const m = await d.textContent();
+  if ((m || '').includes(T('ayar.antet_kaydet'))) { await d.click(); break; }
+}
+await sayfa.waitForTimeout(700);
+await sayfa.goto(KOK + '#/recete/bos', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.kagit-tuval .kagit');
+await sayfa.waitForTimeout(400);
+const basildi = await sayfa.evaluate(() => ({
+  foto: document.querySelectorAll('.kagit__saglik-foto').length,
+  cizim: document.querySelectorAll('.kagit__saglik-cizim').length,
+}));
+if (basildi.foto !== 1 || basildi.cizim !== 0) throw new Error('kâğıtta fotoğraf: ' + JSON.stringify(basildi));
+ok(`Clinical fotoğrafı yüklendi: ${hamKb}KB → ${kucuk.kb}KB (JPEG, ${kucuk.en}px), kâğıda basıldı, çizim yerini bıraktı`);
+
+// Görsel olmayan dosya Farsça uyarı vermeli: hata kodu çevrilmezse
+// hataMetni kendi Türkçe mesajına düşer ve bildirimler #sayfa'nın dışında
+// olduğu için tek-dil taraması da görmez.
+await sayfa.goto(KOK + '#/ayarlar', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.gorsel-secim');
+await sayfa.setInputFiles('.gorsel-secim input[type=file]', { name: 'not.txt', mimeType: 'text/plain', buffer: Buffer.from('merhaba') });
+await sayfa.waitForSelector('.bildirim--hata');
+const gorselUyarisi = (await sayfa.textContent('.bildirim--hata')).trim();
+if (/[çğıöşüÇĞİÖŞÜ]|degil|değil|Görsel|Dosya/.test(gorselUyarisi)) {
+  throw new Error('görsel hatası Türkçe kalmış: ' + gorselUyarisi);
+}
+ok(`görsel olmayan dosya Farsça uyarı verdi: ${gorselUyarisi}`);
+
+/* --- Kâğıt A4'e sığıyor mu? --- */
+/* page.pdf() gerçek yazdırma yolundan geçiyor: mm toplamı değil, BASILAN
+   sayfa sayısı ölçülüyor. Kâğıt bir dönem A4'e sığmıyordu (345mm) ve her
+   reçete iki sayfa çıkıyordu; burası onun nöbetçisi.
+   DİKKAT: emulateMedia({media:'screen'}) çağrılırsa pdf() de EKRAN
+   stilleriyle basar ve ölçüm anlamsızlaşır — media'ya dokunulmuyor. */
+await sayfa.emulateMedia({ media: null });
+await sayfa.goto(KOK + '#/recete/bos', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.kagit-tuval .kagit');
+const sayfaSayisi = async () => {
+  const pdf = await sayfa.pdf({ format: 'A4', printBackground: true });
+  const metin = Buffer.from(pdf).toString('latin1');
+  return Number(([...metin.matchAll(/\/Type\s*\/Pages[\s\S]{0,200}?\/Count\s+(\d+)/g)][0] || [])[1] || 0);
+};
+const kagitKur = (stil, ilacSayisi) => sayfa.evaluate(async ({ stil, ilacSayisi }) => {
+  document.querySelectorAll('#sayfa > .yazdir-alan').forEach((e) => e.remove());
+  const { kagitCiz } = await import('./js/kagit.js');
+  const { yerelDepoAc } = await import('./js/depo/idb.js');
+  const depo = await yerelDepoAc();
+  const ayar = { ...(await depo.ayarlar()), yazdirmaBoyutu: 'A4', kagitStili: stil };
+  const hastalar = await depo.listele('hastalar');
+  const ilaclar = await depo.listele('ilaclar');
+  const satirlar = Array.from({ length: ilacSayisi }, (_, i) => ({
+    ilacAdi: (ilaclar[i % ilaclar.length] || {}).ad || 'دوا', adet: 2,
+    kullanim: 'روزی ۲ بار بعد از غذا', sure: '۵ روز', yol: 'خوراکی',
+  }));
+  document.getElementById('sayfa').appendChild(kagitCiz({
+    ayar, bos: ilacSayisi === 0, hasta: ilacSayisi ? hastalar[0] : null,
+    recete: ilacSayisi ? {
+      receteNo: '2026-09-22-01', tarih: '2026-09-22', hastaId: hastalar[0]?.id, satirlar,
+      belirtiler: 'تب، سرفه', tani: 'عفونت مجرای تنفسی فوقانی', taniKodu: 'J06.9',
+      laboratuvar: 'CBC — شمارش کامل خون', notlar: 'استراحت کافی', kanGrubu: 'A Rh+',
+      olcumler: { bp: '120/80', pr: '78', rr: '16', bw: '72', temp: '37.2', spo2: '98', ht: '174' },
+      dogrulamaKodu: 'XQ24-WSP9',
+    } : {},
+  }));
+}, { stil, ilacSayisi });
+
+const tasanlar = [];
+const boylar = [];
+for (const [stil, ilac] of [['modern', 0], ['modern', 8], ['klasik', 0], ['sade', 0]]) {
+  await kagitKur(stil, ilac);
+  await sayfa.waitForTimeout(350);
+  const n = await sayfaSayisi();
+  await sayfa.emulateMedia({ media: 'print' });
+  const boyMm = await sayfa.evaluate(() => {
+    const k = document.querySelector('#sayfa > .yazdir-alan');
+    return k ? Math.round(k.offsetHeight / 96 * 25.4) : 0;
+  });
+  await sayfa.emulateMedia({ media: null });
+  boylar.push(`${stil}/${ilac ? ilac + ' ilaç' : 'boş'} ${boyMm}mm`);
+  // Yalnız "tek sayfa" yetmez: sınıra 1mm kala da tek sayfa çıkar ve hekimin
+  // anteti birkaç satır uzayınca kâğıt sessizce ikiye bölünür. Sınır ölçülerek
+  // bulundu: ≈275mm'de ikiye bölünüyor, eşik payla birlikte 272mm.
+  if (n !== 1 || boyMm > 272) tasanlar.push(`${stil}/${ilac ? ilac + ' ilaç' : 'boş'}=${n} sayfa (${boyMm}mm)`);
+}
+await sayfa.evaluate(() => { document.querySelectorAll('#sayfa > .yazdir-alan').forEach((e) => e.remove()); });
+if (tasanlar.length) throw new Error('kâğıt A4\'e sığmıyor: ' + tasanlar.join(', '));
+ok(`kâğıt A4'e sığıyor, hepsi tek sayfa ve payı var: ${boylar.join(' · ')} (sınır ≈275mm)`);
 
 await tarayici.close();
 kapat();

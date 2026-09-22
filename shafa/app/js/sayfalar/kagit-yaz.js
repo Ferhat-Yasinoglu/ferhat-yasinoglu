@@ -14,6 +14,7 @@
 // kutusu — sonuncusu artık ilac-satir-arayuz.js'te, iki yerden de kullanılsın
 // diye değil, tek yerde dursun diye.
 import { el, temizle, btn, btnS, girdi, alan, kart, bosDurum, sayfaBas, uyariSeridi } from '../cekirdek/dom.js';
+import { tarihSecici } from '../cekirdek/tarih-secici.js';
 import { simge } from '../cekirdek/simge.js';
 import { kagitCiz, kagidiYazdir, kagidiOlcekle } from '../kagit.js';
 import {
@@ -84,6 +85,22 @@ async function degerKutusu(ctx, { baslik, deger = '', ipucu = '', tur = 'text' }
   return sonuc && typeof sonuc === 'object' ? sonuc.deger : null;
 }
 
+/* Kâğıdın üstündeki «Date» alanına dokununca açılan kutu. degerKutusu ile
+   `tur: 'date'` kullanılıyordu, yani tarayıcının MİLADİ takvimi: soldaki alan
+   şemsiye çevrilmişti ama bu üçüncü giriş noktası gözden kaçmıştı. */
+async function semsiKutusu(ctx, deger) {
+  const secici = tarihSecici({ value: deger, etiket: t('genel.tarih', 'Tarih') });
+  const sonuc = await ctx.modal({
+    baslik: t('genel.tarih', 'Tarih'),
+    govde: el('div', {}, secici),
+    dugmeler: [
+      { metin: t('genel.vazgec', 'Vazgeç'), deger: null },
+      { metin: t('genel.kaydet', 'Kaydet'), sinif: 'btn--birincil', cb: () => ({ deger: secici.value }) },
+    ],
+  });
+  return sonuc && typeof sonuc === 'object' ? sonuc.deger : null;
+}
+
 const doluMu = (v) => String(v ?? '').trim() !== '';
 
 /* Formdaki ölçüm satırlarının simgeleri; kâğıttakiyle aynı sıra. */
@@ -147,7 +164,7 @@ export default {
         }
       },
       tarih: async () => {
-        const d = await degerKutusu(ctx, { baslik: t('genel.tarih', 'Tarih'), deger: recete.tarih, tur: 'date' });
+        const d = await semsiKutusu(ctx, recete.tarih);
         if (d) recete.tarih = d;
       },
       kanGrubu: async () => {
@@ -307,16 +324,13 @@ export default {
         class: 'btn secim-alani' + (hatalar.hastaId ? ' input--hata' : ''),
         onclick: async () => { await eylemler.hasta(); ciz(); },
       });
-      // Tarih kutusu tarayıcının kendi takvimi, yani MİLADİ. Hekim şemsi
-      // kullanıyor; seçilen günün şemsi karşılığı kutunun altında yazıyor ki
-      // hangi güne bastığını görsün. Depoda tarih yine miladi ISO.
-      const tarihGirdisi = girdi({ type: 'date', name: 'tarih', value: recete.tarih });
-      const semsiYazi = el('span', { class: 'alan__ipucu' }, tarihMetni(recete.tarih));
-      tarihGirdisi.oninput = () => {
-        recete.tarih = tarihGirdisi.value;
-        semsiYazi.textContent = tarihMetni(recete.tarih);
-        tazeleGecikmeli();
-      };
+      // Kutu da takvim de ŞEMSİ. Depoda tarih yine miladi ISO — seçici onu
+      // gizli alanda taşıyor. Önce miladi bir kutu vardı ve şemsi karşılığı
+      // altında yazıyordu; hekim her seferinde kafadan çeviriyordu.
+      const tarihGirdisi = tarihSecici({
+        name: 'tarih', value: recete.tarih,
+        degisti: (iso) => { recete.tarih = iso; tazeleGecikmeli(); },
+      });
 
       const hastaKarti = kart({},
         kartBasligi('hasta', t('recete.hasta_bilgileri', 'Hasta bilgileri')),
@@ -328,7 +342,7 @@ export default {
             value: yas !== null ? String(yas) : '', readonly: true,
             placeholder: t('hasta.yas_birim', 'yıl'), dir: 'ltr',
           })),
-          alan(t('genel.tarih', 'Tarih'), [tarihGirdisi, semsiYazi], { gerekli: true }),
+          alan(t('genel.tarih', 'Tarih'), tarihGirdisi, { gerekli: true }),
           alan(t('recete.numara', 'Reçete no'), girdi({
             value: recete.receteNo || '', readonly: true,
             placeholder: t('recete.numara_yer', 'İsteğe bağlı'),

@@ -7,6 +7,7 @@
 // bastırıp üzerine kalemle yazdığı kâğıdın aynısıdır — her şey aynı yerde durur,
 // yalnız alanlar çizgi olarak basılır.
 import { el, svgEl, qrGorsel } from './cekirdek/dom.js';
+import { gorselMi } from './cekirdek/gorsel.js';
 import { simge } from './cekirdek/simge.js';
 import { t } from './i18n.js';
 import { tamAd, hastaYasi } from './paylasilan/hasta.js';
@@ -123,9 +124,17 @@ function aileAmblemi() {
 }
 
 /** Clinical sütununun altındaki sağlık çizimi: borusu kalp çizen stetoskop.
- *  Basılı kâğıtta burada bir fotoğraf var; çizgi çizimi onun dürüst
- *  karşılığı — fotoğrafı yeniden üretemeyiz, düzeni ve ağırlığı veriyoruz. */
-function saglikResmi() {
+ *  Basılı kâğıtta burada bir FOTOĞRAF var. Hekim kendi fotoğrafını
+ *  Ayarlar'dan yükleyebiliyor (cihazda kalıyor, bkz. cekirdek/gorsel.js);
+ *  yüklemediyse bu çizim duruyor — düzeni ve ağırlığı veriyor. */
+function saglikResmi(ayar = {}) {
+  if (gorselMi(ayar.saglikGorseli)) {
+    return el('img', { class: 'kagit__saglik-foto', src: ayar.saglikGorseli, alt: '' });
+  }
+  return saglikCizimi();
+}
+
+function saglikCizimi() {
   const boru = (d, kalinlik = 3) => svgEl('path', {
     d, fill: 'none', stroke: 'currentColor', 'stroke-width': kalinlik,
     'stroke-linecap': 'round', 'stroke-linejoin': 'round',
@@ -272,7 +281,7 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
   const stil = el('style', {});
   // ℞ alanı sayfanın kalanını doldursun: boş kâğıtta yazmaya bol yer kalır.
   stil.textContent = `@page { size: ${boyut}; margin: ${boyut === 'A5' ? '6mm' : '8mm'}; }`
-    + ` .kagit { --rx-boy: ${boyut === 'A5' ? '92mm' : '168mm'}; }`;
+    + ` .kagit { --rx-boy: ${boyut === 'A5' ? '62mm' : '150mm'}; }`;
 
   const yas = hasta ? hastaYasi(hasta) : null;
 
@@ -408,7 +417,7 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
       : null,
     el('div', { class: 'kagit__sutun-ayak' },
       el('div', { class: 'kagit__sutun-resim' },
-        saglikResmi(),
+        saglikResmi(ayar),
         el('div', { class: 'kagit__sutun-yazi' },
           ...satirlara(t('kagit.saglik_sozu', 'Healthy\nLife\nBrighter\nTomorrow')).map((x) => el('div', {}, x)))),
       el('div', { class: 'kagit__qr-kutu' }, qr,
@@ -511,9 +520,15 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
   // Tek bant, tam genişlik: kurdeleler kâğıdın bir ucundan ötekine akıyor.
   // Eskiden iki köşe parçasıydı (biri CSS'te aynalanan), o düzen kurdele
   // değil iki ayrı leke gibi duruyordu.
+  /* Antet, ihtisas rozeti ve hizmetler TEK bandın içinde: dalga da o banda
+     ait. Önce dalga kâğıdın tepesinde serbest duruyor ve yalnız üst şeridi
+     koyultuyordu; ad, rozet ve hizmetler altında beyaz zeminde kalıyordu.
+     Sarmalayıcı yalnız EKLENDİ, içindekilerin sırası değişmedi — klasik ve
+     sade stiller aynı ağacı giymeye devam ediyor. */
+  const tepe = el('div', { class: 'kagit__tepe' }, dalga('ust'), antet, unvan, hizmet);
+
   return el('div', { class: `yazdir-alan kagit${stilSinifi}` }, stil,
-    dalga('ust'),
-    antet, unvan, hizmet, deneyim, vecize, serit,
+    tepe, deneyim, vecize, serit,
     el('div', { class: 'kagit__govde' }, rx, sutun),
     ayak);
 }

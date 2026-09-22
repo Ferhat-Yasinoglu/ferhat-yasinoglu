@@ -457,3 +457,89 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 
 /* Seçim alanı: hasta gibi listeden seçilen alanlar girdi gibi görünsün. */
 .secim-alani { inline-size: 100%; justify-content: flex-start; font-weight: 500; }
+
+/* ---------- Şemsi tarih seçici ---------- */
+/* Kutu ve takvim şemsi; depoya giren değer gizli alanda miladi ISO.
+   Bkz. cekirdek/tarih-secici.js */
+/* Çerçeve dıştaki kapta, simge kutunun İÇİNDE: ayrı bir düğme olarak
+   yanında dururken dar sütunda tarihi kırpıyordu. */
+.tarih-secici {
+  display: flex; align-items: center; gap: var(--b-2);
+  padding-inline: var(--b-3); min-block-size: 40px;
+  background: rgb(var(--yuzey)); border: var(--kenarlik-2); border-radius: var(--r-kucuk);
+  transition: border-color var(--hiz-1) var(--egri), box-shadow var(--hiz-1) var(--egri);
+}
+.tarih-secici:focus-within { border-color: rgb(var(--vurgu)); box-shadow: var(--halka); }
+/* alan() doğrulama hatasında `input--hata`yı SARMALAYICIYA koyuyor; buradaki
+   `border` kısayolu onu eziyordu ve alan kırmızıya dönmüyordu. */
+.tarih-secici.input--hata { border-color: rgb(var(--kirmizi)); }
+.tarih-secici.input--hata:focus-within { box-shadow: 0 0 0 3px rgb(var(--kirmizi) / .18); }
+.tarih-secici .input {
+  flex: 1; min-inline-size: 0; border: none; background: none; padding: 0;
+  min-block-size: 0; font: inherit; font-size: var(--f-m); color: inherit;
+  font-variant-numeric: tabular-nums;
+}
+.tarih-secici .input:focus { outline: none; box-shadow: none; }
+.tarih-secici .input.input--hata { color: rgb(var(--kirmizi)); box-shadow: none; }
+.tarih-secici__dugme {
+  flex-shrink: 0; display: grid; place-items: center;
+  inline-size: 26px; block-size: 26px; padding: 0;
+  border: none; border-radius: 6px; background: none; cursor: pointer;
+  color: rgb(var(--metin-3));
+  transition: background var(--hiz-1) var(--egri), color var(--hiz-1) var(--egri);
+}
+.tarih-secici__dugme:hover { background: rgb(var(--vurgu) / .1); color: rgb(var(--vurgu)); }
+.tarih-secici:focus-within .tarih-secici__dugme { color: rgb(var(--vurgu)); }
+
+/* Takvim gövdeye ekleniyor (fixed): kartın ya da pencerenin overflow
+   kuralları kırpmasın. Yeri JS'ten veriliyor. */
+.tarih-kutu {
+  position: fixed; z-index: 60; inline-size: 290px;
+  padding: var(--b-3);
+  background: rgb(var(--yuzey)); border: var(--kenarlik-2); border-radius: var(--r);
+  box-shadow: var(--golge-3);
+  /* Boy JS'ten sınırlanıyor (dar ekranda iki yana da sığmayabiliyor):
+     kutu kendi içinde kaydırılsın, ekrandan taşmasın. */
+  overflow-y: auto;
+  animation: tarih-kutu-gir var(--hiz-2) var(--egri);
+}
+@keyframes tarih-kutu-gir { from { opacity: 0; transform: translateY(-4px); } }
+.tarih-kutu__bas { display: flex; align-items: center; gap: 2px; margin-block-end: var(--b-2); }
+.tarih-kutu__ok { min-width: 30px; min-height: 30px; padding-inline: 0; }
+/* Ay ve yıl ortada, oklar iki yanda. */
+.tarih-kutu__ad {
+  flex: 1; display: flex; align-items: baseline; justify-content: center; gap: 6px;
+  font-size: var(--f-m); white-space: nowrap;
+}
+.tarih-kutu__ad b { font-weight: 700; }
+.tarih-kutu__ad span { color: rgb(var(--metin-2)); font-variant-numeric: tabular-nums; }
+.tarih-kutu__izgara { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.tarih-kutu__gunadi {
+  display: grid; place-items: center; block-size: 26px;
+  font-size: var(--f-xs); font-weight: 700; color: rgb(var(--metin-3));
+}
+.tarih-kutu__gun {
+  display: grid; place-items: center;
+  block-size: 34px; padding: 0; border: none; border-radius: var(--r-kucuk);
+  background: none; color: inherit; font: inherit; font-size: var(--f-s);
+  font-variant-numeric: tabular-nums; cursor: pointer;
+  transition: background var(--hiz-1) var(--egri), color var(--hiz-1) var(--egri);
+}
+.tarih-kutu__gun:hover { background: rgb(var(--yuzey-2)); }
+/* Bugün yalnız çerçeveli: seçili günle karışmasın. */
+.tarih-kutu__gun--bugun { box-shadow: inset 0 0 0 1px rgb(var(--vurgu) / .55); font-weight: 700; }
+.tarih-kutu__gun--secili { background: rgb(var(--vurgu)); color: rgb(var(--vurgu-yz)); font-weight: 700; }
+.tarih-kutu__gun--secili:hover { background: rgb(var(--vurgu-2)); }
+.tarih-kutu__ayak {
+  display: flex; gap: var(--b-2); margin-block-start: var(--b-3);
+  padding-block-start: var(--b-2); border-block-start: var(--kenarlik);
+}
+.tarih-kutu__ayak .btn { flex: 1; justify-content: center; }
+
+/* ---------- Görsel seçme (Clinical sütunundaki fotoğraf) ---------- */
+/* Dosya cihazda okunup küçültülüyor; bkz. cekirdek/gorsel.js */
+.gorsel-secim__onizleme { display: flex; align-items: center; gap: var(--b-3); flex-wrap: wrap; }
+.gorsel-secim__resim {
+  inline-size: 84px; block-size: auto; max-block-size: 64px; object-fit: contain;
+  border: var(--kenarlik); border-radius: var(--r-kucuk); background: #fff; padding: 2px;
+}
