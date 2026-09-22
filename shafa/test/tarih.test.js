@@ -110,6 +110,20 @@ describe('şemsi ↔ miladi çevrim', () => {
     expect(uzunluklar).toEqual([31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29]);
   });
 
+  /* semsiden'in sözleşmesi kesin: ya YYYY-MM-DD ya boş. Denetlenmediğinde
+     şemsi yıl 378'den küçükken üç haneli bir metin çıkıyordu ('761-09-22');
+     daha sinsisi 379–999 arası yıllar DÖRT haneli ama bambaşka bir ISO
+     veriyordu (405 → '1026-09-22') ve bütün doğrulama düzeneğini geçiyordu. */
+  it('her zaman ya YYYY-MM-DD ya boş döner — arada bir şey yok', () => {
+    for (const y of [1, 99, 140, 377, 378, 999, 1000, 1405, 2000, 2999]) {
+      const r = semsiden(y, 6, 31);
+      expect(r === '' || /^\d{4}-\d{2}-\d{2}$/.test(r)).toBe(true);
+    }
+    // Miladi karşılığı dört haneye sığmayanlar boş dönüyor.
+    expect(semsiden(140, 6, 31)).toBe('');
+    expect(semsiden(378, 6, 31)).toBe('');
+  });
+
   it('geçersiz girdide boş ya da null döner', () => {
     expect(semsiye('')).toBe(null);
     expect(semsiye('abc')).toBe(null);
@@ -156,5 +170,14 @@ describe('semsiMetniCozumle', () => {
     for (const metin of ['', '1405', '1405/06', 'abc', '1405/06/31/2', null]) {
       expect(semsiMetniCozumle(metin)).toBe(null);
     }
+  });
+  it('yıl TAM dört hane olmalı', () => {
+    // Dolu bir kutuda «1405»in bir rakamını silmek en sıradan tuş vuruşu.
+    // Üç hane kabul edilirken bu geçerli sayılıp başka bir yıla çeviriyordu
+    // (405 → 1026) ve değer sessizce kaydediliyordu.
+    for (const metin of ['405/06/31', '140/06/31', '14/06/31', '14050/06/31']) {
+      expect(semsiMetniCozumle(metin)).toBe(null);
+    }
+    expect(semsiMetniCozumle('1405/06/31')).toEqual({ yil: 1405, ay: 6, gun: 31 });
   });
 });

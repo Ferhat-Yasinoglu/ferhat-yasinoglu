@@ -85,6 +85,22 @@ async function degerKutusu(ctx, { baslik, deger = '', ipucu = '', tur = 'text' }
   return sonuc && typeof sonuc === 'object' ? sonuc.deger : null;
 }
 
+/* Kâğıdın üstündeki «Date» alanına dokununca açılan kutu. degerKutusu ile
+   `tur: 'date'` kullanılıyordu, yani tarayıcının MİLADİ takvimi: soldaki alan
+   şemsiye çevrilmişti ama bu üçüncü giriş noktası gözden kaçmıştı. */
+async function semsiKutusu(ctx, deger) {
+  const secici = tarihSecici({ value: deger, etiket: t('genel.tarih', 'Tarih') });
+  const sonuc = await ctx.modal({
+    baslik: t('genel.tarih', 'Tarih'),
+    govde: el('div', {}, secici),
+    dugmeler: [
+      { metin: t('genel.vazgec', 'Vazgeç'), deger: null },
+      { metin: t('genel.kaydet', 'Kaydet'), sinif: 'btn--birincil', cb: () => ({ deger: secici.value }) },
+    ],
+  });
+  return sonuc && typeof sonuc === 'object' ? sonuc.deger : null;
+}
+
 const doluMu = (v) => String(v ?? '').trim() !== '';
 
 /* Formdaki ölçüm satırlarının simgeleri; kâğıttakiyle aynı sıra. */
@@ -148,7 +164,7 @@ export default {
         }
       },
       tarih: async () => {
-        const d = await degerKutusu(ctx, { baslik: t('genel.tarih', 'Tarih'), deger: recete.tarih, tur: 'date' });
+        const d = await semsiKutusu(ctx, recete.tarih);
         if (d) recete.tarih = d;
       },
       kanGrubu: async () => {

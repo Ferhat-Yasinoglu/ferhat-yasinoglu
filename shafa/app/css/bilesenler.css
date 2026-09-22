@@ -470,6 +470,10 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
   transition: border-color var(--hiz-1) var(--egri), box-shadow var(--hiz-1) var(--egri);
 }
 .tarih-secici:focus-within { border-color: rgb(var(--vurgu)); box-shadow: var(--halka); }
+/* alan() doğrulama hatasında `input--hata`yı SARMALAYICIYA koyuyor; buradaki
+   `border` kısayolu onu eziyordu ve alan kırmızıya dönmüyordu. */
+.tarih-secici.input--hata { border-color: rgb(var(--kirmizi)); }
+.tarih-secici.input--hata:focus-within { box-shadow: 0 0 0 3px rgb(var(--kirmizi) / .18); }
 .tarih-secici .input {
   flex: 1; min-inline-size: 0; border: none; background: none; padding: 0;
   min-block-size: 0; font: inherit; font-size: var(--f-m); color: inherit;
@@ -494,6 +498,9 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
   padding: var(--b-3);
   background: rgb(var(--yuzey)); border: var(--kenarlik-2); border-radius: var(--r);
   box-shadow: var(--golge-3);
+  /* Boy JS'ten sınırlanıyor (dar ekranda iki yana da sığmayabiliyor):
+     kutu kendi içinde kaydırılsın, ekrandan taşmasın. */
+  overflow-y: auto;
   animation: tarih-kutu-gir var(--hiz-2) var(--egri);
 }
 @keyframes tarih-kutu-gir { from { opacity: 0; transform: translateY(-4px); } }

@@ -1130,6 +1130,92 @@ const kalanTakvim = await sayfa.$$eval('.tarih-kutu', (n) => n.length);
 if (kalanTakvim !== 0) throw new Error(`sayfa değişti ama ${kalanTakvim} takvim ortada kaldı`);
 ok('takvim açıkken sayfa değişince takvim de dinleyicileri de temizleniyor');
 
+/* --- Tarih seçicinin kenarları: karşıt incelemeden çıkanlar --- */
+// Dolu kutuda yılın bir rakamını silmek. Üç haneli yıl kabul edilirken
+// «405/06/31» geçerli sayılıp 1026 yılına çevriliyor, doğrulamayı geçip
+// sessizce kaydediliyordu.
+await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.recete-duzen .kagit');
+const oncekiIso = await sayfa.$eval('.tarih-secici input[type=hidden]', (e) => e.value);
+await sayfa.fill('.tarih-secici input[type=text]', '405/06/31');
+await sayfa.waitForTimeout(300);
+const kisaYil = await sayfa.$eval('.tarih-secici input[type=hidden]', (e) => e.value);
+// Üç haneli yıl 1026'ya çevrilip doğrulamayı geçiyordu. Artık hiç
+// çevrilmiyor: önceki GEÇERLİ değer duruyor.
+if (kisaYil === '1026-09-22' || kisaYil !== oncekiIso) {
+  throw new Error(`üç haneli yıl değeri bozdu: ${oncekiIso} → ${kisaYil}`);
+}
+// Odaktan çıkınca ekran son geçerli tarihe dönüyor: hekim ne kaydedeceğini görüyor.
+await sayfa.click('.recete-form h2');
+await sayfa.waitForTimeout(300);
+const donus = await sayfa.evaluate(() => ({
+  gorunen: document.querySelector('.tarih-secici input[type=text]').value,
+  gizli: document.querySelector('.tarih-secici input[type=hidden]').value,
+}));
+if (donus.gizli !== oncekiIso || !donus.gorunen) throw new Error('geri dönüş: ' + JSON.stringify(donus));
+ok(`üç haneli yıl (405/06/31) çevrilmiyor, önceki tarih korunuyor (${oncekiIso}) ve ekran ona dönüyor`);
+
+// Kâğıdın üstündeki «Date» alanı da şemsi seçici açmalı: soldaki alan
+// çevrilmişti ama bu üçüncü giriş noktası miladi kalmıştı.
+await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.recete-duzen .kagit');
+await sayfa.click('.kagit-tuval [data-alan="tarih"]');
+await sayfa.waitForSelector('.modal');
+const kagitTarihi = await sayfa.evaluate(() => ({
+  miladi: document.querySelectorAll('.modal input[type=date]').length,
+  semsi: document.querySelectorAll('.modal .tarih-secici').length,
+}));
+if (kagitTarihi.miladi !== 0 || kagitTarihi.semsi !== 1) {
+  throw new Error('kâğıttaki Date alanı: ' + JSON.stringify(kagitTarihi));
+}
+await sayfa.keyboard.press('Escape');
+await sayfa.waitForSelector('.modal', { state: 'detached' });
+ok('kâğıttaki «Date» alanı da şemsi seçici açıyor, miladi kutu hiçbir yerde kalmamış');
+
+// Takvim modalın içinde açılabiliyor. Escape durdurulmazsa aynı tuş hem
+// takvimi hem modalı kapatıyor ve yarım doldurulmuş form uyarısız gidiyordu.
+await sayfa.goto(KOK + '#/hastalar', { waitUntil: 'networkidle' });
+await sayfa.click(`button:has-text("${T('hasta.ekle')}")`);
+await sayfa.waitForSelector('.modal');
+await sayfa.fill('.modal input[name=ad]', 'آزمون');
+await sayfa.click('.modal .tarih-secici__dugme');
+await sayfa.waitForSelector('.tarih-kutu');
+await sayfa.keyboard.press('Escape');
+await sayfa.waitForTimeout(320);
+const kacis = await sayfa.evaluate(() => ({
+  takvim: document.querySelectorAll('.tarih-kutu').length,
+  modal: document.querySelectorAll('.modal').length,
+  ad: document.querySelector('.modal input[name=ad]')?.value ?? null,
+}));
+if (kacis.takvim !== 0 || kacis.modal !== 1 || kacis.ad !== 'آزمون') {
+  throw new Error('Escape modalı da kapattı: ' + JSON.stringify(kacis));
+}
+// Doğum tarihi alanının adı görünen etiketten gelmeli: sabit bir aria-label
+// onu eziyordu ve alan «تاریخ تولد» yerine «تاریخ (هجری شمسی)» diye
+// tanıtılıyordu.
+const ad = await sayfa.evaluate(() => {
+  const g = document.querySelector('.modal .tarih-secici input[type=text]');
+  return { ariaLabel: g.getAttribute('aria-label'), etiket: g.closest('.alan')?.querySelector('.alan__etiket')?.textContent.trim() };
+});
+if (ad.ariaLabel || !ad.etiket) throw new Error('doğum tarihi alanının adı: ' + JSON.stringify(ad));
+// Elde son geçerli değer YOKKEN (doğum tarihi boş başlıyor) çözülemeyen bir
+// metin yazılırsa, o metin gizli alana da geçiyor ki hastaDogrula ISO
+// kalıbına uymadığını görsün. Önce gizli alan boş kalıyordu: kutuda tarih
+// görünürken hasta doğum tarihsiz, sessizce kaydediliyordu.
+await sayfa.fill('.modal .tarih-secici input[type=text]', '1405/13/45');
+await sayfa.click('.modal input[name=ad]');
+await sayfa.waitForTimeout(300);
+const bosBaslayan = await sayfa.evaluate(() => ({
+  gorunen: document.querySelector('.modal .tarih-secici input[type=text]').value,
+  gizli: document.querySelector('.modal .tarih-secici input[type=hidden]').value,
+}));
+if (bosBaslayan.gizli !== bosBaslayan.gorunen || !bosBaslayan.gizli) {
+  throw new Error('çözülemeyen tarih sessizce boşa düştü: ' + JSON.stringify(bosBaslayan));
+}
+await sayfa.keyboard.press('Escape');
+await sayfa.waitForSelector('.modal', { state: 'detached' });
+ok(`takvimdeki Escape modalı kapatmıyor (form duruyor); alanın adı görünen etiketten geliyor («${ad.etiket}»); çözülemeyen tarih doğrulamaya taşınıyor`);
+
 await tarayici.close();
 kapat();
 

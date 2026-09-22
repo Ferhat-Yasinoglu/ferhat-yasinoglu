@@ -108,13 +108,23 @@ export function semsiye(iso) {
   return semsiGunden(gunNo(y, a, gun));
 }
 
-/** Şemsi tarihten miladi ISO: (1405, 6, 31) → '2026-09-22'. Yoksa ''. */
+/** Şemsi tarihten miladi ISO: (1405, 6, 31) → '2026-09-22'. Yoksa ''.
+ *
+ *  Sözleşme kesin: ya `YYYY-MM-DD` ya boş dize. Sonuç biçimi burada
+ *  DENETLENİYOR — çağıran kod (tarih seçici, doğrulayıcılar) buna güveniyor.
+ *  Önce denetlenmiyordu: şemsi yıl 378'den küçükken üç haneli bir metin
+ *  çıkıyordu ('761-09-22'); daha sinsisi, 379–999 arası yıllar dört haneli
+ *  ama bambaşka bir ISO veriyordu (405 → '1026-09-22') ve doğrulama
+ *  düzeneğinin hepsini geçip sessizce yanlış yıla kaydediyordu. Dolu bir
+ *  kutuda «1405»in başındaki 1'i silmek bunun için yetiyordu. */
+const ISO_KALIBI = /^\d{4}-\d{2}-\d{2}$/;
 export function semsiden(sy, sa, sg) {
   const n = semsiGunNo(Number(sy), Number(sa), Number(sg));
   if (n === null) return '';
   const p = gunden(n);
   const iki = (x) => String(x).padStart(2, '0');
-  return `${p.yil}-${iki(p.ay)}-${iki(p.gun)}`;
+  const iso = `${p.yil}-${iki(p.ay)}-${iki(p.gun)}`;
+  return ISO_KALIBI.test(iso) ? iso : '';
 }
 
 /** Şemsi ayın kaç gün çektiği. Ay uzunlukları elle yazılmıyor: ayın 1'i ile
