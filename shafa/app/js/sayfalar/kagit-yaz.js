@@ -27,7 +27,7 @@ import { sablonuUygula } from '../paylasilan/sablon.js';
 import { sablonSecKutusu, sablonKaydetKutusu } from '../sablon-arayuz.js';
 import { tamAd, hastaYasi, hastaAra, alerjiCakismasi } from '../paylasilan/hasta.js';
 import { receteKaydet } from '../depo/recete.js';
-import { bugun } from '../paylasilan/tarih.js';
+import { bugun, tarihMetni } from '../paylasilan/tarih.js';
 import { t } from '../i18n.js';
 import { dogrulaMetni, hataMetni, uyariMetni } from '../hatalar.js';
 
@@ -309,15 +309,23 @@ export default {
         class: 'btn secim-alani' + (hatalar.hastaId ? ' input--hata' : ''),
         onclick: async () => { await eylemler.hasta(); ciz(); },
       });
+      // Tarih kutusu tarayıcının kendi takvimi, yani MİLADİ. Hekim şemsi
+      // kullanıyor; seçilen günün şemsi karşılığı kutunun altında yazıyor ki
+      // hangi güne bastığını görsün. Depoda tarih yine miladi ISO.
       const tarihGirdisi = girdi({ type: 'date', name: 'tarih', value: recete.tarih });
-      tarihGirdisi.oninput = () => { recete.tarih = tarihGirdisi.value; tazeleGecikmeli(); };
+      const semsiYazi = el('span', { class: 'alan__ipucu' }, tarihMetni(recete.tarih));
+      tarihGirdisi.oninput = () => {
+        recete.tarih = tarihGirdisi.value;
+        semsiYazi.textContent = tarihMetni(recete.tarih);
+        tazeleGecikmeli();
+      };
 
       const hastaKarti = kart({},
         el('div', { class: 'kart__bas' }, el('h2', {}, t('recete.hasta_bilgileri', 'Hasta bilgileri'))),
         el('div', { class: 'izgara izgara--form' },
           alan(t('nav.hasta', 'Hasta'), hastaDugmesi, { gerekli: true }),
           alan(t('hasta.yas_etiket', 'Yaş'), girdi({ value: yas !== null ? String(yas) : '', readonly: true, placeholder: '—' })),
-          alan(t('genel.tarih', 'Tarih'), tarihGirdisi, { gerekli: true }),
+          alan(t('genel.tarih', 'Tarih'), [tarihGirdisi, semsiYazi], { gerekli: true }),
           alan(t('recete.numara', 'Reçete no'), girdi({
             value: recete.receteNo || '', readonly: true,
             placeholder: t('recete.numara_ipucu', 'Kaydedilince verilir'),

@@ -22,19 +22,47 @@ export function gunFarki(a, b) {
   return Math.round((t2 - t1) / 86400000);
 }
 
-export function trTarih(iso) {
+/* Hekim ve hastaları ŞEMSİ (hicri şemsi) takvim kullanıyor: reçetede,
+   listelerde ve kâğıtta görünen tarih o takvimde olmalı.
+
+   Depoda tarih MİLADİ ISO (YYYY-MM-DD) kalıyor ve öyle kalmalı: sıralama,
+   reçete numarası (YYYY-MM-DD-NN) ve sahtecilik özeti hep ona bağlı.
+   Değişen yalnız GÖSTERİM.
+
+   Intl bu takvimi kendi biliyor, ek bir kütüphane gerekmiyor — projenin
+   çalışma anında hiç bağımlılığı yok, öyle kalıyor. `nu-latn` rakamları
+   Latin tutuyor: uygulamanın geri kalanı da öyle. */
+const SEMSI = new Intl.DateTimeFormat('fa-AF-u-ca-persian-nu-latn', {
+  year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC',
+});
+
+const semsiParcala = (yil, ay, gun) => {
+  const p = {};
+  for (const x of SEMSI.formatToParts(new Date(Date.UTC(yil, ay - 1, gun)))) {
+    if (x.type !== 'literal') p[x.type] = x.value;
+  }
+  return p;
+};
+
+/** ISO tarihi şemsi takvimde yazar: 2026-09-22 → 1405/06/31. */
+export function tarihMetni(iso) {
   const g = String(iso ?? '').slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(g)) return '—';
-  const [y, a, gun] = g.split('-');
-  return `${gun}.${a}.${y}`;
+  const [y, a, gun] = g.split('-').map(Number);
+  const p = semsiParcala(y, a, gun);
+  return `${p.year}/${p.month}/${p.day}`;
 }
 
-export function trTarihSaat(iso) {
-  if (!iso) return '—';
-  const d = new Date(iso);
+/** Zaman damgasını şemsi tarih + yerel saat olarak yazar. */
+export function tarihSaatMetni(damga) {
+  if (!damga) return '—';
+  const d = new Date(damga);
   if (Number.isNaN(d.getTime())) return '—';
-  const p = (n) => String(n).padStart(2, '0');
-  return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  const iki = (n) => String(n).padStart(2, '0');
+  // Gün YEREL bileşenlerden: damgayı UTC'ye çevirip biçimlersek gece yarısı
+  // civarında tarih bir gün kayıyor.
+  const p = semsiParcala(d.getFullYear(), d.getMonth() + 1, d.getDate());
+  return `${p.year}/${p.month}/${p.day} ${iki(d.getHours())}:${iki(d.getMinutes())}`;
 }
 
 /** Doğum tarihinden yaş. Doğum günü henüz gelmediyse bir eksiltir. */

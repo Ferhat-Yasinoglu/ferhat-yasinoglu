@@ -11,7 +11,7 @@ import { modal, onayla, sor } from './cekirdek/modal.js';
 import { ilacAra, ilacEtiketi } from './paylasilan/ilac.js';
 import { hastaAra, tamAd } from './paylasilan/hasta.js';
 import { eslesir, bicimAyarla } from './paylasilan/metin.js';
-import { trTarih } from './paylasilan/tarih.js';
+import { tarihMetni } from './paylasilan/tarih.js';
 import { t, yukle as dilYukle, uygula as dilUygula, suankiDil } from './i18n.js';
 import { kurtar } from './cekirdek/kurtarma.js';
 
@@ -113,7 +113,7 @@ async function aramaAc(ctx, ilk = '') {
         ad: tamAd(h), alt: t('ara.hasta', 'Hasta · {b}', { b: h.telefon || h.kimlikNo || '—' }), s: 'hasta', yol: `/hasta/${h.id}`,
       })),
       ...receteler.filter((r) => eslesir(`${r.receteNo || ''} ${r.tani || ''}`, q)).slice(0, 4).map((r) => ({
-        ad: r.receteNo || t('nav.recete', 'Reçete'), alt: t('ara.recete', 'Reçete · {g}', { g: trTarih(r.tarih) }), s: 'recete', yol: `/recete/${r.id}`,
+        ad: r.receteNo || t('nav.recete', 'Reçete'), alt: t('ara.recete', 'Reçete · {g}', { g: tarihMetni(r.tarih) }), s: 'recete', yol: `/recete/${r.id}`,
       })),
     ];
     if (!bulunan.length) { sonuc.appendChild(el('div', { class: 'liste__satir sessiz' }, t('ara.yok', 'Sonuç yok.'))); return; }

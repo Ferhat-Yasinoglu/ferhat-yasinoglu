@@ -3,7 +3,7 @@ import { el, temizle, btnS, girdi, secim, sayfaBas, bosDurum, sirala } from '../
 import { receteOzet, RECETE_TURLERI } from '../paylasilan/recete.js';
 import { tamAd } from '../paylasilan/hasta.js';
 import { eslesir } from '../paylasilan/metin.js';
-import { trTarih, bugun } from '../paylasilan/tarih.js';
+import { tarihMetni, bugun } from '../paylasilan/tarih.js';
 import { t, secenekleriCevir, secenekAdi } from '../i18n.js';
 
 const SUZGECLER = [['', 'Tümü'], ['bugun', 'Bugün yazılanlar']];
@@ -63,7 +63,7 @@ export default {
           el('td', {},
             el('div', { class: 'liste__baslik' }, r.receteNo || '—'),
             el('div', { class: 'liste__alt' }, secenekAdi(RECETE_TURLERI, r.tur, 'recete.tur'))),
-          el('td', {}, trTarih(r.tarih)),
+          el('td', {}, tarihMetni(r.tarih)),
           el('td', {},
             el('div', { class: 'liste__baslik' }, hasta),
             r.tani ? el('div', { class: 'liste__alt' }, [r.tani, r.taniKodu].filter(Boolean).join(' · ')) : null),

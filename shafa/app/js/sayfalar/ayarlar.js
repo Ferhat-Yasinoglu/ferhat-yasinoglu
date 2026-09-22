@@ -6,7 +6,7 @@ import { yedekOlustur, iceAktar, yedekDogrula, indir, hatirlatmaGerekli } from '
 import { ornekYukle, ornekAntetiSil } from '../depo/ornek.js';
 import { hazirListeyiYukle } from '../depo/hazir-ilaclar.js';
 import { KOLEKSIYONLAR } from '../depo/sema.js';
-import { trTarihSaat } from '../paylasilan/tarih.js';
+import { tarihSaatMetni } from '../paylasilan/tarih.js';
 import { sayiMetni, bicimAyarla, PARA_BIRIMLERI } from '../paylasilan/metin.js';
 import { t } from '../i18n.js';
 import { sablonListesi } from '../sablon-arayuz.js';
@@ -92,7 +92,7 @@ async function geriYukle(ctx, dosya) {
   const onay = await modal({
     baslik: t('yedek.geri_yukle', 'Yedekten geri yükle'),
     govde: el('div', {},
-      el('p', {}, t('yedek.dosya_tarihi', 'Dosya tarihi: {t}', { t: trTarihSaat(belge.olusturuldu) })),
+      el('p', {}, t('yedek.dosya_tarihi', 'Dosya tarihi: {t}', { t: tarihSaatMetni(belge.olusturuldu) })),
       el('p', {}, t('yedek.icindekiler', 'İçindekiler: {l}', { l: sayilar.join(', ') || '—' })),
       el('div', { class: 'alan' }, el('span', { class: 'alan__etiket' }, t('yedek.nasil', 'Nasıl yüklensin?')), strateji),
       el('div', { class: 'uyari uyari--bilgi' }, simge('bilgi', { boy: 16 }), el('span', {}, t('yedek.uyari', 'Birleştirmede hiçbir kayıt kaybolmaz; değiştirmede bu cihazdaki kayıtlar silinir.')))),
@@ -208,7 +208,7 @@ export default {
           el('h2', {}, t('ayar.yedek', 'Yedek')),
           h.gerekli ? rozet(t('ayar.yedek_gerekli', 'yedek gerekli'), 'sari') : rozet(t('ayar.guncel', 'güncel'), 'yesil')),
         el('p', { class: 'kart__alt' }, meta.sonYedek
-          ? t('ayar.son_yedek', 'Son yedek: {t} · o günden beri {n} değişiklik.', { t: trTarihSaat(meta.sonYedek), n: meta.degisiklikSayaci || 0 })
+          ? t('ayar.son_yedek', 'Son yedek: {t} · o günden beri {n} değişiklik.', { t: tarihSaatMetni(meta.sonYedek), n: meta.degisiklikSayaci || 0 })
           : t('ayar.yedek_yok', 'Henüz yedek alınmadı.')),
         el('div', { class: 'uyari uyari--bilgi', style: { marginBlock: 'var(--b-3)' } },
           simge('kilit', { boy: 16 }),

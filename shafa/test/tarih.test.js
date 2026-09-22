@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isoGun, gunFarki, trTarih, yasHesapla, goreliGun } from '../app/js/paylasilan/tarih.js';
+import { isoGun, gunFarki, tarihMetni, yasHesapla, goreliGun } from '../app/js/paylasilan/tarih.js';
 
 describe('isoGun', () => {
   it('yerel saate göre gün verir', () => {
@@ -32,10 +32,25 @@ describe('yasHesapla', () => {
   });
 });
 
-describe('trTarih / goreliGun', () => {
-  it('gün.ay.yıl biçimine çevirir', () => {
-    expect(trTarih('2026-09-20')).toBe('20.09.2026');
-    expect(trTarih('')).toBe('—');
+describe('tarihMetni / goreliGun', () => {
+  // Hekim ve hastaları şemsi takvim kullanıyor: gösterilen tarih o takvimde.
+  // Depoda tarih miladi ISO kalıyor — reçete numarası ve sahtecilik özeti
+  // ona bağlı, bu yüzden burada yalnız GÖSTERİM deneniyor.
+  it('şemsi takvimde yıl/ay/gün yazar', () => {
+    expect(tarihMetni('2026-09-22')).toBe('1405/06/31');
+    expect(tarihMetni('2026-03-21')).toBe('1405/01/01');   // nevruz: yıl başı
+    expect(tarihMetni('2026-03-20')).toBe('1404/12/29');   // bir gün öncesi eski yıl
+  });
+  it('doğum tarihi gibi eski günleri de çevirir', () => {
+    expect(tarihMetni('1985-04-12')).toBe('1364/01/23');
+  });
+  it('rakamlar Latin: uygulamanın geri kalanı da öyle', () => {
+    expect(tarihMetni('2026-09-22')).toMatch(/^[0-9/]+$/);
+  });
+  it('geçersiz ya da boş tarihte tire döner', () => {
+    expect(tarihMetni('')).toBe('—');
+    expect(tarihMetni('abc')).toBe('—');
+    expect(tarihMetni(null)).toBe('—');
   });
   it('uzaklığı kod olarak verir (cümleyi arayüz kurar)', () => {
     expect(goreliGun('2026-09-20', '2026-09-20')).toEqual({ kod: 'bugun', gun: 0 });

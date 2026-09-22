@@ -13,7 +13,7 @@ import { tamAd, hastaYasi } from './paylasilan/hasta.js';
 import { OLCUMLER } from './paylasilan/recete.js';
 import { formKisa, ilacAdiFormsuz } from './paylasilan/ilac.js';
 import { ozetMetni, kodSatiri } from './paylasilan/dogrulama.js';
-import { trTarih } from './paylasilan/tarih.js';
+import { tarihMetni } from './paylasilan/tarih.js';
 import { telefonNormalize } from './paylasilan/metin.js';
 
 /** Antet amblemi: kanatlı kadüse — hekimin basılı kâğıdındaki amblem.
@@ -374,7 +374,7 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
   const serit = el('div', { class: 'kagit__serit', dir: 'ltr' },
     alan('Name', tamAd(hasta), '52mm', SERIT_SIMGELERI[0], 'hasta'),
     alan('Age', yas !== null ? String(yas) : '', '18mm', SERIT_SIMGELERI[1], null),
-    alan('Date', bos ? '' : trTarih(recete.tarih), '30mm', SERIT_SIMGELERI[2], 'tarih'),
+    alan('Date', bos ? '' : tarihMetni(recete.tarih), '30mm', SERIT_SIMGELERI[2], 'tarih'),
     alan('No', bos ? '' : recete.receteNo, '28mm', SERIT_SIMGELERI[3], null));
 
   /* ---- Clinical sütunu: ölçümler, altta stetoskop ve QR ---- */
