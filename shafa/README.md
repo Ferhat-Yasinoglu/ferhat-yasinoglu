@@ -174,8 +174,64 @@ değiştirirse yedekten gelen anahtarla eski reçeteler doğrulanmaya devam eder
 Anahtar yedekten de kaybolursa eski kodlar bir daha doğrulanamaz; yedek dosyası
 bu yüzden hasta bilgisi kadar bu anahtarı da korur.
 
+İki cihazın anahtarı bir araya gelince (eşitlemede ya da başka bir cihazın
+yedeği yüklenince) biri aktif kalır, **kaybeden silinmez**: `eskiAnahtarlar`a
+düşer. Yeni kodlar hep aktif anahtarla üretilir, denetim ise sırayla hepsini
+dener — yoksa eşitlemenin ilk gününde cihazlardan birinin o güne dek bastığı
+bütün reçeteler "TUTMUYOR" derdi.
+
 Kod reçetenin kanonik özetinden üretilir; aynı reçete yeniden basıldığında
 kod değişmez.
+
+## İki cihazda aynı veri
+
+Varsayılan kapalı. Açılırsa bilgisayarla telefon aynı kayıtları kullanır.
+
+**Nereye yazıyor:** hekimin kendi Google Drive'ındaki gizli uygulama klasörüne
+(`appDataFolder`). İstenen izin `drive.appdata`: Drive'ın geri kalanı görünmez,
+klasör Drive arayüzünde çıkmaz, başka uygulamalar okuyamaz.
+
+**Google ne görüyor:** şifreli baytlar. Belge yüklenmeden önce cihazda
+kapatılıyor — parola → PBKDF2-SHA256 (310 000 tur) → AES-GCM-256. Parola
+cihazdan çıkmaz, kasanın içine de girmez (girseydi kasayı açacak anahtar
+kasanın içinde olurdu). Bu yüzden **iki cihaza da aynı parola elle yazılır.**
+Parola kaybolursa buluttaki kopya açılamaz; cihazdaki veri ve indirilmiş yedek
+dosyaları bundan etkilenmez.
+
+**Çakışma:** bağımsız kayıtlarda `guncellendi`si yeni olan kazanır, silme mezar
+taşı olduğu için silinen kayıt öbür cihazda dirilmez. Ayarlar kaydı tek zarfı
+paylaştığı için ayrı işlenir: alan alan birleşir, bir tarafta boş olan alan dolu
+kalır, iki taraf da doluysa yenisi seçilir ve eski değer hekime gösterilir.
+
+**Çevrimdışı:** eşitleme kapalıyken Google'a ait tek satır yüklenmez (dinamik
+import). Açıkken bile uygulama internetsiz eskisi gibi tam çalışır; eşitleme
+internet gelince yapılır.
+
+### Kurulum (bir kez, Google Cloud'da)
+
+1. <https://console.cloud.google.com> → yeni proje.
+2. **APIs & Services → Library** → *Google Drive API* → Enable.
+3. **OAuth consent screen** → External → uygulama adı, destek e-postası.
+   *Scopes* adımında `.../auth/drive.appdata` eklenir. Yayına almaya gerek yok:
+   *Test users* listesine hekimin Gmail adresi yazılırsa yeter.
+4. **Credentials → Create credentials → OAuth client ID → Web application.**
+   *Authorized JavaScript origins*'e uygulamanın adresi yazılır
+   (yayın adresi, ayrıca yerelde denemek için `http://localhost:8788`).
+5. Çıkan `…apps.googleusercontent.com` kimliği uygulamada
+   **Ayarlar → Google ile eşitle → Google istemci kimliği** alanına yapıştırılır.
+   Aynısı ikinci cihaza da girilir.
+
+İstemci kimliği gizli değildir; Google web istemcilerini kaynak adresine bağlar.
+Yayına sabitlenmesi istenirse `app/js/senkron/google.js` içindeki
+`VARSAYILAN_ISTEMCI` doldurulur, ayar alanı yedek yol olarak kalır.
+
+### Denenmemiş olan
+
+Eşitleme mantığı, kasa ve iki cihazın buluşması hem birim testleriyle hem de
+gerçek tarayıcıda gerçek IndexedDB/WebCrypto ile deneniyor (taşıyıcı yerine
+bellek taşıyıcısı konuyor). **Google'ın kendi uç noktaları denenmedi** —
+istemci kimliği gerekiyor. Bu yüzden taşıyıcı bilerek ince tutuldu:
+`oku()` ve `yaz()`.
 
 ## Yapılacaklar
 
@@ -187,6 +243,7 @@ kod değişmez.
 - [x] Farsça arayüz ve sağdan sola düzen
 - [x] Reçete kâğıdı: antet, klinik ölçüm sütunu, QR, boş kâğıt
 - [x] WhatsApp / e-posta ile gönderme
+- [x] İki cihazda aynı veri: Google Drive ile şifreli eşitleme (yukarıya bak)
 - [ ] Reçete başlık alanlarının gözden geçirilmesi (aşağıya bak)
 - [ ] Reçeteyi dosya (PDF/görsel) olarak gönderme — şu an metin olarak gidiyor,
       kâğıt görünümü için "Yazdır → PDF" kullanılıyor
@@ -221,10 +278,15 @@ app/                      PWA (statik olarak olduğu gibi sunulur)
     i18n.js               t() ve sözlük yükleme
     hatalar.js            hata, doğrulama ve uyarı kodlarının arayüz metni
     kagit.js              reçete kâğıdı (dolu ve boş hali) + yazdırma
-    cekirdek/             dom · yonlendirici · modal · bildirim · simge · tema
-    depo/                 sema · depo · idb · recete · dogrulama · yedek · ornek
+    senkron-arayuz.js     Ayarlar'daki eşitleme kartı ve eşitleme turu
+    cekirdek/             dom · yonlendirici · modal · bildirim · simge · tema ·
+                          tarih-secici · gorsel · kurtarma
+    depo/                 sema · depo · idb · recete · dogrulama · yedek · ornek ·
+                          senkron (taşıyıcıdan bağımsız eşitleme motoru)
+    senkron/              google.js — Drive appDataFolder taşıyıcısı (tek ağ ucu)
     paylasilan/           saf alan mantığı: ilac · hasta · recete · qr · dogrulama ·
-                          tarih · metin · kimlik
+                          tarih · metin · kimlik · senkron (birleşme kararları) ·
+                          kasa (şifreleme)
     sayfalar/             panel · ilaclar · ilac · hastalar · hasta ·
                           receteler · recete-yeni · recete · ayarlar · bulunamadi
 test/                     vitest
@@ -243,6 +305,10 @@ tools/                    sun (statik sunucu) · kontrol (statik denetim) · tar
   değil yedektir: sözlükte anahtar yoksa ekran boş kalmasın diye durur.
   `npm run kontrol` her anahtarın sözlükte karşılığı olduğunu denetler, tarayıcı
   denemesi de ekranda Türkçe kalmadığını ayrıca doğrular.
+- Eşitlemenin **kararı** `paylasilan/senkron.js`'te (saf), **yürütmesi**
+  `depo/senkron.js`'te, **ağı** `senkron/google.js`'te. Taşıyıcı arayüzü iki
+  yöntemden ibaret (`oku`, `yaz`) — böylece eşitlemenin doğruluğu Google'a
+  bağlı olmadan denenebiliyor.
 - **Saf modüller cümle kurmaz.** Doğrulama, hata, uyarı ve "3 gün önce" gibi
   göreli tarihler `paylasilan/` ve `depo/` içinde **kod** olarak döner; metne
   çevirme işi `hatalar.js`'tedir. Böylece alan mantığı dilden bağımsız kalır ve
@@ -252,7 +318,8 @@ tools/                    sun (statik sunucu) · kontrol (statik denetim) · tar
 
 - **e-Reçete / Medula entegrasyonu yoktur.** Resmî kurum kimliği gerektirir. Bu uygulama
   kendi içinde çalışan bir kayıt ve takip sistemidir; çıktısı yazdırılabilir reçetedir.
-- Veri tek cihazdadır. Başka cihaza geçmek için yedek dosyası taşınır.
+- Veri varsayılan olarak tek cihazdadır. İki cihazı buluşturmak için ya yedek
+  dosyası taşınır ya da Google eşitlemesi açılır (aşağıya bak).
 - Tarayıcı verisi temizlenirse kayıtlar silinir. Düzenli yedek şart.
 - Yedek dosyası şifresiz JSON'dur ve hasta bilgisi içerir; güvenli bir yerde saklanmalı.
 - Reçete WhatsApp ve e-postaya **metin** olarak gider. Tarayıcıdan sunucusuz
