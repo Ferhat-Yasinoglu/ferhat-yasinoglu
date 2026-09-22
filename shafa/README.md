@@ -225,6 +225,21 @@ internet gelince yapılır.
 Yayına sabitlenmesi istenirse `app/js/senkron/google.js` içindeki
 `VARSAYILAN_ISTEMCI` doldurulur, ayar alanı yedek yol olarak kalır.
 
+### Bilerek kabul edilen iki şey
+
+**Google'ın betiği bizim sayfamızda çalışıyor.** Giriş için `accounts.google.com`
+üzerinden bir betik yükleniyor ve o betik, sayfanın görebildiği her şeyi
+görebilir — IndexedDB'deki hasta kayıtları ve kasa parolası dahil. Bu, Google'ın
+desteklediği giriş yolunun (GIS) doğasında var. İki şeyle sınırlandı: betik
+uygulama açılışında değil, yalnız gerçek bir eşitleme sırasında yükleniyor; ve
+CSP'de joker yok, tam adres yazılı. Bundan tamamen kurtulmanın yolu yönlendirme
+tabanlı OAuth'a geçmek; şimdilik yapılmadı.
+
+**Reçete doğrulama anahtarı da buluta gidiyor** (şifreli). Gitmek zorunda: iki
+cihazın aynı reçeteyi doğrulayabilmesi için aynı anahtarı taşıması gerekiyor.
+Sonucu şu: kasa parolasını ve Drive dosyasını birlikte ele geçiren biri geçerli
+doğrulama kodu üretebilir. Parola yalnız hekimin iki cihazında.
+
 ### Denenmemiş olan
 
 Eşitleme mantığı, kasa ve iki cihazın buluşması hem birim testleriyle hem de

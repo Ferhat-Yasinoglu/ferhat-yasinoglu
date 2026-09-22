@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { BellekDepo } from '../app/js/depo/depo.js';
 import { senkronEt, bellekTasima, SenkronHatasi } from '../app/js/depo/senkron.js';
 import { ayarlariBirlestir, anahtarlariBirlestir, belgeyiTemizle, belgeParmakIzi, CIHAZA_OZEL_AYARLAR } from '../app/js/paylasilan/senkron.js';
-import { kasayaKoy, kasadanAl, kasaMi, KasaHatasi } from '../app/js/paylasilan/kasa.js';
+import { kasayaKoy, kasadanAl, kasaMi, KasaHatasi, donguSayisi, DONGU } from '../app/js/paylasilan/kasa.js';
 import { kodUret, metniDogrula, anahtarlar } from '../app/js/depo/dogrulama.js';
 import { belgeDerle } from '../app/js/depo/yedek.js';
 
@@ -27,6 +27,37 @@ describe('kasa', () => {
     const paket = await kasayaKoy({ a: 1 }, PAROLA);
     const bozuk = { ...paket, veri: paket.veri.slice(0, -2) + (paket.veri.at(-2) === 'A' ? 'B' : 'A') + paket.veri.at(-1) };
     await expect(kasadanAl(bozuk, PAROLA)).rejects.toThrow(KasaHatasi);
+  });
+  it('gerçek boyutta veriyi taşıyor', async () => {
+    // Küçük nesnelerle geçen testler bir yığın taşmasını gizlemişti: base64'e
+    // çevirme bütün baytları ayrı argüman olarak yığına koyuyordu ve ~128KB'da
+    // çöküyordu. Ayarlardaki Clinical fotoğrafı tek başına 220KB'a çıkabiliyor,
+    // yani fotoğraf yüklemiş bir hekimde ilk eşitleme çökerdi.
+    const buyuk = { foto: 'data:image/jpeg;base64,' + 'A'.repeat(300 * 1024), hasta: 'عبدالله' };
+    const paket = await kasayaKoy(buyuk, PAROLA);
+    const geri = await kasadanAl(paket, PAROLA);
+    expect(geri.foto.length).toBe(buyuk.foto.length);
+    expect(geri.hasta).toBe('عبدالله');
+    expect(JSON.stringify(paket)).not.toContain('عبدالله');
+  });
+  it('başka tur sayısıyla yazılmış kasa yine açılıyor', async () => {
+    // Tur sayısı ileride artarsa eski kasalar açılmaya devam etmeli; sabit
+    // sayıya baksaydık doğru parolada bile "parola tutmuyor" derdi.
+    const paket = await kasayaKoy({ a: 1 }, PAROLA);
+    expect(paket.dongu).toBe(DONGU);
+    expect(donguSayisi(paket)).toBe(DONGU);
+    expect(await kasadanAl({ ...paket }, PAROLA)).toEqual({ a: 1 });
+  });
+  it('dosyadaki tur sayısı sınırlanıyor', () => {
+    expect(donguSayisi({ dongu: 1 })).toBe(100000);       // anahtarı zayıflatma
+    expect(donguSayisi({ dongu: 1e12 })).toBe(2000000);   // tarayıcıyı kilitleme
+    expect(donguSayisi({})).toBe(DONGU);                  // eski kasa
+    expect(donguSayisi({ dongu: 'abc' })).toBe(DONGU);
+  });
+  it('bozuk dosyaya "parola tutmuyor" demiyor', async () => {
+    const paket = await kasayaKoy({ a: 1 }, PAROLA);
+    await expect(kasadanAl({ ...paket, veri: '!!!' }, PAROLA)).rejects.toMatchObject({ kod: 'bozuk' });
+    await expect(kasadanAl({ ...paket, iv: '' }, PAROLA)).rejects.toMatchObject({ kod: 'bozuk' });
   });
   it('Shafa kasası olmayanı reddeder', async () => {
     await expect(kasadanAl({ bicim: 'başka' }, PAROLA)).rejects.toMatchObject({ kod: 'bicim' });

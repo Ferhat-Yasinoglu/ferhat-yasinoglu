@@ -21,7 +21,18 @@ export class KasaHatasi extends Error {
   constructor(kod, mesaj) { super(mesaj || kod); this.kod = kod; }
 }
 
-const b64Yaz = (baytlar) => btoa(String.fromCharCode(...new Uint8Array(baytlar)));
+/* Base64'e PARÇA PARÇA çeviriliyor. `String.fromCharCode(...dizi)` bütün
+   baytları ayrı argüman olarak yığına koyuyor ve ~128KB'da yığını taşırıyor:
+   ayarlardaki Clinical fotoğrafı tek başına 220KB'a çıkabildiği için, fotoğraf
+   yüklemiş bir hekimde İLK eşitleme çöküyordu. Testler küçük nesnelerle
+   geçtiği, tarayıcı denemesi de sınırın hemen altında kaldığı için görünmedi. */
+const ADIM = 0x8000;
+const b64Yaz = (baytlar) => {
+  const b = new Uint8Array(baytlar);
+  let metin = '';
+  for (let i = 0; i < b.length; i += ADIM) metin += String.fromCharCode(...b.subarray(i, i + ADIM));
+  return btoa(metin);
+};
 const b64Oku = (metin) => Uint8Array.from(atob(metin), (c) => c.charCodeAt(0));
 
 function altyapi() {
@@ -30,12 +41,24 @@ function altyapi() {
   return c;
 }
 
+/** Dosyadaki tur sayısı kullanılır ama sınırlanır: çok düşük bir değer
+ *  anahtarı zayıflatır, çok yüksek bir değer tarayıcıyı dakikalarca kilitler.
+ *  Dosyayı değiştirebilen biri ikisini de deneyebilir. Eski kasalarda alan
+ *  yoksa bugünkü sayı varsayılır. */
+const EN_AZ_DONGU = 100000;
+const EN_COK_DONGU = 2000000;
+export const donguSayisi = (paket) => {
+  const n = Math.trunc(Number(paket?.dongu));
+  if (!Number.isFinite(n) || n <= 0) return DONGU;
+  return Math.min(EN_COK_DONGU, Math.max(EN_AZ_DONGU, n));
+};
+
 /** Parola + tuz → AES-GCM anahtarı. Tuz kasanın açık başlığında durur. */
-async function anahtarTuret(parola, tuz) {
+async function anahtarTuret(parola, tuz, dongu = DONGU) {
   const c = altyapi();
   const ham = await c.subtle.importKey('raw', new TextEncoder().encode(String(parola)), 'PBKDF2', false, ['deriveKey']);
   return c.subtle.deriveKey(
-    { name: 'PBKDF2', salt: tuz, iterations: DONGU, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt: tuz, iterations: dongu, hash: 'SHA-256' },
     ham, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
 }
 
@@ -62,10 +85,17 @@ export async function kasadanAl(paket, parola) {
   if (Number(paket.surum) > KASA_SURUMU) throw new KasaHatasi('surum', 'Kasa bu sürümden yeni; önce uygulamayı güncelle.');
   if (!parola) throw new KasaHatasi('parola_yok', 'Parola gerekli.');
   const c = altyapi();
+  // Başlığın çözülmesi AYRI deneniyor: bozuk bir dosyada da "parola tutmuyor"
+  // deseydik hekim olmayan bir parola sorununun peşine düşerdi.
+  let tuz, iv, veri;
+  try { tuz = b64Oku(paket.tuz); iv = b64Oku(paket.iv); veri = b64Oku(paket.veri); }
+  catch { throw new KasaHatasi('bozuk', 'Buluttaki dosya bozuk.'); }
+  if (!tuz.length || iv.length !== 12 || !veri.length) throw new KasaHatasi('bozuk', 'Buluttaki dosya bozuk.');
+
   let acik;
   try {
-    const anahtar = await anahtarTuret(parola, b64Oku(paket.tuz));
-    acik = await c.subtle.decrypt({ name: 'AES-GCM', iv: b64Oku(paket.iv) }, anahtar, b64Oku(paket.veri));
+    const anahtar = await anahtarTuret(parola, tuz, donguSayisi(paket));
+    acik = await c.subtle.decrypt({ name: 'AES-GCM', iv }, anahtar, veri);
   } catch { throw new KasaHatasi('parola', 'Parola tutmuyor.'); }
   try { return JSON.parse(new TextDecoder().decode(acik)); }
   catch { throw new KasaHatasi('bozuk', 'Kasa açıldı ama içi okunamadı.'); }
