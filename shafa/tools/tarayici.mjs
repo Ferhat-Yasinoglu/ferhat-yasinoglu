@@ -672,7 +672,9 @@ if (EKRAN) {
   });
   await sayfa.emulateMedia({ media: 'print' });
   await resim(sayfa, '11-bos-kagit.png', { fullPage: true });
-  await sayfa.emulateMedia({ media: 'screen' });
+  // `'screen'` DEĞİL: media'yı sabitliyor ve sonraki page.pdf() de
+  // ekran stilleriyle basıyor. `null` varsayılana döndürür.
+  await sayfa.emulateMedia({ media: null });
   await sayfa.evaluate(() => { document.querySelector('.yazdir-alan').replaceWith(window.__doluKagit); });
 }
 
@@ -692,7 +694,9 @@ ok('gönder: WhatsApp bağlantısı hastanın numarasıyla ve reçete metniyle k
 await sayfa.click(`.modal button:has-text("${T('genel.kapat')}")`);
 await sayfa.emulateMedia({ media: 'print' });
 await resim(sayfa, '9-recete-cikti.png', { fullPage: true });
-await sayfa.emulateMedia({ media: 'screen' });
+// `'screen'` DEĞİL: media'yı sabitliyor ve sonraki page.pdf() de
+  // ekran stilleriyle basıyor. `null` varsayılana döndürür.
+  await sayfa.emulateMedia({ media: null });
 
 // --- Doğrulama kodu: kâğıtta basılı mı, QR'da var mı?
 const basiliKod = (await sayfa.textContent('.kagit__kod')).trim();
@@ -1331,6 +1335,66 @@ if (/[çğıöşüÇĞİÖŞÜ]|degil|değil|Görsel|Dosya/.test(gorselUyarisi))
   throw new Error('görsel hatası Türkçe kalmış: ' + gorselUyarisi);
 }
 ok(`görsel olmayan dosya Farsça uyarı verdi: ${gorselUyarisi}`);
+
+/* --- Kâğıt A4'e sığıyor mu? --- */
+/* page.pdf() gerçek yazdırma yolundan geçiyor: mm toplamı değil, BASILAN
+   sayfa sayısı ölçülüyor. Kâğıt bir dönem A4'e sığmıyordu (345mm) ve her
+   reçete iki sayfa çıkıyordu; burası onun nöbetçisi.
+   DİKKAT: emulateMedia({media:'screen'}) çağrılırsa pdf() de EKRAN
+   stilleriyle basar ve ölçüm anlamsızlaşır — media'ya dokunulmuyor. */
+await sayfa.emulateMedia({ media: null });
+await sayfa.goto(KOK + '#/recete/bos', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.kagit-tuval .kagit');
+const sayfaSayisi = async () => {
+  const pdf = await sayfa.pdf({ format: 'A4', printBackground: true });
+  const metin = Buffer.from(pdf).toString('latin1');
+  return Number(([...metin.matchAll(/\/Type\s*\/Pages[\s\S]{0,200}?\/Count\s+(\d+)/g)][0] || [])[1] || 0);
+};
+const kagitKur = (stil, ilacSayisi) => sayfa.evaluate(async ({ stil, ilacSayisi }) => {
+  document.querySelectorAll('#sayfa > .yazdir-alan').forEach((e) => e.remove());
+  const { kagitCiz } = await import('./js/kagit.js');
+  const { yerelDepoAc } = await import('./js/depo/idb.js');
+  const depo = await yerelDepoAc();
+  const ayar = { ...(await depo.ayarlar()), yazdirmaBoyutu: 'A4', kagitStili: stil };
+  const hastalar = await depo.listele('hastalar');
+  const ilaclar = await depo.listele('ilaclar');
+  const satirlar = Array.from({ length: ilacSayisi }, (_, i) => ({
+    ilacAdi: (ilaclar[i % ilaclar.length] || {}).ad || 'دوا', adet: 2,
+    kullanim: 'روزی ۲ بار بعد از غذا', sure: '۵ روز', yol: 'خوراکی',
+  }));
+  document.getElementById('sayfa').appendChild(kagitCiz({
+    ayar, bos: ilacSayisi === 0, hasta: ilacSayisi ? hastalar[0] : null,
+    recete: ilacSayisi ? {
+      receteNo: '2026-09-22-01', tarih: '2026-09-22', hastaId: hastalar[0]?.id, satirlar,
+      belirtiler: 'تب، سرفه', tani: 'عفونت مجرای تنفسی فوقانی', taniKodu: 'J06.9',
+      laboratuvar: 'CBC — شمارش کامل خون', notlar: 'استراحت کافی', kanGrubu: 'A Rh+',
+      olcumler: { bp: '120/80', pr: '78', rr: '16', bw: '72', temp: '37.2', spo2: '98', ht: '174' },
+      dogrulamaKodu: 'XQ24-WSP9',
+    } : {},
+  }));
+}, { stil, ilacSayisi });
+
+const tasanlar = [];
+const boylar = [];
+for (const [stil, ilac] of [['modern', 0], ['modern', 8], ['klasik', 0], ['sade', 0]]) {
+  await kagitKur(stil, ilac);
+  await sayfa.waitForTimeout(350);
+  const n = await sayfaSayisi();
+  await sayfa.emulateMedia({ media: 'print' });
+  const boyMm = await sayfa.evaluate(() => {
+    const k = document.querySelector('#sayfa > .yazdir-alan');
+    return k ? Math.round(k.offsetHeight / 96 * 25.4) : 0;
+  });
+  await sayfa.emulateMedia({ media: null });
+  boylar.push(`${stil}/${ilac ? ilac + ' ilaç' : 'boş'} ${boyMm}mm`);
+  // Yalnız "tek sayfa" yetmez: sınıra 1mm kala da tek sayfa çıkar ve hekimin
+  // anteti birkaç satır uzayınca kâğıt sessizce ikiye bölünür. Sınır ölçülerek
+  // bulundu: ≈275mm'de ikiye bölünüyor, eşik payla birlikte 272mm.
+  if (n !== 1 || boyMm > 272) tasanlar.push(`${stil}/${ilac ? ilac + ' ilaç' : 'boş'}=${n} sayfa (${boyMm}mm)`);
+}
+await sayfa.evaluate(() => { document.querySelectorAll('#sayfa > .yazdir-alan').forEach((e) => e.remove()); });
+if (tasanlar.length) throw new Error('kâğıt A4\'e sığmıyor: ' + tasanlar.join(', '));
+ok(`kâğıt A4'e sığıyor, hepsi tek sayfa ve payı var: ${boylar.join(' · ')} (sınır ≈275mm)`);
 
 await tarayici.close();
 kapat();

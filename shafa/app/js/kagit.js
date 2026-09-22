@@ -281,7 +281,7 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
   const stil = el('style', {});
   // ℞ alanı sayfanın kalanını doldursun: boş kâğıtta yazmaya bol yer kalır.
   stil.textContent = `@page { size: ${boyut}; margin: ${boyut === 'A5' ? '6mm' : '8mm'}; }`
-    + ` .kagit { --rx-boy: ${boyut === 'A5' ? '92mm' : '168mm'}; }`;
+    + ` .kagit { --rx-boy: ${boyut === 'A5' ? '62mm' : '150mm'}; }`;
 
   const yas = hasta ? hastaYasi(hasta) : null;
 
