@@ -347,3 +347,54 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 .sessiz { color: rgb(var(--metin-3)); }
 .sayi-yazi { font-variant-numeric: tabular-nums; }
 .simge { flex-shrink: 0; }
+
+/* ---------- Reçete yazma: solda form, sağda canlı kâğıt ----------
+   Hekim soldaki alanları doldurdukça sağdaki kâğıt yazılıyor. Dar ekranda
+   tek sütuna iniyor ve kâğıt formun ALTINA geçiyor: telefonda yan yana iki
+   sütun ikisini de okunmaz yapıyor. */
+.recete-duzen {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--b-4); align-items: start;
+}
+@media (max-width: 1100px) { .recete-duzen { grid-template-columns: 1fr; } }
+
+.recete-form { display: flex; flex-direction: column; gap: var(--b-4); min-inline-size: 0; }
+.recete-form > .kart { margin-block-end: 0; }
+/* Clinical ve ℞ kartları yan yana; dar alanda alt alta. */
+.recete-ikili { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: var(--b-4); align-items: start; }
+@media (max-width: 760px) { .recete-ikili { grid-template-columns: 1fr; } }
+.recete-ikili > .kart { margin-block-end: 0; }
+
+/* Önizleme geniş ekranda kaydırmayla birlikte yukarıda kalıyor: hekim
+   formu doldururken kâğıdı görmeye devam etsin. */
+.recete-onizleme { min-inline-size: 0; position: sticky; inset-block-start: var(--b-3); }
+@media (max-width: 1100px) { .recete-onizleme { position: static; } }
+.recete-onizleme__bas {
+  display: flex; align-items: center; gap: var(--b-2);
+  font-size: .85rem; font-weight: 600; color: rgb(var(--metin-2));
+  margin-block-end: var(--b-2);
+}
+.recete-onizleme .kagit-tuval { padding-block: 0; }
+
+/* Clinical satırı: simge, kısa ad, değer kutusu. */
+.olcum-liste { display: flex; flex-direction: column; gap: var(--b-2); }
+.olcum-satir { display: grid; grid-template-columns: auto 5.6rem minmax(0, 1fr); align-items: center; gap: var(--b-2); }
+.olcum-satir__simge { display: inline-flex; color: rgb(var(--vurgu)); }
+.olcum-satir__ad { font-size: .82rem; font-weight: 600; color: rgb(var(--metin-2)); }
+
+/* ℞ alanları: etiket, seçilen değer, ekleme düğmesi. */
+.rx-baslik { font-family: Georgia, "Times New Roman", serif; font-size: 1.5rem; }
+.rx-satir {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center; gap: var(--b-2);
+  padding-block: var(--b-2); border-block-end: 1px solid rgb(var(--kenar));
+}
+.rx-satir:last-child { border-block-end: none; }
+.rx-satir__etiket { font-weight: 600; font-size: .88rem; }
+.rx-satir__deger { font-size: .85rem; overflow-wrap: anywhere; }
+
+/* Kaydet/yazdır düğmeleri formun altında, sağa yaslı. */
+.recete-eylem { justify-content: flex-end; flex-wrap: wrap; }
+
+/* Seçim alanı: hasta gibi listeden seçilen alanlar girdi gibi görünsün. */
+.secim-alani { inline-size: 100%; justify-content: flex-start; font-weight: 500; }

@@ -223,13 +223,22 @@ const alanlar = await sayfa.$$eval('.kagit-tuval [data-alan]', (e) => e.map((x) 
 for (const beklenen of ['hasta', 'tarih', 'kanGrubu', 'tani', 'belirtiler', 'laboratuvar', 'ilac-ekle', 'notlar', 'olcum:bp']) {
   if (!alanlar.includes(beklenen)) throw new Error(`kâğıtta "${beklenen}" alanı dokunulabilir değil: ${alanlar.join(', ')}`);
 }
-// Eski formdan tek bir kutu bile kalmamalı: kâğıt tek yazma yüzeyi.
-for (const eski of ['tani', 'taniKodu', 'belirtiler', 'laboratuvar', 'olcum_bp']) {
-  if (await sayfa.locator(`#sayfa input[name=${eski}]`).count()) {
-    throw new Error(`eski reçete formu hâlâ çiziliyor: input[name=${eski}]`);
-  }
-}
-ok(`kâğıt üzerinde ${alanlar.length} alan dokunulabilir, ayrı reçete formu kalmamış`);
+ok(`kâğıt üzerinde ${alanlar.length} alan dokunulabilir`);
+
+// --- İki sütunlu düzen: solda form, sağda CANLI kâğıt.
+// "Birinci sayfayı doldur, ikinci sayfa olarak yazılsın": soldaki alana
+// yazılan değer sağdaki kâğıda geçmeli. Kâğıt sayfanın tek kopyası, yani
+// önizleme ile basılan aynı şey.
+if (!(await sayfa.locator('.recete-duzen .recete-form').count())) throw new Error('sol sütundaki form yok');
+if (!(await sayfa.locator('.recete-duzen .recete-onizleme .kagit-tuval').count())) throw new Error('sağ sütundaki canlı kâğıt yok');
+await sayfa.fill('#sayfa input[name=olcum_bp]', '118/76');
+// Tazeleme gecikmeli (her tuşta QR üretmemek için): kâğıtta belirmesini bekle.
+await sayfa.waitForSelector('.kagit__klinik-sutun:has-text("118/76")', { timeout: 5000 });
+ok('solda yazılan kan basıncı sağdaki kâğıda anında geçti: 118/76');
+// Kalan adımlar kâğıttan sürüyor; bu değeri geri al ki sonraki ölçüm adımı
+// kendi değerini yazdığında karışmasın.
+await sayfa.fill('#sayfa input[name=olcum_bp]', '');
+await sayfa.waitForSelector('.kagit__klinik-sutun:has-text("118/76")', { state: 'detached', timeout: 5000 });
 
 // --- Alerjili ilaç: uyarı, satır eklenmeden önce kutunun içinde çıkmalı
 await sayfa.click(kagitAlan('ilac-ekle'));
@@ -453,7 +462,9 @@ for (const anahtar of ['recete.ver', 'recete.verilemedi', 'recete.geri_al', 'sto
 }
 // Eski form gittiyse ona ait anahtarlar da gitmiş olmalı: sözlükte öksüz
 // kayıt kalması, kaldırma işinin yarım bittiğinin en sessiz işareti.
-for (const anahtar of ['recete.yeni_alt', 'recete.bilgiler', 'recete.tani_kodu', 'recete.sec_ipucu', 'klinik.hepsi']) {
+// recete.yeni_alt listeden ÇIKARILDI: iki sütunlu düzen geldiğinde yeni
+// metniyle geri kullanılmaya başladı. Kalanlar hâlâ öksüz olmalı.
+for (const anahtar of ['recete.bilgiler', 'recete.tani_kodu', 'recete.sec_ipucu', 'klinik.hepsi']) {
   if (anahtar in sozluk) throw new Error(`sözlükte eski formun anahtarı kaldı: ${anahtar}`);
 }
 ok('karşılama yok, eski formun sözlük anahtarları da temizlenmiş');
