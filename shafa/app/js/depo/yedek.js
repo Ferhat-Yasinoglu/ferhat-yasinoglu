@@ -3,22 +3,31 @@
 // belirli aralıklarla hatırlatır. Dosya hasta bilgisi içerir, arayüz bunu söyler.
 import { KOLEKSIYONLAR, DUSEN_KOLEKSIYONLAR, SEMA_SURUMU, YEDEKLENEN } from './sema.js';
 import { simdi } from '../paylasilan/kimlik.js';
+import { ayarlariBirlestir } from '../paylasilan/senkron.js';
 
 export const YEDEK_BICIMI = 'shafa-yedek';
 /** Uygulama "Eczane" adıyla çıkmıştı; o sürümün yedekleri hâlâ kabul edilir.
  *  Kullanıcının elindeki dosyayı adı değişti diye reddetmek olmaz. */
 const ESKI_BICIMLER = ['eczane-yedek'];
 
-export async function yedekOlustur(depo) {
+/** Belgeyi derler. Meta'ya DOKUNMAZ: eşitleme de bu belgeyi kullanıyor ama
+ *  "yedek alındı" saymamalı. Buluttaki kopya Google hesabı ile bizim kodumuzun
+ *  doğruluğuna bağlı; elde duran dosyanın yerini tutmuyor, o yüzden yedek
+ *  hatırlatması eşitlemeyle susmuyor. */
+export async function belgeDerle(depo) {
   const koleksiyonlar = {};
   for (const ad of YEDEKLENEN) koleksiyonlar[ad] = await depo.listele(ad, { silinmisDahil: true });
-  const belge = {
+  return {
     bicim: YEDEK_BICIMI,
     semaSurumu: SEMA_SURUMU,
     uygulamaSurumu: globalThis.UYGULAMA_SURUMU || '',
     olusturuldu: simdi(),
     koleksiyonlar,
   };
+}
+
+export async function yedekOlustur(depo) {
+  const belge = await belgeDerle(depo);
   await depo.metaKaydet({ sonYedek: belge.olusturuldu, degisiklikSayaci: 0 });
   return belge;
 }
@@ -53,6 +62,7 @@ export async function iceAktar(depo, belge, { strateji = 'birlestir', prova = fa
   if (!dogrulama.gecerli) return { ok: false, hatalar: dogrulama.hatalar };
 
   const rapor = {};
+  const cakisan = [];
   for (const [ad, kayitlar] of Object.entries(belge.koleksiyonlar)) {
     if (DUSEN_KOLEKSIYONLAR.includes(ad)) continue;
     const r = { eklendi: 0, guncellendi: 0, atlandi: 0 };
@@ -60,22 +70,29 @@ export async function iceAktar(depo, belge, { strateji = 'birlestir', prova = fa
     for (const k of kayitlar) {
       if (!k?.id) { r.atlandi++; continue; }
       const eski = strateji === 'degistir' ? null : await depo._oku(ad, k.id);
+      // Ayarlar tek bir kayıt: bütün antet alanları ve reçete doğrulama
+      // anahtarı aynı zarfı paylaşıyor. "Yenisi kazansın" deseydik öbür
+      // cihazda boş bırakılmış bir antet buradakini siler, kaybeden anahtarla
+      // basılmış reçeteler de bir daha doğrulanamazdı. Bu yüzden ayarlar
+      // zarfa bakmadan ALAN ALAN birleşiyor (paylasilan/senkron.js).
+      if (ad === 'ayarlar' && strateji !== 'degistir') {
+        const { sonuc, cakisan: c, degisti } = ayarlariBirlestir(eski, k);
+        cakisan.push(...c);
+        if (!degisti) { r.atlandi++; continue; }
+        if (eski) r.guncellendi++; else r.eklendi++;
+        if (!prova) await depo._yaz(ad, { ...sonuc, rev: Math.max(eski?.rev || 0, k.rev || 0) + 1 });
+        continue;
+      }
       if (eski) {
         if ((eski.guncellendi || '') >= (k.guncellendi || '')) { r.atlandi++; continue; }
         r.guncellendi++;
       } else r.eklendi++;
-      // Ayarlar tek bir kayıt ve içinde reçete doğrulama anahtarı da duruyor.
-      // Yalnız bir kısmını taşıyan bir yedek (ör. sadece antet) kaydı olduğu
-      // gibi değiştirseydi anahtar silinir, o güne kadar yazılmış bütün
-      // reçetelerin kodu doğrulanamaz hale gelirdi. Bu yüzden ayarlarda
-      // dosyadaki alanlar mevcudun üstüne yazılır, geri kalanı korunur.
-      const yazilacak = ad === 'ayarlar' && eski ? { ...eski, ...k } : k;
-      if (!prova) await depo._yaz(ad, { ...yazilacak, rev: Math.max(eski?.rev || 0, k.rev || 0) + 1 });
+      if (!prova) await depo._yaz(ad, { ...k, rev: Math.max(eski?.rev || 0, k.rev || 0) + 1 });
     }
     rapor[ad] = r;
     if (!prova) depo._yay(ad, { tur: 'temizle' });
   }
-  return { ok: true, rapor };
+  return { ok: true, rapor, cakisan };
 }
 
 /** Yedek eskidi mi? 20 değişiklik ya da 7 gün. */

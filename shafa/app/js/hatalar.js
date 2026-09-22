@@ -33,6 +33,23 @@ const DEPO = {
   gorsel_tur: 'Seçilen dosya bir görsel değil.',
   gorsel_bozuk: 'Görsel açılamadı.',
   gorsel_buyuk: 'Görsel çok büyük; daha küçük bir fotoğraf seç.',
+  // Eşitleme ve kasa. Türkçe kalan bir kod Farsça arayüzün ortasına Türkçe
+  // cümle basıyor — görsel yükleme eklenirken tam bu olmuştu.
+  parola_yok: 'Önce kasa parolası girilmeli.',
+  parola: 'Kasa parolası tutmuyor. Öbür cihazdaki parolanın aynısını yaz.',
+  kasa_bozuk: 'Buluttaki dosya açılamadı.',
+  uzak_bozuk: 'Buluttaki dosya bir Shafa kopyası değil.',
+  kripto: 'Bu tarayıcı şifreleme desteklemiyor; eşitleme çalışmaz.',
+  bicim: 'Dosya tanınmadı.',
+  surum: 'Buluttaki kopya bu sürümden yeni; önce uygulamayı güncelle.',
+  bozuk: 'Dosyanın içi okunamadı.',
+  istemci_yok: 'Google istemci kimliği girilmemiş.',
+  yetki: 'Google izin vermedi. Hesabı seç ve erişime izin ver.',
+  pencere: 'Tarayıcı Google penceresini engelledi. Engeli kaldırıp yeniden dene.',
+  ag: 'Google\'a ulaşılamadı. İnternet bağlantısını denetle.',
+  drive: 'Drive isteği başarısız oldu.',
+  betik: 'Google giriş betiği yüklenemedi.',
+  belge_bitti: 'Giriş süresi doldu; yeniden eşitle.',
 };
 
 /** Doğrulama kodunu arayüz metnine çevirir. Kod tanınmazsa olduğu gibi döner. */

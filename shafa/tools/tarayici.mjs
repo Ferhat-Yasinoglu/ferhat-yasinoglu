@@ -1396,6 +1396,78 @@ await sayfa.evaluate(() => { document.querySelectorAll('#sayfa > .yazdir-alan').
 if (tasanlar.length) throw new Error('kâğıt A4\'e sığmıyor: ' + tasanlar.join(', '));
 ok(`kâğıt A4'e sığıyor, hepsi tek sayfa ve payı var: ${boylar.join(' · ')} (sınır ≈275mm)`);
 
+// --- Eşitleme: gerçek tarayıcıda, gerçek IndexedDB ve gerçek WebCrypto ile.
+// Google'ın kendi uç noktaları burada denenemiyor (istemci kimliği hekimde),
+// o yüzden taşıyıcı yerine bellek taşıyıcısı konuyor. Denenen şey taşıyıcı
+// değil zaten: iki deponun aynı veriye yakınsaması, kasanın gerçek tarayıcıda
+// açılıp kapanması ve hasta adının şifreli gövdede GÖRÜNMEMESİ.
+await sayfa.click('#kenar-menu a[href="#/ayarlar"]');
+await sayfa.waitForSelector(`h2:has-text("${T('senkron.baslik')}")`);
+const senkronKart = sayfa.locator('.kart', { has: sayfa.locator(`h2:has-text("${T('senkron.baslik')}")`) });
+const esitleDugmesi = senkronKart.locator(`button:has-text("${T('senkron.simdi')}")`);
+if (await esitleDugmesi.isEnabled()) throw new Error('kimlik/parola girilmeden "eşitle" düğmesi açık');
+ok('eşitleme kartı çizildi; kimlik ve parola girilmeden eşitleme düğmesi kapalı');
+
+await senkronKart.locator('input[name=senkronIstemciId]').fill('deneme.apps.googleusercontent.com');
+await senkronKart.locator('input[name=senkronParolasi]').fill('kabil-1404');
+await senkronKart.locator(`button:has-text("${T('senkron.kaydet')}")`).click();
+// Başarı bildirimi kartın YENİDEN ÇİZİLMESİNDEN önce çıkıyor; ona bakıp
+// düğmeyi yoklamak eski kartı yokluyordu. Kartın kendi durumunu bekle.
+await senkronKart.locator('.rozet', { hasText: T('senkron.acik') }).waitFor({ timeout: 5000 });
+if (!(await esitleDugmesi.isEnabled())) throw new Error('kimlik ve parola girildiği halde "eşitle" düğmesi kapalı kaldı');
+ok('kimlik ve parola kaydedilince eşitleme düğmesi açıldı, kart "açık" rozetine döndü');
+
+const senkronSonucu = await sayfa.evaluate(async () => {
+  const { yerelDepoAc } = await import('./js/depo/idb.js');
+  const { BellekDepo } = await import('./js/depo/depo.js');
+  const { senkronEt, bellekTasima } = await import('./js/depo/senkron.js');
+  const { kodUret, metniDogrula } = await import('./js/depo/dogrulama.js');
+  const PAROLA = 'kabil-1404';
+
+  const bilgisayar = await yerelDepoAc();                 // gerçek IndexedDB
+  const telefon = new BellekDepo();                       // ikinci "cihaz"
+  const bulut = bellekTasima();
+
+  // Bilgisayarda bir reçete özeti imzalanıyor; telefon kendi anahtarını üretiyor.
+  const ozet = 'نسخه: 9001\nتاریخ: 2026-01-01\nمریض: دنیا';
+  const kod = await kodUret(bilgisayar, ozet);
+  await kodUret(telefon, 'başka');
+  const ayriAnahtar = (await bilgisayar.ayarlar()).dogrulamaAnahtari !== (await telefon.ayarlar()).dogrulamaAnahtari;
+
+  const hastaAdi = (await bilgisayar.listele('hastalar'))[0]?.ad || '';
+  await senkronEt(bilgisayar, bulut, { parola: PAROLA });
+  await senkronEt(telefon, bulut, { parola: PAROLA });
+  await senkronEt(bilgisayar, bulut, { parola: PAROLA });
+
+  const govde = JSON.stringify(bulut.icerik);
+  const ikinciTur = await senkronEt(bilgisayar, bulut, { parola: PAROLA });
+
+  return {
+    hastaAdi,
+    ayriAnahtar,
+    bilgisayarHasta: (await bilgisayar.listele('hastalar')).length,
+    telefonHasta: (await telefon.listele('hastalar')).length,
+    telefonIlac: (await telefon.listele('ilaclar')).length,
+    bilgisayarIlac: (await bilgisayar.listele('ilaclar')).length,
+    sifreli: govde.includes('shafa-kasa') && !govde.includes(hastaAdi) && !govde.includes(PAROLA),
+    parolaSizdi: govde.includes(PAROLA),
+    telefondaDogrulandi: (await metniDogrula(telefon, `${ozet}\nکد تأیید: ${kod}`)).durum,
+    bosTurYukledi: ikinciTur.yuklendi,
+  };
+});
+
+const s = senkronSonucu;
+if (!s.ayriAnahtar) throw new Error('iki cihaz aynı doğrulama anahtarıyla başladı — deneme bir şey kanıtlamıyor');
+if (!s.hastaAdi) throw new Error('örnek hasta bulunamadı, sızıntı denetimi boşa döner');
+if (s.telefonHasta !== s.bilgisayarHasta || s.telefonIlac !== s.bilgisayarIlac) {
+  throw new Error(`cihazlar aynı veriye gelmedi: hasta ${s.bilgisayarHasta}/${s.telefonHasta}, ilaç ${s.bilgisayarIlac}/${s.telefonIlac}`);
+}
+if (s.parolaSizdi) throw new Error('kasa parolası buluta yazılan gövdede geçiyor');
+if (!s.sifreli) throw new Error(`buluta yazılan gövdede hasta adı açık duruyor ("${s.hastaAdi}")`);
+if (s.telefondaDogrulandi !== 'gecerli') throw new Error(`öbür cihazda basılmış reçete doğrulanmadı: ${s.telefondaDogrulandi}`);
+if (s.bosTurYukledi) throw new Error('değişiklik yokken yine de yükleme yapıldı');
+ok(`eşitleme: iki cihaz da ${s.bilgisayarHasta} hasta / ${s.bilgisayarIlac} ilaçta buluştu; gövde şifreli (hasta adı «${s.hastaAdi}» geçmiyor); öbür cihazın reçetesi doğrulandı; boş tur yükleme yapmadı`);
+
 await tarayici.close();
 kapat();
 
