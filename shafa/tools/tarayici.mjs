@@ -1446,11 +1446,23 @@ if (!bozukUyari.includes('992727769946-82oa2him')) {
 }
 ok(`ayara yarım yapıştırılmış kimlik yakalanıyor ve ekranda yazıyor: «${bozukUyari.slice(0, 60)}…»`);
 
-await senkronKart.locator('input[name=senkronIstemciId]').fill('');
-await senkronKart.locator(`button:has-text("${T('senkron.kaydet')}")`).click();
-await sayfa.waitForSelector(`text=${T('senkron.kimlik_gomulu').split('{k}')[0].trim()}`, { timeout: 5000 });
-if (await senkronKart.locator('.uyari--hata').count()) throw new Error('alan boşaltıldığı halde uyarı duruyor');
-ok('alan boşaltılınca uyarı kalkıyor ve kullanılan kimlik olarak gömülü olan yazıyor');
+// Hekimin telefonda bu alanı bulup boşaltması beklenmiyor: uygulama açılışta
+// kendi düzeltiyor. Bozuk değer DURUYORKEN sayfa yenileniyor.
+await sayfa.reload({ waitUntil: 'networkidle' });
+await sayfa.waitForSelector('#kenar-menu a');
+await sayfa.waitForSelector(`h2:has-text("${T('senkron.baslik')}")`);
+const kartYeni = sayfa.locator('.kart', { has: sayfa.locator(`h2:has-text("${T('senkron.baslik')}")`) });
+await kartYeni.locator(`text=${T('senkron.kimlik_gomulu').split('{k}')[0].trim()}`).waitFor({ timeout: 5000 });
+if (await kartYeni.locator('.uyari--hata').count()) throw new Error('açılışta onarım olmadı, uyarı duruyor');
+
+const onarim = await sayfa.evaluate(async () => {
+  const { yerelDepoAc } = await import('./js/depo/idb.js');
+  const a = await (await yerelDepoAc()).ayarlar();
+  return { alan: a.senkronIstemciId, kenara: a.senkronIstemciIdBozuk };
+});
+if (onarim.alan) throw new Error(`kimlik alanı temizlenmedi: ${onarim.alan}`);
+if (onarim.kenara !== '992727769946-82oa2him') throw new Error(`eski değer saklanmadı: ${onarim.kenara}`);
+ok(`açılışta kendi düzeltiyor: bozuk kimlik kenara alındı («${onarim.kenara}» saklandı, silinmedi), gömülü kimliğe dönüldü`);
 
 const senkronSonucu = await sayfa.evaluate(async () => {
   const { yerelDepoAc } = await import('./js/depo/idb.js');
