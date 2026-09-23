@@ -110,6 +110,20 @@ ya da sayfa yüklenirken zıplardı.
   adresi buraya yazılamaz. Bu bilgiler yalnız cihazdaki Ayarlar'da durur.
 - **Fiyat yazmıyor.** İkinci sürüm paralı olacak ama rakam belli değil; belli
   olmadan sayfaya sayı yazılmıyor. Tarife kartı "به زودی" diyor.
+- **Google hesabına yedek sayılmıyor.** Uygulamada var, sitede reklamı yok.
+  Onay ekranı "Testing" modunda olduğu sürece yalnız test listesindeki adresler
+  (en çok 100) giriş yapabiliyor; siteyi görüp indiren bir hekim düğmeye bassa
+  Google onu reddediyor. Bir süre sayfa bunu bir "imkân" diye saydı —
+  verilmeyen bir sözdü. Özellik kartı, tarife satırı ve "iki cihazı nasıl
+  birleştiririm" sorusunun Google'lı cevabı kaldırıldı; o sorunun cevabı artık
+  bugün **herkeste** çalışan yol: dosya yedeğini öbür cihaza taşımak.
+
+  Gizlilik sorusundaki *«در تنظیمات یک امکان اختیاری هم هست»* cümlesi **duruyor**:
+  uygulamada gerçekten var, ve "معلومات دستگاه را ترک نمی‌کند" derken bunu
+  söylememek eksik bilgi olurdu.
+
+  Onay ekranı yayına alınınca geri konabilir — ya da özellik ikinci sürümde
+  paralı tarifeye alınabilir.
 
 ## Çalıştırma
 
@@ -323,6 +337,9 @@ başka bir cihaz yaptı, onun kodunu yaz» kutusunu gösterir. İlk cihazda kod
 
 Bu sıra bilerek böyle: hekim ilk cihazda kodla hiç karşılaşmıyor. Kodu ancak
 gerçekten lazım olduğu anda görüyor.
+
+**Tanıtım sayfası bundan söz etmiyor** — bilerek. Gerekçesi yukarıda,
+"Sayfada bilerek olmayanlar" başlığında.
 
 Onay ekranı "Testing" modunda olduğu sürece yalnız **test listesindeki adresler**
 giriş yapabilir (en çok 100). Listede olmayan bir hekim `hesap_izinsiz` hatasını
