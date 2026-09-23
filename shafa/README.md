@@ -263,13 +263,23 @@ cihazın aynı reçeteyi doğrulayabilmesi için aynı anahtarı taşıması ger
 Sonucu şu: kasa parolasını ve Drive dosyasını birlikte ele geçiren biri geçerli
 doğrulama kodu üretebilir. Parola yalnız hekimin iki cihazında.
 
-### Denenmemiş olan
+### Ne otomatik deneniyor, ne elle doğrulandı
 
 Eşitleme mantığı, kasa ve iki cihazın buluşması hem birim testleriyle hem de
-gerçek tarayıcıda gerçek IndexedDB/WebCrypto ile deneniyor (taşıyıcı yerine
-bellek taşıyıcısı konuyor). **Google'ın kendi uç noktaları denenmedi** —
-istemci kimliği gerekiyor. Bu yüzden taşıyıcı bilerek ince tutuldu:
-`oku()` ve `yaz()`.
+gerçek tarayıcıda gerçek IndexedDB/WebCrypto ile deneniyor — taşıyıcı yerine
+bellek taşıyıcısı konuyor. Taşıyıcı bu yüzden bilerek ince tutuldu
+(`oku()` ve `yaz()`): eşitlemenin doğruluğu Google'a bağlı olmadan denenebiliyor.
+
+**Google'ın kendi uç noktaları CI'da denenmiyor** ve denenemez: gerçek bir
+OAuth onayı bir insanın tıklamasını gerektiriyor. Gerçek hesapla uçtan uca ilk
+tur 23 Eylül 2026'da elle yapıldı ve geçti — giriş, izin, Drive'a yazma ve
+okuma. Yani akış çalışıyor; ama bu yoldaki bir gerileme testlerden değil,
+ancak kullanımdan anlaşılır.
+
+Yolda çıkan ve düzeltilen şey de buydu: arıza değil, arızanın görünmezliği.
+Bir hata Google'ın ekranında çıkıp uygulamada iz bırakmayınca sebebi kimse
+bulamıyor. Artık kod hangi kimliğin kullanıldığını yazıyor, engellenen betiği
+"internet yok"tan ayırıyor ve yanıt gelmezse takılıp kalmıyor.
 
 ## Yapılacaklar
 
