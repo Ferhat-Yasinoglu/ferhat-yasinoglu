@@ -1433,6 +1433,25 @@ if (!/^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/.test(gomuluKimlik.gomulu)) 
 if (gomuluKimlik.bosAyarla !== gomuluKimlik.gomulu) throw new Error('alan boşken gömülü kimliğe düşmüyor');
 ok(`yalnız parola girildi (kimlik alanı boş) — eşitleme açıldı, gömülü kimlik kullanılıyor: ${gomuluKimlik.gomulu.slice(0, 18)}…`);
 
+// --- Ayara yarım bir kimlik yapıştırılmışsa görünüyor mu?
+// Hekimin telefonunda tam bu oldu: kimliği koda gömmeden önce ayara yapıştırdığı
+// değer eksik kaldı, gömülü kimliğin yerine geçti ve Google "client bulunamadı"
+// dedi. Hata Google'dan geldiği için sebebi uygulamada hiç görünmüyordu.
+await senkronKart.locator('input[name=senkronIstemciId]').fill('992727769946-82oa2him');
+await senkronKart.locator(`button:has-text("${T('senkron.kaydet')}")`).click();
+await sayfa.waitForSelector(`text=${T('senkron.kimlik_bozuk').split('{k}')[0].trim()}`, { timeout: 5000 });
+const bozukUyari = (await senkronKart.locator('.uyari--hata').first().textContent()).trim();
+if (!bozukUyari.includes('992727769946-82oa2him')) {
+  throw new Error(`bozuk kimlik uyarısı değeri göstermiyor: ${bozukUyari}`);
+}
+ok(`ayara yarım yapıştırılmış kimlik yakalanıyor ve ekranda yazıyor: «${bozukUyari.slice(0, 60)}…»`);
+
+await senkronKart.locator('input[name=senkronIstemciId]').fill('');
+await senkronKart.locator(`button:has-text("${T('senkron.kaydet')}")`).click();
+await sayfa.waitForSelector(`text=${T('senkron.kimlik_gomulu').split('{k}')[0].trim()}`, { timeout: 5000 });
+if (await senkronKart.locator('.uyari--hata').count()) throw new Error('alan boşaltıldığı halde uyarı duruyor');
+ok('alan boşaltılınca uyarı kalkıyor ve kullanılan kimlik olarak gömülü olan yazıyor');
+
 const senkronSonucu = await sayfa.evaluate(async () => {
   const { yerelDepoAc } = await import('./js/depo/idb.js');
   const { BellekDepo } = await import('./js/depo/depo.js');
