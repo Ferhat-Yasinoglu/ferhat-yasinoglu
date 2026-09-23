@@ -1405,7 +1405,37 @@ ok(`kâğıt A4'e sığıyor, hepsi tek sayfa ve payı var: ${boylar.join(' · '
 // o yüzden taşıyıcı yerine bellek taşıyıcısı konuyor. Denenen şey taşıyıcı
 // değil zaten: iki deponun aynı veriye yakınsaması, kasanın gerçek tarayıcıda
 // açılıp kapanması ve hasta adının şifreli gövdede GÖRÜNMEMESİ.
+// --- Kurulum kartı: tarayıcı "kurulabilir" deyince düğme çıkıyor mu?
+// Headless tarayıcı gerçek `beforeinstallprompt` üretmiyor, o yüzden olay
+// elle yollanıyor — kodun yakaladığı olayın aynısı. Denenen şey olayın
+// kendisi değil, ondan sonrasının doğru çalışması.
 await sayfa.click('#kenar-menu a[href="#/ayarlar"]');
+await sayfa.waitForSelector(`h2:has-text("${T('kurulum.baslik')}")`);
+const kurKart = sayfa.locator('.kart', { has: sayfa.locator(`h2:has-text("${T('kurulum.baslik')}")`) });
+if (await kurKart.locator(`button:has-text("${T('kurulum.kur')}")`).count()) {
+  throw new Error('tarayıcı kurulabilir demeden kurulum düğmesi görünüyor');
+}
+await sayfa.waitForSelector(`text=${T('kurulum.menu').slice(0, 24)}`);
+ok('kurulum kartı çizildi; tarayıcı kurulabilir demeden düğme yok, menü tarifi var');
+
+await sayfa.evaluate(() => {
+  window.__kurCagrildi = false;
+  const o = new Event('beforeinstallprompt');
+  o.prompt = () => { window.__kurCagrildi = true; };
+  o.userChoice = Promise.resolve({ outcome: 'accepted' });
+  window.dispatchEvent(o);
+});
+const kurDugmesi = kurKart.locator(`button:has-text("${T('kurulum.kur')}")`);
+await kurDugmesi.waitFor({ timeout: 5000 });
+await kurDugmesi.click();
+await sayfa.waitForSelector('.bildirim--basari');
+const kurSonuc = await sayfa.evaluate(() => window.__kurCagrildi);
+if (!kurSonuc) throw new Error('düğmeye basıldı ama tarayıcının kurulum penceresi çağrılmadı');
+if (await kurKart.locator(`button:has-text("${T('kurulum.kur')}")`).count()) {
+  throw new Error('kurulumdan sonra düğme duruyor; olay bir kez kullanılabiliyor');
+}
+ok('kurulabilir olunca kart kendini tazeliyor, düğme gerçekten kurulum penceresini çağırıyor ve sonra kayboluyor');
+
 await sayfa.waitForSelector(`h2:has-text("${T('senkron.baslik')}")`);
 const senkronKart = sayfa.locator('.kart', { has: sayfa.locator(`h2:has-text("${T('senkron.baslik')}")`) });
 const esitleDugmesi = senkronKart.locator(`button:has-text("${T('senkron.simdi')}")`);
