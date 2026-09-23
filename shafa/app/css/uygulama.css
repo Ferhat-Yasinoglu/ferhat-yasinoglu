@@ -202,7 +202,30 @@ a { color: rgb(var(--vurgu)); }
 
 /* ---------- Dar ekran ---------- */
 @media (max-width: 860px) {
-  .kenar { display: none; }
+  /* Kenar çubuğu telefonda kaybolmuyor, çekmeceye dönüyor: üst köşedeki ☰
+     onu açıyor. Ayrı bir telefon menüsü yazmaktansa aynı menüyü kaydırmak —
+     sayaçlar, sıra ve aktif işaret tek yerde kalıyor. */
+  .kenar {
+    display: flex; position: fixed; inset-block: 0; inset-inline-start: 0;
+    z-index: 60; inline-size: min(82vw, 300px); block-size: 100dvh;
+    box-shadow: var(--golge-3);
+  }
+  /* Kayma animasyonu ancak hekim ☰'ye BİR KEZ bastıktan sonra açılıyor.
+     Yoksa geniş ekrandan dar ekrana geçildiği anda medya sorgusu da bir
+     değer değişimi sayılıyor ve çekmece bir kez görünüp kayarak kapanıyordu.
+     Telefonda olmaz ama bilgisayarda pencere daraltılınca gözle görülüyordu. */
+  body.menu-hazir .kenar { transition: translate var(--hiz-3) var(--egri); }
+  /* Kapalıyken kendi kenarının dışına çıkıyor. Yön belgeden geliyor:
+     uygulama sağdan sola ama bir gün soldan sağa açılırsa da doğru kalsın. */
+  [dir="rtl"] .kenar { translate: 100% 0; }
+  [dir="ltr"] .kenar { translate: -100% 0; }
+  body.menu-acik .kenar { translate: 0 0; }
+  .kenar-perde {
+    position: fixed; inset: 0; z-index: 50; background: rgb(0 0 0 / .45);
+    opacity: 0; pointer-events: none; transition: opacity var(--hiz-3) var(--egri);
+  }
+  body.menu-acik .kenar-perde { opacity: 1; pointer-events: auto; }
+  body.menu-acik { overflow: hidden; }
   .ust__logo { display: flex; }
   /* Telefonda üst çubukta yalnız marka, arama ve tema kalır: tarih ve
      hekim adı satırı taşırıyordu, ikisi de başka yerde yazılı. */
@@ -254,3 +277,14 @@ a { color: rgb(var(--vurgu)); }
    Klavyeyle gerçekten gelinirse işaret kalkıyor ve halka yine çıkıyor. */
 [data-yonlendirme-odagi]:focus,
 [data-yonlendirme-odagi]:focus-visible { outline: none; }
+
+/* ☰ yalnız dar ekranda: geniş ekranda kenar çubuğu zaten görünüyor. */
+.ust__menu { display: none; }
+.kenar-perde { display: none; }
+@media (max-width: 860px) {
+  .ust__menu { display: inline-flex; }
+  .kenar-perde { display: block; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kenar, .kenar-perde { transition: none; }
+}

@@ -190,6 +190,31 @@ değil çizgi olarak kuruldu (gövde, kâse, çapraz kuyruk) — font kullanıls
 cihazdan cihaza değişirdi. 16 pikselde de okunuyor, tek renkli sürümü kâğıt
 için var (`app/img/`).
 
+**Giriş sayfası reçete kâğıdı.** Hekimler öyle istedi ve doğrusu da o:
+uygulamanın günlük işi reçete yazmak. `/` artık `kagit-yaz.js`'e gidiyor,
+panel menüye indi.
+
+Bunun bir tuzağı vardı: **«uygulama boş» karşılaması yalnız paneldeydi.** Giriş
+sayfası değişince yeni kuran hekim boş bir kâğıda düşüyordu — ne hasta, ne dava,
+ne de nereden başlayacağını söyleyen bir şey. Karşılama reçete sayfasına da
+kondu; deneme boş kurulumda onun çıktığını ve «hasta ekle» yolunu gösterdiğini
+denetliyor.
+
+**Menü sırası hekimlerin sırası:** reçete, hasta, dava — sonra reçete listesi.
+Telefondaki alt çubuk bu dördü. «Reçeteler» dördüncü kutuda bilerek: hekim
+yazdığı reçeteyi en çok oradan arıyor (eczane telefon edince, hasta geri
+gelince), menüye gömülmesi günlük işi yavaşlatırdı.
+
+Geri kalanı (panel, boş kâğıt, tanılar, laboratuvar, raporlar, ayarlar) üst
+köşedeki **☰** ile açılan çekmecede. Çekmece için **ayrı bir telefon menüsü
+yazılmadı**: dar ekranda gizlenen kenar çubuğunun kendisi kayarak geliyor.
+Böylece tek menü var — sıra, sayaçlar ve aktif işaret iki yerde ayrı ayrı
+tutulmuyor.
+
+Kayma animasyonu ancak hekim ☰'ye **bir kez bastıktan sonra** açılıyor: yoksa
+geniş ekrandan dar ekrana geçildiği anda medya sorgusu da bir değer değişimi
+sayılıyor ve çekmece bir kez görünüp kayarak kapanıyordu.
+
 **Renk klinik turkuazı.** Uygulamayı hekim muayene sırasında, hastayla
 konuşurken, çoğu zaman telefonda kullanıyor; bu yüzden palet sakin ve dikkat
 çeken tek şey uyarılar. Karanlık tema gece nöbeti için.

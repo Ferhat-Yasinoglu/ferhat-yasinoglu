@@ -139,6 +139,25 @@ export default {
     const duzenleme = ctx.param.id ? await depo.al('receteler', ctx.param.id) : null;
     if (benimSira !== cizimSirasi) return;
 
+    /* Yepyeni kurulumda karşılama. Bu sayfa artık uygulamanın GİRİŞ sayfası;
+       eskiden karşılama yalnız paneldeydi ve hekim buraya ancak kendi gelirdi.
+       O karşılama olmadan yeni kuran hekim boş bir kâğıda düşüyor: ne hasta
+       var, ne dava, ne de nereden başlayacağını söyleyen bir şey. */
+    if (!duzenleme && !ilaclar.length && !hastalar.length) {
+      // Kökü sayfa modülü temizler, yönlendirici değil: temizlemezsek
+      // index.html'deki «javascript kapalı» metni karşılamanın üstünde kalıyor.
+      temizle(kok);
+      kok.appendChild(bosDurum({
+        simge: 'kalem',
+        baslik: t('kagit.ilk_baslik', 'Reçete yazmaya hazır'),
+        alt: t('kagit.ilk_alt', 'Önce bir hasta ve birkaç dava lazım. Ayarlar\'dan hazır dava listesini yükleyebilir ya da örnek kayıtlarla deneyebilirsin — ikisi de tek tuşla silinir.'),
+        eylem: el('div', { class: 'satir' },
+          btnS('hasta', t('kagit.ilk_hasta', 'Hasta ekle'), { class: 'btn btn--birincil', onclick: () => git('/hastalar') }),
+          btnS('ayarlar', t('panel.ayarlara_git', 'Ayarlar\'a git'), { class: 'btn', onclick: () => git('/ayarlar') })),
+      }));
+      return;
+    }
+
     let sablonlar = ilkSablonlar;
     let recete = duzenleme ? { ...duzenleme } : bosRecete(ayar, bugun());
     let hasta = recete.hastaId ? hastalar.find((h) => h.id === recete.hastaId) : null;
