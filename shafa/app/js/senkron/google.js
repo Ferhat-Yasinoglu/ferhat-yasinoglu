@@ -110,7 +110,14 @@ export async function belgeAl(kimlik, { sessiz = false, sure = BELGE_SURESI } = 
     const dur = bitir(red);
     c.callback = (y) => {
       if (y?.error) {
-        const kod = y.error === 'popup_closed' || y.error === 'access_denied' ? 'yetki'
+        // access_denied kendi kodunda: onay ekranı "Testing" modundayken
+        // listede OLMAYAN her adres bunu alıyor. Eskiden pencere kapatmayla
+        // aynı kovaya düşüyordu ve hekim «hesabı seç, izin ver» diye
+        // YAPAMAYACAĞI bir şey okuyordu — kaç kez denerse denesin olmayacak,
+        // sebebini de öğrenemeyecekti.
+        // İki sebebi de kapsayan bir metin veriliyor (hekim "İptal"e bastığında
+        // da access_denied dönüyor; istemciden ikisi ayırt edilemiyor).
+        const kod = y.error === 'access_denied' ? 'hesap_izinsiz'
           : y.error === 'popup_failed_to_open' ? 'pencere' : 'yetki';
         dur(new GoogleHatasi(kod, y.error_description || y.error));
         return;

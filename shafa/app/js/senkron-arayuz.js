@@ -1,4 +1,4 @@
-// Ayarlar'daki "Google ile eşitle" kartı ve eşitleme turunun arayüz tarafı.
+// Ayarlar'daki "Kendi Google hesabına yedek" kartı ve yedekleme turunun arayüz tarafı.
 // Karar mantığı depo/senkron.js'te; burası yalnız düğme, metin ve rapor.
 import { el, btnS, girdi, alan, kart, rozet } from './cekirdek/dom.js';
 import { simge } from './cekirdek/simge.js';
@@ -34,7 +34,7 @@ export async function senkronTuru(ctx, { sessiz = false } = {}) {
     return null;
   }
   if (!navigator.onLine) {
-    if (!sessiz) ctx.uyar(t('senkron.cevrimdisi', 'İnternet yok — eşitleme internet gelince yapılabilir.'));
+    if (!sessiz) ctx.uyar(t('senkron.cevrimdisi', 'İnternet yok — yedek internet gelince alınır.'));
     return null;
   }
   try {
@@ -42,8 +42,8 @@ export async function senkronTuru(ctx, { sessiz = false } = {}) {
     await depo.metaKaydet({ sonSenkron: simdi(), sonSenkronHata: '' });
     return sonuc;
   } catch (e) {
-    await depo.metaKaydet({ sonSenkronHata: hataMetni(e, t('senkron.olmadi', 'Eşitleme yapılamadı')) });
-    if (!sessiz) ctx.hata(hataMetni(e, t('senkron.olmadi', 'Eşitleme yapılamadı')));
+    await depo.metaKaydet({ sonSenkronHata: hataMetni(e, t('senkron.olmadi', 'Google\'a yedekleme yapılamadı')) });
+    if (!sessiz) ctx.hata(hataMetni(e, t('senkron.olmadi', 'Google\'a yedekleme yapılamadı')));
     return null;
   }
 }
@@ -53,9 +53,9 @@ export function senkronOzeti(s) {
   if (!s) return '';
   const { eklendi = 0, guncellendi = 0 } = s.indirildi || {};
   const inen = eklendi + guncellendi;
-  if (inen && s.yuklendi) return t('senkron.iki_yon', '{n} kayıt indi, bu cihazdakiler de yüklendi.', { n: inen });
-  if (inen) return t('senkron.indi', '{n} kayıt indi.', { n: inen });
-  if (s.yuklendi) return t('senkron.yuklendi', 'Bu cihazdakiler buluta yüklendi.');
+  if (inen && s.yuklendi) return t('senkron.iki_yon', '{n} kayıt indi, bu cihazdakiler de kaydedildi.', { n: inen });
+  if (inen) return t('senkron.indi', '{n} kayıt Google\'dan indi.', { n: inen });
+  if (s.yuklendi) return t('senkron.yuklendi', 'Bu cihazdakiler Google\'a kaydedildi.');
   return t('senkron.zaten', 'İki taraf zaten aynıydı.');
 }
 
@@ -99,7 +99,7 @@ export function senkronKarti(ctx, ayar, meta, yenile) {
   }
 
   async function eslestir() {
-    rapor.replaceChildren(el('div', { class: 'uyari uyari--bilgi' }, simge('yenile', { boy: 16 }), el('span', {}, t('senkron.suruyor', 'Eşitleniyor…'))));
+    rapor.replaceChildren(el('div', { class: 'uyari uyari--bilgi' }, simge('yenile', { boy: 16 }), el('span', {}, t('senkron.suruyor', 'Yedekleniyor…'))));
     const s = await senkronTuru(ctx, {});
     rapor.replaceChildren();
     if (!s) { yenile(); return; }
@@ -111,13 +111,13 @@ export function senkronKarti(ctx, ayar, meta, yenile) {
 
   return kart({},
     el('div', { class: 'kart__bas' },
-      el('h2', {}, t('senkron.baslik', 'Google ile eşitle')),
+      el('h2', {}, t('senkron.baslik', 'Kendi Google hesabına yedek')),
       acik ? rozet(t('senkron.acik', 'açık'), 'yesil') : rozet(t('senkron.kapali', 'kapalı'), 'gri')),
-    el('p', { class: 'kart__alt' }, t('senkron.alt', 'Bilgisayarla telefonun aynı kayıtları kullanması için. Veriler kendi Google Drive hesabının gizli uygulama klasörüne konur; Drive\'da görünmez ve başka uygulamalar okuyamaz.')),
+    el('p', { class: 'kart__alt' }, t('senkron.alt', 'Veriler KENDİ Google Drive hesabının gizli uygulama klasörüne konur; Drive\'da görünmez ve başka uygulamalar okuyamaz. Bilgisayarla telefon da aynı kayıtları alır.')),
 
     el('div', { class: 'uyari uyari--bilgi', style: { marginBlock: 'var(--b-3)' } },
       simge('kilit', { boy: 16 }),
-      el('span', {}, t('senkron.gizlilik', 'Yüklenmeden önce her şey bu cihazda şifrelenir; Google yalnız şifreli veriyi görür. Parola cihazdan çıkmaz — bu yüzden İKİ CİHAZDA DA AYNI PAROLAYI yazmak gerekir. Parola kaybolursa buluttaki kopya açılamaz.'))),
+      el('span', {}, t('senkron.gizlilik', 'Yüklenmeden önce her şey bu cihazda şifrelenir; Google yalnız şifreli veriyi görür. Parola cihazdan çıkmaz — bu yüzden İKİ CİHAZDA DA AYNI PAROLAYI yazmak gerekir. Parola kaybolursa Google\'daki kopya açılamaz.'))),
 
     el('div', { class: 'izgara izgara--form' },
       alan(t('senkron.istemci', 'Google istemci kimliği'), el('div', {}, kimlikKutusu, kimlikSatiri()), {
@@ -128,14 +128,14 @@ export function senkronKarti(ctx, ayar, meta, yenile) {
       })),
 
     meta.sonSenkron
-      ? el('p', { class: 'kart__alt' }, t('senkron.son', 'Son eşitleme: {t}', { t: tarihSaatMetni(meta.sonSenkron) }))
-      : el('p', { class: 'kart__alt' }, t('senkron.hic', 'Henüz eşitlenmedi.')),
+      ? el('p', { class: 'kart__alt' }, t('senkron.son', 'Google\'a son yedek: {t}', { t: tarihSaatMetni(meta.sonSenkron) }))
+      : el('p', { class: 'kart__alt' }, t('senkron.hic', 'Google\'a henüz yedek alınmadı.')),
     meta.sonSenkronHata
       ? el('div', { class: 'uyari uyari--hata' }, simge('hata', { boy: 16 }), el('span', {}, meta.sonSenkronHata))
       : null,
 
     el('div', { class: 'satir', style: { marginBlockStart: 'var(--b-3)' } },
-      btnS('kaydet', t('senkron.kaydet', 'Eşitleme ayarlarını kaydet'), { class: 'btn', onclick: async () => {
+      btnS('kaydet', t('senkron.kaydet', 'Yedekleme ayarlarını kaydet'), { class: 'btn', onclick: async () => {
         const kimlik = kimlikKutusu.value.trim();
         const parola = parolaKutusu.value;
         // Kimlik alanı boş bırakılabilir: koda gömülü olan kullanılır. Burada
@@ -146,7 +146,7 @@ export function senkronKarti(ctx, ayar, meta, yenile) {
         basari(t('ayar.kaydedildi', 'Bilgiler kaydedildi'));
         yenile();
       } }),
-      btnS('yenile', t('senkron.simdi', 'Şimdi eşitle'), {
+      btnS('yenile', t('senkron.simdi', 'Şimdi yedekle'), {
         class: 'btn btn--birincil',
         disabled: !senkronHazir(ayar) || undefined,
         title: senkronHazir(ayar) ? '' : t('senkron.eksik', 'Önce istemci kimliği ve kasa parolası girilmeli.'),
@@ -156,7 +156,7 @@ export function senkronKarti(ctx, ayar, meta, yenile) {
         ? btnS('kapat', t('senkron.cikis', 'Google\'dan çık'), { class: 'btn btn--sade', onclick: async () => {
           cikisYap();
           await depo.ayarKaydet({ senkronAcik: 0 });
-          uyar(t('senkron.cikildi', 'Çıkıldı. Buluttaki kopyaya dokunulmadı.'));
+          uyar(t('senkron.cikildi', 'Çıkıldı. Google\'daki kopyaya dokunulmadı.'));
           yenile();
         } })
         : null),

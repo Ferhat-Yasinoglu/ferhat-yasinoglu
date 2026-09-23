@@ -257,9 +257,24 @@ bütün reçeteler "TUTMUYOR" derdi.
 Kod reçetenin kanonik özetinden üretilir; aynı reçete yeniden basıldığında
 kod değişmez.
 
-## İki cihazda aynı veri
+## Kendi Google hesabına yedek
 
-Varsayılan kapalı. Açılırsa bilgisayarla telefon aynı kayıtları kullanır.
+Varsayılan kapalı. Açılırsa hekimin **kendi** Google hesabına şifreli bir kopya
+gider ve bilgisayarla telefon aynı kayıtları kullanır.
+
+**Neden "yedek" deniyor, "eşitleme" değil.** Hekimin kafasındaki şey "kendi
+hesabıma kaydetmek"; uygulama ise "همگام‌سازی" (eşitleme) diyordu. Arayüzdeki
+ad artık «پشتیبان در حساب گوگل خودتان». Özellik gerçekte çift yönlü olduğu için
+**alt satır bunu söylemeye devam ediyor** — yalnız "yedek" deyip geçmek, öbür
+cihazdan kayıt inince hekimi şaşırtırdı. Ayarlar'da iki kart yan yana duruyor:
+«پشتیبان فایلی» (dosya) ve «پشتیبان در حساب گوگل خودتان».
+
+**Google girişi girişte değil.** Yeni kuran hekimde eşitleme kapalı, dolayısıyla
+`senkron/google.js` hiç yüklenmiyor; açılışta ne giriş ekranı var ne hesap
+sorusu. Bu bugün doğruydu ama **bunu tutan bir denetim yoktu**: biri açılışa bir
+import koysa hiçbir test patlamazdı. `npm run deneme` artık temiz bir tarayıcı
+bağlamı açıp bütün ağ isteklerini dinliyor — Google'a giden tek bir istek olsa,
+ya da ekranda bir modal/e-posta kutusu çıksa, deneme düşüyor.
 
 **Nereye yazıyor:** hekimin kendi Google Drive'ındaki gizli uygulama klasörüne
 (`appDataFolder`). İstenen izin `drive.appdata`: Drive'ın geri kalanı görünmez,
@@ -283,8 +298,15 @@ internet gelince yapılır.
 
 ### Açmak için
 
-**Ayarlar → Google ile eşitle** → kasa parolasını yaz → **Kaydet** → **Şimdi eşitle**.
-İkinci cihazda aynı parola. İstemci kimliği alanı boş bırakılır.
+**Ayarlar → Kendi Google hesabına yedek** → kasa parolasını yaz → **Kaydet** →
+**Şimdi yedekle**. İkinci cihazda aynı parola. İstemci kimliği alanı boş bırakılır.
+
+Onay ekranı "Testing" modunda olduğu sürece yalnız **test listesindeki adresler**
+giriş yapabilir (en çok 100). Listede olmayan bir hekim `hesap_izinsiz` hatasını
+ve onu dosya yedeğine yönlendiren cümleyi görür. Herkese açmak için onay
+ekranının yayına alınması gerekiyor; `drive.appdata` hassas olmayan bir kapsam
+olduğu için ağır doğrulama süreci gerekmez, ama gizlilik politikası sayfası
+gerekir.
 
 ### İstemci kimliği nerede
 
@@ -355,6 +377,21 @@ Bir hata Google'ın ekranında çıkıp uygulamada iz bırakmayınca sebebi kims
 bulamıyor. Artık kod hangi kimliğin kullanıldığını yazıyor, engellenen betiği
 "internet yok"tan ayırıyor ve yanıt gelmezse takılıp kalmıyor.
 
+**Aynı dersin ikinci vakası: `access_denied`.** Onay ekranı "Testing" modunda
+olduğu sürece, test listesinde OLMAYAN her adres Google'dan `access_denied`
+alıyor. Kod bunu pencere kapatmayla aynı kovaya (`yetki`) atıyordu ve hekim
+şunu okuyordu:
+
+> «گوگل اجازه نداد. حساب را انتخاب کنید و اجازهٔ دسترسی بدهید.»
+> *(Google izin vermedi. Hesabı seçin ve erişime izin verin.)*
+
+Bu, o hekimin **yapamayacağı** bir şey. Kaç kez denerse denesin olmayacaktı.
+Artık `access_denied` kendi kodunda (`hesap_izinsiz`) ve mesajı iki sebebi
+birden sayıyor — hekim "İptal"e bastığında da aynı hata dönüyor, istemciden
+ikisi ayırt edilemiyor — sonra da bugün **herkeste** çalışan yolu gösteriyor:
+«دانلود پشتیبان». Tarayıcı denemesi yalnız kodun ayrıştığını değil, **metnin
+"izin ver" demediğini ve dosya yedeğine yönlendirdiğini** de denetliyor.
+
 ## Yapılacaklar
 
 - [x] İskelet: depo, yönlendirici, tema, bileşenler
@@ -365,7 +402,7 @@ bulamıyor. Artık kod hangi kimliğin kullanıldığını yazıyor, engellenen 
 - [x] Farsça arayüz ve sağdan sola düzen
 - [x] Reçete kâğıdı: antet, klinik ölçüm sütunu, QR, boş kâğıt
 - [x] WhatsApp / e-posta ile gönderme
-- [x] İki cihazda aynı veri: Google Drive ile şifreli eşitleme (yukarıya bak)
+- [x] Kendi Google hesabına şifreli yedek; iki cihaz aynı kayıtları kullanır (yukarıya bak)
 - [ ] Reçete başlık alanlarının gözden geçirilmesi (aşağıya bak)
 - [ ] Reçeteyi dosya (PDF/görsel) olarak gönderme — şu an metin olarak gidiyor,
       kâğıt görünümü için "Yazdır → PDF" kullanılıyor
@@ -444,7 +481,7 @@ tools/                    sun (statik sunucu) · kontrol (statik denetim) ·
 - **e-Reçete / Medula entegrasyonu yoktur.** Resmî kurum kimliği gerektirir. Bu uygulama
   kendi içinde çalışan bir kayıt ve takip sistemidir; çıktısı yazdırılabilir reçetedir.
 - Veri varsayılan olarak tek cihazdadır. İki cihazı buluşturmak için ya yedek
-  dosyası taşınır ya da Google eşitlemesi açılır (aşağıya bak).
+  dosyası taşınır ya da Google hesabına yedek açılır (aşağıya bak).
 - Tarayıcı verisi temizlenirse kayıtlar silinir. Düzenli yedek şart.
 - Yedek dosyası şifresiz JSON'dur ve hasta bilgisi içerir; güvenli bir yerde saklanmalı.
 - Reçete WhatsApp ve e-postaya **metin** olarak gider. Tarayıcıdan sunucusuz

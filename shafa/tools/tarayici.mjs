@@ -1580,6 +1580,95 @@ if (googleHatalari.zaman !== 'zaman_asimi') throw new Error(`geri çağırmayan 
 if (googleHatalari.sure > 3000) throw new Error(`zaman aşımı geç düştü: ${googleHatalari.sure}ms`);
 ok(`Google hataları ayrışıyor: engellenen betik «betik» (internet suçlanmıyor), kimliksiz «istemci_yok», geri çağırmayan istemci ${googleHatalari.sure}ms'de «zaman_asimi» (sonsuza kadar dönmüyor)`);
 
+// --- Listede olmayan hekim ne okuyor?
+// Onay ekranı "Testing" modundayken listede OLMAYAN her adres access_denied
+// alıyor. Bu eskiden pencere kapatmayla aynı kovaya düşüyor ve hekim
+// «hesabı seç, izin ver» diye YAPAMAYACAĞI bir şey okuyordu: kaç kez
+// denerse denesin olmayacaktı, sebebini de öğrenemeyecekti.
+googleDenemesi = true;
+const izinHatalari = await sayfa.evaluate(async () => {
+  const g = await import('./js/senkron/google.js');
+  const { hataMetni } = await import('./js/hatalar.js');
+  // Her durum için AYRI kimlik: istemciKur kimliğe göre önbellekliyor.
+  const dene = async (hata, kimlik) => {
+    globalThis.google = { accounts: { oauth2: { initTokenClient: () => {
+      const c = { requestAccessToken() { c.callback({ error: hata }); } };
+      return c;
+    } } } };
+    g.cikisYap();
+    try { await g.belgeAl(kimlik, { sure: 2000 }); return { kod: 'HATA_YOK', metin: '' }; }
+    catch (e) { return { kod: e?.kod || '?', metin: hataMetni(e, '') }; }
+  };
+  return {
+    red: await dene('access_denied', 'a.apps.googleusercontent.com'),
+    kapandi: await dene('popup_closed', 'b.apps.googleusercontent.com'),
+  };
+});
+googleDenemesi = false;
+
+if (izinHatalari.red.kod !== 'hesap_izinsiz') {
+  throw new Error(`access_denied '${izinHatalari.red.kod}' diye raporlandı; 'hesap_izinsiz' olmalıydı`);
+}
+if (izinHatalari.kapandi.kod !== 'yetki') {
+  throw new Error(`popup_closed '${izinHatalari.kapandi.kod}' diye raporlandı; 'yetki' olmalıydı`);
+}
+if (izinHatalari.red.metin === izinHatalari.kapandi.metin) {
+  throw new Error('iki durum aynı cümleyi basıyor; ayrışmanın anlamı kalmıyor');
+}
+// Asıl mesele metnin İÇERİĞİ: hekime yapamayacağı bir şey söylememeli ve
+// bugün herkeste çalışan yolu (dosya yedeği) göstermeli.
+const izinMetni = izinHatalari.red.metin;
+if (/اجازهٔ دسترسی بدهید|حساب را انتخاب کنید/.test(izinMetni)) {
+  throw new Error('«izin ver / hesabı seç» hâlâ deniyor — listede olmayan hekim bunu yapamaz: ' + izinMetni);
+}
+if (!izinMetni.includes(T('yedek.indir'))) {
+  throw new Error('mesaj dosya yedeğine yönlendirmiyor: ' + izinMetni);
+}
+ok(`listede olmayan hesap ayrı: access_denied «hesap_izinsiz», pencere kapanışı «yetki»; mesaj "izin ver" demiyor, «${T('yedek.indir')}» diyor`);
+
+// --- Hesapsız açılış: Google girişi GİRİŞTE değil.
+// Yeni kuran hekimde eşitleme kapalı; Google'a ait tek satır yüklenmemeli,
+// giriş ekranı ya da hesap sorusu çıkmamalı. Bugün böyle — ama bunu tutan
+// bir denetim yoktu: biri açılışa giriş koysa hiçbir test patlamazdı.
+const temizBaglam = await tarayici.newContext({ viewport: { width: 1280, height: 900 } });
+const istekler = [];
+temizBaglam.on('request', (r) => istekler.push(r.url()));
+const temizHatalar = [];
+temizBaglam.on('console', (m) => { if (m.type() === 'error') temizHatalar.push(m.text()); });
+const temizSayfa = await temizBaglam.newPage();
+// 'networkidle' bilerek kullanılmıyor: bu deneme iki bağlamı ve vitest'i
+// izleyen makinede koşuyor, ağ 30 saniye boyunca bir an bile boşalmazsa
+// kendiliğinden düşerdi. Menü çizilene kadar bekleyip üstüne sabit bir pay
+// koymak hem yeterli (açılış sonrası sessiz tur 1500ms'de) hem sağlam.
+await temizSayfa.goto(KOK, { waitUntil: 'load' });
+await temizSayfa.waitForSelector('#kenar-menu a[href="#/ayarlar"]');
+await temizSayfa.waitForTimeout(2500);
+
+const googleIstekleri = istekler.filter((u) => /accounts\.google\.com|googleapis\.com|senkron\/google\.js/.test(u));
+if (googleIstekleri.length) {
+  throw new Error('açılışta Google isteği yapıldı: ' + [...new Set(googleIstekleri)].join(', '));
+}
+const engel = await temizSayfa.evaluate(() => ({
+  modal: document.querySelectorAll('[role="dialog"], .modal').length,
+  eposta: document.querySelectorAll('input[type=email]').length,
+  parola: document.querySelectorAll('input[type=password]').length,
+  panel: !!document.querySelector('#sayfa')?.textContent.trim(),
+}));
+if (engel.modal) throw new Error('açılışta modal var; uygulama hesapsız açılmalı');
+if (engel.eposta || engel.parola) throw new Error('açılışta e-posta/parola kutusu var; giriş istenmemeli');
+if (!engel.panel) throw new Error('panel boş çizildi');
+// Hekim gerçekten kullanabiliyor mu: reçete yazma yoluna girebilmeli.
+// `#sayfa`yı beklemek yetmez — o her zaman var; adresin ve içeriğin
+// GERÇEKTEN değiştiğini görmek gerekiyor.
+const panelMetni = await temizSayfa.textContent('#sayfa');
+await temizSayfa.click('#kenar-menu a[href="#/recete/kagit"]');
+await temizSayfa.waitForFunction(
+  (eski) => location.hash === '#/recete/kagit' && document.querySelector('#sayfa')?.textContent !== eski,
+  panelMetni, { timeout: 15000 });
+if (temizHatalar.length) throw new Error('temiz açılışta konsol hatası: ' + temizHatalar.join(' | '));
+await temizBaglam.close();
+ok(`hesapsız açılış: ${istekler.length} istekte tek bir Google isteği yok, modal/giriş kutusu yok, reçete yazmaya girilebiliyor`);
+
 await tarayici.close();
 kapat();
 

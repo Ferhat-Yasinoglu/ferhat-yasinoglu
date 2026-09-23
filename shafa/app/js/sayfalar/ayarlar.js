@@ -249,7 +249,7 @@ export default {
       });
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' },
-          el('h2', {}, t('ayar.yedek', 'Yedek')),
+          el('h2', {}, t('ayar.yedek', 'Dosya yedeği')),
           h.gerekli ? rozet(t('ayar.yedek_gerekli', 'yedek gerekli'), 'sari') : rozet(t('ayar.guncel', 'güncel'), 'yesil')),
         el('p', { class: 'kart__alt' }, meta.sonYedek
           ? t('ayar.son_yedek', 'Son yedek: {t} · o günden beri {n} değişiklik.', { t: tarihSaatMetni(meta.sonYedek), n: meta.degisiklikSayaci || 0 })
@@ -266,11 +266,12 @@ export default {
           } }),
           el('label', { class: 'btn' }, simge('yukle', { boy: 18 }), t('yedek.geri_yukle', 'Yedekten geri yükle'), dosyaGirdisi))));
 
+      /* --- Google hesabına yedek: dosya yedeğinin hemen ardında, çünkü
+             ikisi aynı sorunun iki cevabı. --- */
+      kok.appendChild(senkronKarti(ctx, ayar, meta, ciz));
+
       /* --- Bu cihaza kur --- */
       kok.appendChild(kurulumKarti(ctx, ciz));
-
-      /* --- Google ile eşitle --- */
-      kok.appendChild(senkronKarti(ctx, ayar, meta, ciz));
 
       /* --- Veriler --- */
       kok.appendChild(kart({},
