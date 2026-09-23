@@ -503,7 +503,7 @@
  "senkron.iki_yon": "{n} ثبت پایین شد و ثبت‌های این دستگاه هم بار شد.",
  "senkron.indi": "{n} ثبت پایین شد.",
  "senkron.istemci": "شناسهٔ کلاینت گوگل",
- "senkron.istemci_ipucu": "Google Cloud Console ← OAuth client ID ← Web application. در «مبدأ مجاز» آدرس همین اپلیکیشن نوشته می‌شود. به apps.googleusercontent.com ختم می‌شود.",
+ "senkron.istemci_ipucu": "خالی بگذارید — شناسهٔ خود اپلیکیشن استفاده می‌شود. تنها اگر می‌خواهید پروژهٔ گوگل کلاود خودتان را به کار ببرید، اینجا بنویسید.",
  "senkron.kapali": "خاموش",
  "senkron.kaydet": "ذخیرهٔ تنظیمات همگام‌سازی",
  "senkron.olmadi": "همگام‌سازی انجام نشد",

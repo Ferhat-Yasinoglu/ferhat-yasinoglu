@@ -95,7 +95,7 @@ export function senkronKarti(ctx, ayar, meta, yenile) {
 
     el('div', { class: 'izgara izgara--form' },
       alan(t('senkron.istemci', 'Google istemci kimliği'), kimlikKutusu, {
-        ipucu: t('senkron.istemci_ipucu', 'Google Cloud Console → «OAuth istemci kimliği» → Web uygulaması. İzin verilen kaynak adresine uygulamanın adresi yazılır. …apps.googleusercontent.com ile biter.'),
+        ipucu: t('senkron.istemci_ipucu', 'Boş bırak — uygulamanın kendi kimliği kullanılır. Yalnız kendi Google Cloud projeni kullanmak istersen buraya yaz.'),
       }),
       alan(t('senkron.parola', 'Kasa parolası'), parolaKutusu, {
         ipucu: t('senkron.parola_ipucu', 'Kendi seçtiğin parola; Google\'ın parolası değil. Öbür cihazda harfi harfine aynısını yaz.'),
@@ -112,7 +112,11 @@ export function senkronKarti(ctx, ayar, meta, yenile) {
       btnS('kaydet', t('senkron.kaydet', 'Eşitleme ayarlarını kaydet'), { class: 'btn', onclick: async () => {
         const kimlik = kimlikKutusu.value.trim();
         const parola = parolaKutusu.value;
-        await depo.ayarKaydet({ senkronIstemciId: kimlik, senkronParolasi: parola, senkronAcik: kimlik && parola ? 1 : 0 });
+        // Kimlik alanı boş bırakılabilir: koda gömülü olan kullanılır. Burada
+        // doğrudan `kimlik`e baksaydık, alanı boş bırakan hekimde eşitleme
+        // hiç açılmazdı.
+        const etkin = !!(istemciKimligi({ senkronIstemciId: kimlik }) && parola);
+        await depo.ayarKaydet({ senkronIstemciId: kimlik, senkronParolasi: parola, senkronAcik: etkin ? 1 : 0 });
         basari(t('ayar.kaydedildi', 'Bilgiler kaydedildi'));
         yenile();
       } }),

@@ -1408,14 +1408,26 @@ const esitleDugmesi = senkronKart.locator(`button:has-text("${T('senkron.simdi')
 if (await esitleDugmesi.isEnabled()) throw new Error('kimlik/parola girilmeden "eşitle" düğmesi açık');
 ok('eşitleme kartı çizildi; kimlik ve parola girilmeden eşitleme düğmesi kapalı');
 
-await senkronKart.locator('input[name=senkronIstemciId]').fill('deneme.apps.googleusercontent.com');
+// İstemci kimliği alanı BİLEREK boş bırakılıyor: koda gömülü kimlik var ve
+// hekimin izleyeceği yol bu. Alana bakıp karar verseydik, boş bırakan hekimde
+// eşitleme hiç açılmazdı.
+await senkronKart.locator('input[name=senkronIstemciId]').fill('');
 await senkronKart.locator('input[name=senkronParolasi]').fill('kabil-1404');
 await senkronKart.locator(`button:has-text("${T('senkron.kaydet')}")`).click();
 // Başarı bildirimi kartın YENİDEN ÇİZİLMESİNDEN önce çıkıyor; ona bakıp
 // düğmeyi yoklamak eski kartı yokluyordu. Kartın kendi durumunu bekle.
 await senkronKart.locator('.rozet', { hasText: T('senkron.acik') }).waitFor({ timeout: 5000 });
 if (!(await esitleDugmesi.isEnabled())) throw new Error('kimlik ve parola girildiği halde "eşitle" düğmesi kapalı kaldı');
-ok('kimlik ve parola kaydedilince eşitleme düğmesi açıldı, kart "açık" rozetine döndü');
+const gomuluKimlik = await sayfa.evaluate(async () => {
+  const { VARSAYILAN_ISTEMCI } = await import('./js/senkron/google.js');
+  const { istemciKimligi } = await import('./js/senkron-arayuz.js');
+  return { gomulu: VARSAYILAN_ISTEMCI, bosAyarla: istemciKimligi({ senkronIstemciId: '' }) };
+});
+if (!/^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/.test(gomuluKimlik.gomulu)) {
+  throw new Error(`gömülü istemci kimliği beklenen biçimde değil: ${gomuluKimlik.gomulu}`);
+}
+if (gomuluKimlik.bosAyarla !== gomuluKimlik.gomulu) throw new Error('alan boşken gömülü kimliğe düşmüyor');
+ok(`yalnız parola girildi (kimlik alanı boş) — eşitleme açıldı, gömülü kimlik kullanılıyor: ${gomuluKimlik.gomulu.slice(0, 18)}…`);
 
 const senkronSonucu = await sayfa.evaluate(async () => {
   const { yerelDepoAc } = await import('./js/depo/idb.js');
