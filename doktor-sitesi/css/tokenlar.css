@@ -1,0 +1,93 @@
+/* Tasarım tokenları — sakin, güven veren bir klinik paleti (teal-mavi + beyaz).
+   Renkler rgb üçlüsü olarak tutulur ki rgb(var(--primer) / .12) gibi alfa
+   kullanılabilsin. Varsayılan tema aydınlık; koyu tema yalnız kullanıcı üst
+   çubuktan seçerse ya da sistem tercihi koyuysa açılır (aşağıdaki iki blok).
+   Yalnız mantıksal CSS özellikleri kullanılır: Farsça arayüz aynı dosyayla,
+   fiziksel sol/sağ hiçbir yerde sabitlenmeden sağdan sola döner. */
+:root {
+  --bg: 255 255 255;
+  --bg-2: 243 248 250;          /* bölüm zeminleri, hafif mavi ton */
+  --yuzey: 255 255 255;         /* kart zemini */
+  --cizgi: 219 229 233;         /* ince çizgiler/kenarlıklar */
+
+  --metin: 23 33 40;
+  --metin-2: 91 106 114;
+  --metin-3: 140 153 160;
+
+  --primer: 20 108 148;         /* #146C94 — ana teal-mavi */
+  --primer-2: 14 84 115;        /* #0E5473 — hover/koyu */
+  --primer-acik: 224 240 245;   /* rozet/kart zemini için açık ton */
+  --vurgu: 21 142 122;          /* #158E7A — ikinci teal-yeşil vurgu */
+  --basari: 34 139 93;
+  --buton-yazi: 255 255 255;    /* birincil düğme üstü yazı */
+
+  --r-kucuk: 8px; --r: 14px; --r-buyuk: 22px; --r-tam: 999px;
+  --b-1: 4px; --b-2: 8px; --b-3: 12px; --b-4: 16px; --b-5: 24px; --b-6: 32px; --b-7: 48px; --b-8: 64px;
+
+  --govde: 1120px;
+
+  --golge-1: 0 1px 2px rgb(23 33 40 / .06);
+  --golge-2: 0 4px 14px rgb(23 33 40 / .08), 0 1px 3px rgb(23 33 40 / .06);
+  --golge-3: 0 18px 46px rgb(23 33 40 / .12), 0 4px 12px rgb(23 33 40 / .08);
+  --odak-halka: 0 0 0 3px rgb(var(--primer) / .35);
+
+  --yazi: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Tahoma, 'Vazirmatn', Arial, 'Noto Sans', sans-serif;
+  --f-xs: .75rem; --f-s: .875rem; --f-m: 1rem; --f-l: 1.125rem; --f-xl: 1.375rem; --f-2xl: 1.875rem; --f-3xl: 2.5rem;
+
+  --gecis: 180ms ease;
+  color-scheme: light;
+}
+
+/* Sistem tercihi koyuysa VE kullanıcı elle "light" seçmediyse. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: 12 18 22;
+    --bg-2: 16 25 30;
+    --yuzey: 20 29 35;
+    --cizgi: 41 55 62;
+
+    --metin: 230 238 240;
+    --metin-2: 170 184 190;
+    --metin-3: 120 134 140;
+
+    --primer: 104 190 222;      /* #68BEDE — koyu zeminde açık teal-mavi */
+    --primer-2: 143 208 233;
+    --primer-acik: 21 44 53;
+    --vurgu: 92 201 175;
+    --basari: 92 201 152;
+    --buton-yazi: 12 18 22;
+
+    --golge-1: 0 1px 2px rgb(0 0 0 / .4);
+    --golge-2: 0 4px 14px rgb(0 0 0 / .45), 0 1px 3px rgb(0 0 0 / .35);
+    --golge-3: 0 18px 46px rgb(0 0 0 / .55), 0 4px 12px rgb(0 0 0 / .4);
+    color-scheme: dark;
+  }
+}
+
+/* Kullanıcı üst çubuktan elle "koyu" seçtiyse — sistem tercihinden bağımsız. */
+:root[data-theme="dark"] {
+  --bg: 12 18 22;
+  --bg-2: 16 25 30;
+  --yuzey: 20 29 35;
+  --cizgi: 41 55 62;
+
+  --metin: 230 238 240;
+  --metin-2: 170 184 190;
+  --metin-3: 120 134 140;
+
+  --primer: 104 190 222;
+  --primer-2: 143 208 233;
+  --primer-acik: 21 44 53;
+  --vurgu: 92 201 175;
+  --basari: 92 201 152;
+  --buton-yazi: 12 18 22;
+
+  --golge-1: 0 1px 2px rgb(0 0 0 / .4);
+  --golge-2: 0 4px 14px rgb(0 0 0 / .45), 0 1px 3px rgb(0 0 0 / .35);
+  --golge-3: 0 18px 46px rgb(0 0 0 / .55), 0 4px 12px rgb(0 0 0 / .4);
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --gecis: 0ms; }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "doktor-sitesi",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Aile hekimliği kliniği için tek sayfa, tek dilli (Farsça, RTL) tanıtım sitesi. Çerçevesiz, derleme adımsız.",
+  "scripts": {
+    "sun": "node tools/sun.mjs . 8788",
+    "test": "vitest run",
+    "test:izle": "vitest",
+    "kontrol": "node tools/kontrol.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.0"
+  }
+}

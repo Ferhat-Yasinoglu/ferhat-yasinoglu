@@ -1,0 +1,29 @@
+# doktor-sitesi'nin testleri. GitHub yalniz depo kokundeki .github/workflows'u
+# okudugu icin bu dosya projenin yaninda degil burada duruyor.
+name: doktor-sitesi testleri
+
+on:
+  pull_request:
+    paths:
+      - "doktor-sitesi/**"
+      - ".github/workflows/doktor-sitesi.yml"
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: doktor-sitesi
+
+jobs:
+  dogrula:
+    name: Testler
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: doktor-sitesi/package-lock.json
+      - run: npm ci
+      - run: npm run kontrol
+      - run: npm test
