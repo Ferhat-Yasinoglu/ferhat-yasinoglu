@@ -24,9 +24,18 @@ describe('kasa', () => {
     await expect(kasadanAl(paket, 'başka')).rejects.toMatchObject({ kod: 'parola' });
   });
   it('bir bayt oynanmış kasa açılmıyor', async () => {
+    // Base64 METNİNDE karakter değiştirmek yetmiyor: değişiklik dolgu bitlerine
+    // denk gelirse çözülen baytlar aynı kalıyor ve test kendiliğinden geçiyordu.
+    // (Yerelde geçti, CI'da düştü.) Artık gerçek bayt çevriliyor.
     const paket = await kasayaKoy({ a: 1 }, PAROLA);
-    const bozuk = { ...paket, veri: paket.veri.slice(0, -2) + (paket.veri.at(-2) === 'A' ? 'B' : 'A') + paket.veri.at(-1) };
-    await expect(kasadanAl(bozuk, PAROLA)).rejects.toThrow(KasaHatasi);
+    const ham = Uint8Array.from(atob(paket.veri), (c) => c.charCodeAt(0));
+    for (const yer of [0, Math.floor(ham.length / 2), ham.length - 1]) {
+      const oynanmis = Uint8Array.from(ham);
+      oynanmis[yer] ^= 0xff;
+      const bozuk = { ...paket, veri: btoa(String.fromCharCode(...oynanmis)) };
+      expect(bozuk.veri).not.toBe(paket.veri);
+      await expect(kasadanAl(bozuk, PAROLA)).rejects.toThrow(KasaHatasi);
+    }
   });
   it('gerçek boyutta veriyi taşıyor', async () => {
     // Küçük nesnelerle geçen testler bir yığın taşmasını gizlemişti: base64'e
