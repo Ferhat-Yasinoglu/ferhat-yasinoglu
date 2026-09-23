@@ -207,23 +207,46 @@ kalır, iki taraf da doluysa yenisi seçilir ve eski değer hekime gösterilir.
 import). Açıkken bile uygulama internetsiz eskisi gibi tam çalışır; eşitleme
 internet gelince yapılır.
 
-### Kurulum (bir kez, Google Cloud'da)
+### Açmak için
+
+**Ayarlar → Google ile eşitle** → kasa parolasını yaz → **Kaydet** → **Şimdi eşitle**.
+İkinci cihazda aynı parola. İstemci kimliği alanı boş bırakılır.
+
+### İstemci kimliği nerede
+
+`app/js/senkron/google.js` içinde, `VARSAYILAN_ISTEMCI` sabitinde, açıkça.
+Durmasında sakınca yok: OAuth **web istemci kimlikleri tasarımı gereği
+herkese açıktır** — Google ile giriş kullanan her sitenin kaynak kodunda
+görünürler. Gizli olan `client secret`tir ve bu akış onu hiç kullanmaz.
+
+Kötüye kullanımı engelleyen şey gizliliği değil, Google'ın kimliği **kaynak
+adresine** bağlaması. Yalnız şu iki adresten çalışır:
+
+```
+https://ferhat-yasinoglu.github.io
+http://localhost:8788
+```
+
+Başka biri bu kimlikle olsa olsa **kendi** Drive'ının uygulama klasörüne
+erişir — buradaki hiçbir şeye değil.
+
+### Kendi projesini kullanmak isteyen için
+
+Ayarlardaki **Google istemci kimliği** alanı yedek yol olarak duruyor; oraya
+yazılan değer gömülü olanın yerine geçer. Kendi kimliğini üretmek için:
 
 1. <https://console.cloud.google.com> → yeni proje.
 2. **APIs & Services → Library** → *Google Drive API* → Enable.
-3. **OAuth consent screen** → External → uygulama adı, destek e-postası.
-   *Scopes* adımında `.../auth/drive.appdata` eklenir. Yayına almaya gerek yok:
-   *Test users* listesine hekimin Gmail adresi yazılırsa yeter.
-4. **Credentials → Create credentials → OAuth client ID → Web application.**
-   *Authorized JavaScript origins*'e uygulamanın adresi yazılır
-   (yayın adresi, ayrıca yerelde denemek için `http://localhost:8788`).
-5. Çıkan `…apps.googleusercontent.com` kimliği uygulamada
-   **Ayarlar → Google ile eşitle → Google istemci kimliği** alanına yapıştırılır.
-   Aynısı ikinci cihaza da girilir.
+3. **Google Auth Platform → Get started**: uygulama adı, destek e-postası,
+   **External**, iletişim adresi. Yayına almaya gerek yok — *Audience* altında
+   **Test users**'a kendi Gmail adresini eklemek yeter.
+4. **Data Access** → `.../auth/drive.appdata` kapsamı eklenir.
+5. **Clients → Create client → Web application.** *Authorized JavaScript
+   origins*'e uygulamanın adresi yazılır; *redirect URIs* boş bırakılır
+   (kullanılan akış yönlendirme değil).
 
-İstemci kimliği gizli değildir; Google web istemcilerini kaynak adresine bağlar.
-Yayına sabitlenmesi istenirse `app/js/senkron/google.js` içindeki
-`VARSAYILAN_ISTEMCI` doldurulur, ayar alanı yedek yol olarak kalır.
+Google Cloud Console iki adımlı doğrulama (2SV) açık olmayan hesapları
+içeri almıyor; hesapta açık değilse ilk adımda takılır.
 
 ### Bilerek kabul edilen iki şey
 

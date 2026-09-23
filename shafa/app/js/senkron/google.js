@@ -23,10 +23,23 @@ const DOSYA_ADI = 'shafa.kasa.json';
 const API = 'https://www.googleapis.com/drive/v3';
 const YUKLEME = 'https://www.googleapis.com/upload/drive/v3';
 
-/** İstemci kimliği burada boş: hekimin kendi Google Cloud projesinden geliyor
- *  ve şimdilik ayarlardan giriliyor. Kimlik gizli değil; yayına sabitlenmesi
- *  gerekirse buraya yazılır ve ayar alanı yedek yol olarak kalır. */
-export const VARSAYILAN_ISTEMCI = '';
+/**
+ * Hekimin Google Cloud projesindeki istemci kimliği.
+ *
+ * Burada açıkça duruyor ve durmasında sakınca yok: OAuth web istemci kimlikleri
+ * tasarımı gereği herkese açık — Google ile giriş kullanan her sitenin kaynak
+ * kodunda görünür. Gizli olan `client secret`tir, onu bu akış hiç kullanmıyor.
+ * Kimliğin kötüye kullanımını engelleyen şey gizliliği değil, Google'ın onu
+ * KAYNAK ADRESİNE bağlaması: yalnız aşağıdaki iki adresten çalışır.
+ *   https://ferhat-yasinoglu.github.io
+ *   http://localhost:8788
+ * Başka biri bu kimlikle kendi Drive'ının uygulama klasörüne erişebilir —
+ * yani kendi verisine; buradaki hiçbir şeye değil.
+ *
+ * Ayarlardaki alan yedek yol olarak duruyor: başka bir hekim kendi projesini
+ * kullanmak isterse oradan girer ve buradaki değerin yerine geçer.
+ */
+export const VARSAYILAN_ISTEMCI = '992727769946-82oa2himlups0dihvjau26hp7det5pu8.apps.googleusercontent.com';
 
 export class GoogleHatasi extends Error {
   constructor(kod, mesaj, veri = null) { super(mesaj || kod); this.kod = kod; this.veri = veri; }
