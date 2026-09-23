@@ -10,6 +10,17 @@ import { hataMetni } from './hatalar.js';
 import { t } from './i18n.js';
 
 export const istemciKimligi = (ayar) => (ayar?.senkronIstemciId || VARSAYILAN_ISTEMCI || '').trim();
+
+/** Google istemci kimliğinin biçimi. Ayarlara yarım yapıştırılmış bir değer
+ *  gömülü kimliğin yerine geçiyor ve Google "böyle bir client yok" diyor —
+ *  hata Google'dan geldiği için de sebebi uygulamada hiç görünmüyordu. */
+export const KIMLIK_KALIBI = /^\d+-[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/;
+export const kimlikDurumu = (ayar) => {
+  const kimlik = istemciKimligi(ayar);
+  const kendi = !(ayar?.senkronIstemciId || '').trim();
+  if (!kimlik) return { kimlik: '', kaynak: 'yok', gecerli: false };
+  return { kimlik, kaynak: kendi ? 'gomulu' : 'ayar', gecerli: KIMLIK_KALIBI.test(kimlik) };
+};
 export const senkronHazir = (ayar) => !!istemciKimligi(ayar) && !!ayar?.senkronParolasi && !!ayar?.senkronAcik;
 
 /**
@@ -72,6 +83,24 @@ export function senkronKarti(ctx, ayar, meta, yenile) {
       el('ul', { class: 'sessiz' }, ...cakisan.slice(0, 8).map((c) =>
         el('li', {}, t('ayar.' + c.alan, c.alan) + ': ' + kisalt(c.secilen === 'yerel' ? c.uzak : c.yerel))))));
 
+  /* Hangi kimliğin GERÇEKTEN kullanıldığı yazıyor. Bu satır olmadan, ayarlara
+     yarım kalmış bir kimlik yapıştırılmışsa hekim yalnız Google'ın "client
+     bulunamadı" ekranını görüyor ve sebebin kendi ayarında olduğunu anlamıyor. */
+  function kimlikSatiri() {
+    const d = kimlikDurumu(ayar);
+    if (!d.kimlik) return null;
+    const kisa = d.kimlik.length > 34 ? d.kimlik.slice(0, 30) + '…' : d.kimlik;
+    if (!d.gecerli) {
+      return el('div', { class: 'uyari uyari--hata', style: { marginBlockStart: 'var(--b-2)' } },
+        simge('uyari', { boy: 16 }),
+        el('span', {}, t('senkron.kimlik_bozuk', 'Buradaki kimlik biçime uymuyor, Google tanımaz: {k} — alanı boşaltıp kaydedersen uygulamanın kendi kimliği kullanılır.', { k: kisa })));
+    }
+    return el('div', { class: 'sessiz', style: { marginBlockStart: 'var(--b-1)' } },
+      d.kaynak === 'gomulu'
+        ? t('senkron.kimlik_gomulu', 'Kullanılan kimlik: {k} (uygulamanın kendi kimliği)', { k: kisa })
+        : t('senkron.kimlik_ayar', 'Kullanılan kimlik: {k} (buradan girildi)', { k: kisa }));
+  }
+
   async function eslestir() {
     rapor.replaceChildren(el('div', { class: 'uyari uyari--bilgi' }, simge('yenile', { boy: 16 }), el('span', {}, t('senkron.suruyor', 'Eşitleniyor…'))));
     const s = await senkronTuru(ctx, {});
@@ -94,7 +123,7 @@ export function senkronKarti(ctx, ayar, meta, yenile) {
       el('span', {}, t('senkron.gizlilik', 'Yüklenmeden önce her şey bu cihazda şifrelenir; Google yalnız şifreli veriyi görür. Parola cihazdan çıkmaz — bu yüzden İKİ CİHAZDA DA AYNI PAROLAYI yazmak gerekir. Parola kaybolursa buluttaki kopya açılamaz.'))),
 
     el('div', { class: 'izgara izgara--form' },
-      alan(t('senkron.istemci', 'Google istemci kimliği'), kimlikKutusu, {
+      alan(t('senkron.istemci', 'Google istemci kimliği'), el('div', {}, kimlikKutusu, kimlikSatiri()), {
         ipucu: t('senkron.istemci_ipucu', 'Boş bırak — uygulamanın kendi kimliği kullanılır. Yalnız kendi Google Cloud projeni kullanmak istersen buraya yaz.'),
       }),
       alan(t('senkron.parola', 'Kasa parolası'), parolaKutusu, {
