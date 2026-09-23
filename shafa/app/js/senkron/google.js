@@ -55,11 +55,26 @@ function betigiYukle() {
     s.src = GIS_ADRESI;
     s.async = true;
     s.onload = () => (globalThis.google?.accounts?.oauth2 ? coz() : red(new GoogleHatasi('betik', 'Google betiği yüklendi ama beklenen arayüz yok.')));
-    s.onerror = () => { betikSozu = null; red(new GoogleHatasi('ag', 'Google betiği yüklenemedi.')); };
+    s.onerror = () => {
+      betikSozu = null;
+      // ÇEVRİMİÇİYKEN betiğin yüklenememesi "internet yok" demek değil:
+      // engellenmiş demektir — reklam engelleyici, kurumsal filtre, ya da eski
+      // önbellekten gelen ve accounts.google.com'a izin vermeyen bir CSP.
+      // İkisini aynı mesaja indirmek hekimi internetini kurcalamaya gönderiyor,
+      // oysa bakması gereken yer bambaşka.
+      red(navigator.onLine
+        ? new GoogleHatasi('betik', 'Google giriş betiği yüklenemedi.')
+        : new GoogleHatasi('ag', 'İnternet yok.'));
+    };
     document.head.appendChild(s);
   });
   return betikSozu;
 }
+
+/** GIS her zaman geri çağırmıyor: oturum yokken sessiz istek ya da engellenmiş
+ *  bir pencere sözü hiç çözmeyebiliyor. Zaman aşımı olmadan arayüzde
+ *  "Eşitleniyor…" sonsuza kadar dönüyor ve hekim neyin beklendiğini anlamıyor. */
+const BELGE_SURESI = 90000;
 
 /** Bellekte duran erişim belgesi. Diske yazılmıyor: bir saat ömrü var ve
  *  saklamanın getirisi, çalınmasının götürüsünden az. */
@@ -83,25 +98,29 @@ function istemciKur(kimlik) {
  * Pencereyi tarayıcı engellerse 'pencere' hatası düşer — bu, hekime
  * "düğmeye basınca olur" diyebilmemiz için ayrı tutuluyor.
  */
-export async function belgeAl(kimlik, { sessiz = false } = {}) {
+export async function belgeAl(kimlik, { sessiz = false, sure = BELGE_SURESI } = {}) {
   if (!kimlik) throw new GoogleHatasi('istemci_yok', 'Google istemci kimliği girilmemiş.');
   if (girisliMi()) return belge.deger;
   await betigiYukle();
   const c = istemciKur(kimlik);
   return new Promise((coz, red) => {
+    const sayac = setTimeout(() => red(new GoogleHatasi('zaman_asimi', 'Google yanıt vermedi.')), sure);
+    const bitir = (fn) => (...a) => { clearTimeout(sayac); fn(...a); };
+    const tamam = bitir(coz);
+    const dur = bitir(red);
     c.callback = (y) => {
       if (y?.error) {
         const kod = y.error === 'popup_closed' || y.error === 'access_denied' ? 'yetki'
           : y.error === 'popup_failed_to_open' ? 'pencere' : 'yetki';
-        red(new GoogleHatasi(kod, y.error_description || y.error));
+        dur(new GoogleHatasi(kod, y.error_description || y.error));
         return;
       }
       belge = { deger: y.access_token, biter: Date.now() + (Number(y.expires_in || 3600) - 60) * 1000 };
-      coz(belge.deger);
+      tamam(belge.deger);
     };
-    c.error_callback = (y) => red(new GoogleHatasi(y?.type === 'popup_failed_to_open' ? 'pencere' : 'yetki', y?.message || 'İzin alınamadı.'));
+    c.error_callback = (y) => dur(new GoogleHatasi(y?.type === 'popup_failed_to_open' ? 'pencere' : 'yetki', y?.message || 'İzin alınamadı.'));
     try { c.requestAccessToken({ prompt: sessiz ? '' : 'consent' }); }
-    catch (e) { red(new GoogleHatasi('yetki', e?.message)); }
+    catch (e) { dur(new GoogleHatasi('yetki', e?.message)); }
   });
 }
 

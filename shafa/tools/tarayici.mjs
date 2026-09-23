@@ -76,7 +76,11 @@ const tarayici = await chromium.launch();
 // Açık bir bağlam: yan sekmeler aynı IndexedDB'yi görsün diye gerekli.
 const baglam = await tarayici.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
 const sayfa = await baglam.newPage();
-sayfa.on('console', (m) => { if (m.type() === 'error') hatalar.push('console: ' + m.text()); });
+/* Son adım Google betiğini BİLEREK yüklenemez halde çağırıyor; tarayıcı da
+   bunu konsola hata olarak yazıyor. O adım boyunca konsol susturuluyor, öncesi
+   ve sonrasında değil — başka bir yerdeki gerçek hata yine denemeyi düşürür. */
+let googleDenemesi = false;
+sayfa.on('console', (m) => { if (m.type() === 'error' && !googleDenemesi) hatalar.push('console: ' + m.text()); });
 sayfa.on('pageerror', (e) => hatalar.push('pageerror: ' + e.message));
 
 await sayfa.goto(KOK, { waitUntil: 'networkidle' });
@@ -1479,6 +1483,41 @@ if (!s.sifreli) throw new Error(`buluta yazılan gövdede hasta adı açık duru
 if (s.telefondaDogrulandi !== 'gecerli') throw new Error(`öbür cihazda basılmış reçete doğrulanmadı: ${s.telefondaDogrulandi}`);
 if (s.bosTurYukledi) throw new Error('değişiklik yokken yine de yükleme yapıldı');
 ok(`eşitleme: iki cihaz da ${s.bilgisayarHasta} hasta / ${s.bilgisayarIlac} ilaçta buluştu; gövde şifreli (hasta adı «${s.hastaAdi}» geçmiyor); öbür cihazın reçetesi doğrulandı; boş tur yükleme yapmadı`);
+
+// --- Google hataları birbirinden ayrılıyor mu?
+// Bu ortamda GIS betiği ÇEVRİMİÇİYKEN yüklenemiyor (vekil sunucunun sertifikası
+// tanınmıyor) — yani tam olarak "internet var ama betik engellendi" durumu.
+// Hekimi internetini kurcalamaya göndermemek için bu 'ag' değil 'betik' olmalı.
+googleDenemesi = true;
+const googleHatalari = await sayfa.evaluate(async () => {
+  const g = await import('./js/senkron/google.js');
+  const out = {};
+
+  try { await g.belgeAl(g.VARSAYILAN_ISTEMCI); out.engel = 'HATA_YOK'; }
+  catch (e) { out.engel = e?.kod || '?'; }
+
+  try { await g.belgeAl(''); out.kimliksiz = 'HATA_YOK'; }
+  catch (e) { out.kimliksiz = e?.kod || '?'; }
+
+  // Zaman aşımı: hiç geri çağırmayan bir istemci taklit ediliyor. Bu olmadan
+  // söz hiç çözülmüyor ve arayüzde "Eşitleniyor…" sonsuza kadar dönüyordu.
+  globalThis.google = { accounts: { oauth2: { initTokenClient: () => ({ requestAccessToken() {} }) } } };
+  g.cikisYap();
+  const t0 = Date.now();
+  try { await g.belgeAl('sahte.apps.googleusercontent.com', { sure: 250 }); out.zaman = 'HATA_YOK'; }
+  catch (e) { out.zaman = e?.kod || '?'; }
+  out.sure = Date.now() - t0;
+  return out;
+});
+
+googleDenemesi = false;
+if (googleHatalari.engel !== 'betik') {
+  throw new Error(`engellenen betik '${googleHatalari.engel}' diye raporlandı; 'betik' olmalıydı`);
+}
+if (googleHatalari.kimliksiz !== 'istemci_yok') throw new Error(`kimliksiz çağrı: ${googleHatalari.kimliksiz}`);
+if (googleHatalari.zaman !== 'zaman_asimi') throw new Error(`geri çağırmayan istemci: ${googleHatalari.zaman}`);
+if (googleHatalari.sure > 3000) throw new Error(`zaman aşımı geç düştü: ${googleHatalari.sure}ms`);
+ok(`Google hataları ayrışıyor: engellenen betik «betik» (internet suçlanmıyor), kimliksiz «istemci_yok», geri çağırmayan istemci ${googleHatalari.sure}ms'de «zaman_asimi» (sonsuza kadar dönmüyor)`);
 
 await tarayici.close();
 kapat();
