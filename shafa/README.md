@@ -298,8 +298,31 @@ internet gelince yapılır.
 
 ### Açmak için
 
-**Ayarlar → Kendi Google hesabına yedek** → kasa parolasını yaz → **Kaydet** →
-**Şimdi yedekle**. İkinci cihazda aynı parola. İstemci kimliği alanı boş bırakılır.
+**Ayarlar → Kendi Google hesabına yedek → «Google ile giriş yap».** Tek düğme.
+Hekim bu uygulamada **hiçbir parola yazmıyor** — yazdığı tek şifre kendi Gmail
+şifresi, o da Google'ın kendi penceresinde.
+
+Kartta eskiden iki kutu vardı: «kasa parolası» ve «Google istemci kimliği».
+İkincisi geliştirici işiydi; bir doktorun ekranında `992727769946-82oa2…` diye
+bir dize durmamalıydı. İkisi de artık **«Gelişmiş»** başlığının altında katlı.
+`npm run deneme` kartta görünür tek bir kutu bile olmadığını ve tek düğmenin
+giriş düğmesi olduğunu denetliyor.
+
+**Kasa kodunu uygulama üretiyor.** İlk girişte `kasaKoduUret()` (bkz.
+`paylasilan/kimlik.js`) 100 bitlik bir kod üretip ayarlara yazıyor:
+`G5KF-RFXS-7KPZ-626R-X9FW`. Birbirine benzeyen harfler (I, O, 0, 1) alfabede
+yok, çünkü bu kod elle öbür cihaza geçirilecek. `crypto` yoksa `Math.random`'a
+**düşülmüyor**, hata veriliyor: burada üretilen şey bir şifreleme anahtarı ve
+tahmin edilebilir olması sessiz bir güvenlik kaybı olurdu.
+
+**İkinci cihaz.** Orada da tek düğmeye basılır. Uygulama kendi kodunu üretir,
+Google'daki dosyayı indirir, açamaz ve `parola` hatası düşer — bu kodu
+`meta.sonSenkronHataKodu`'na yazılır. Kart o zaman, ancak o zaman, «bu yedeği
+başka bir cihaz yaptı, onun kodunu yaz» kutusunu gösterir. İlk cihazda kod
+«Gelişmiş» altında, kopyalama düğmesiyle duruyor.
+
+Bu sıra bilerek böyle: hekim ilk cihazda kodla hiç karşılaşmıyor. Kodu ancak
+gerçekten lazım olduğu anda görüyor.
 
 Onay ekranı "Testing" modunda olduğu sürece yalnız **test listesindeki adresler**
 giriş yapabilir (en çok 100). Listede olmayan bir hekim `hesap_izinsiz` hatasını

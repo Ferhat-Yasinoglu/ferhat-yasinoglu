@@ -35,8 +35,8 @@ const DEPO = {
   gorsel_buyuk: 'Görsel çok büyük; daha küçük bir fotoğraf seç.',
   // Eşitleme ve kasa. Türkçe kalan bir kod Farsça arayüzün ortasına Türkçe
   // cümle basıyor — görsel yükleme eklenirken tam bu olmuştu.
-  parola_yok: 'Önce kasa parolası girilmeli.',
-  parola: 'Kasa parolası tutmuyor. Öbür cihazdaki parolanın aynısını yaz.',
+  parola_yok: 'Önce Google ile giriş yapılmalı.',
+  parola: 'Bu yedek başka bir cihazda yapılmış. O cihazın kodunu gir.',
   kasa_bozuk: 'Google\'daki dosya açılamadı.',
   uzak_bozuk: 'Buluttaki dosya bir Shafa kopyası değil.',
   kripto: 'Bu tarayıcı şifreleme desteklemiyor; eşitleme çalışmaz.',
