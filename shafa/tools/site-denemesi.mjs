@@ -94,6 +94,32 @@ try {
   if (eskiKalan.length) throw new Error('tanıtımda eski adres kalmış: ' + eskiKalan);
   ok(`tanıtım /shafa/ açıldı, ${uygBag} uygulama bağlantısı, eski adres kalmamış`);
 
+  // İndirme bölümü artık sitenin asıl dönüşüm yolu: ziyaretçi uygulamayı
+  // buradan kuruyor. Sekmeler JS ile açılıp kapanıyor; JS'te bir hata olsa
+  // dört tarifin dördü birden açık kalır ya da hiçbiri açılmaz ve bu hiçbir
+  // testte patlamaz.
+  const acikPano = () => sayfa.$$eval('.pano', (a) => a.filter((x) => !x.hidden).map((x) => x.id));
+  const sekmeSayisi = await sayfa.$$eval('.sekme', (a) => a.length);
+  const ilkAcik = await acikPano();
+  if (sekmeSayisi < 3) throw new Error('indirme sekmeleri eksik: ' + sekmeSayisi);
+  if (ilkAcik.length !== 1) throw new Error('açılışta tam bir pano açık olmalı: ' + ilkAcik.join(', '));
+  await sayfa.click('#s-ios');
+  const iosAcik = await acikPano();
+  if (iosAcik.join() !== 'p-ios') throw new Error('sekme değişmedi: ' + iosAcik.join(', '));
+  ok(`indirme bölümü: ${sekmeSayisi} sekme, açılışta ${ilkAcik[0]}, tıklayınca p-ios`);
+
+  // Sekme şeridini ortalayan kod sayfayı da kaydırırsa ziyaretçi tanıtımı
+  // baştan değil indirme bölümünden görür. Bir kez tam da böyle oldu.
+  await sayfa.goto(`${K}/shafa/`, { waitUntil: 'networkidle' });
+  const kaydi = await sayfa.evaluate(() => window.scrollY);
+  if (kaydi > 0) throw new Error('sayfa kendiliğinden kaydı: scrollY=' + kaydi);
+  ok('açılışta sayfa kendiliğinden kaymıyor (scrollY=0)');
+
+  // Kurulum düğmesi uygulamayı kurulum işaretiyle açmalı.
+  const kurBag = await sayfa.$$eval('a[href="./app/?kur=1"]', (a) => a.length);
+  if (!kurBag) throw new Error('indirme bölümünde ./app/?kur=1 düğmesi yok');
+  ok(`kurulum düğmesi yerinde (${kurBag} tane ./app/?kur=1)`);
+
   await sayfa.click('a[href="./app/"]');
   await sayfa.waitForURL(/\/shafa\/app\//);
   await sayfa.waitForSelector('#sayfa', { timeout: 15000 });

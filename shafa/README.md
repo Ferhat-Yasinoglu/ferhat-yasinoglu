@@ -38,6 +38,79 @@ Yayın `.github/workflows/site.yml` ile yapılır. Service worker'ın önbellek
 anahtarı dağıtımın kısa SHA'sıyla damgalanır (`sw.js` içindeki `__SURUM__`);
 bu olmadan tarayıcı eski dosyaları süresiz tutar ve güncelleme hekime ulaşmaz.
 
+## Tanıtım sayfası
+
+`tanitim/index.html` — tek dosya, derleme yok, çerçeve yok. Koyu tema, Dari, RTL.
+Sıra: kahraman · güvence şeridi · 7 numaralı özellik kartı · «چگونه کار می‌کند»
+dört adım · reçete kâğıdı · sahtecilik tablosu · tarife · **indirme** · sorular · kapanış.
+
+### İndirme bölümü neden sekme
+
+Örnek alınan site (`dakhlak.pamircode.com`) her işletim sistemi için **kurulum
+dosyası** indirtiyor: Windows sekmesinde "دانلود برای ویندوز — نسخه 1.0.15"
+diye bir EXE. Shafa'nın indirilecek bir dosyası yok; tarayıcıdan kurulan bir
+web uygulaması. Bu yüzden sekmelerin altında dosya değil **o cihazın kurulum
+tarifi** var: Android'de "kur" düğmesi, iPhone'da Safari → Share → Add to Home
+Screen, masaüstünde adres çubuğundaki kurulum simgesi.
+
+Bu bir eksiklik değil, farklı bir dağıtım biçimi — ve sayfa bunu gizlemiyor,
+"به جای فایل نصبی، از خود مرورگر نصب می‌شود" diye açıkça yazıyor. Gerçekten
+EXE/APK indirtmek isteniyorsa uygulamanın Tauri (masaüstü) ve TWA (Android)
+ile paketlenmesi gerekir; iOS'ta Apple yan yükleme vermediği için o sekme her
+hâlükârda "ana ekrana ekle" kalır.
+
+### Sekmelerin kuralları
+
+- Panolar HTML'de **açık** kurulur; gizlemeyi yalnız JS yapar. JS çalışmazsa
+  dört tarif de alt alta okunur — içerik hiçbir durumda erişilemez olmaz.
+- Ziyaretçinin kendi cihazının sekmesi açılır; tanınmayan cihazda Android'de kalır.
+- Seçili sekme dar ekranda şeridin dışında kalırsa şerit kaydırılır — ama
+  `scrollIntoView` ile **değil**: o sayfanın kendisini de kaydırıyor ve ziyaretçi
+  tanıtımı baştan değil indirme bölümünden görüyordu (ölçüldü: `scrollY` 0 yerine
+  7486). Onun yerine yalnız şeridin `scrollLeft`'i fark kadar oynatılıyor.
+  `npm run site` açılışta `scrollY === 0` olduğunu ayrıca denetliyor.
+
+### Sürüm rozeti
+
+İndirme bölümü "نسخه 0.2.0" yazıyor. Bu sayı elle yazıldığı için uygulama sürümü
+yükselince sessizce geride kalır. `npm run kontrol` rozeti `uygulama.js`'teki
+`UYGULAMA_SURUMU` ile karşılaştırıyor: ikisi ayrışırsa denetim patlar.
+Sürüm yükseltmek tek satır — `js/uygulama.js`; rozet peşinden gelir.
+
+### Ekran görüntüleri
+
+```bash
+node tools/gorsel-uret.mjs      # panel.png ve mobil.png'yi yeniden üretir
+```
+
+Elle alınan görüntüler sessizce eskiyor: tanıtımdaki `panel.png` örnek hastalar
+Dari'ye çevrilmeden önce alınmıştı ve Afgan hekime aylarca **«Ayşe Yılmaz,
+Mehmet Demir, Zeynep Kaya»** gösterdi. Hiçbir test bunu yakalamadı, çünkü
+görüntü bir ikili dosya.
+
+Araç uygulamayı **koyu temada** açıyor (tanıtım sayfası koyu), örnek veriyi
+yüklüyor, 14 güne yayılmış sabit dağılımla 28 örnek reçete yazıyor ve
+`panel.png`'yi **1600×1000 — 16:10, gerçek bir bilgisayar ekranı oranında**
+alıyor. Reçete satırlarında doz/kullanım alanı boş bırakılıyor: bu depo ilaç
+**adlarının** sözlüğü, tedavi tarifi değil.
+
+Yedek hatırlatma bandı (`.bant`) görüntüye girmesin diye örnek veri yazıldıktan
+sonra "yedek alındı" işaretleniyor — ve araç bandın gerçekten yok olduğunu
+denetliyor, sessizce fotoğrafa girmesin diye.
+
+`recete.png` bilerek dışarıda: o basılı reçete kâğıdı, kâğıt beyazdır.
+
+`npm run kontrol` HTML'deki `width`/`height` ile dosyanın gerçek ölçüsünü
+karşılaştırıyor. Bu olmasa 1280×900 yazan etiket 1600×1000'lik görüntüyü ezer
+ya da sayfa yüklenirken zıplardı.
+
+### Sayfada bilerek olmayanlar
+
+- **Ekip / "تیم ما" bölümü yok.** Depo herkese açık; hekimin adı, telefonu ve
+  adresi buraya yazılamaz. Bu bilgiler yalnız cihazdaki Ayarlar'da durur.
+- **Fiyat yazmıyor.** İkinci sürüm paralı olacak ama rakam belli değil; belli
+  olmadan sayfaya sayı yazılmıyor. Tarife kartı "به زودی" diyor.
+
 ## Çalıştırma
 
 ```bash
@@ -47,6 +120,7 @@ npm run sun          # http://localhost:8788/  — uygulama app/ klasöründen s
 npm test             # alan mantığı, depo, reçete ve yedek testleri
 npm run kontrol      # statik denetimler (mantıksal CSS, innerHTML yok, saf modüller)
 npm run deneme       # gerçek tarayıcıda uçtan uca deneme (playwright kuruluysa)
+npm run site         # yayın düzenini kurup gerçek tarayıcıda dener
 ```
 
 Tarayıcıda `?nosw=1` ile service worker atlanır (yerel geliştirmede önbellek karışmasın).
@@ -338,7 +412,10 @@ app/                      PWA (statik olarak olduğu gibi sunulur)
     sayfalar/             panel · ilaclar · ilac · hastalar · hasta ·
                           receteler · recete-yeni · recete · ayarlar · bulunamadi
 test/                     vitest
-tools/                    sun (statik sunucu) · kontrol (statik denetim) · tarayici (uçtan uca)
+tanitim/index.html        tanıtım ve indirme sayfası (tek dosya)
+tools/                    sun (statik sunucu) · kontrol (statik denetim) ·
+                          tarayici (uçtan uca) · site-denemesi (yayın düzeni) ·
+                          gorsel-uret (tanıtım ekran görüntüleri)
 ```
 
 ### Kurallar

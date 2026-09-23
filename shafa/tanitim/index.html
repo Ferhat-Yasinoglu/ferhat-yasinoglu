@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>شفا — نسخه‌نویسی برای داکتران</title>
-<meta name="description" content="برنامه نسخه‌نویسی برای داکتران. معلومات مریضان در گوشی خود شما می‌ماند؛ سرور و حساب کاربری ندارد و بدون انترنت هم کار می‌کند.">
-<meta name="theme-color" content="#0f766e">
+<meta name="description" content="برنامه نسخه‌نویسی برای داکتران. معلومات مریضان در دستگاه خود شما می‌ماند؛ سرور ندارد، بدون انترنت کار می‌کند و از همین صفحه روی تیلفون، کمپیوتر و تبلت نصب می‌شود.">
+<meta name="theme-color" content="#070c0e">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <meta property="og:title" content="شفا — نسخه‌نویسی برای داکتران">
-<meta property="og:description" content="معلومات مریضان از گوشی بیرون نمی‌رود. بدون انترنت کار می‌کند.">
+<meta property="og:description" content="معلومات مریضان از دستگاه بیرون نمی‌رود. بدون انترنت کار می‌کند. از همین صفحه نصب می‌شود.">
 <meta property="og:type" content="website">
 <style>
 /* Yazı tipi uygulamanın kopyasından gelir: iki yerde aynı dosyayı taşımayalım.
@@ -19,171 +19,286 @@
   font-weight: 100 900; font-style: normal; font-display: swap;
 }
 
+/* Koyu tema tek yön: tanıtım sayfası gece de gündüz de aynı görünür.
+   Uygulamanın kendisi hâlâ açık/koyu ikisini de destekliyor; burası vitrin. */
 :root {
-  --ink: #0c1d21; --ink-2: #445c60; --ink-3: #7c9096;
-  --kagit: #ffffff; --zemin: #f4f8f8; --cizgi: #dce7e7;
-  --vurgu: #0f766e; --vurgu-2: #0b5f58; --vurgu-3: #14b8a6; --vurgu-soluk: #e7f4f2;
+  --zemin: #070c0e;        /* sayfa */
+  --kagit: #0d1518;        /* kart */
+  --kagit-2: #121c20;      /* kart içi vurgu */
+  --cizgi: #1c2a2e;
+  --cizgi-2: #26383d;
+  --ink: #e8f1f1;
+  --ink-2: #9db0b3;
+  --ink-3: #6b8085;
+  --vurgu: #14b8a6;
+  --vurgu-2: #2dd4bf;
+  --vurgu-koyu: #0f766e;
+  --vurgu-soluk: #0e2b29;
   --r: 16px; --r-b: 24px;
-  --en: 1120px;
+  --en: 1140px;
   --egri: cubic-bezier(.22,.68,.36,1);
   --yazi: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ink: #e6f0f0; --ink-2: #9db3b5; --ink-3: #728a8d;
-    --kagit: #111c1f; --zemin: #0a1214; --cizgi: #1f3034;
-    --vurgu: #2dd4bf; --vurgu-2: #5eead4; --vurgu-3: #14b8a6; --vurgu-soluk: #11302d;
-  }
 }
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
+/* Yapışkan üst çubuk 66px: çapaya atlarken başlık çubuğun altında kalmasın. */
+section[id] { scroll-margin-block-start: 78px; }
 body {
   margin: 0; background: var(--zemin); color: var(--ink);
-  font-family: var(--yazi); font-size: 16px; line-height: 1.7;
+  font-family: var(--yazi); font-size: 16px; line-height: 1.75;
   -webkit-text-size-adjust: 100%;
 }
 img { max-inline-size: 100%; block-size: auto; display: block; }
-a { color: var(--vurgu); }
+a { color: var(--vurgu-2); }
 h1, h2, h3 { line-height: 1.25; letter-spacing: -.015em; margin: 0; }
 p { margin: 0; }
 .kap { max-inline-size: var(--en); margin-inline: auto; padding-inline: 20px; }
-.bolum { padding-block: clamp(56px, 9vw, 104px); }
+.bolum { padding-block: clamp(56px, 9vw, 108px); }
 .bolum--kagit { background: var(--kagit); border-block: 1px solid var(--cizgi); }
 
 /* ---------- Üst çubuk ---------- */
 .ust {
-  position: sticky; inset-block-start: 0; z-index: 20;
-  background: color-mix(in srgb, var(--kagit) 82%, transparent);
-  backdrop-filter: saturate(160%) blur(12px);
+  position: sticky; inset-block-start: 0; z-index: 30;
+  background: color-mix(in srgb, var(--zemin) 84%, transparent);
+  backdrop-filter: saturate(160%) blur(14px);
   border-block-end: 1px solid var(--cizgi);
 }
-.ust .kap { display: flex; align-items: center; gap: 12px; block-size: 64px; }
+.ust .kap { display: flex; align-items: center; gap: 12px; block-size: 66px; }
 .marka { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
 .marka img { inline-size: 34px; block-size: 34px; border-radius: 9px; }
 .marka b { font-size: 19px; letter-spacing: -.02em; }
 .marka span { font-size: 12px; color: var(--ink-3); display: block; line-height: 1; }
-.ust nav { margin-inline-start: auto; display: flex; align-items: center; gap: 8px; }
-.ust nav a.baglanti { display: none; color: var(--ink-2); text-decoration: none; font-weight: 600; font-size: 14px; padding: 8px 10px; border-radius: 10px; }
-.ust nav a.baglanti:hover { color: var(--ink); background: var(--zemin); }
-@media (min-width: 720px) { .ust nav a.baglanti { display: inline-flex; } }
+.ust nav { margin-inline-start: auto; display: flex; align-items: center; gap: 4px; }
+.ust nav a.baglanti { display: none; color: var(--ink-2); text-decoration: none; font-weight: 600; font-size: 14px; padding: 8px 11px; border-radius: 10px; }
+.ust nav a.baglanti:hover { color: var(--ink); background: var(--kagit-2); }
+@media (min-width: 900px) { .ust nav a.baglanti { display: inline-flex; } }
 
 /* ---------- Düğmeler ---------- */
 .dugme {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 12px 20px; border-radius: 12px; border: 1px solid var(--cizgi);
-  background: var(--kagit); color: var(--ink);
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  padding: 13px 22px; border-radius: 12px; border: 1px solid var(--cizgi-2);
+  background: var(--kagit-2); color: var(--ink);
   font: inherit; font-weight: 700; text-decoration: none; white-space: nowrap;
-  transition: transform .12s var(--egri), box-shadow .12s var(--egri), border-color .12s var(--egri);
+  transition: transform .12s var(--egri), box-shadow .12s var(--egri), border-color .12s var(--egri), background .12s var(--egri);
 }
-.dugme:hover { border-color: color-mix(in srgb, var(--vurgu) 45%, transparent); }
+.dugme:hover { border-color: color-mix(in srgb, var(--vurgu) 55%, transparent); }
 .dugme:active { transform: scale(.975); }
+.dugme svg { inline-size: 18px; block-size: 18px; flex-shrink: 0; }
 .dugme--asil {
-  background: linear-gradient(180deg, var(--vurgu-3), var(--vurgu));
-  border-color: var(--vurgu-2); color: #fff;
-  box-shadow: 0 2px 10px color-mix(in srgb, var(--vurgu) 30%, transparent);
+  background: linear-gradient(180deg, var(--vurgu-2), var(--vurgu));
+  border-color: var(--vurgu-2); color: #04211e;
+  box-shadow: 0 2px 14px color-mix(in srgb, var(--vurgu) 34%, transparent);
 }
-.dugme--asil:hover { box-shadow: 0 6px 22px color-mix(in srgb, var(--vurgu) 38%, transparent); }
-.dugme--kucuk { padding: 9px 14px; font-size: 14px; }
+.dugme--asil:hover { box-shadow: 0 8px 28px color-mix(in srgb, var(--vurgu) 42%, transparent); }
+.dugme--kucuk { padding: 9px 15px; font-size: 14px; }
+.dugme--buyuk { padding: 17px 30px; font-size: 17px; }
 
 /* ---------- Kahraman ---------- */
-.kahraman { position: relative; overflow: hidden; background: var(--kagit); }
+.kahraman { position: relative; overflow: hidden; }
 .kahraman::before {
-  content: ''; position: absolute; inset-block-start: -240px; inset-inline-end: -160px;
-  inline-size: 620px; block-size: 620px; border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--vurgu) 16%, transparent), transparent 66%);
+  content: ''; position: absolute; inset-block-start: -300px; inset-inline-end: -200px;
+  inline-size: 720px; block-size: 720px; border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--vurgu) 20%, transparent), transparent 66%);
   pointer-events: none;
 }
-.kahraman .kap { position: relative; display: grid; gap: 40px; align-items: center; }
-@media (min-width: 900px) { .kahraman .kap { grid-template-columns: 1.05fr .95fr; gap: 56px; } }
+/* Ekran görüntüsü metnin yanında değil altında ve tam genişlikte: yanda
+   dururken 1600 piksellik panel yarım sütuna sığdığı için içindeki hiçbir
+   yazı okunmuyordu. Amaç zaten bunu bir bilgisayar ekranı gibi göstermek. */
+.kahraman .kap { position: relative; display: grid; gap: 46px; justify-items: center; text-align: center; }
+.kahraman .alt { margin-inline: auto; }
+.kahraman .eylemler { justify-content: center; }
+.kahraman .ekran { inline-size: 100%; }
 .rozet {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 6px 13px; border-radius: 999px;
-  background: var(--vurgu-soluk); color: var(--vurgu);
-  font-size: 13px; font-weight: 700; margin-block-end: 20px;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 15px; border-radius: 999px;
+  background: var(--vurgu-soluk); color: var(--vurgu-2);
+  border: 1px solid color-mix(in srgb, var(--vurgu) 30%, transparent);
+  font-size: 13px; font-weight: 700; margin-block-end: 22px;
 }
-.rozet::before { content: ''; inline-size: 7px; block-size: 7px; border-radius: 50%; background: var(--vurgu); }
-.kahraman h1 { font-size: clamp(30px, 5.4vw, 50px); font-weight: 800; }
-.kahraman h1 em { font-style: normal; color: var(--vurgu); }
-.kahraman .alt { margin-block-start: 18px; font-size: clamp(16px, 2vw, 19px); color: var(--ink-2); max-inline-size: 46ch; }
-.kahraman .eylemler { margin-block-start: 30px; display: flex; flex-wrap: wrap; gap: 12px; }
-.kahraman .not { margin-block-start: 16px; font-size: 13.5px; color: var(--ink-3); }
+.rozet::before { content: ''; inline-size: 7px; block-size: 7px; border-radius: 50%; background: var(--vurgu-2); }
+.kahraman h1 { font-size: clamp(31px, 5.6vw, 54px); font-weight: 800; }
+.kahraman h1 em { font-style: normal; color: var(--vurgu-2); }
+.kahraman .alt { margin-block-start: 20px; font-size: clamp(16px, 2vw, 19px); color: var(--ink-2); max-inline-size: 46ch; }
+.kahraman .eylemler { margin-block-start: 32px; display: flex; flex-wrap: wrap; gap: 12px; }
+.kahraman .not { margin-block-start: 18px; font-size: 13.5px; color: var(--ink-3); }
 
 .ekran {
-  border: 1px solid var(--cizgi); border-radius: var(--r-b); overflow: hidden;
-  background: var(--kagit); box-shadow: 0 30px 70px rgb(9 41 44 / .13);
+  border: 1px solid var(--cizgi-2); border-radius: var(--r-b); overflow: hidden;
+  background: var(--kagit); box-shadow: 0 34px 80px rgb(0 0 0 / .55);
 }
-@media (prefers-color-scheme: dark) { .ekran { box-shadow: 0 30px 70px rgb(0 0 0 / .5); } }
+.ekran--pencere { padding-block-start: 34px; position: relative; }
+.ekran--pencere::before {
+  content: ''; position: absolute; inset-block-start: 0; inset-inline: 0; block-size: 34px;
+  background: var(--kagit-2); border-block-end: 1px solid var(--cizgi);
+}
+.ekran--pencere::after {
+  content: ''; position: absolute; inset-block-start: 13px; inset-inline-start: 16px;
+  inline-size: 8px; block-size: 8px; border-radius: 50%;
+  background: var(--cizgi-2);
+  box-shadow: 14px 0 0 var(--cizgi-2), 28px 0 0 var(--cizgi-2);
+}
 
 /* ---------- Güvence şeridi ---------- */
 .serit { display: grid; gap: 16px; }
 @media (min-width: 760px) { .serit { grid-template-columns: repeat(3, 1fr); gap: 20px; } }
-.serit div { padding: 22px; border: 1px solid var(--cizgi); border-radius: var(--r); background: var(--zemin); }
+.serit div { padding: 24px; border: 1px solid var(--cizgi); border-radius: var(--r); background: var(--kagit-2); }
 .serit b { display: block; font-size: 17px; margin-block-end: 6px; }
 .serit p { color: var(--ink-2); font-size: 15px; }
 
 /* ---------- Bölüm başlığı ---------- */
-.bas { max-inline-size: 60ch; margin-block-end: 40px; }
-.bas .etiket { color: var(--vurgu); font-weight: 700; font-size: 13.5px; letter-spacing: .08em; }
-.bas h2 { font-size: clamp(24px, 3.6vw, 34px); font-weight: 800; margin-block-start: 8px; }
+.bas { max-inline-size: 60ch; margin-block-end: 42px; }
+.bas--orta { margin-inline: auto; text-align: center; }
+.bas .etiket { color: var(--vurgu-2); font-weight: 700; font-size: 13.5px; letter-spacing: .08em; }
+.bas h2 { font-size: clamp(25px, 3.8vw, 36px); font-weight: 800; margin-block-start: 8px; }
 .bas p { margin-block-start: 12px; color: var(--ink-2); font-size: 17px; }
 
-/* ---------- Özellikler ---------- */
-.ozellikler { display: grid; gap: 16px; }
-@media (min-width: 660px) { .ozellikler { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1000px) { .ozellikler { grid-template-columns: repeat(3, 1fr); } }
-.ozellik {
-  padding: 24px; border: 1px solid var(--cizgi); border-radius: var(--r); background: var(--kagit);
+/* ---------- Numaralı kartlar ---------- */
+.kartlar { display: grid; gap: 16px; }
+@media (min-width: 680px) { .kartlar { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1020px) { .kartlar--uc { grid-template-columns: repeat(3, 1fr); } }
+.kart {
+  position: relative; padding: 26px; border: 1px solid var(--cizgi); border-radius: var(--r);
+  background: var(--kagit-2);
   transition: transform .2s var(--egri), border-color .2s var(--egri), box-shadow .2s var(--egri);
 }
-.ozellik:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--vurgu) 40%, transparent); box-shadow: 0 12px 30px rgb(9 41 44 / .08); }
-.ozellik .simge {
-  inline-size: 42px; block-size: 42px; border-radius: 12px; display: grid; place-items: center;
-  background: var(--vurgu-soluk); color: var(--vurgu); margin-block-end: 14px;
+.kart:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--vurgu) 45%, transparent); box-shadow: 0 14px 34px rgb(0 0 0 / .4); }
+.kart .no {
+  display: block; font-size: 13px; font-weight: 800; letter-spacing: .1em;
+  color: var(--vurgu); margin-block-end: 14px;
 }
-.ozellik .simge svg { inline-size: 22px; block-size: 22px; }
-/* Ziyaretcinin kendi cihazi one cikarilir: uc tarifin hangisinin ona ait
-   oldugunu okuyup bulmak zorunda kalmasin. */
-.ozellik--bu { border-color: var(--vurgu); box-shadow: 0 12px 30px rgb(9 41 44 / .10); }
-.ozellik--bu .simge { background: var(--vurgu); color: #fff; }
-.cihaz-rozet { display: none; font-size: 12px; font-weight: 700; color: var(--vurgu); margin-block-end: 6px; }
-.ozellik--bu .cihaz-rozet { display: block; }
-.nasb-not { text-align: center; color: var(--sessiz); font-size: 14px; margin-block-start: 22px; }
-.ozellik h3 { font-size: 17.5px; font-weight: 700; }
-.ozellik p { margin-block-start: 7px; color: var(--ink-2); font-size: 15px; }
+.kart .simge {
+  inline-size: 44px; block-size: 44px; border-radius: 12px; display: grid; place-items: center;
+  background: var(--vurgu-soluk); color: var(--vurgu-2); margin-block-end: 15px;
+  border: 1px solid color-mix(in srgb, var(--vurgu) 24%, transparent);
+}
+.kart .simge svg { inline-size: 22px; block-size: 22px; }
+.kart h3 { font-size: 17.5px; font-weight: 700; }
+.kart p { margin-block-start: 8px; color: var(--ink-2); font-size: 15px; }
 
 /* ---------- Kâğıt bölümü ---------- */
-.kagit-duzen { display: grid; gap: 34px; align-items: center; }
-@media (min-width: 900px) { .kagit-duzen { grid-template-columns: .95fr 1.05fr; gap: 52px; } }
-.liste-tik { list-style: none; margin: 22px 0 0; padding: 0; display: grid; gap: 13px; }
+.ikili { display: grid; gap: 34px; align-items: center; }
+@media (min-width: 940px) { .ikili { grid-template-columns: .95fr 1.05fr; gap: 54px; } }
+.liste-tik { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 13px; }
 .liste-tik li { display: flex; gap: 11px; align-items: flex-start; color: var(--ink-2); font-size: 15.5px; }
-.liste-tik svg { flex-shrink: 0; margin-block-start: 4px; color: var(--vurgu); inline-size: 17px; block-size: 17px; }
+.liste-tik svg { flex-shrink: 0; margin-block-start: 5px; color: var(--vurgu-2); inline-size: 17px; block-size: 17px; }
 .liste-tik b { color: var(--ink); }
 
 /* ---------- Sahtecilik tablosu ---------- */
-.tablo-kap { border: 1px solid var(--cizgi); border-radius: var(--r); overflow: hidden; background: var(--kagit); }
+.tablo-kap { border: 1px solid var(--cizgi); border-radius: var(--r); overflow: hidden; background: var(--kagit-2); }
 table { inline-size: 100%; border-collapse: collapse; font-size: 15px; }
-th, td { padding: 15px 18px; text-align: start; border-block-end: 1px solid var(--cizgi); }
-th { background: var(--zemin); font-size: 13px; color: var(--ink-2); letter-spacing: .04em; }
+th, td { padding: 16px 18px; text-align: start; border-block-end: 1px solid var(--cizgi); }
+th { background: var(--kagit); font-size: 13px; color: var(--ink-2); letter-spacing: .04em; }
 tr:last-child td { border-block-end: none; }
-.evet { color: var(--vurgu); font-weight: 700; }
+.evet { color: var(--vurgu-2); font-weight: 700; }
 .hayir { color: var(--ink-3); font-weight: 700; }
+
+/* ---------- İndirme: sekmeler ---------- */
+.indir { border: 1px solid var(--cizgi-2); border-radius: var(--r-b); background: var(--kagit-2); overflow: hidden; }
+.sekmeler {
+  display: flex; gap: 6px; padding: 10px; overflow-x: auto;
+  background: var(--kagit); border-block-end: 1px solid var(--cizgi);
+  scrollbar-width: none;
+}
+.sekmeler::-webkit-scrollbar { display: none; }
+.sekme {
+  flex: 1 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 16px; border-radius: 11px; border: 1px solid transparent;
+  background: transparent; color: var(--ink-2); font: inherit; font-weight: 700; font-size: 14.5px;
+  cursor: pointer; white-space: nowrap;
+  transition: background .15s var(--egri), color .15s var(--egri), border-color .15s var(--egri);
+}
+.sekme svg { inline-size: 18px; block-size: 18px; }
+.sekme:hover { color: var(--ink); background: var(--kagit-2); }
+.sekme[aria-selected="true"] {
+  background: var(--vurgu-soluk); color: var(--vurgu-2);
+  border-color: color-mix(in srgb, var(--vurgu) 40%, transparent);
+}
+.pano { padding: clamp(26px, 4vw, 42px); text-align: center; }
+.pano + .pano { border-block-start: 1px solid var(--cizgi); }   /* JS yokken hepsi alt alta okunur kalır */
+.surum-rozet {
+  display: inline-flex; align-items: center; gap: 8px; margin-block-end: 18px;
+  padding: 5px 13px; border-radius: 999px; background: var(--vurgu-soluk);
+  border: 1px solid color-mix(in srgb, var(--vurgu) 28%, transparent);
+  color: var(--vurgu-2); font-size: 12.5px; font-weight: 700;
+}
+.pano h3 { font-size: clamp(19px, 2.6vw, 23px); font-weight: 800; }
+.pano .aciklama { margin-block-start: 12px; color: var(--ink-2); font-size: 15.5px; max-inline-size: 52ch; margin-inline: auto; }
+.pano .eylem { margin-block-start: 24px; }
+.pano .kucuk-not { margin-block-start: 14px; color: var(--ink-3); font-size: 13px; }
+.adimlar { list-style: none; counter-reset: a; margin: 24px auto 0; padding: 0; max-inline-size: 46ch; text-align: start; display: grid; gap: 12px; }
+.adimlar li { counter-increment: a; position: relative; padding-inline-start: 38px; color: var(--ink-2); font-size: 15px; }
+.adimlar li::before {
+  content: counter(a, persian); position: absolute; inset-inline-start: 0; inset-block-start: 3px;
+  inline-size: 25px; block-size: 25px; border-radius: 8px; display: grid; place-items: center;
+  background: var(--vurgu-soluk); color: var(--vurgu-2); font-size: 12.5px; font-weight: 800;
+  border: 1px solid color-mix(in srgb, var(--vurgu) 24%, transparent);
+}
+.adimlar b { color: var(--ink); }
+.indir-alt { margin-block-start: 22px; text-align: center; color: var(--ink-3); font-size: 14px; }
+
+/* ---------- Tarife ---------- */
+.tarifeler { display: grid; gap: 18px; align-items: start; }
+@media (min-width: 820px) { .tarifeler { grid-template-columns: repeat(2, 1fr); } }
+.tarife { position: relative; padding: 30px; border: 1px solid var(--cizgi); border-radius: var(--r-b); background: var(--kagit-2); }
+.tarife--asil { border-color: var(--vurgu); box-shadow: 0 16px 40px rgb(0 0 0 / .45); }
+.tarife .simdi {
+  position: absolute; inset-block-start: 18px; inset-inline-end: 18px;
+  padding: 5px 12px; border-radius: 999px; background: var(--vurgu); color: #04211e;
+  font-size: 12px; font-weight: 800;
+}
+.tarife .ad { font-size: 15px; font-weight: 700; color: var(--vurgu-2); }
+.tarife .fiyat { margin-block-start: 10px; font-size: clamp(30px, 4.6vw, 42px); font-weight: 800; letter-spacing: -.02em; }
+.tarife .fiyat small { font-size: 15px; font-weight: 600; color: var(--ink-3); letter-spacing: 0; }
+.tarife .not { margin-block-start: 8px; color: var(--ink-2); font-size: 15px; }
+.tarife .liste-tik { margin-block-start: 22px; }
+.tarife .dugme { margin-block-start: 26px; inline-size: 100%; }
+.tarife--yakinda { color: var(--ink-2); }
+.tarife--yakinda .fiyat { color: var(--ink-3); }
+
+/* ---------- Sorular ---------- */
+.sorular-duzen { display: grid; gap: 30px; align-items: start; }
+@media (min-width: 940px) { .sorular-duzen { grid-template-columns: .82fr 1.18fr; gap: 46px; } }
+.soru-kutu { padding: 28px; border: 1px solid var(--cizgi); border-radius: var(--r-b); background: var(--kagit-2); }
+.soru-kutu h3 { font-size: 19px; font-weight: 800; }
+.soru-kutu p { margin-block-start: 10px; color: var(--ink-2); font-size: 15px; }
+.soru-liste { display: grid; gap: 12px; }
+details.soru {
+  border: 1px solid var(--cizgi); border-radius: var(--r); background: var(--kagit-2);
+  overflow: hidden; transition: border-color .2s var(--egri);
+}
+details.soru[open] { border-color: color-mix(in srgb, var(--vurgu) 40%, transparent); }
+details.soru summary {
+  list-style: none; cursor: pointer; padding: 18px 22px;
+  display: flex; align-items: center; gap: 14px;
+  font-weight: 700; font-size: 16px;
+}
+details.soru summary::-webkit-details-marker { display: none; }
+details.soru summary .no { color: var(--vurgu); font-size: 13px; font-weight: 800; letter-spacing: .08em; flex-shrink: 0; }
+details.soru summary .art {
+  margin-inline-start: auto; flex-shrink: 0; inline-size: 26px; block-size: 26px; border-radius: 8px;
+  display: grid; place-items: center; background: var(--kagit); color: var(--ink-2);
+  font-size: 17px; line-height: 1; transition: transform .2s var(--egri), color .2s var(--egri);
+}
+details.soru[open] summary .art { transform: rotate(45deg); color: var(--vurgu-2); }
+details.soru .cevap { padding: 0 22px 20px; color: var(--ink-2); font-size: 15.5px; }
+details.soru .cevap p + p { margin-block-start: 10px; }
 
 /* ---------- Kapanış ---------- */
 .kapanis {
-  border: 1px solid var(--cizgi); border-radius: var(--r-b); padding: clamp(32px, 5vw, 56px);
-  background: linear-gradient(140deg, var(--vurgu-soluk), var(--kagit) 70%);
+  border: 1px solid var(--cizgi-2); border-radius: var(--r-b); padding: clamp(34px, 5vw, 60px);
+  background: radial-gradient(120% 130% at 50% 0%, var(--vurgu-soluk), var(--kagit-2) 62%);
   text-align: center;
 }
-.kapanis h2 { font-size: clamp(24px, 3.6vw, 34px); font-weight: 800; }
+.kapanis h2 { font-size: clamp(25px, 3.8vw, 36px); font-weight: 800; }
 .kapanis p { margin-block-start: 12px; color: var(--ink-2); max-inline-size: 54ch; margin-inline: auto; }
-.kapanis .eylemler { margin-block-start: 26px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.kapanis .eylemler { margin-block-start: 28px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
 
 footer { border-block-start: 1px solid var(--cizgi); background: var(--kagit); }
-footer .kap { padding-block: 30px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; color: var(--ink-3); font-size: 14px; }
-footer nav { margin-inline-start: auto; display: flex; gap: 16px; }
+footer .kap { padding-block: 32px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; color: var(--ink-3); font-size: 14px; }
+footer nav { margin-inline-start: auto; display: flex; flex-wrap: wrap; gap: 16px; }
 footer a { color: var(--ink-2); text-decoration: none; }
-footer a:hover { color: var(--vurgu); }
+footer a:hover { color: var(--vurgu-2); }
 
 /* ---------- Kaydırınca beliren ---------- */
 .bit { opacity: 0; transform: translateY(18px); transition: opacity .55s var(--egri), transform .55s var(--egri); }
@@ -191,7 +306,7 @@ footer a:hover { color: var(--vurgu); }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .bit { opacity: 1; transform: none; transition: none; }
-  .ozellik:hover, .dugme:active { transform: none; }
+  .kart:hover, .dugme:active { transform: none; }
 }
 </style>
 </head>
@@ -204,11 +319,15 @@ footer a:hover { color: var(--vurgu); }
       <span><b>شفا</b><span>نسخه‌نویسی</span></span>
     </a>
     <nav>
-      <a class="baglanti" href="#ozellikler">امکانات</a>
-      <a class="baglanti" href="#kagit">کاغذ نسخه</a>
-      <a class="baglanti" href="#تایید">کد تأیید</a>
-      <a class="baglanti" href="#nasb">نصب</a>
-      <a class="dugme dugme--asil dugme--kucuk" href="./app/">باز کردن برنامه</a>
+      <a class="baglanti" href="#امکانات">امکانات</a>
+      <a class="baglanti" href="#چگونه">چگونه کار می‌کند</a>
+      <a class="baglanti" href="#کاغذ">کاغذ نسخه</a>
+      <a class="baglanti" href="#تعرفه">تعرفه</a>
+      <a class="baglanti" href="#سوالات">سوالات</a>
+      <a class="dugme dugme--asil dugme--kucuk" href="#دانلود">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>
+        دانلود
+      </a>
     </nav>
   </div>
 </header>
@@ -216,20 +335,23 @@ footer a:hover { color: var(--vurgu); }
 <section class="kahraman bolum">
   <div class="kap">
     <div>
-      <span class="rozet">بدون سرور · بدون حساب کاربری</span>
-      <h1>دفتر نسخه‌ی شما، <em>روی گوشی خودتان</em></h1>
+      <span class="rozet">بدون سرور · بدون حساب کاربری · رایگان</span>
+      <h1>دفتر نسخه‌ی شما، <em>روی دستگاه خودتان</em></h1>
       <p class="alt">
         مریض را انتخاب کنید، دواها را اضافه کنید و نسخه را چاپ کنید یا بفرستید.
         معلومات مریضان از دستگاه بیرون نمی‌رود و برنامه بدون انترنت هم کار می‌کند.
       </p>
       <div class="eylemler">
-        <a class="dugme dugme--asil" href="./app/">باز کردن برنامه</a>
-        <a class="dugme" href="#kagit">دیدن نمونه نسخه</a>
+        <a class="dugme dugme--asil" href="#دانلود">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>
+          دانلود رایگان
+        </a>
+        <a class="dugme" href="./app/">باز کردن در مرورگر</a>
       </div>
-      <p class="not">نصب نمی‌خواهد؛ در مرورگر باز می‌شود و می‌توانید به صفحه اصلی گوشی اضافه کنید.</p>
+      <p class="not">تیلفون، کمپیوتر و تبلت — از همین صفحه نصب می‌شود. به فروشگاه ضرورت نیست.</p>
     </div>
-    <div class="ekran bit">
-      <img src="gorsel/panel.png" alt="صفحه اصلی برنامه: نسخه‌های امروز، نسخه‌های اخیر و مریضان اخیر" width="1280" height="900" loading="eager">
+    <div class="ekran ekran--pencere bit">
+      <img src="gorsel/panel.png" alt="صفحه اصلی برنامه روی کمپیوتر: نسخه‌های امروز، جدول ۱۴ روز اخیر و نسخه‌های اخیر" width="3200" height="2000" loading="eager">
     </div>
   </div>
 </section>
@@ -242,7 +364,7 @@ footer a:hover { color: var(--vurgu); }
     </div>
     <div class="bit">
       <b>بدون انترنت کار می‌کند</b>
-      <p>یک بار که باز شد، بعد از آن بدون انترنت هم باز می‌شود. در کلینیک انترنت قطع شود، کار متوقف نمی‌شود.</p>
+      <p>یک بار که نصب شد، بعد از آن بدون انترنت هم باز می‌شود. در کلینیک انترنت قطع شود، کار متوقف نمی‌شود.</p>
     </div>
     <div class="bit">
       <b>پشتیبان یک فایل است</b>
@@ -251,66 +373,107 @@ footer a:hover { color: var(--vurgu); }
   </div>
 </section>
 
-<section class="bolum" id="ozellikler">
+<section class="bolum" id="امکانات">
   <div class="kap">
     <div class="bas bit">
       <span class="etiket">امکانات</span>
       <h2>آنچه یک داکتر هر روز لازم دارد</h2>
       <p>نه بیشتر. برنامه دفتر گدام نیست؛ کارش نوشتن نسخه است.</p>
     </div>
-    <div class="ozellikler">
+    <div class="kartlar kartlar--uc">
 
-      <div class="ozellik bit">
+      <div class="kart bit">
+        <span class="no">۰۱</span>
         <div class="simge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg></div>
         <h3>نوشتن نسخه</h3>
         <p>مریض را انتخاب کنید، دوا را جستجو کنید، تعداد و طریقه استعمال را بنویسید. شماره نسخه خودکار داده می‌شود.</p>
       </div>
 
-      <div class="ozellik bit">
+      <div class="kart bit">
+        <span class="no">۰۲</span>
         <div class="simge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.2 1.8 17.5A2 2 0 0 0 3.5 20.5h17a2 2 0 0 0 1.7-3L13.7 3.2a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
         <h3>هشدار حساسیت</h3>
         <p>اگر مریض به دوایی حساسیت داشته باشد، همان لحظه‌ی اضافه کردن هشدار می‌دهد. اگر یک ماده در دو سطر تکرار شود هم می‌گوید.</p>
       </div>
 
-      <div class="ozellik bit">
+      <div class="kart bit">
+        <span class="no">۰۳</span>
         <div class="simge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg></div>
         <h3>کاغذ نسخه با سربرگ شما</h3>
         <p>نام، تخصص، خدمات، آدرس و شماره‌های خود را یک بار می‌نویسید؛ از آن به بعد روی هر کاغذ چاپ می‌شود. سه طرح دارد.</p>
       </div>
 
-      <div class="ozellik bit">
+      <div class="kart bit">
+        <span class="no">۰۴</span>
         <div class="simge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
         <h3>کاغذ خالی</h3>
         <p>همان سربرگ را خالی چاپ کنید و مثل گذشته با قلم پر کنید. جاهای خالی خط‌دار چاپ می‌شوند.</p>
       </div>
 
-      <div class="ozellik bit">
+      <div class="kart bit">
+        <span class="no">۰۵</span>
         <div class="simge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.5 8.5 0 0 1-4-1L3 21l2.1-5a8.4 8.4 0 0 1-1-4 8.5 8.5 0 0 1 8.4-8.4h.5a8.5 8.5 0 0 1 8 8z"/></svg></div>
         <h3>فرستادن نسخه</h3>
         <p>واتساپ، ایمیل یا کاپی کردن متن. کود QR هم روی کاغذ چاپ می‌شود.</p>
       </div>
 
-      <div class="ozellik bit">
+      <div class="kart bit">
+        <span class="no">۰۶</span>
         <div class="simge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
         <h3>کد تأیید</h3>
         <p>هر نسخه یک کد هشت‌حرفی دارد. اگر روی کاغذ دست برده شود، کد دیگر نمی‌خواند.</p>
       </div>
 
-      <div class="ozellik bit">
+      <div class="kart bit">
+        <span class="no">۰۷</span>
         <div class="simge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-9 9c-4 0-7.4-2.6-8.6-6.2"/><path d="M3 12a9 9 0 0 1 9-9c4 0 7.4 2.6 8.6 6.2"/><path d="M3 4v5h5M21 20v-5h-5"/></svg></div>
         <h3>همگام‌سازی با گوگل</h3>
-        <p>
-          اگر بخواهید، کمپیوتر و تیلفون همان ثبت‌ها را دارند. معلومات پیش از بار شدن
-          در همین دستگاه رمز می‌شود؛ گوگل تنها معلومات رمزشده را می‌بیند.
-        </p>
+        <p>اگر بخواهید، کمپیوتر و تیلفون همان ثبت‌ها را دارند. معلومات پیش از بار شدن در همین دستگاه رمز می‌شود؛ گوگل تنها معلومات رمزشده را می‌بیند.</p>
       </div>
 
     </div>
   </div>
 </section>
 
-<section class="bolum bolum--kagit" id="kagit">
-  <div class="kap kagit-duzen">
+<section class="bolum bolum--kagit" id="چگونه">
+  <div class="kap">
+    <div class="bas bas--orta bit">
+      <span class="etiket">چگونه کار می‌کند</span>
+      <h2>از نصب تا اولین نسخه، چهار قدم</h2>
+      <p>نه ثبت نام می‌خواهد، نه ایمیل، نه شماره تیلفون. در پنج دقیقه آماده است.</p>
+    </div>
+    <div class="kartlar">
+
+      <div class="kart bit">
+        <span class="no">قدم ۰۱</span>
+        <h3>نصب کنید</h3>
+        <p>از بخش دانلود همین صفحه، دکمهٔ دستگاه خود را بزنید. برنامه در صفحهٔ اصلی یک آیکن می‌گذارد؛ از فروشگاه چیزی دانلود نمی‌شود.</p>
+      </div>
+
+      <div class="kart bit">
+        <span class="no">قدم ۰۲</span>
+        <h3>سربرگ خود را بنویسید</h3>
+        <p>در تنظیمات، نام و تخصص و آدرس و شماره‌های خود را یک بار وارد کنید. از آن به بعد روی هر کاغذ چاپ می‌شود.</p>
+      </div>
+
+      <div class="kart bit">
+        <span class="no">قدم ۰۳</span>
+        <h3>نسخه بنویسید</h3>
+        <p>مریض را انتخاب یا ثبت کنید، دواها را اضافه کنید و چاپ را بزنید. برنامه از قبل فهرست دوا، تشخیص، علایم و لابراتوار دارد.</p>
+      </div>
+
+      <div class="kart bit">
+        <span class="no">قدم ۰۴</span>
+        <h3>پشتیبان بگیرید</h3>
+        <p>هر چند وقت یک بار از تنظیمات یک فایل پشتیبان بگیرید. اگر بخواهید، همگام‌سازی با گوگل را هم روشن کنید تا کمپیوتر و تیلفون یکی شوند.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="bolum" id="کاغذ">
+  <div class="kap ikili">
     <div class="bit">
       <div class="bas" style="margin-block-end:0">
         <span class="etiket">کاغذ نسخه</span>
@@ -330,7 +493,7 @@ footer a:hover { color: var(--vurgu); }
   </div>
 </section>
 
-<section class="bolum" id="تایید">
+<section class="bolum bolum--kagit" id="تایید">
   <div class="kap">
     <div class="bas bit">
       <span class="etiket">در برابر جعل</span>
@@ -357,81 +520,245 @@ footer a:hover { color: var(--vurgu); }
   </div>
 </section>
 
+<section class="bolum" id="تعرفه">
+  <div class="kap">
+    <div class="bas bas--orta bit">
+      <span class="etiket">تعرفه</span>
+      <h2>امروز رایگان است</h2>
+      <p>هر چه در این صفحه می‌بینید، همین حالا و بدون پرداخت در دسترس است.</p>
+    </div>
+    <div class="tarifeler">
+
+      <div class="tarife tarife--asil bit">
+        <span class="simdi">همین حالا</span>
+        <span class="ad">طرح فعلی</span>
+        <div class="fiyat">رایگان <small>برای همیشه</small></div>
+        <p class="not">بدون ثبت نام، بدون محدودیت تعداد مریض یا نسخه.</p>
+        <ul class="liste-tik">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>نوشتن و چاپ نسخه، کاغذ خالی، سه طرح سربرگ</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>فهرست آمادهٔ دوا، تشخیص، علایم و لابراتوار</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>هشدار حساسیت و تکرار ماده</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>کد تأیید و کود QR روی کاغذ</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>کار بدون انترنت، پشتیبان فایلی</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>همگام‌سازی رمزشده میان کمپیوتر و تیلفون</span></li>
+        </ul>
+        <a class="dugme dugme--asil" href="#دانلود">دانلود کنید</a>
+      </div>
+
+      <div class="tarife tarife--yakinda bit">
+        <span class="ad">پیشرفته</span>
+        <div class="fiyat">به زودی</div>
+        <p class="not">
+          نسخهٔ دوم برنامه در حال ساخته شدن است و پولی خواهد بود. قیمت آن هنوز
+          تعیین نشده و تا وقتی که تعیین نشود، چیزی در این جا نمی‌نویسیم.
+        </p>
+        <ul class="liste-tik">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span><b>آنچه امروز دارید رایگان می‌ماند</b> — طرح پولی چیزی را از شما پس نمی‌گیرد.</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>معلومات مریضان در طرح پولی هم روی دستگاه خود شما می‌ماند.</span></li>
+        </ul>
+        <a class="dugme" href="#دانلود">فعلاً از رایگان شروع کنید</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 <section class="bolum bolum--kagit">
-  <div class="kap kagit-duzen">
-    <div class="ekran bit" style="max-inline-size:390px;margin-inline:auto">
-      <img src="gorsel/mobil.png" alt="برنامه روی گوشی" width="390" height="780" loading="lazy">
+  <div class="kap ikili">
+    <div class="ekran bit" style="max-inline-size:340px;margin-inline:auto">
+      <img src="gorsel/mobil.png" alt="برنامه روی گوشی: داشبورد، دکمه نوشتن نسخه و جدول ۱۴ روز اخیر" width="780" height="1560" loading="lazy">
     </div>
     <div class="bit">
       <div class="bas" style="margin-block-end:0">
         <span class="etiket">روی گوشی</span>
         <h2>در جیب شما، در اتاق معاینه</h2>
         <p>
-          همان برنامه روی گوشی هم کامل کار می‌کند. از مرورگر «افزودن به صفحه اصلی»
-          را بزنید؛ مثل یک اپلیکیشن باز می‌شود و بعد از آن انترنت هم لازم ندارد.
+          همان برنامه روی گوشی هم کامل کار می‌کند — نه نسخهٔ کوچک‌شده، نه امکانات کمتر.
+          بعد از نصب، مثل هر اپلیکیشن دیگر از صفحهٔ اصلی باز می‌شود.
         </p>
       </div>
       <ul class="liste-tik">
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>نوشتن از راست به چپ، به زبان فارسی</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>حالت روشن و حالت شب</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>جستجوی سریع میان دواها، مریضان و نسخه‌ها</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>چاپ از همان گوشی، اگر پرینتر وصل باشد</span></li>
       </ul>
     </div>
   </div>
 </section>
 
-<section class="bolum bolum--kagit" id="nasb">
+<section class="bolum" id="دانلود">
   <div class="kap">
-    <div class="bas bit">
-      <span class="etiket">نصب</span>
+    <div class="bas bas--orta bit">
+      <span class="etiket">دانلود</span>
       <h2>روی تیلفون، کمپیوتر و تبلت</h2>
       <p>
-        به فروشگاه ضرورت نیست. برنامه از همین صفحه نصب می‌شود، در صفحهٔ اصلی
-        یک آیکن می‌ماند و بعد از آن بدون انترنت هم باز می‌شود.
+        دستگاه خود را انتخاب کنید. شفا یک برنامهٔ تحت وب است: به جای فایل نصبی،
+        از خود مرورگر نصب می‌شود — بعد از نصب مثل هر برنامهٔ دیگر یک آیکن دارد،
+        پُر صفحه باز می‌شود و بدون انترنت هم کار می‌کند.
       </p>
     </div>
 
-    <div class="eylemler" style="justify-content:center;margin-block-end:26px">
-      <a class="dugme dugme--asil" href="./app/?kur=1">باز کردن و نصب</a>
+    <div class="indir bit">
+      <div class="sekmeler" role="tablist" aria-label="انتخاب دستگاه">
+        <button class="sekme" type="button" role="tab" id="s-android" aria-controls="p-android" aria-selected="true" data-cihaz="android">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+          اندروید
+        </button>
+        <button class="sekme" type="button" role="tab" id="s-ios" aria-controls="p-ios" aria-selected="false" data-cihaz="ios">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
+          آیفون و آیپد
+        </button>
+        <button class="sekme" type="button" role="tab" id="s-windows" aria-controls="p-windows" aria-selected="false" data-cihaz="windows">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          ویندوز
+        </button>
+        <button class="sekme" type="button" role="tab" id="s-mac" aria-controls="p-mac" aria-selected="false" data-cihaz="mac">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9H3z"/><path d="M2 18h20l-1.5 3H3.5z"/></svg>
+          مک و لینوکس
+        </button>
+      </div>
+
+      <div class="pano" role="tabpanel" id="p-android" aria-labelledby="s-android">
+        <span class="surum-rozet">نسخه <span dir="ltr">0.2.0</span></span>
+        <h3>نصب روی اندروید</h3>
+        <p class="aciklama">گوشی و تبلت اندرویدی. با Chrome یا مرورگر خود گوشی.</p>
+        <div class="eylem"><a class="dugme dugme--asil dugme--buyuk" href="./app/?kur=1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>
+          باز کردن و نصب
+        </a></div>
+        <ol class="adimlar">
+          <li>دکمهٔ بالا را بزنید؛ برنامه باز می‌شود.</li>
+          <li>پایین صفحه <b>دکمهٔ نصب</b> ظاهر می‌شود — آن را بزنید.</li>
+          <li>اگر ظاهر نشد، از منوی ⋮ مرورگر <b>«افزودن به صفحهٔ اصلی»</b> را بزنید.</li>
+        </ol>
+        <p class="kucuk-not">بدون فایل APK · حدود ۱ میگابایت · Chrome یا مرورگر خود گوشی</p>
+      </div>
+
+      <div class="pano" role="tabpanel" id="p-ios" aria-labelledby="s-ios">
+        <span class="surum-rozet">نسخه <span dir="ltr">0.2.0</span></span>
+        <h3>نصب روی آیفون و آیپد</h3>
+        <p class="aciklama">اپل نصب برنامه را تنها از راه Safari اجازه می‌دهد؛ راه دیگری ندارد.</p>
+        <div class="eylem"><a class="dugme dugme--asil dugme--buyuk" href="./app/?kur=1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>
+          باز کردن در Safari
+        </a></div>
+        <ol class="adimlar">
+          <li>این صفحه را در <b>Safari</b> باز کنید (نه در Chrome).</li>
+          <li>دکمهٔ بالا را بزنید تا برنامه باز شود.</li>
+          <li>دکمهٔ <b>Share</b> (مربع با تیر) در پایین صفحه را بزنید.</li>
+          <li>از فهرست <b>«Add to Home Screen»</b> را انتخاب کنید.</li>
+        </ol>
+        <p class="kucuk-not">بدون App Store · تنها از راه Safari</p>
+      </div>
+
+      <div class="pano" role="tabpanel" id="p-windows" aria-labelledby="s-windows">
+        <span class="surum-rozet">نسخه <span dir="ltr">0.2.0</span></span>
+        <h3>نصب روی ویندوز</h3>
+        <p class="aciklama">با Chrome یا Edge. بعد از نصب در فهرست Start می‌آید و مثل برنامه‌های دیگر باز می‌شود.</p>
+        <div class="eylem"><a class="dugme dugme--asil dugme--buyuk" href="./app/?kur=1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>
+          باز کردن و نصب
+        </a></div>
+        <ol class="adimlar">
+          <li>دکمهٔ بالا را بزنید؛ برنامه در مرورگر باز می‌شود.</li>
+          <li>دکمهٔ <b>نصب</b> در خود صفحه را بزنید.</li>
+          <li>یا در نوار آدرس، آیکن نصب (صفحه با تیر) را بزنید.</li>
+        </ol>
+        <p class="kucuk-not">بدون فایل EXE · Chrome یا Edge</p>
+      </div>
+
+      <div class="pano" role="tabpanel" id="p-mac" aria-labelledby="s-mac">
+        <span class="surum-rozet">نسخه <span dir="ltr">0.2.0</span></span>
+        <h3>نصب روی مک و لینوکس</h3>
+        <p class="aciklama">با Chrome یا Edge روی هر دو کار می‌کند. در Safari مک، از منوی File گزینهٔ «Add to Dock».</p>
+        <div class="eylem"><a class="dugme dugme--asil dugme--buyuk" href="./app/?kur=1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>
+          باز کردن و نصب
+        </a></div>
+        <ol class="adimlar">
+          <li>دکمهٔ بالا را بزنید.</li>
+          <li>در Chrome یا Edge، آیکن نصب در نوار آدرس را بزنید.</li>
+          <li>در Safari مک: منوی <b>File</b> ← <b>Add to Dock</b>.</li>
+        </ol>
+        <p class="kucuk-not">macOS و لینوکس · Chrome، Edge یا Safari</p>
+      </div>
     </div>
 
-    <div class="ozellikler">
-
-      <div class="ozellik bit" data-cihaz="android">
-        <div class="cihaz-rozet">دستگاه شما</div>
-        <div class="simge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
-        <h3>اندروید</h3>
-        <p>
-          دکمهٔ «باز کردن و نصب» را بزنید؛ برنامه باز می‌شود و خودش دکمهٔ نصب را
-          نشان می‌دهد. اگر ظاهر نشد، از منوی مرورگر «افزودن به صفحهٔ اصلی» را بزنید.
-        </p>
-      </div>
-
-      <div class="ozellik bit" data-cihaz="ios">
-        <div class="cihaz-rozet">دستگاه شما</div>
-        <div class="simge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></div>
-        <h3>آیفون و آیپد</h3>
-        <p>
-          برنامه را در Safari باز کنید، دکمهٔ «Share» در پایین را بزنید و از فهرست
-          «Add to Home Screen» را انتخاب کنید. اپل نصب را تنها از همین راه اجازه می‌دهد.
-        </p>
-      </div>
-
-      <div class="ozellik bit" data-cihaz="masaustu">
-        <div class="cihaz-rozet">دستگاه شما</div>
-        <div class="simge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
-        <h3>کمپیوتر</h3>
-        <p>
-          در Chrome یا Edge دکمهٔ «باز کردن و نصب» را بزنید. در نوار آدرس هم یک
-          آیکن نصب ظاهر می‌شود؛ از آنجا هم می‌شود.
-        </p>
-      </div>
-
-    </div>
-
-    <p class="nasb-not">
+    <p class="indir-alt">
       بعد از نصب، نو شدن‌ها خود به خود می‌آیند — چیزی را دوباره نصب کردن لازم نیست.
+      <br>
+      نمی‌خواهید نصب کنید؟ <a href="./app/">در مرورگر باز کنید</a> — همه چیز همان‌طور کار می‌کند.
     </p>
+  </div>
+</section>
+
+<section class="bolum bolum--kagit" id="سوالات">
+  <div class="kap">
+    <div class="bas bas--orta bit">
+      <span class="etiket">سوالات</span>
+      <h2>آنچه داکتران بیشتر می‌پرسند</h2>
+    </div>
+    <div class="sorular-duzen">
+      <div class="soru-kutu bit">
+        <h3>کوتاه‌ترین جواب</h3>
+        <p><b>دیتابیس آفلاین.</b> معلومات در حافظهٔ خود دستگاه است، نه روی سرور کسی.</p>
+        <p><b>بدون حساب کاربری.</b> ثبت نام، ایمیل و شمارهٔ تیلفون نمی‌خواهد.</p>
+        <p><b>پشتیبان امن.</b> یک فایل که خودتان نگه می‌دارید؛ و اگر بخواهید، یک کاپی رمزشده در گوگل درایو.</p>
+      </div>
+
+      <div class="soru-liste">
+
+        <details class="soru bit" open>
+          <summary><span class="no">۰۱</span><span>معلومات مریضان من به جایی فرستاده می‌شود؟</span><span class="art">+</span></summary>
+          <div class="cevap">
+            <p>نخیر. برنامه سرور ندارد. هر نام، هر نسخه و هر عکسی که وارد می‌کنید در حافظهٔ خود دستگاه ذخیره می‌شود و از آن بیرون نمی‌رود.</p>
+            <p>تنها استثنا وقتی است که خودتان همگام‌سازی با گوگل را روشن کنید — و در آن حالت هم معلومات <b>پیش از بار شدن، در همین دستگاه رمز می‌شود</b>. گوگل فایل رمزشده را نگه می‌دارد و محتوای آن را نمی‌بیند.</p>
+          </div>
+        </details>
+
+        <details class="soru bit">
+          <summary><span class="no">۰۲</span><span>بدون انترنت کار می‌کند؟</span><span class="art">+</span></summary>
+          <div class="cevap">
+            <p>بله. بعد از نصب، برنامه تماماً روی دستگاه است. در کلینیک انترنت قطع شود، نوشتن و چاپ نسخه متوقف نمی‌شود.</p>
+            <p>انترنت تنها برای دو چیز لازم است: نو شدن برنامه، و همگام‌سازی اختیاری با گوگل.</p>
+          </div>
+        </details>
+
+        <details class="soru bit">
+          <summary><span class="no">۰۳</span><span>اگر گوشی گم شود یا خراب شود چه؟</span><span class="art">+</span></summary>
+          <div class="cevap">
+            <p>چون معلومات روی دستگاه است، با رفتن دستگاه معلومات هم می‌رود. برای همین <b>پشتیبان گرفتن جدی است</b>: از تنظیمات، «پشتیبان» یک فایل می‌دهد که باید جای امنی نگه دارید.</p>
+            <p>اگر همگام‌سازی با گوگل را روشن کرده باشید، یک کاپی رمزشده هم در حساب گوگل خودتان می‌ماند و روی دستگاه نو برمی‌گردد.</p>
+          </div>
+        </details>
+
+        <details class="soru bit">
+          <summary><span class="no">۰۴</span><span>کمپیوتر و تیلفون را چطور یکی کنم؟</span><span class="art">+</span></summary>
+          <div class="cevap">
+            <p>از تنظیمات، همگام‌سازی با گوگل را روشن کنید و در هر دو دستگاه با <b>همان حساب گوگل</b> داخل شوید. یک رمز هم انتخاب می‌کنید که معلومات با آن رمز می‌شود.</p>
+            <p>آن رمز فقط نزد خود شماست و در هیچ جا ذخیره نمی‌شود — پس آن را گم نکنید؛ بدون آن فایل رمزشده باز نمی‌شود.</p>
+          </div>
+        </details>
+
+        <details class="soru bit">
+          <summary><span class="no">۰۵</span><span>چرا در Play Store نیست؟</span><span class="art">+</span></summary>
+          <div class="cevap">
+            <p>چون ضرورت نیست. شفا یک برنامهٔ تحت وب است و از همین صفحه نصب می‌شود؛ بعد از نصب فرقی با یک برنامهٔ فروشگاهی ندارد: آیکن دارد، پُر صفحه باز می‌شود و بدون انترنت کار می‌کند.</p>
+            <p>این راه یک فایده هم دارد: نو شدن‌ها خود به خود می‌آیند و لازم نیست هر بار چیزی دانلود کنید.</p>
+          </div>
+        </details>
+
+        <details class="soru bit">
+          <summary><span class="no">۰۶</span><span>قیمت دارد؟</span><span class="art">+</span></summary>
+          <div class="cevap">
+            <p>نخیر. هر چه امروز در این صفحه می‌بینید رایگان است و رایگان می‌ماند.</p>
+            <p>نسخهٔ دوم برنامه که در حال ساخته شدن است پولی خواهد بود، اما آنچه امروز دارید از شما پس گرفته نمی‌شود.</p>
+          </div>
+        </details>
+
+      </div>
+    </div>
   </div>
 </section>
 
@@ -444,8 +771,11 @@ footer a:hover { color: var(--vurgu); }
         مریض نمونه می‌توانید یک نسخه بنویسید و چاپ آن را ببینید. با یک کلیک هم پاک می‌شود.
       </p>
       <div class="eylemler">
-        <a class="dugme dugme--asil" href="./app/">باز کردن برنامه</a>
-        <a class="dugme" href="#ozellikler">مرور دوباره امکانات</a>
+        <a class="dugme dugme--asil dugme--buyuk" href="#دانلود">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>
+          دانلود رایگان
+        </a>
+        <a class="dugme dugme--buyuk" href="./app/">باز کردن در مرورگر</a>
       </div>
     </div>
   </div>
@@ -455,30 +785,75 @@ footer a:hover { color: var(--vurgu); }
   <div class="kap">
     <span>شفا — نسخه‌نویسی برای داکتران</span>
     <nav>
-      <a href="#ozellikler">امکانات</a>
-      <a href="#kagit">کاغذ نسخه</a>
+      <a href="#امکانات">امکانات</a>
+      <a href="#چگونه">چگونه کار می‌کند</a>
+      <a href="#تعرفه">تعرفه</a>
+      <a href="#سوالات">سوالات</a>
+      <a href="#دانلود">دانلود</a>
       <a href="./app/">برنامه</a>
     </nav>
   </div>
 </footer>
 
 <script>
-// Kaydırınca beliren bölümler. Gözlemci desteklenmiyorsa ya da kullanıcı
-// az hareket istiyorsa her şey baştan görünür kalır — içerik hiçbir
-// durumda gizli kalmaz.
-// Ziyaretcinin cihazina ait kurulum tarifi one cikarilir. Bilinmeyen bir
-// cihazda hicbiri isaretlenmez ve uc tarif de okunabilir kalir: yanlis
-// isaretlemektense hic isaretlememek yeg.
+// İndirme sekmeleri. Panolar HTML'de görünür kurulur: JS çalışmazsa dört
+// tarif de alt alta okunabilir kalır. Gizlemeyi yalnız JS yapar — içerik
+// hiçbir durumda erişilemez olmaz.
 (function () {
+  var sekmeler = [].slice.call(document.querySelectorAll('.sekme'));
+  if (!sekmeler.length) return;
+
+  function sec(cihaz) {
+    sekmeler.forEach(function (s) {
+      var bu = s.dataset.cihaz === cihaz;
+      s.setAttribute('aria-selected', bu ? 'true' : 'false');
+      s.tabIndex = bu ? 0 : -1;
+      var pano = document.getElementById(s.getAttribute('aria-controls'));
+      if (pano) pano.hidden = !bu;
+    });
+  }
+
+  sekmeler.forEach(function (s) {
+    s.addEventListener('click', function () { sec(s.dataset.cihaz); });
+    s.addEventListener('keydown', function (e) {
+      var yon = e.key === 'ArrowLeft' ? 1 : (e.key === 'ArrowRight' ? -1 : 0);   // RTL: sol = sonraki
+      if (!yon) return;
+      e.preventDefault();
+      var i = sekmeler.indexOf(s);
+      var hedef = sekmeler[(i + yon + sekmeler.length) % sekmeler.length];
+      sec(hedef.dataset.cihaz);
+      hedef.focus();
+    });
+  });
+
+  // Ziyaretçinin kendi cihazı açılır. Tanınmayan bir cihazda Android'de
+  // kalır: yanlış tarifi öne çıkarmaktansa en yaygın olanı göstermek yeğ.
   var ua = navigator.userAgent || '';
   var ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  var cihaz = ios ? 'ios' : (/Android/.test(ua) ? 'android' : (/Windows|Macintosh|Linux|CrOS/.test(ua) ? 'masaustu' : ''));
-  if (cihaz) {
-    var k = document.querySelector('.ozellik[data-cihaz="' + cihaz + '"]');
-    if (k) k.classList.add('ozellik--bu');
+  var cihaz = ios ? 'ios'
+    : /Android/.test(ua) ? 'android'
+    : /Windows/.test(ua) ? 'windows'
+    : /Macintosh|Linux|CrOS/.test(ua) ? 'mac'
+    : 'android';
+  sec(cihaz);
+
+  // Dar ekranda sekme şeridi kayıyor: seçili sekme şeridin dışında kalırsa
+  // ziyaretçi kendi tarifinin açık olduğunu göremez, yanlış tarifi okur.
+  // scrollIntoView burada kullanılamaz: sayfanın kendisini de kaydırır ve
+  // ziyaretçi sayfayı en baştan değil indirme bölümünden görür. Yalnız şeridi
+  // kaydırıyoruz. Fark olarak ekliyoruz: RTL'de scrollLeft'in başlangıç
+  // noktası tarayıcıdan tarayıcıya değişiyor, fark ikisinde de aynı çalışır.
+  var acik = document.querySelector('.sekme[aria-selected="true"]');
+  if (acik && acik.parentElement) {
+    var serit = acik.parentElement;
+    var a = acik.getBoundingClientRect(), b = serit.getBoundingClientRect();
+    serit.scrollLeft += (a.left + a.width / 2) - (b.left + b.width / 2);
   }
 })();
 
+// Kaydırınca beliren bölümler. Gözlemci desteklenmiyorsa ya da kullanıcı
+// az hareket istiyorsa her şey baştan görünür kalır — içerik hiçbir
+// durumda gizli kalmaz.
 (function () {
   var azHareket = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var ogeler = document.querySelectorAll('.bit');
