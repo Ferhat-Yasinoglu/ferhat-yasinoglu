@@ -1438,20 +1438,36 @@ ok('kurulabilir olunca kart kendini tazeliyor, düğme gerçekten kurulum pencer
 
 await sayfa.waitForSelector(`h2:has-text("${T('senkron.baslik')}")`);
 const senkronKart = sayfa.locator('.kart', { has: sayfa.locator(`h2:has-text("${T('senkron.baslik')}")`) });
-const esitleDugmesi = senkronKart.locator(`button:has-text("${T('senkron.simdi')}")`);
-if (await esitleDugmesi.isEnabled()) throw new Error('kimlik/parola girilmeden "eşitle" düğmesi açık');
-ok('eşitleme kartı çizildi; kimlik ve parola girilmeden eşitleme düğmesi kapalı');
 
-// İstemci kimliği alanı BİLEREK boş bırakılıyor: koda gömülü kimlik var ve
-// hekimin izleyeceği yol bu. Alana bakıp karar verseydik, boş bırakan hekimde
-// eşitleme hiç açılmazdı.
-await senkronKart.locator('input[name=senkronIstemciId]').fill('');
-await senkronKart.locator('input[name=senkronParolasi]').fill('kabil-1404');
-await senkronKart.locator(`button:has-text("${T('senkron.kaydet')}")`).click();
-// Başarı bildirimi kartın YENİDEN ÇİZİLMESİNDEN önce çıkıyor; ona bakıp
-// düğmeyi yoklamak eski kartı yokluyordu. Kartın kendi durumunu bekle.
-await senkronKart.locator('.rozet', { hasText: T('senkron.acik') }).waitFor({ timeout: 5000 });
-if (!(await esitleDugmesi.isEnabled())) throw new Error('kimlik ve parola girildiği halde "eşitle" düğmesi kapalı kaldı');
+// --- Kartta hekimin yazacağı HİÇBİR ŞEY yok: tek düğme.
+// Eskiden burada bir "kasa parolası" ve bir "Google istemci kimliği" kutusu
+// duruyordu. İkincisi geliştirici işi — bir doktorun ekranında `992727769946-…`
+// diye bir dize durmamalı. Hekimin bu uygulamada yazdığı tek şifre kendi Gmail
+// şifresi, o da Google'ın kendi penceresinde.
+const gorunurKutu = await senkronKart.locator('input:visible').count();
+const gorunurDugme = (await senkronKart.locator('button:visible').allTextContents()).map((x) => x.trim());
+if (gorunurKutu) throw new Error(`kartta ${gorunurKutu} görünür kutu var; hekim burada hiçbir şey yazmamalı`);
+if (gorunurDugme.length !== 1) throw new Error('tek düğme olmalıydı: ' + gorunurDugme.join(' | '));
+if (!gorunurDugme[0].includes(T('senkron.giris'))) throw new Error('tek düğme giriş düğmesi değil: ' + gorunurDugme[0]);
+ok(`yedek kartı tek düğme: «${T('senkron.giris')}» — görünür kutu yok, parola sorulmuyor`);
+
+// --- Düğmeye basınca kasa kodunu uygulama kendi üretiyor.
+// Bu ortamda Google betiği yüklenemiyor, yani tur düşecek — ama düşmeden ÖNCE
+// kodun üretilip saklanmış olması gerekiyor. Sınanan şey bu.
+googleDenemesi = true;
+await senkronKart.locator(`button:has-text("${T('senkron.giris')}")`).click();
+await senkronKart.locator('.rozet', { hasText: T('senkron.acik') }).waitFor({ timeout: 15000 });
+googleDenemesi = false;
+const kodDurumu = await sayfa.evaluate(async () => {
+  const { yerelDepoAc } = await import('./js/depo/idb.js');
+  const a = await (await yerelDepoAc()).ayarlar();
+  return { kod: a.senkronParolasi || '', acik: !!a.senkronAcik, kimlik: a.senkronIstemciId || '' };
+});
+if (!kodDurumu.acik) throw new Error('düğmeye basıldı ama yedekleme açılmadı');
+if (!/^[A-Z0-9]{4}(-[A-Z0-9]{4}){4}$/.test(kodDurumu.kod)) {
+  throw new Error('kasa kodu üretilmedi ya da biçimi bozuk: ' + JSON.stringify(kodDurumu.kod));
+}
+if (kodDurumu.kimlik) throw new Error('istemci kimliği kendiliğinden doldu: ' + kodDurumu.kimlik);
 const gomuluKimlik = await sayfa.evaluate(async () => {
   const { VARSAYILAN_ISTEMCI } = await import('./js/senkron/google.js');
   const { istemciKimligi } = await import('./js/senkron-arayuz.js');
@@ -1461,16 +1477,18 @@ if (!/^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/.test(gomuluKimlik.gomulu)) 
   throw new Error(`gömülü istemci kimliği beklenen biçimde değil: ${gomuluKimlik.gomulu}`);
 }
 if (gomuluKimlik.bosAyarla !== gomuluKimlik.gomulu) throw new Error('alan boşken gömülü kimliğe düşmüyor');
-ok(`yalnız parola girildi (kimlik alanı boş) — eşitleme açıldı, gömülü kimlik kullanılıyor: ${gomuluKimlik.gomulu.slice(0, 18)}…`);
+ok(`tek tuşla açıldı: hekim parola yazmadı, kodu uygulama üretti (${kodDurumu.kod.slice(0, 9)}…), kimlik gömülüden geliyor`);
 
 // --- Ayara yarım bir kimlik yapıştırılmışsa görünüyor mu?
 // Hekimin telefonunda tam bu oldu: kimliği koda gömmeden önce ayara yapıştırdığı
 // değer eksik kaldı, gömülü kimliğin yerine geçti ve Google "client bulunamadı"
 // dedi. Hata Google'dan geldiği için sebebi uygulamada hiç görünmüyordu.
+// Alan artık «Gelişmiş» altında: açmak gerekiyor.
+await senkronKart.locator('details.gelismis > summary').click();
 await senkronKart.locator('input[name=senkronIstemciId]').fill('992727769946-82oa2him');
 await senkronKart.locator(`button:has-text("${T('senkron.kaydet')}")`).click();
 await sayfa.waitForSelector(`text=${T('senkron.kimlik_bozuk').split('{k}')[0].trim()}`, { timeout: 5000 });
-const bozukUyari = (await senkronKart.locator('.uyari--hata').first().textContent()).trim();
+const bozukUyari = (await senkronKart.locator('.uyari--hata', { hasText: '992727769946-82oa2him' }).first().textContent()).trim();
 if (!bozukUyari.includes('992727769946-82oa2him')) {
   throw new Error(`bozuk kimlik uyarısı değeri göstermiyor: ${bozukUyari}`);
 }
@@ -1482,8 +1500,11 @@ await sayfa.reload({ waitUntil: 'networkidle' });
 await sayfa.waitForSelector('#kenar-menu a');
 await sayfa.waitForSelector(`h2:has-text("${T('senkron.baslik')}")`);
 const kartYeni = sayfa.locator('.kart', { has: sayfa.locator(`h2:has-text("${T('senkron.baslik')}")`) });
+await kartYeni.locator('details.gelismis > summary').click();
 await kartYeni.locator(`text=${T('senkron.kimlik_gomulu').split('{k}')[0].trim()}`).waitFor({ timeout: 5000 });
-if (await kartYeni.locator('.uyari--hata').count()) throw new Error('açılışta onarım olmadı, uyarı duruyor');
+if (await kartYeni.locator('.uyari--hata', { hasText: '992727769946-82oa2him' }).count()) {
+  throw new Error('açılışta onarım olmadı, bozuk kimlik uyarısı duruyor');
+}
 
 const onarim = await sayfa.evaluate(async () => {
   const { yerelDepoAc } = await import('./js/depo/idb.js');
@@ -1579,6 +1600,95 @@ if (googleHatalari.kimliksiz !== 'istemci_yok') throw new Error(`kimliksiz çağ
 if (googleHatalari.zaman !== 'zaman_asimi') throw new Error(`geri çağırmayan istemci: ${googleHatalari.zaman}`);
 if (googleHatalari.sure > 3000) throw new Error(`zaman aşımı geç düştü: ${googleHatalari.sure}ms`);
 ok(`Google hataları ayrışıyor: engellenen betik «betik» (internet suçlanmıyor), kimliksiz «istemci_yok», geri çağırmayan istemci ${googleHatalari.sure}ms'de «zaman_asimi» (sonsuza kadar dönmüyor)`);
+
+// --- Listede olmayan hekim ne okuyor?
+// Onay ekranı "Testing" modundayken listede OLMAYAN her adres access_denied
+// alıyor. Bu eskiden pencere kapatmayla aynı kovaya düşüyor ve hekim
+// «hesabı seç, izin ver» diye YAPAMAYACAĞI bir şey okuyordu: kaç kez
+// denerse denesin olmayacaktı, sebebini de öğrenemeyecekti.
+googleDenemesi = true;
+const izinHatalari = await sayfa.evaluate(async () => {
+  const g = await import('./js/senkron/google.js');
+  const { hataMetni } = await import('./js/hatalar.js');
+  // Her durum için AYRI kimlik: istemciKur kimliğe göre önbellekliyor.
+  const dene = async (hata, kimlik) => {
+    globalThis.google = { accounts: { oauth2: { initTokenClient: () => {
+      const c = { requestAccessToken() { c.callback({ error: hata }); } };
+      return c;
+    } } } };
+    g.cikisYap();
+    try { await g.belgeAl(kimlik, { sure: 2000 }); return { kod: 'HATA_YOK', metin: '' }; }
+    catch (e) { return { kod: e?.kod || '?', metin: hataMetni(e, '') }; }
+  };
+  return {
+    red: await dene('access_denied', 'a.apps.googleusercontent.com'),
+    kapandi: await dene('popup_closed', 'b.apps.googleusercontent.com'),
+  };
+});
+googleDenemesi = false;
+
+if (izinHatalari.red.kod !== 'hesap_izinsiz') {
+  throw new Error(`access_denied '${izinHatalari.red.kod}' diye raporlandı; 'hesap_izinsiz' olmalıydı`);
+}
+if (izinHatalari.kapandi.kod !== 'yetki') {
+  throw new Error(`popup_closed '${izinHatalari.kapandi.kod}' diye raporlandı; 'yetki' olmalıydı`);
+}
+if (izinHatalari.red.metin === izinHatalari.kapandi.metin) {
+  throw new Error('iki durum aynı cümleyi basıyor; ayrışmanın anlamı kalmıyor');
+}
+// Asıl mesele metnin İÇERİĞİ: hekime yapamayacağı bir şey söylememeli ve
+// bugün herkeste çalışan yolu (dosya yedeği) göstermeli.
+const izinMetni = izinHatalari.red.metin;
+if (/اجازهٔ دسترسی بدهید|حساب را انتخاب کنید/.test(izinMetni)) {
+  throw new Error('«izin ver / hesabı seç» hâlâ deniyor — listede olmayan hekim bunu yapamaz: ' + izinMetni);
+}
+if (!izinMetni.includes(T('yedek.indir'))) {
+  throw new Error('mesaj dosya yedeğine yönlendirmiyor: ' + izinMetni);
+}
+ok(`listede olmayan hesap ayrı: access_denied «hesap_izinsiz», pencere kapanışı «yetki»; mesaj "izin ver" demiyor, «${T('yedek.indir')}» diyor`);
+
+// --- Hesapsız açılış: Google girişi GİRİŞTE değil.
+// Yeni kuran hekimde eşitleme kapalı; Google'a ait tek satır yüklenmemeli,
+// giriş ekranı ya da hesap sorusu çıkmamalı. Bugün böyle — ama bunu tutan
+// bir denetim yoktu: biri açılışa giriş koysa hiçbir test patlamazdı.
+const temizBaglam = await tarayici.newContext({ viewport: { width: 1280, height: 900 } });
+const istekler = [];
+temizBaglam.on('request', (r) => istekler.push(r.url()));
+const temizHatalar = [];
+temizBaglam.on('console', (m) => { if (m.type() === 'error') temizHatalar.push(m.text()); });
+const temizSayfa = await temizBaglam.newPage();
+// 'networkidle' bilerek kullanılmıyor: bu deneme iki bağlamı ve vitest'i
+// izleyen makinede koşuyor, ağ 30 saniye boyunca bir an bile boşalmazsa
+// kendiliğinden düşerdi. Menü çizilene kadar bekleyip üstüne sabit bir pay
+// koymak hem yeterli (açılış sonrası sessiz tur 1500ms'de) hem sağlam.
+await temizSayfa.goto(KOK, { waitUntil: 'load' });
+await temizSayfa.waitForSelector('#kenar-menu a[href="#/ayarlar"]');
+await temizSayfa.waitForTimeout(2500);
+
+const googleIstekleri = istekler.filter((u) => /accounts\.google\.com|googleapis\.com|senkron\/google\.js/.test(u));
+if (googleIstekleri.length) {
+  throw new Error('açılışta Google isteği yapıldı: ' + [...new Set(googleIstekleri)].join(', '));
+}
+const engel = await temizSayfa.evaluate(() => ({
+  modal: document.querySelectorAll('[role="dialog"], .modal').length,
+  eposta: document.querySelectorAll('input[type=email]').length,
+  parola: document.querySelectorAll('input[type=password]').length,
+  panel: !!document.querySelector('#sayfa')?.textContent.trim(),
+}));
+if (engel.modal) throw new Error('açılışta modal var; uygulama hesapsız açılmalı');
+if (engel.eposta || engel.parola) throw new Error('açılışta e-posta/parola kutusu var; giriş istenmemeli');
+if (!engel.panel) throw new Error('panel boş çizildi');
+// Hekim gerçekten kullanabiliyor mu: reçete yazma yoluna girebilmeli.
+// `#sayfa`yı beklemek yetmez — o her zaman var; adresin ve içeriğin
+// GERÇEKTEN değiştiğini görmek gerekiyor.
+const panelMetni = await temizSayfa.textContent('#sayfa');
+await temizSayfa.click('#kenar-menu a[href="#/recete/kagit"]');
+await temizSayfa.waitForFunction(
+  (eski) => location.hash === '#/recete/kagit' && document.querySelector('#sayfa')?.textContent !== eski,
+  panelMetni, { timeout: 15000 });
+if (temizHatalar.length) throw new Error('temiz açılışta konsol hatası: ' + temizHatalar.join(' | '));
+await temizBaglam.close();
+ok(`hesapsız açılış: ${istekler.length} istekte tek bir Google isteği yok, modal/giriş kutusu yok, reçete yazmaya girilebiliyor`);
 
 await tarayici.close();
 kapat();

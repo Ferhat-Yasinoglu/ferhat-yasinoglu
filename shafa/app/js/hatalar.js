@@ -35,9 +35,9 @@ const DEPO = {
   gorsel_buyuk: 'Görsel çok büyük; daha küçük bir fotoğraf seç.',
   // Eşitleme ve kasa. Türkçe kalan bir kod Farsça arayüzün ortasına Türkçe
   // cümle basıyor — görsel yükleme eklenirken tam bu olmuştu.
-  parola_yok: 'Önce kasa parolası girilmeli.',
-  parola: 'Kasa parolası tutmuyor. Öbür cihazdaki parolanın aynısını yaz.',
-  kasa_bozuk: 'Buluttaki dosya açılamadı.',
+  parola_yok: 'Önce Google ile giriş yapılmalı.',
+  parola: 'Bu yedek başka bir cihazda yapılmış. O cihazın kodunu gir.',
+  kasa_bozuk: 'Google\'daki dosya açılamadı.',
   uzak_bozuk: 'Buluttaki dosya bir Shafa kopyası değil.',
   kripto: 'Bu tarayıcı şifreleme desteklemiyor; eşitleme çalışmaz.',
   bicim: 'Dosya tanınmadı.',
@@ -45,6 +45,7 @@ const DEPO = {
   bozuk: 'Dosyanın içi okunamadı.',
   istemci_yok: 'Google istemci kimliği girilmemiş.',
   yetki: 'Google izin vermedi. Hesabı seç ve erişime izin ver.',
+  hesap_izinsiz: 'Google bu hesaba izin vermedi. Ya izni vermeden pencereyi kapattın, ya da bu adres henüz uygulamanın listesinde değil. Her hâlükârda «Yedek indir» her hesapla ve internetsiz çalışır — dosyayı kendin sakla.',
   pencere: 'Tarayıcı Google penceresini engelledi. Engeli kaldırıp yeniden dene.',
   ag: 'Google\'a ulaşılamadı. İnternet bağlantısını denetle.',
   drive: 'Drive isteği başarısız oldu.',

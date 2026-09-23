@@ -18,6 +18,29 @@ export function yeniId(onek = 'kyt') {
   return `${onek}_${govde}`;
 }
 
+/* Kasa kodu. Hekim ARTIK PAROLA YAZMIYOR: giriş düğmesine basınca uygulama
+   bunu kendi üretiyor. Kod yalnız ikinci cihaz eklenirken görünüyor ve elle
+   geçirilebilsin diye birbirine benzeyen harfler (I, O, 0, 1) alfabede yok;
+   dörtlü gruplara da bölünüyor. 20 harf × 32 seçenek = 100 bit.
+
+   crypto yoksa BİLEREK düşülmüyor: `yeniId` Math.random'a düşebilir çünkü orada
+   çakışmama yetiyor. Burada üretilen şey bir ŞİFRELEME ANAHTARI — tahmin
+   edilebilir olması sessiz bir güvenlik kaybı olurdu, hata vermek yeğ. */
+const KOD_ALFABE = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+export function kasaKoduUret(uzunluk = 20) {
+  const c = globalThis.crypto;
+  if (!c?.getRandomValues) throw new Error('crypto yok: kasa kodu güvenle üretilemez');
+  const b = new Uint8Array(uzunluk);
+  c.getRandomValues(b);
+  let kod = '';
+  for (let i = 0; i < uzunluk; i++) {
+    if (i && i % 4 === 0) kod += '-';
+    kod += KOD_ALFABE[b[i] % KOD_ALFABE.length];
+  }
+  return kod;
+}
+
 // Zaman damgası tekdüze artar: aynı milisaniyede iki kayıt oluşursa (ver + geri
 // al gibi arka arkaya işlemler) ikincisi bir milisaniye ileri atılır. Yoksa
 // hareket geçmişi eşit damgalarda kararsız sıralanıyor, "önce ne oldu"

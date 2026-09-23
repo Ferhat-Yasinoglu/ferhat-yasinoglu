@@ -33,6 +33,7 @@
 .btn--sade { background: transparent; border-color: transparent; }
 .btn--sade:hover:not(:disabled) { background: rgb(var(--yuzey-2)); border-color: transparent; }
 .btn--kucuk { min-height: 32px; padding-inline: var(--b-3); font-size: var(--f-s); }
+.btn--buyuk { min-height: 48px; padding-inline: var(--b-5); font-size: var(--f-l); }
 .btn--ikon { padding-inline: var(--b-2); min-width: 40px; }
 .btn--ikon.btn--kucuk { min-width: 32px; }
 .btn--genis { width: 100%; }
@@ -542,4 +543,33 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 .gorsel-secim__resim {
   inline-size: 84px; block-size: auto; max-block-size: 64px; object-fit: contain;
   border: var(--kenarlik); border-radius: var(--r-kucuk); background: #fff; padding: 2px;
+}
+
+/* Gelişmiş: hekimin günlük işinde yeri olmayan ayarlar katlı duruyor. Silmek
+   yerine katlamak — istemci kimliği geliştiriciye, kasa kodu da ikinci cihazı
+   kuran hekime lazım; ama ikisi de ilk bakışta ekranda durmamalı.
+   İşaret olarak ok değil artı kullanılıyor: ok sağdan sola yazıda ters
+   görünüyor, artı her iki yönde de aynı okunuyor. */
+details.gelismis {
+  margin-block-start: var(--b-4); border-block-start: var(--kenarlik); padding-block-start: var(--b-3);
+}
+details.gelismis > summary {
+  cursor: pointer; list-style: none;
+  display: inline-flex; align-items: center; gap: var(--b-2);
+  font-weight: 600; font-size: var(--f-s); color: rgb(var(--metin-3));
+}
+details.gelismis > summary::-webkit-details-marker { display: none; }
+details.gelismis > summary::before {
+  content: '+'; display: inline-block; font-size: var(--f-l); line-height: 1;
+  transition: transform var(--hiz-1) var(--egri);
+}
+details.gelismis[open] > summary::before { transform: rotate(45deg); }
+details.gelismis > summary:hover { color: rgb(var(--metin)); }
+
+/* Kasa kodu: elle öbür cihaza geçirilecek, o yüzden tek aralıklı ve seçilebilir. */
+code.kod {
+  display: inline-block; padding: var(--b-2) var(--b-3); border-radius: var(--r-kucuk);
+  background: rgb(var(--yuzey-2)); border: var(--kenarlik);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--f-m); letter-spacing: .06em; user-select: all;
 }

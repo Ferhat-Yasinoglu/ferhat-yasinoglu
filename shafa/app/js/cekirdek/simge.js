@@ -35,6 +35,7 @@ const SIMGELER = {
   ayarlar: [['path', { d: 'M4 7h9M19 7h1M4 12h4M14 12h6M4 17h11M21 17h0' }], ['circle', { cx: 16, cy: 7, r: 2 }], ['circle', { cx: 11, cy: 12, r: 2 }], ['circle', { cx: 18, cy: 17, r: 2 }]],
   barkod: [['path', { d: 'M4 6v12M7 6v12M10.5 6v12M14 6v12M17 6v12M20 6v12' }]],
   telefon: [['path', { d: 'M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z' }]],
+  bulut: [['path', { d: 'M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.6 4.2 4.2 0 0 0 7 18z' }]],
   kilit: [['rect', { x: 4, y: 11, width: 16, height: 10, rx: 2 }], ['path', { d: 'M8 11V7a4 4 0 0 1 8 0v4' }]],
   kalp: [['path', { d: 'M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 2.6C19 15.6 12 20 12 20z' }]],
   /* Marka simgesi: kalbin içinden geçen nabız çizgisi. Düz kalp tek başına
