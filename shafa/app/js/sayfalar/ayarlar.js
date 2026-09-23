@@ -12,6 +12,7 @@ import { sayiMetni, bicimAyarla, PARA_BIRIMLERI } from '../paylasilan/metin.js';
 import { t } from '../i18n.js';
 import { sablonListesi } from '../sablon-arayuz.js';
 import { senkronKarti } from '../senkron-arayuz.js';
+import { kurulumKarti } from '../kurulum-arayuz.js';
 import { kagidiYazdir } from '../kagit.js';
 import { hataMetni } from '../hatalar.js';
 import { metniDogrula } from '../depo/dogrulama.js';
@@ -264,6 +265,9 @@ export default {
             ciz();
           } }),
           el('label', { class: 'btn' }, simge('yukle', { boy: 18 }), t('yedek.geri_yukle', 'Yedekten geri yükle'), dosyaGirdisi))));
+
+      /* --- Bu cihaza kur --- */
+      kok.appendChild(kurulumKarti(ctx, ciz));
 
       /* --- Google ile eşitle --- */
       kok.appendChild(senkronKarti(ctx, ayar, meta, ciz));

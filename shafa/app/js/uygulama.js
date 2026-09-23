@@ -4,6 +4,7 @@
 import { yerelDepoAc } from './depo/idb.js';
 import { hatirlatmaGerekli, yedekOlustur, indir } from './depo/yedek.js';
 import { bozukKimligiAyikla } from './paylasilan/senkron.js';
+import { kur, kurulabilirMi, kuruluMu, elleKurulur, dinle as kurulumuDinle } from './cekirdek/kurulum.js';
 import { Yonlendirici } from './cekirdek/yonlendirici.js';
 import { el, temizle, btn, girdi, sirala } from './cekirdek/dom.js';
 import { simge } from './cekirdek/simge.js';
@@ -339,6 +340,29 @@ async function baslat() {
         });
       });
     } catch (e) { console.warn('SW kaydedilemedi', e); }
+  }
+
+  /* Tanıtım sayfasından "kur" diye gelindiyse kurulumu öne çıkar.
+     Kendiliğinden kuramıyoruz: prompt() yalnız kullanıcı hareketinin içinde
+     çağrılabiliyor. Bu yüzden basılacak bir düğme gösteriliyor — ve tarayıcı
+     "kurulabilir" demeden düğme çıkmıyor, çalışmayan düğme göstermeyelim. */
+  if (/(^|[?&])kur(=|&|$)/.test(location.search) && !kuruluMu()) {
+    let gosterildi = false;
+    const goster = () => {
+      if (gosterildi || kuruluMu()) return;
+      if (kurulabilirMi()) {
+        gosterildi = true;
+        bildir(t('kurulum.hazir', 'Uygulama bu cihaza kurulabilir.'), {
+          sure: 0,
+          eylem: { metin: t('kurulum.kur', 'Bu cihaza kur'), cb: () => kur() },
+        });
+      } else if (elleKurulur()) {
+        gosterildi = true;
+        bildir(t('kurulum.ios', 'iPhone ve iPad\'de: alttaki «Paylaş» düğmesine bas, açılan listeden «Ana Ekrana Ekle»yi seç.'), { sure: 0 });
+      }
+    };
+    goster();
+    if (!gosterildi) kurulumuDinle(goster);   // olay açılıştan sonra da gelebiliyor
   }
 
   // Eşitleme açıksa açılıştan SONRA sessiz bir tur. İki şey bilerek böyle:
