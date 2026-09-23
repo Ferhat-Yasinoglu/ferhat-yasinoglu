@@ -25,13 +25,21 @@ globalThis.UYGULAMA_SURUMU = UYGULAMA_SURUMU;
    Etiketler Afganistan'da kullanılan sözcüklerle (مریضان، دواها); tasarımdaki
    İran Farsçası karşılıkları (بیماران، داروها) bilerek alınmadı, hekim
    bugüne kadar bunları gördü. */
+/* Sıra hekimlerin söylediği sıra: önce reçete, sonra hasta, sonra dava.
+   `alt: true` olanlar telefondaki alt çubuğa çıkıyor — dördü, fazlası
+   parmağın altında kalabalık ediyor. Geri kalanı kenar çubuğunda; telefonda
+   o çubuk üst köşedeki ☰ ile çekmece gibi açılıyor.
+
+   «Reçeteler» dördüncü kutuda BİLEREK: hekim yazdığı reçeteyi en çok oradan
+   arıyor (eczane telefon edince, hasta geri gelince). Menüye gömülmesi
+   günlük işi yavaşlatırdı. */
 const MENU = [
-  { yol: '/panel', ad: 'Panel', anahtar: 'nav.panel', simge: 'panel', alt: true },
-  { yol: '/hastalar', ad: 'Hastalar', anahtar: 'nav.hastalar', simge: 'hasta', alt: true, sayac: 'hastalar' },
   { yol: '/recete/kagit', ad: 'Reçete yaz', anahtar: 'nav.kagit', simge: 'kalem', alt: true },
-  { yol: '/recete/bos', ad: 'Boş kâğıt', anahtar: 'nav.bos_kagit', simge: 'yazdir', alt: false },
-  { yol: '/receteler', ad: 'Reçeteler', anahtar: 'nav.receteler', simge: 'recete', alt: true, sayac: 'receteler' },
+  { yol: '/hastalar', ad: 'Hastalar', anahtar: 'nav.hastalar', simge: 'hasta', alt: true, sayac: 'hastalar' },
   { yol: '/ilaclar', ad: 'İlaçlar', anahtar: 'nav.ilaclar', simge: 'ilac', alt: true, sayac: 'ilaclar' },
+  { yol: '/receteler', ad: 'Reçeteler', anahtar: 'nav.receteler', simge: 'recete', alt: true, sayac: 'receteler' },
+  { yol: '/panel', ad: 'Panel', anahtar: 'nav.panel', simge: 'panel', alt: false },
+  { yol: '/recete/bos', ad: 'Boş kâğıt', anahtar: 'nav.bos_kagit', simge: 'yazdir', alt: false },
   { yol: '/tanilar', ad: 'Tanılar', anahtar: 'nav.tanilar', simge: 'not', alt: false },
   { yol: '/laboratuvar', ad: 'Laboratuvar', anahtar: 'nav.laboratuvar', simge: 'tup', alt: false },
   { yol: '/raporlar', ad: 'Raporlar', anahtar: 'nav.raporlar', simge: 'grafik', alt: false },
@@ -39,7 +47,9 @@ const MENU = [
 ];
 
 const ROTALAR = [
-  { yol: '/', yukle: () => import('./sayfalar/panel.js') },
+  // Uygulamanın günlük işi reçete yazmak: açılışta hekim doğrudan kâğıdın
+  // başında oluyor. Panel kalktı değil, menüye indi.
+  { yol: '/', yukle: () => import('./sayfalar/kagit-yaz.js') },
   { yol: '/panel', yukle: () => import('./sayfalar/panel.js') },
   { yol: '/ilaclar', yukle: () => import('./sayfalar/ilaclar.js') },
   { yol: '/ilac/:id', yukle: () => import('./sayfalar/ilac.js') },
@@ -78,7 +88,7 @@ async function menuCiz(depo) {
   // Önce yalnız menü çiziliyordu; ötekiler index.html'de sabit dursaydı
   // slogan ayarlardan gelemezdi.
   temizle(kenar);
-  kenar.appendChild(el('a', { class: 'kenar__marka', href: '#/panel' },
+  kenar.appendChild(el('a', { class: 'kenar__marka', href: '#/' },
     el('span', { class: 'kenar__marka-simge' }, simge('nabiz-kalp', { boy: 24 })),
     el('span', { class: 'kenar__marka-ad' },
       el('b', {}, 'Shafa'),
@@ -129,6 +139,29 @@ async function hesabiCiz(depo) {
     el('span', {}, ad ? (unvan || t('ust.hekim', 'Hekim hesabı')) : t('ust.antet_bos_alt', 'Ayarlar'))));
   kap.appendChild(el('a', { class: 'avatar avatar--ust', href: '#/ayarlar', 'aria-hidden': 'true', tabindex: '-1' },
     ad ? basHarfler(ad) : simge('hasta', { boy: 18 })));
+}
+
+/* Telefonda menü. Yeni bir menü bileşeni YAZILMIYOR: dar ekranda gizlenen
+   kenar çubuğunun kendisi çekmece olarak açılıyor. Böylece tek menü var —
+   sayaçlar, aktif işaret ve sıra iki yerde ayrı ayrı tutulmuyor. */
+export function menuyuKapat() {
+  document.body.classList.remove('menu-acik');
+  document.querySelector('.ust__menu')?.setAttribute('aria-expanded', 'false');
+}
+
+function menuDugmesi() {
+  const d = btn('', {
+    class: 'btn btn--sade btn--ikon ust__menu',
+    'aria-label': t('nav.menu', 'Menü'),
+    'aria-expanded': 'false',
+    onclick: () => {
+      document.body.classList.add('menu-hazir');
+      const acik = document.body.classList.toggle('menu-acik');
+      d.setAttribute('aria-expanded', acik ? 'true' : 'false');
+    },
+  });
+  d.appendChild(simge('menu'));
+  return d;
 }
 
 /* Detay sayfaları kendi listelerini aktif gösterir: /ilac/x → İlaçlar. */
@@ -292,12 +325,16 @@ async function baslat() {
     simge('takvim', { boy: 16 }),
     el('span', { dir: 'ltr' }, tarihMetni(bugun()))));
   ustSag.appendChild(temaDugmesi());
+  ustSag.appendChild(menuDugmesi());
   ustSag.appendChild(el('div', { class: 'ust__hesap', id: 'ust-hesap' }));
   await hesabiCiz(depo);
 
+  document.getElementById('kenar-perde')?.addEventListener('click', menuyuKapat);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') menuyuKapat(); });
+
   const yonlendirici = new Yonlendirici(ROTALAR, {
     kok: document.getElementById('sayfa'),
-    cizimOncesi: ({ yol }) => { aktifIsaretle(yol); bantlariYenile(ctx); },
+    cizimOncesi: ({ yol }) => { aktifIsaretle(yol); bantlariYenile(ctx); menuyuKapat(); },
   });
   yonlendirici.ctx = ctx;
   ctx.git = (yol) => yonlendirici.git(yol);
@@ -309,7 +346,7 @@ async function baslat() {
 
   // replaceState kullanılır: `location.hash = …` bir hashchange kuyruğa alır ve
   // yönlendirici açılışta iki kez çizerdi.
-  if (!location.hash) history.replaceState(null, '', '#/panel');
+  if (!location.hash) history.replaceState(null, '', '#/recete/kagit');
   await yonlendirici.baslat();
 
   window.addEventListener('unhandledrejection', (e) => {

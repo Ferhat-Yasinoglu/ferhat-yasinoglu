@@ -87,9 +87,24 @@ await sayfa.goto(KOK, { waitUntil: 'networkidle' });
 await sayfa.waitForSelector('#kenar-menu a');
 ok('uygulama açıldı, menü çizildi');
 
-// --- Panel boşken doğru şeyi söylüyor mu?
+// --- Giriş sayfası REÇETE. Boş kurulumda hekim yolunu bulabiliyor mu?
+// Karşılama eskiden yalnız paneldeydi; giriş sayfası değişince yeni kuran
+// hekim boş bir kâğıda düşüyordu: ne hasta, ne dava, ne de nereden
+// başlayacağını söyleyen bir şey.
+if (new URL(sayfa.url()).hash !== '#/recete/kagit') {
+  throw new Error('giriş sayfası reçete değil: ' + new URL(sayfa.url()).hash);
+}
+await sayfa.waitForSelector(`text=${T('kagit.ilk_baslik')}`);
+const ilkEylemler = await sayfa.$$eval('#sayfa .btn', (a) => a.map((x) => x.textContent.trim()));
+if (!ilkEylemler.some((x) => x.includes(T('kagit.ilk_hasta')))) {
+  throw new Error('boş kurulumda "hasta ekle" yolu yok: ' + ilkEylemler.join(' | '));
+}
+ok(`giriş sayfası reçete kâğıdı; boş kurulumda karşılama çıkıyor ve yol gösteriyor (${ilkEylemler.join(' · ')})`);
+
+// Panel kalkmadı, menüye indi.
+await sayfa.goto(KOK + '#/panel', { waitUntil: 'networkidle' });
 await sayfa.waitForSelector(`text=${T('panel.bos')}`);
-ok('boş panel "uygulama boş" diyor');
+ok('panel duruyor (artık menüde): boşken "uygulama boş" diyor');
 
 // --- Ayarlar: örnek veri yükle
 await sayfa.click('#kenar-menu a[href="#/ayarlar"]');
@@ -866,7 +881,52 @@ await sayfa.setViewportSize({ width: 390, height: 780 });
 await sayfa.waitForSelector('.alt a');
 const altGorunur = await sayfa.isVisible('.alt a[href="#/ilaclar"]');
 if (!altGorunur) throw new Error('dar ekranda alt gezinme görünmüyor');
-ok('dar ekranda alt gezinme çubuğu açıldı');
+
+// Alt çubuk hekimlerin istediği dört kutu, o sırayla. Fazlası parmağın
+// altında kalabalık ediyor, azı menüsüz erişilemeyen sayfa bırakıyor.
+const altOgeler = await sayfa.$$eval('.alt a', (as) => as.map((a) => a.getAttribute('href')));
+const beklenenAlt = ['#/recete/kagit', '#/hastalar', '#/ilaclar', '#/receteler'];
+if (JSON.stringify(altOgeler) !== JSON.stringify(beklenenAlt)) {
+  throw new Error('alt çubuk beklenenden farklı: ' + altOgeler.join(' '));
+}
+ok(`dar ekranda alt çubuk ${altOgeler.length} kutu, sırasıyla: ${altOgeler.join(' ')}`);
+
+// --- Telefonda menü: kenar çubuğu çekmece olarak açılıyor.
+// Ayrı bir telefon menüsü YOK; gizlenen kenar çubuğunun kendisi kayıyor.
+// Bu olmadan Ayarlar, Raporlar, Panel telefonda hiç açılamaz.
+const kenarGorunur = () => sayfa.evaluate(() => {
+  const k = document.querySelector('.kenar');
+  return !!k && k.getBoundingClientRect().left < window.innerWidth - 20;
+});
+if (await kenarGorunur()) throw new Error('çekmece kapalıyken kenar çubuğu ekranda duruyor');
+if (!(await sayfa.isVisible('.ust__menu'))) throw new Error('dar ekranda ☰ düğmesi yok');
+await sayfa.click('.ust__menu');
+await sayfa.waitForFunction(() => document.body.classList.contains('menu-acik'));
+await sayfa.waitForTimeout(400);
+if (!(await kenarGorunur())) throw new Error('☰ basıldı, çekmece açılmadı');
+const cekmeceOgeler = await sayfa.$$eval('.kenar .menu a', (as) => as.map((a) => a.getAttribute('href')));
+for (const gerekli of ['#/ayarlar', '#/raporlar', '#/panel']) {
+  if (!cekmeceOgeler.includes(gerekli)) throw new Error(`çekmecede ${gerekli} yok: ` + cekmeceOgeler.join(' '));
+}
+// Bir kaleme basınca hem gidilmeli hem çekmece kapanmalı: açık kalırsa
+// hekim gittiği sayfayı göremiyor.
+await sayfa.click('.kenar .menu a[href="#/ayarlar"]');
+try {
+  await sayfa.waitForFunction(
+    () => location.hash === '#/ayarlar' && !document.body.classList.contains('menu-acik'),
+    null, { timeout: 8000 });
+} catch {
+  // Çıplak zaman aşımı hangi şartın tutmadığını söylemiyor; ikisini de yaz.
+  const d = await sayfa.evaluate(() => ({ hash: location.hash, acik: document.body.classList.contains('menu-acik') }));
+  throw new Error(`çekmeceden gezinme tamamlanmadı: adres ${d.hash}, çekmece ${d.acik ? 'AÇIK kaldı' : 'kapalı'}`);
+}
+await sayfa.waitForTimeout(400);
+if (await kenarGorunur()) throw new Error('gezinmeden sonra çekmece açık kaldı');
+ok(`telefonda ☰ çekmeceyi açıyor (${cekmeceOgeler.length} kalem, ayarlar/raporlar/panel içinde), kaleme basınca gidip kapanıyor`);
+
+// Geniş ekrana dönülüyor: sonraki adımlar kenar çubuğuna tıklıyor.
+await sayfa.setViewportSize({ width: 1280, height: 900 });
+await sayfa.waitForSelector('#kenar-menu a');
 await resim(sayfa, '6-mobil.png');
 
 // --- Veri kalıcı mı? (sayfa yenilenince duruyor mu)
@@ -923,8 +983,9 @@ ok('ikinci kez yüklemek kopya oluşturmadı');
 /* --- Kenar çubuğu, üst çubuk ve yeni sayfalar --- */
 await sayfa.goto(KOK + '#/panel', { waitUntil: 'networkidle' });
 const kenarOgeleri = await sayfa.$$eval('#kenar-menu a', (as) => as.map((a) => a.getAttribute('href')));
-const beklenenMenu = ['#/panel', '#/hastalar', '#/recete/kagit', '#/recete/bos', '#/receteler',
-  '#/ilaclar', '#/tanilar', '#/laboratuvar', '#/raporlar', '#/ayarlar'];
+// Sıra hekimlerin söylediği sıra: reçete, hasta, dava — sonra gerisi.
+const beklenenMenu = ['#/recete/kagit', '#/hastalar', '#/ilaclar', '#/receteler',
+  '#/panel', '#/recete/bos', '#/tanilar', '#/laboratuvar', '#/raporlar', '#/ayarlar'];
 if (JSON.stringify(kenarOgeleri) !== JSON.stringify(beklenenMenu)) {
   throw new Error('menü sırası beklenenden farklı: ' + kenarOgeleri.join(' '));
 }
@@ -1678,17 +1739,21 @@ const engel = await temizSayfa.evaluate(() => ({
 if (engel.modal) throw new Error('açılışta modal var; uygulama hesapsız açılmalı');
 if (engel.eposta || engel.parola) throw new Error('açılışta e-posta/parola kutusu var; giriş istenmemeli');
 if (!engel.panel) throw new Error('panel boş çizildi');
-// Hekim gerçekten kullanabiliyor mu: reçete yazma yoluna girebilmeli.
+// Hekim gerçekten kullanabiliyor mu? Giriş sayfası ZATEN reçete kâğıdı;
+// o yüzden gezinmenin çalıştığı başka bir sayfaya geçilerek sınanıyor.
 // `#sayfa`yı beklemek yetmez — o her zaman var; adresin ve içeriğin
 // GERÇEKTEN değiştiğini görmek gerekiyor.
-const panelMetni = await temizSayfa.textContent('#sayfa');
-await temizSayfa.click('#kenar-menu a[href="#/recete/kagit"]');
+if (new URL(temizSayfa.url()).hash !== '#/recete/kagit') {
+  throw new Error('temiz açılış reçete kâğıdına düşmedi: ' + new URL(temizSayfa.url()).hash);
+}
+const girisMetni = await temizSayfa.textContent('#sayfa');
+await temizSayfa.click('#kenar-menu a[href="#/hastalar"]');
 await temizSayfa.waitForFunction(
-  (eski) => location.hash === '#/recete/kagit' && document.querySelector('#sayfa')?.textContent !== eski,
-  panelMetni, { timeout: 15000 });
+  (eski) => location.hash === '#/hastalar' && document.querySelector('#sayfa')?.textContent !== eski,
+  girisMetni, { timeout: 15000 });
 if (temizHatalar.length) throw new Error('temiz açılışta konsol hatası: ' + temizHatalar.join(' | '));
 await temizBaglam.close();
-ok(`hesapsız açılış: ${istekler.length} istekte tek bir Google isteği yok, modal/giriş kutusu yok, reçete yazmaya girilebiliyor`);
+ok(`hesapsız açılış: ${istekler.length} istekte tek bir Google isteği yok, modal/giriş kutusu yok, giriş sayfası reçete kâğıdı, gezinme çalışıyor`);
 
 await tarayici.close();
 kapat();
