@@ -138,5 +138,28 @@ for (const [dil, sozluk] of Object.entries(sozlukler)) {
 }
 dinamik.forEach(([a]) => kullanilan.add(a));
 
+// (7) Tanıtım sayfasındaki sürüm rozeti koddaki sürümle aynı mı?
+// İndirme bölümü "نسخه 0.2.0" yazıyor. Bu sayı elle yazıldığı için uygulama
+// sürümü yükselince geride kalır ve kimse fark etmez: ziyaretçi eski bir
+// sürüm indirdiğini sanır, oysa indirdiği hep en yenisi. Referans sitede de
+// aynı sayı (v1.0.15) dört yerde elle yazılmıştı. Denetim ikisini bağlıyor.
+const tanitim = await readFile(new URL('../tanitim/index.html', import.meta.url), 'utf8');
+const surumEslesme = (await oku('js/uygulama.js')).match(/UYGULAMA_SURUMU\s*=\s*'([^']+)'/);
+if (!surumEslesme) hataVer('uygulama.js: UYGULAMA_SURUMU okunamadı — tanıtımdaki sürüm doğrulanamıyor');
+else {
+  const rozetler = [...tanitim.matchAll(/<span class="surum-rozet">[\s\S]*?<span dir="ltr">([^<]+)<\/span>/g)].map((m) => m[1].trim());
+  if (!rozetler.length) hataVer('tanitim/index.html: sürüm rozeti bulunamadı — indirme bölümü sürümü göstermiyor');
+  const yanlis = rozetler.filter((r) => r !== surumEslesme[1]);
+  if (yanlis.length) {
+    hataVer(`tanitim/index.html: sürüm rozeti koddan farklı (${[...new Set(yanlis)].join(', ')} ≠ ${surumEslesme[1]})`);
+  }
+}
+
+// (8) Tanıtımda eski /eczane/ adresi kalmasın. Site denemesi de bakıyor ama o
+// Playwright kurulu değilse atlanıyor; bu denetim her koşulda çalışır.
+for (const m of tanitim.matchAll(/(?:href|src)="([^"]*eczane[^"]*)"/g)) {
+  hataVer(`tanitim/index.html: eski adres kalmış → ${m[1]}`);
+}
+
 console.log(hata ? `${hata} sorun` : `✓ statik denetimler geçti (${kullanilan.size} çeviri anahtarı yerinde)`);
 process.exit(hata ? 1 : 0);
