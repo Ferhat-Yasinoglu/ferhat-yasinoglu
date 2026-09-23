@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { BellekDepo } from '../app/js/depo/depo.js';
 import { senkronEt, bellekTasima, SenkronHatasi } from '../app/js/depo/senkron.js';
-import { ayarlariBirlestir, anahtarlariBirlestir, belgeyiTemizle, belgeParmakIzi, CIHAZA_OZEL_AYARLAR } from '../app/js/paylasilan/senkron.js';
+import { ayarlariBirlestir, anahtarlariBirlestir, belgeyiTemizle, belgeParmakIzi, CIHAZA_OZEL_AYARLAR, bozukKimligiAyikla } from '../app/js/paylasilan/senkron.js';
 import { kasayaKoy, kasadanAl, kasaMi, KasaHatasi, donguSayisi, DONGU } from '../app/js/paylasilan/kasa.js';
 import { kodUret, metniDogrula, anahtarlar } from '../app/js/depo/dogrulama.js';
 import { belgeDerle } from '../app/js/depo/yedek.js';
@@ -24,9 +24,18 @@ describe('kasa', () => {
     await expect(kasadanAl(paket, 'başka')).rejects.toMatchObject({ kod: 'parola' });
   });
   it('bir bayt oynanmış kasa açılmıyor', async () => {
+    // Base64 METNİNDE karakter değiştirmek yetmiyor: değişiklik dolgu bitlerine
+    // denk gelirse çözülen baytlar aynı kalıyor ve test kendiliğinden geçiyordu.
+    // (Yerelde geçti, CI'da düştü.) Artık gerçek bayt çevriliyor.
     const paket = await kasayaKoy({ a: 1 }, PAROLA);
-    const bozuk = { ...paket, veri: paket.veri.slice(0, -2) + (paket.veri.at(-2) === 'A' ? 'B' : 'A') + paket.veri.at(-1) };
-    await expect(kasadanAl(bozuk, PAROLA)).rejects.toThrow(KasaHatasi);
+    const ham = Uint8Array.from(atob(paket.veri), (c) => c.charCodeAt(0));
+    for (const yer of [0, Math.floor(ham.length / 2), ham.length - 1]) {
+      const oynanmis = Uint8Array.from(ham);
+      oynanmis[yer] ^= 0xff;
+      const bozuk = { ...paket, veri: btoa(String.fromCharCode(...oynanmis)) };
+      expect(bozuk.veri).not.toBe(paket.veri);
+      await expect(kasadanAl(bozuk, PAROLA)).rejects.toThrow(KasaHatasi);
+    }
   });
   it('gerçek boyutta veriyi taşıyor', async () => {
     // Küçük nesnelerle geçen testler bir yığın taşmasını gizlemişti: base64'e
@@ -112,6 +121,28 @@ describe('ayar birleştirme', () => {
     const a = anahtarlariBirlestir({ dogrulamaAnahtari: 'A', eskiAnahtarlar: ['C'] }, { dogrulamaAnahtari: 'B' });
     const b = anahtarlariBirlestir({ dogrulamaAnahtari: 'A', eskiAnahtarlar: ['B'] }, { dogrulamaAnahtari: 'C' });
     expect(a.eskiAnahtarlar).toEqual(b.eskiAnahtarlar);
+  });
+});
+
+describe('bozuk istemci kimliği', () => {
+  const GECERLI = '992727769946-82oa2himlups0dihvjau26hp7det5pu8.apps.googleusercontent.com';
+
+  it('yarım kalmış kimliği kenara alıyor, silmiyor', () => {
+    const yama = bozukKimligiAyikla({ senkronIstemciId: '992727769946-82oa2him' });
+    expect(yama).toEqual({ senkronIstemciId: '', senkronIstemciIdBozuk: '992727769946-82oa2him' });
+  });
+  it('geçerli kimliğe dokunmuyor', () => {
+    // Kendi Google Cloud projesini kullanan hekimin değeri kaybolmamalı.
+    expect(bozukKimligiAyikla({ senkronIstemciId: GECERLI })).toBe(null);
+    expect(bozukKimligiAyikla({ senkronIstemciId: ' ' + GECERLI + ' ' })).toBe(null);
+  });
+  it('alan zaten boşsa bir şey yapmıyor', () => {
+    expect(bozukKimligiAyikla({})).toBe(null);
+    expect(bozukKimligiAyikla({ senkronIstemciId: '' })).toBe(null);
+    expect(bozukKimligiAyikla(null)).toBe(null);
+  });
+  it('kenara alınan değer buluta gitmiyor', () => {
+    expect(CIHAZA_OZEL_AYARLAR).toContain('senkronIstemciIdBozuk');
   });
 });
 

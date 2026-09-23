@@ -21,7 +21,29 @@
 /** Eşitlemeyle gidip gelmeyen, her cihazda kendine ait kalan ayarlar.
  *  Kasa parolası buradaysa mecburen: kasayı açacak parola kasanın içinde
  *  duramaz. İstemci kimliği de kasa açılmadan önce gerekiyor. */
-export const CIHAZA_OZEL_AYARLAR = ['senkronParolasi', 'senkronIstemciId', 'senkronAcik', 'senkronHesap', 'senkronDosyaId'];
+export const CIHAZA_OZEL_AYARLAR = ['senkronParolasi', 'senkronIstemciId', 'senkronIstemciIdBozuk', 'senkronAcik', 'senkronHesap', 'senkronDosyaId'];
+
+/** Google istemci kimliğinin biçimi. */
+export const KIMLIK_KALIBI = /^\d+-[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/;
+
+/**
+ * Ayarlarda biçime uymayan bir istemci kimliği varsa onu kenara alan yamayı
+ * döndürür; yoksa null.
+ *
+ * Neden gerekti: kimlik koda gömülmeden önce "Ayarlar'a yapıştır" deniyordu.
+ * Telefonda yarım kalmış bir değer orada kalınca gömülü kimliğin YERİNE geçip
+ * Google'a gidiyor, "client bulunamadı" diye dönüyor ve sebebi uygulamada hiç
+ * görünmüyor. Hekimin telefonda bir alanı bulup boşaltmasını beklemek yerine
+ * uygulama kendi düzeltiyor.
+ *
+ * Değer SİLİNMİYOR, `senkronIstemciIdBozuk`a taşınıyor: yanlış olduğu kesin
+ * ama bizim sildiğimiz şey kullanıcının yazdığı bir şey.
+ */
+export function bozukKimligiAyikla(ayar) {
+  const ham = String(ayar?.senkronIstemciId || '').trim();
+  if (!ham || KIMLIK_KALIBI.test(ham)) return null;
+  return { senkronIstemciId: '', senkronIstemciIdBozuk: ham };
+}
 
 const ZARF_ALANLARI = ['id', 'rev', 'olusturuldu', 'guncellendi', 'silindi', 'silindiZamani'];
 const ANAHTAR_ALANLARI = ['dogrulamaAnahtari', 'eskiAnahtarlar'];

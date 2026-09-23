@@ -4,6 +4,7 @@ import { el, btnS, girdi, alan, kart, rozet } from './cekirdek/dom.js';
 import { simge } from './cekirdek/simge.js';
 import { senkronEt } from './depo/senkron.js';
 import { driveTasima, cikisYap, VARSAYILAN_ISTEMCI } from './senkron/google.js';
+import { KIMLIK_KALIBI } from './paylasilan/senkron.js';
 import { tarihSaatMetni } from './paylasilan/tarih.js';
 import { simdi } from './paylasilan/kimlik.js';
 import { hataMetni } from './hatalar.js';
@@ -11,10 +12,6 @@ import { t } from './i18n.js';
 
 export const istemciKimligi = (ayar) => (ayar?.senkronIstemciId || VARSAYILAN_ISTEMCI || '').trim();
 
-/** Google istemci kimliğinin biçimi. Ayarlara yarım yapıştırılmış bir değer
- *  gömülü kimliğin yerine geçiyor ve Google "böyle bir client yok" diyor —
- *  hata Google'dan geldiği için de sebebi uygulamada hiç görünmüyordu. */
-export const KIMLIK_KALIBI = /^\d+-[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/;
 export const kimlikDurumu = (ayar) => {
   const kimlik = istemciKimligi(ayar);
   const kendi = !(ayar?.senkronIstemciId || '').trim();

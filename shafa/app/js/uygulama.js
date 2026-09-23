@@ -3,6 +3,7 @@
 // ctx: { depo, t, git, bildir, basari, uyar, hata, modal, onayla, sor, param, sorgu, … }
 import { yerelDepoAc } from './depo/idb.js';
 import { hatirlatmaGerekli, yedekOlustur, indir } from './depo/yedek.js';
+import { bozukKimligiAyikla } from './paylasilan/senkron.js';
 import { Yonlendirici } from './cekirdek/yonlendirici.js';
 import { el, temizle, btn, girdi, sirala } from './cekirdek/dom.js';
 import { simge } from './cekirdek/simge.js';
@@ -226,6 +227,16 @@ async function baslat() {
   if (depo.kaliciYap) depo.kaliciYap();
 
   const ayar = await depo.ayarlar();
+
+  // Ayarlarda biçime uymayan bir Google istemci kimliği kalmışsa kenara alınır.
+  // Böyle bir değer gömülü kimliğin yerine geçip eşitlemeyi sessizce çökertiyor
+  // ve hata Google'ın ekranında çıktığı için sebebi burada hiç görünmüyor.
+  const kimlikYamasi = bozukKimligiAyikla(ayar);
+  if (kimlikYamasi) {
+    await depo.ayarKaydet(kimlikYamasi);
+    Object.assign(ayar, kimlikYamasi);
+  }
+
   await dilYukle();
   bicimAyarla({ dil: suankiDil(), kur: ayar.paraBirimi || 'AFN' });
 
