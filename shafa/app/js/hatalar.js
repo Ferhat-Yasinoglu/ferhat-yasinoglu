@@ -48,7 +48,8 @@ const DEPO = {
   pencere: 'Tarayıcı Google penceresini engelledi. Engeli kaldırıp yeniden dene.',
   ag: 'Google\'a ulaşılamadı. İnternet bağlantısını denetle.',
   drive: 'Drive isteği başarısız oldu.',
-  betik: 'Google giriş betiği yüklenemedi.',
+  betik: 'Google giriş betiği yüklenemedi. İnternet var ama betik engellenmiş: reklam engelleyiciyi kapat, sayfayı zorla yenile (Ctrl+Shift+R) ve tekrar dene.',
+  zaman_asimi: 'Google yanıt vermedi. Pencere engellenmiş olabilir; yeniden dene.',
   belge_bitti: 'Giriş süresi doldu; yeniden eşitle.',
 };
 
