@@ -102,8 +102,13 @@ p { margin: 0; }
   background: radial-gradient(circle, color-mix(in srgb, var(--vurgu) 20%, transparent), transparent 66%);
   pointer-events: none;
 }
-.kahraman .kap { position: relative; display: grid; gap: 42px; align-items: center; }
-@media (min-width: 940px) { .kahraman .kap { grid-template-columns: 1.02fr .98fr; gap: 56px; } }
+/* Ekran görüntüsü metnin yanında değil altında ve tam genişlikte: yanda
+   dururken 1600 piksellik panel yarım sütuna sığdığı için içindeki hiçbir
+   yazı okunmuyordu. Amaç zaten bunu bir bilgisayar ekranı gibi göstermek. */
+.kahraman .kap { position: relative; display: grid; gap: 46px; justify-items: center; text-align: center; }
+.kahraman .alt { margin-inline: auto; }
+.kahraman .eylemler { justify-content: center; }
+.kahraman .ekran { inline-size: 100%; }
 .rozet {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 7px 15px; border-radius: 999px;
@@ -121,6 +126,17 @@ p { margin: 0; }
 .ekran {
   border: 1px solid var(--cizgi-2); border-radius: var(--r-b); overflow: hidden;
   background: var(--kagit); box-shadow: 0 34px 80px rgb(0 0 0 / .55);
+}
+.ekran--pencere { padding-block-start: 34px; position: relative; }
+.ekran--pencere::before {
+  content: ''; position: absolute; inset-block-start: 0; inset-inline: 0; block-size: 34px;
+  background: var(--kagit-2); border-block-end: 1px solid var(--cizgi);
+}
+.ekran--pencere::after {
+  content: ''; position: absolute; inset-block-start: 13px; inset-inline-start: 16px;
+  inline-size: 8px; block-size: 8px; border-radius: 50%;
+  background: var(--cizgi-2);
+  box-shadow: 14px 0 0 var(--cizgi-2), 28px 0 0 var(--cizgi-2);
 }
 
 /* ---------- Güvence şeridi ---------- */
@@ -334,8 +350,8 @@ footer a:hover { color: var(--vurgu-2); }
       </div>
       <p class="not">تیلفون، کمپیوتر و تبلت — از همین صفحه نصب می‌شود. به فروشگاه ضرورت نیست.</p>
     </div>
-    <div class="ekran bit">
-      <img src="gorsel/panel.png" alt="صفحه اصلی برنامه: نسخه‌های امروز، نسخه‌های اخیر و مریضان اخیر" width="1280" height="900" loading="eager">
+    <div class="ekran ekran--pencere bit">
+      <img src="gorsel/panel.png" alt="صفحه اصلی برنامه روی کمپیوتر: نسخه‌های امروز، جدول ۱۴ روز اخیر و نسخه‌های اخیر" width="3200" height="2000" loading="eager">
     </div>
   </div>
 </section>
@@ -547,7 +563,31 @@ footer a:hover { color: var(--vurgu-2); }
   </div>
 </section>
 
-<section class="bolum bolum--kagit" id="دانلود">
+<section class="bolum bolum--kagit">
+  <div class="kap ikili">
+    <div class="ekran bit" style="max-inline-size:340px;margin-inline:auto">
+      <img src="gorsel/mobil.png" alt="برنامه روی گوشی: داشبورد، دکمه نوشتن نسخه و جدول ۱۴ روز اخیر" width="780" height="1560" loading="lazy">
+    </div>
+    <div class="bit">
+      <div class="bas" style="margin-block-end:0">
+        <span class="etiket">روی گوشی</span>
+        <h2>در جیب شما، در اتاق معاینه</h2>
+        <p>
+          همان برنامه روی گوشی هم کامل کار می‌کند — نه نسخهٔ کوچک‌شده، نه امکانات کمتر.
+          بعد از نصب، مثل هر اپلیکیشن دیگر از صفحهٔ اصلی باز می‌شود.
+        </p>
+      </div>
+      <ul class="liste-tik">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>نوشتن از راست به چپ، به زبان فارسی</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>حالت روشن و حالت شب</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>جستجوی سریع میان دواها، مریضان و نسخه‌ها</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>چاپ از همان گوشی، اگر پرینتر وصل باشد</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="bolum" id="دانلود">
   <div class="kap">
     <div class="bas bas--orta bit">
       <span class="etiket">دانلود</span>
@@ -653,7 +693,7 @@ footer a:hover { color: var(--vurgu-2); }
   </div>
 </section>
 
-<section class="bolum" id="سوالات">
+<section class="bolum bolum--kagit" id="سوالات">
   <div class="kap">
     <div class="bas bas--orta bit">
       <span class="etiket">سوالات</span>
@@ -722,7 +762,7 @@ footer a:hover { color: var(--vurgu-2); }
   </div>
 </section>
 
-<section class="bolum bolum--kagit">
+<section class="bolum">
   <div class="kap">
     <div class="kapanis bit">
       <h2>همین حالا امتحان کنید</h2>

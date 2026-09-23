@@ -77,6 +77,33 @@ yükselince sessizce geride kalır. `npm run kontrol` rozeti `uygulama.js`'teki
 `UYGULAMA_SURUMU` ile karşılaştırıyor: ikisi ayrışırsa denetim patlar.
 Sürüm yükseltmek tek satır — `js/uygulama.js`; rozet peşinden gelir.
 
+### Ekran görüntüleri
+
+```bash
+node tools/gorsel-uret.mjs      # panel.png ve mobil.png'yi yeniden üretir
+```
+
+Elle alınan görüntüler sessizce eskiyor: tanıtımdaki `panel.png` örnek hastalar
+Dari'ye çevrilmeden önce alınmıştı ve Afgan hekime aylarca **«Ayşe Yılmaz,
+Mehmet Demir, Zeynep Kaya»** gösterdi. Hiçbir test bunu yakalamadı, çünkü
+görüntü bir ikili dosya.
+
+Araç uygulamayı **koyu temada** açıyor (tanıtım sayfası koyu), örnek veriyi
+yüklüyor, 14 güne yayılmış sabit dağılımla 28 örnek reçete yazıyor ve
+`panel.png`'yi **1600×1000 — 16:10, gerçek bir bilgisayar ekranı oranında**
+alıyor. Reçete satırlarında doz/kullanım alanı boş bırakılıyor: bu depo ilaç
+**adlarının** sözlüğü, tedavi tarifi değil.
+
+Yedek hatırlatma bandı (`.bant`) görüntüye girmesin diye örnek veri yazıldıktan
+sonra "yedek alındı" işaretleniyor — ve araç bandın gerçekten yok olduğunu
+denetliyor, sessizce fotoğrafa girmesin diye.
+
+`recete.png` bilerek dışarıda: o basılı reçete kâğıdı, kâğıt beyazdır.
+
+`npm run kontrol` HTML'deki `width`/`height` ile dosyanın gerçek ölçüsünü
+karşılaştırıyor. Bu olmasa 1280×900 yazan etiket 1600×1000'lik görüntüyü ezer
+ya da sayfa yüklenirken zıplardı.
+
 ### Sayfada bilerek olmayanlar
 
 - **Ekip / "تیم ما" bölümü yok.** Depo herkese açık; hekimin adı, telefonu ve
@@ -387,7 +414,8 @@ app/                      PWA (statik olarak olduğu gibi sunulur)
 test/                     vitest
 tanitim/index.html        tanıtım ve indirme sayfası (tek dosya)
 tools/                    sun (statik sunucu) · kontrol (statik denetim) ·
-                          tarayici (uçtan uca) · site-denemesi (yayın düzeni)
+                          tarayici (uçtan uca) · site-denemesi (yayın düzeni) ·
+                          gorsel-uret (tanıtım ekran görüntüleri)
 ```
 
 ### Kurallar
