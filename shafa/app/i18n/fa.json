@@ -1,4 +1,6 @@
 {
+ "alt_serit.not_bas": "با تکنالوژی",
+ "alt_serit.not_son": "برای سلامتی بهتر",
  "ara.basla": "برای جستجو تایپ کنید.",
  "ara.etiket": "جستجو",
  "ara.hasta": "مریض · {b}",
@@ -575,6 +577,9 @@
  "tarih.temizle": "پاک کردن",
  "ust.antet_bos": "سربرگ را وارد کن",
  "ust.antet_bos_alt": "تنظیمات",
+ "ust.bildirim_var": "اطلاعیه‌ها: {n} تازه",
+ "ust.bildirim_yok": "اطلاعیهٔ تازه‌ای نیست.",
+ "ust.bildirimler": "اطلاعیه‌ها",
  "ust.hekim": "حساب داکتر",
  "uyari.alerji": "مریض به «{a}» حساسیت دارد",
  "uyari.cift_etken": "یک ماده مؤثره در بیش از یک سطر: {liste}",

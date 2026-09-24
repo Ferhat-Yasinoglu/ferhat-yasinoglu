@@ -2,14 +2,12 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
+  /* Düz zemin: tasarımda sayfanın tepesinde ışık yok; eski radyal parıltı
+     üst çubuğun düz zemininin altında ayrı bir leke gibi kalıyordu. */
   background: rgb(var(--bg)); color: rgb(var(--metin));
   font-family: var(--yazi); font-size: var(--f-m); line-height: var(--satir-yazi);
   -webkit-text-size-adjust: 100%;
   text-rendering: optimizeLegibility;
-  /* Sayfanın üstünde çok hafif bir ışık: düz gri zemin ucuz duruyordu.
-     Kaydırıldığında yerinde kalsın diye fixed. */
-  background-image: radial-gradient(1200px 420px at 70% -120px, rgb(var(--vurgu) / .07), transparent 70%);
-  background-attachment: fixed;
 }
 h1, h2, h3 { line-height: var(--satir-baslik); letter-spacing: -.01em; }
 h1 { font-size: var(--f-xl); margin-block: 0 var(--b-1); font-weight: 700; }
@@ -19,12 +17,16 @@ a { color: rgb(var(--vurgu)); }
 .js-gerekli { padding: var(--b-5); text-align: center; color: rgb(var(--metin-2)); }
 
 /* ---------- Üst çubuk ---------- */
+/* Zemin sayfanın kendisi: tasarımda üst çubuğun ayrı bir dolgusu yok, onu
+   yalnız alttaki ince çizgi ve yumuşak gölge ayırıyor. Eski yarı saydam
+   beyaz + bulanıklık, düz zeminin üstünde gri bir şerit gibi duruyordu. */
 .ust {
   position: sticky; inset-block-start: 0; z-index: 40;
   display: flex; align-items: center; gap: var(--b-3);
   block-size: var(--ust-cubuk); padding-inline: var(--b-4);
-  background: rgb(var(--yuzey) / .82); backdrop-filter: saturate(160%) blur(12px);
-  border-block-end: var(--kenarlik);
+  background: rgb(var(--bg));
+  border-block-end: 1px solid rgb(var(--ust-cizgi));
+  box-shadow: 0 2px 10px rgb(20 60 100 / .06);
 }
 /* Marka geniş ekranda kenar çubuğunda; üst çubuktaki kopyası yalnız kenar
    çubuğu gizlendiğinde (dar ekran) görünür — iki yerde birden durunca
@@ -39,43 +41,61 @@ a { color: rgb(var(--vurgu)); }
 .ust__ara { flex: 1; max-inline-size: 420px; }
 .ust__sag { margin-inline-start: auto; display: flex; align-items: center; gap: var(--b-2); }
 
-/* Büyüteç ve kısayol rozeti kutunun İÇİNDE; girdi ikisinin arasında akar. */
+/* Büyüteç ve kısayol rozeti kutunun İÇİNDE; girdi ikisinin arasında akar.
+   Kenar renkleri çizgi tonunun saydamlığıyla: karanlık temada da kendiliğinden
+   doğru tona düşüyor (tasarımda #dae3ec). */
 .ara-kutu {
-  display: flex; align-items: center; gap: var(--b-2);
-  padding-inline: var(--b-3); block-size: 38px;
-  background: rgb(var(--yuzey)); border: var(--kenarlik-2); border-radius: var(--r-kucuk);
+  display: flex; align-items: center; gap: 16px;
+  padding-inline: 13px 12px; block-size: 42px;
+  background: rgb(var(--yuzey)); border: 1px solid rgb(var(--cizgi) / .17); border-radius: 8px;
   transition: border-color var(--hiz-1) var(--egri), box-shadow var(--hiz-1) var(--egri);
 }
 .ara-kutu:focus-within { border-color: rgb(var(--vurgu)); box-shadow: var(--halka); }
-.ara-kutu__simge { display: flex; color: rgb(var(--metin-3)); cursor: text; flex-shrink: 0; }
+.ara-kutu__simge { display: flex; color: rgb(var(--metin-2)); cursor: text; flex-shrink: 0; }
+/* Tasarımdaki büyüteç biraz kalın çizgili (18 px'te 1.35 px ince kalıyordu). */
+.ara-kutu__simge .simge { stroke-width: 2.2; }
 /* Girdinin kendi kutusu yok: çerçeve dıştaki kapta. */
 .ara-kutu input {
   flex: 1; min-inline-size: 0; border: none; background: none; padding: 0; margin: 0;
-  font: inherit; font-size: var(--f-s); color: inherit; block-size: 100%;
+  font: inherit; font-size: 14px; color: inherit; block-size: 100%;
 }
+.ara-kutu input::placeholder { color: rgb(var(--metin-4) / .9); opacity: 1; }
 .ara-kutu input:focus { outline: none; }
 .ara-kutu input::-webkit-search-cancel-button { display: none; }
 .ara-kutu__kisayol {
-  flex-shrink: 0; padding-block: 2px; padding-inline: 6px; border-radius: 6px;
-  background: rgb(var(--yuzey-2)); border: var(--kenarlik);
-  font-family: inherit; font-size: var(--f-xs); font-weight: 600; color: rgb(var(--metin-3));
+  flex-shrink: 0; display: inline-grid; place-items: center;
+  block-size: 24px; padding-inline: 7px; border-radius: 4px;
+  background: rgb(var(--cizgi) / .04); border: 1px solid rgb(var(--cizgi) / .13);
+  font-family: inherit; font-size: 12px; font-weight: 500; line-height: 1; color: rgb(var(--metin-4));
 }
 
-/* Bugünün tarihi — yazı, seçici değil. */
+/* Bugünün tarihi — yazı, seçici değil. Yazı başta, takvim simgesi sonda
+   (tasarımdaki gibi); kutu arama kutusuyla aynı boyda. */
 .ust__tarih {
-  display: flex; align-items: center; gap: 6px;
-  padding-block: 6px; padding-inline: var(--b-3);
-  border: var(--kenarlik-2); border-radius: var(--r-kucuk);
-  font-size: var(--f-s); font-weight: 600; color: rgb(var(--metin-2));
+  display: flex; align-items: center; justify-content: space-between; gap: var(--b-2);
+  inline-size: 170px; block-size: 42px; padding-block: 0; padding-inline: 15px;
+  background: rgb(var(--yuzey)); border: 1px solid rgb(var(--cizgi) / .19); border-radius: 8px;
+  font-size: 15px; font-weight: 400; color: rgb(var(--metin));
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
-.ust__tarih .simge { color: rgb(var(--vurgu)); }
+.ust__tarih .simge { color: rgb(var(--metin-baslik)); }
+/* Tema ve zil: çerçevesiz, dolgulu simge (masaüstünde 36 px kutu). */
+.ust__tema, .ust__zil { color: rgb(var(--metin-baslik)); }
+/* Zil yalnız geniş ekranda (aşağıdaki masaüstü bloğu): telefonda uyarılar
+   bugünkü gibi sayfanın tepesinde duruyor, üst çubukta yer de yok. */
+.ust__zil { display: none; }
+.ust__zil-nokta {
+  position: absolute; inset-block-start: 7px; inset-inline-end: 8px;
+  inline-size: 8px; block-size: 8px; border-radius: var(--r-tam);
+  background: rgb(var(--yildiz)); box-shadow: 0 0 0 2px rgb(var(--bg));
+}
 
-/* Hekim bloğu: ad + alt satır, yanında baş harfler. */
-.ust__hesap { display: flex; align-items: center; gap: var(--b-2); }
-.ust__hesap-ad { display: flex; flex-direction: column; line-height: 1.2; text-decoration: none; color: inherit; max-inline-size: 180px; }
-.ust__hesap-ad b { font-size: var(--f-s); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ust__hesap-ad span { font-size: var(--f-xs); color: rgb(var(--metin-3)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Hekim bloğu: ad + alt satır, yanında baş harfler. İki satır da avatara
+   yaslı (sütun flex'te flex-end = bitiş kenarı). */
+.ust__hesap { display: flex; align-items: center; gap: 11px; }
+.ust__hesap-ad { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; text-decoration: none; color: inherit; max-inline-size: 180px; }
+.ust__hesap-ad b { max-inline-size: 100%; font-size: 14px; font-weight: 600; color: rgb(var(--metin)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ust__hesap-ad span { max-inline-size: 100%; font-size: 12px; font-weight: 400; color: rgb(var(--metin-2)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .avatar--ust { inline-size: 36px; block-size: 36px; flex-shrink: 0; text-decoration: none; }
 
 /* ---------- Gövde ---------- */
@@ -92,53 +112,68 @@ a { color: rgb(var(--vurgu)); }
 }
 
 /* ---------- Marka bloğu ---------- */
+/* Ölçüler tasarımdan (1536 px): 75 px blok (2 px çizgi dahil), simge 21 px
+   içeride, adla arasında 11 px. */
 .kenar__marka {
-  display: flex; align-items: center; gap: var(--b-2);
-  padding: var(--b-4) var(--b-3);
-  border-block-end: 1px solid rgb(var(--kenar-cizgi) / .08);
+  display: flex; align-items: center; gap: 11px; flex-shrink: 0;
+  block-size: 75px; padding-block: 0; padding-inline: 21px 12px;
+  border-block-end: 2px solid rgb(var(--kenar-cizgi) / .035);
   color: inherit; text-decoration: none;
 }
+/* Çıplak kalp+EKG çizgisi, kutusuz. SVG'nin kendi boşluğu (24'lük kutuda
+   kalp 18 birim) negatif kenar payıyla yutuluyor ki yerleşimde yalnız
+   görünen çizim (45×43) yer tutsun ve ad tasarımdaki yere düşsün. */
 .kenar__marka-simge {
-  display: grid; place-items: center; flex-shrink: 0;
-  inline-size: 38px; block-size: 38px; border-radius: var(--r-kucuk);
-  background: rgb(var(--kenar-vurgu) / .13); color: rgb(var(--kenar-vurgu));
-  border: 1px solid rgb(var(--kenar-vurgu) / .28);
+  display: flex; flex-shrink: 0; color: rgb(var(--kenar-marka));
+  margin-block: -10px -4px; margin-inline: -7px;
   transition: transform var(--hiz-2) var(--egri-yay);
 }
 .kenar__marka:hover .kenar__marka-simge { transform: scale(1.06); }
 /* Marka adı Latin: RTL gövdede kendi yönünü taşısın. */
-.kenar__marka-ad { display: flex; flex-direction: column; line-height: 1.2; min-inline-size: 0; direction: ltr; text-align: start; }
-.kenar__marka-ad b { font-size: var(--f-xl); font-weight: 800; letter-spacing: -.02em; color: rgb(var(--kenar-vurgu)); }
-.kenar__marka-ad span { font-size: var(--f-xs); color: rgb(var(--kenar-metin-2)); }
+.kenar__marka-ad { display: flex; flex-direction: column; min-inline-size: 0; padding-block-start: 5px; direction: ltr; text-align: start; }
+.kenar__marka-ad b { font-size: 22px; font-weight: 700; line-height: 28px; color: rgb(var(--kenar-marka)); }
+.kenar__marka-ad span { font-size: 11px; line-height: 16px; color: rgb(var(--kenar-marka-2)); }
 
 /* ---------- Menü ---------- */
-.menu { display: flex; flex-direction: column; gap: 2px; padding-block: var(--b-3); }
+/* 52 px satır, aralık yok; simge 22 px kutuda, yazı simgeden 20 px sonra
+   (tasarımda bütün etiketler x=70'te başlıyor). */
+.menu { display: flex; flex-direction: column; gap: 0; padding-block: 11px; }
 .menu a {
   position: relative; overflow: hidden;
-  display: flex; align-items: center; gap: var(--b-3);
-  min-block-size: 42px;
-  padding-block: var(--b-2); padding-inline: var(--b-4) var(--b-3);
-  /* Tam genişlikte: yalnız iç uç yuvarlatılıyor, dış uç kenara dayanıyor. */
-  border-start-end-radius: var(--r-tam); border-end-end-radius: var(--r-tam);
-  color: rgb(var(--kenar-metin)); text-decoration: none; font-weight: 600; font-size: var(--f-m);
+  display: flex; align-items: center; gap: 20px;
+  min-block-size: 52px; margin-inline-start: 1px;
+  padding-block: 0; padding-inline: 27px 12px;
+  /* Seçili hap dış kenarda yuvarlak, iç uçta köşeli: iç uç kenar
+     çubuğunun sınırına dayanıyor, orada yuvarlak bir uç boşluk bırakıyordu. */
+  border-start-start-radius: 6px; border-end-start-radius: 6px;
+  color: rgb(var(--kenar-metin)); text-decoration: none; font-weight: 400; font-size: 14px;
   transition: background var(--hiz-1) var(--egri), color var(--hiz-1) var(--egri);
 }
 .menu a:hover { background: rgb(var(--kenar-cizgi) / .07); color: rgb(var(--kenar-cizgi)); }
 .menu a[aria-current="page"] {
   /* Düz zemin: gradyan yönü fiziksel olduğu için RTL/LTR'de elle
-     çevrilmesi gerekiyordu; tasarımdaki seçili öğe zaten tek renk. */
+     çevrilmesi gerekiyordu; tasarımdaki seçili öğe zaten tek renk.
+     Gölge yalnız dikey: yatay kayma fizikseldir, çekmecede yanlış yana düşerdi. */
   background: rgb(var(--kenar-vurgu-2));
-  color: rgb(var(--kenar-cizgi)); font-weight: 700;
+  color: rgb(var(--kenar-cizgi)); font-weight: 600; font-size: 15px;
+  box-shadow: 0 2px 12px rgb(var(--kenar-vurgu-2) / .3);
 }
 /* Seçili öğenin DIŞ kenarında parlak şerit. Sahte öğe kullanıldı:
    border-inline-start metni kaydırıyordu. */
 .menu a[aria-current="page"]::before {
   content: ''; position: absolute; inset-inline-start: 0; inset-block: 0;
-  inline-size: 4px; background: rgb(var(--kenar-vurgu));
+  inline-size: 5px; background: rgb(var(--kenar-vurgu));
+  border-start-start-radius: 6px; border-end-start-radius: 6px;
   animation: isaret-bit var(--hiz-2) var(--egri);
 }
+/* İç uçta 3 px'lik parlak kenar. İçe gölge (inset box-shadow) kullanılmadı:
+   onun kayması fiziksel, sağdan açılan telefon çekmecesinde dış kenara düşerdi. */
+.menu a[aria-current="page"]::after {
+  content: ''; position: absolute; inset-inline-end: 0; inset-block: 0;
+  inline-size: 3px; background: rgb(var(--kenar-vurgu) / .7);
+}
 @keyframes isaret-bit { from { transform: scaleY(0); opacity: 0; } }
-.menu .simge { flex-shrink: 0; color: rgb(var(--kenar-vurgu)); transition: transform var(--hiz-2) var(--egri-yay); }
+.menu .simge { flex-shrink: 0; color: rgb(var(--kenar-simge)); transition: transform var(--hiz-2) var(--egri-yay); }
 .menu a:hover .simge { transform: scale(1.12); }
 .menu a[aria-current="page"] .simge { color: rgb(var(--kenar-cizgi)); }
 .menu a > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -151,21 +186,28 @@ a { color: rgb(var(--vurgu)); }
 }
 .menu a[aria-current="page"] .menu__sayi { background: rgb(var(--kenar-cizgi) / .22); color: rgb(var(--kenar-cizgi)); }
 
-/* ---------- Slogan ve sürüm şeridi ---------- */
+/* ---------- Slogan ve ayak ---------- */
 /* `auto` üst boşluk: menü kısa olsa da blok hep dibe yaslanır. */
-.kenar__slogan { margin-block-start: auto; padding: var(--b-5) var(--b-3) var(--b-4); text-align: center; }
-.kenar__slogan-fa { font-size: var(--f-l); font-weight: 700; line-height: 1.55; color: rgb(var(--kenar-vurgu) / .95); }
-.kenar__slogan-lat { margin-block-start: 6px; font-size: var(--f-xs); line-height: 1.5; color: rgb(var(--kenar-metin-2)); }
-.kenar__ayak {
-  display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap;
-  padding: var(--b-3) var(--b-2);
-  background: rgb(var(--kenar-zemin-2));
-  border-block-start: 1px solid rgb(var(--kenar-cizgi) / .07);
-  font-size: var(--f-xs); color: rgb(var(--kenar-metin-2));
+.kenar__slogan { margin-block-start: auto; padding-block: 24px 22px; padding-inline: 12px; text-align: center; }
+.kenar__slogan-fa { font-size: 18px; font-weight: 500; line-height: 27px; color: rgb(var(--kenar-slogan)); }
+/* Dar genişlik tasarımdaki iki satırı veriyor ("Your Health," / "Our
+   Priority"); 15 px'te tek satıra sığıp başka bir blok gibi duruyordu. */
+.kenar__slogan-lat {
+  margin-block-start: 10px; margin-inline: auto; max-inline-size: 105px;
+  font-size: 15px; font-weight: 300; line-height: 23px; color: rgb(var(--kenar-slogan-2));
 }
-.kenar__ayak .simge { color: rgb(var(--kenar-vurgu)); }
-.kenar__ayak b { font-weight: 600; color: rgb(var(--kenar-metin)); }
-.kenar__surum { font-variant-numeric: tabular-nums; opacity: .75; }
+/* Ayak kolonla aynı renkte, yalnız ince bir çizgiyle ayrılıyor. */
+.kenar__ayak {
+  display: flex; align-items: center; gap: 13px; flex-shrink: 0;
+  block-size: 52px; padding-block: 0; padding-inline: 17px 8px;
+  background: rgb(var(--kenar-zemin-2));
+  border-block-start: 2px solid rgb(var(--kenar-cizgi) / .05);
+  font-size: 12px; color: rgb(var(--kenar-metin));
+}
+/* Marka simgesiyle aynı hile: görünen kalp 25 px yer tutsun. */
+.kenar__ayak .simge { flex-shrink: 0; margin-inline: -4px; margin-block: -4px; color: rgb(var(--kenar-cizgi)); }
+.kenar__ayak b { font-weight: 600; color: rgb(var(--kenar-cizgi)); }
+.kenar__surum { margin-inline-start: auto; font-variant-numeric: tabular-nums; opacity: .75; }
 
 .icerik { flex: 1; min-inline-size: 0; padding: var(--b-5) var(--b-6); padding-block-end: var(--b-8); max-inline-size: var(--icerik-en); }
 .bantlar { display: flex; flex-direction: column; gap: var(--b-2); margin-block-end: var(--b-4); }
@@ -185,6 +227,20 @@ a { color: rgb(var(--vurgu)); }
 
 /* ---------- Alt gezinme (mobil) ---------- */
 .alt { display: none; }
+
+/* ---------- Alt şerit (yalnız masaüstü) ---------- */
+/* Sürüm solda, "teknolojiyle ♥" notu sağda. Telefonda yok: orada alt
+   gezinme çubuğu duruyor, sürüm de çekmecenin ayağında. Görünür olduğu
+   yer aşağıdaki masaüstü bloğu. */
+.alt-serit {
+  display: none; align-items: center; justify-content: space-between; gap: var(--b-4);
+  block-size: var(--alt-serit); padding-inline: 47px 31px;
+  background: rgb(var(--bg-alt)); border-block-start: 1px solid rgb(var(--cizgi) / .035);
+  font-size: 12.5px; color: rgb(var(--alt-serit-metin));
+}
+.alt-serit__surum { font-size: 13px; font-variant-numeric: tabular-nums; }
+.alt-serit__not { display: flex; align-items: center; gap: 6px; }
+.alt-serit__not .simge { flex-shrink: 0; color: rgb(var(--yildiz)); }
 
 /* ---------- Hareket ---------- */
 /* Sayfa girişi: kısa ve yukarı doğru. Uzun ya da yaylı olursa her gezinme
@@ -289,3 +345,93 @@ a { color: rgb(var(--vurgu)); }
 @media (prefers-reduced-motion: reduce) {
   .kenar, .kenar-perde { transition: none; }
 }
+
+/* =====================================================================
+   MASAÜSTÜ YERLEŞİMİ (≥ 861 px) — tasarımla birebir
+   ---------------------------------------------------------------------
+   Tasarım soldan sağa dizilmiş: kenar çubuğu solda, arama solda, hekim
+   sağda, sürüm solda. <html dir="rtl"> DEĞİŞMİYOR; yalnız kabuğun
+   kapları (üst çubuk, kenar çubuğu, alt şerit) CSS `direction` ile soldan
+   sağa akıyor, sayfaların içeriği (.icerik) sağdan sola kalıyor. Mantıksal
+   özellikler böylece tasarımdaki yerlere kendiliğinden düşüyor.
+
+   Yönle ilgili bütün masaüstü kuralları BU blokta. Blok silinirse bugünkü
+   aynalanmış sağdan sola düzen geri gelir (geri dönüş yolu budur).
+   Uyarılar:
+   - direction: rtl verilen bir öğe kendi margin/padding-inline'ını sağdan
+     sola çözer. O yüzden yalnız ebeveynin yerleştirdiği yapraklara verilir;
+     kenar payı taşıyanlarda unicode-bidi: plaintext kullanılır.
+   - [dir="rtl"] / [dir="ltr"] seçici YAZILMAZ: <html dir>'e bakar,
+     hesaplanan yöne değil.
+   - Gölge kayması, translate ve gradyan açısı fizikseldir; elle bakılır.
+   - Telefon çekmecesi kuralları dar ekran bloğunda kalır.
+   - @media screen: yazdırmaya karışmaz.
+   ===================================================================== */
+@media screen and (min-width: 861px) {
+  /* ---- 1. Kabuk ---- */
+  /* Kenar çubuğu tam boy, üst çubuk ve alt şerit yalnız içerik sütununda.
+     DOM taşınmıyor: sağdan sola ızgarada 1. sütun sağda olduğu için kenar
+     çubuğu 2. sütuna konunca fiziksel olarak sola düşüyor. */
+  body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--kenar);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: "ust kenar" "icerik kenar" "serit kenar";
+    min-block-size: 100dvh;
+  }
+  .govde { display: contents; }
+  .ust { grid-area: ust; direction: ltr; padding-inline: 18px 22px; gap: 18px; }
+  .kenar { grid-area: kenar; direction: ltr; inset-block-start: 0; block-size: 100dvh; }
+  /* İçerik sağdan sola kalıyor: öbür sayfalar dokunulmadan duruyor. Kenar
+     boşlukları tasarımdan: panellerin üstünde ve altında 12, solda
+     (kenar çubuğu yanında) 14, sağda 25. */
+  .icerik { grid-area: icerik; padding-block: 12px; padding-inline: 25px 14px; }
+  .alt-serit { grid-area: serit; direction: ltr; display: flex; }
+
+  /* Sağdan sola kalan yapraklar */
+  .ust__ara { flex: 0 1 377px; max-inline-size: 377px; }
+  .ara-kutu__kisayol { min-inline-size: 56px; }
+  /* Yer tutucu büyütecin hemen yanında (sağdan sola girdide `end` = sol). */
+  .ara-kutu input { direction: rtl; text-align: end; }
+  .ust__sag { gap: 18px; }
+  .ust__tema, .ust__zil { min-inline-size: 36px; min-block-size: 36px; padding: 0; }
+  .ust__zil { display: inline-flex; }
+  /* Ad ve alt satır avatara yaslı; Farsça ad soldan sağa kapta yazı
+     sırasını kendi ilk harfinden alsın (parantezli adlar karışmasın). */
+  .ust__hesap-ad b, .ust__hesap-ad span { unicode-bidi: plaintext; }
+  .avatar--ust { inline-size: 41px; block-size: 41px; box-shadow: 0 0 0 1px rgb(var(--yuzey)); }
+  /* Not sağ uçta: yeri ebeveynin space-between'i veriyor, kendi kenar payı yok. */
+  .alt-serit__not { direction: rtl; }
+  /* Tasarımda menüde sayı yok; 189 px'te uzun etiketler de kesiliyordu.
+     Sayılar telefon çekmecesinde ve sayfaların kendisinde duruyor. */
+  .menu__sayi { display: none; }
+  /* Sürüm masaüstünde alt şeritte; ayakta ikinci kez yazılmıyor. */
+  .kenar__surum { display: none; }
+
+  /* Uyarı bantları (yedek, depolama) sayfanın tepesini itmiyor: zilin
+     açtığı kutuda duruyor. Zilin noktası bekleyen uyarı olduğunu söylüyor.
+     Kutu .icerik'te (sağdan sola), inline-start = sağ = zilin altı. */
+  .bantlar {
+    position: fixed; z-index: 45;
+    inset-block-start: calc(var(--ust-cubuk) + 6px); inset-inline-start: 22px;
+    inline-size: min(380px, calc(100vw - var(--kenar) - 40px));
+    margin: 0; padding: var(--b-3);
+    background: rgb(var(--yuzey)); border: var(--kenarlik-2); border-radius: var(--r);
+    box-shadow: var(--golge-3);
+    display: none;
+  }
+  body.zil-acik .bantlar { display: flex; animation: zil-kutu-gir var(--hiz-2) var(--egri); }
+  /* Dar kutuda simge yalnız bir satırda kalmasın: yazı aradaki yeri alıp kırılsın. */
+  .bantlar .bant > span { flex: 1 1 0; min-inline-size: 0; }
+  .bantlar:empty::before {
+    content: attr(data-bos); padding: var(--b-2);
+    font-size: var(--f-s); color: rgb(var(--metin-2)); text-align: center;
+  }
+
+  /* ---- 2. Reçete sayfası: form solda, kâğıt sağda ----
+     Sonraki adımlar (form paneli, kâğıt) kurallarını buraya ekler. */
+  /* Tasarımda sayfa tam genişlikte; öbür sayfalardaki 1240 px sınırı
+     okunurluk için, burada iki panel yan yana ekranı dolduruyor. */
+  .icerik:has(.recete-duzen) { max-inline-size: none; }
+}
+@keyframes zil-kutu-gir { from { opacity: 0; transform: translateY(-4px); } }

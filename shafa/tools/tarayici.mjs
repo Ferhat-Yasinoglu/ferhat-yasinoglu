@@ -797,7 +797,9 @@ await sayfa.keyboard.press('Escape');
 // --- Yedek al ve içeriğini doğrula
 const indirme = sayfa.waitForEvent('download');
 await sayfa.click('#kenar-menu a[href="#/ayarlar"]');
-await sayfa.click(`button:has-text("${T('yedek.indir')}")`);
+// Ayarlar sayfasının kendi düğmesi. Aynı yazılı düğme yedek hatırlatma
+// bandında da var; bant geniş ekranda zilin kapalı kutusunda duruyor.
+await sayfa.click(`#sayfa button:has-text("${T('yedek.indir')}")`);
 const dosya = await indirme;
 const yol = await dosya.path();
 const belge = JSON.parse(await readFile(yol, 'utf8'));
@@ -989,16 +991,22 @@ const beklenenMenu = ['#/recete/kagit', '#/hastalar', '#/ilaclar', '#/receteler'
 if (JSON.stringify(kenarOgeleri) !== JSON.stringify(beklenenMenu)) {
   throw new Error('menü sırası beklenenden farklı: ' + kenarOgeleri.join(' '));
 }
-// Marka, slogan ve sürüm şeridi kenar çubuğunda; üst çubuktaki marka kopyası
-// geniş ekranda GİZLİ olmalı — iki yerde birden yazınca ad tekrarlanıyordu.
+// Marka ve slogan kenar çubuğunda; üst çubuktaki marka kopyası geniş ekranda
+// GİZLİ olmalı — iki yerde birden yazınca ad tekrarlanıyordu. Sürüm geniş
+// ekranda alt şeritte ve uygulamanın gerçek sürümü (tasarımdaki sabit
+// "v1.0.0" yazısı değil).
 const marka = (await sayfa.textContent('.kenar__marka')).replace(/\s+/g, ' ').trim();
-const ayakMetni = (await sayfa.textContent('.kenar__ayak')).replace(/\s+/g, ' ').trim();
+const surum = await sayfa.evaluate(() => {
+  const e = document.querySelector('.alt-serit__surum');
+  return { metin: e?.textContent.trim(), gorunur: !!e?.checkVisibility(), beklenen: 'v' + globalThis.UYGULAMA_SURUMU };
+});
 const sloganVar = await sayfa.isVisible('.kenar__slogan-fa');
 const ustMarkaGorunur = await sayfa.isVisible('.ust__logo');
-if (!marka.includes('Shafa') || !ayakMetni.includes('v') || !sloganVar || ustMarkaGorunur) {
-  throw new Error(`kenar çubuğu eksik: marka="${marka}" ayak="${ayakMetni}" slogan=${sloganVar} üstMarka=${ustMarkaGorunur}`);
+if (!marka.includes('Shafa') || !/^v\d+\.\d+\.\d+$/.test(surum.metin || '') || surum.metin !== surum.beklenen
+    || !surum.gorunur || !sloganVar || ustMarkaGorunur) {
+  throw new Error(`kenar çubuğu eksik: marka="${marka}" sürüm=${JSON.stringify(surum)} slogan=${sloganVar} üstMarka=${ustMarkaGorunur}`);
 }
-ok(`kenar çubuğu tasarımdaki gibi: ${beklenenMenu.length} kalem, marka "${marka}", ayakta "${ayakMetni}", slogan yerinde`);
+ok(`kenar çubuğu tasarımdaki gibi: ${beklenenMenu.length} kalem, marka "${marka}", slogan yerinde; alt şeritte ${surum.metin}`);
 
 // Aktif kalem TEK olmalı: /recete/kagit'teyken "لیست نسخه‌ها" da işaretliyse
 // hekim hangi ekranda olduğunu göremiyor (bir kez öyle oldu).
@@ -1029,10 +1037,70 @@ ok('tek aktif menü kalemi, yönlendirme odağı başlıkta ama halka çizilmiyo
 const kutuIcinde = await sayfa.isVisible('.ara-kutu .ara-kutu__simge');
 const kisayol = (await sayfa.textContent('.ara-kutu__kisayol')).trim();
 const ustTarih = (await sayfa.textContent('.ust__tarih')).trim();
-if (!kutuIcinde || kisayol !== 'Ctrl K' || !/^\d{4}\/\d{2}\/\d{2}$/.test(ustTarih)) {
+if (!kutuIcinde || !/^Ctrl\s*\+?\s*K$/.test(kisayol) || !/^\d{4}\/\d{2}\/\d{2}$/.test(ustTarih)) {
   throw new Error(`üst çubuk beklendiği gibi değil: simge=${kutuIcinde} kısayol="${kisayol}" tarih="${ustTarih}"`);
 }
 ok(`üst çubukta büyüteç kutunun içinde, "${kisayol}" rozeti ayrı, şemsi tarih ${ustTarih}`);
+
+// --- Masaüstü kabuğu tasarımdaki yerde: kenar çubuğu solda ve tam boy, üst
+// çubuk onun yanından başlıyor, alt şerit görünür. Sayfa <html dir="rtl">
+// kalıyor; bu yerleşimi yalnız uygulama.css'in masaüstü bloğu veriyor —
+// blok bozulursa kenar çubuğu yine sağa ve üst çubuğun altına düşer.
+await sayfa.setViewportSize({ width: 1536, height: 1024 });
+await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.recete-duzen .kagit');
+const kabuk = await sayfa.evaluate(() => {
+  const k = (s) => document.querySelector(s)?.getBoundingClientRect();
+  const kenar = k('.kenar'), ust = k('.ust'), serit = k('.alt-serit');
+  return {
+    kenarX: Math.round(kenar.left), kenarY: Math.round(kenar.top), kenarH: Math.round(kenar.height), kenarW: Math.round(kenar.width),
+    ustX: Math.round(ust.left), ustH: Math.round(ust.height), yukseklik: innerHeight,
+    serit: !!document.querySelector('.alt-serit')?.checkVisibility() && Math.round(serit.height),
+    seritX: Math.round(serit.left),
+    surum: document.querySelector('.alt-serit__surum')?.textContent.trim(), beklenen: 'v' + globalThis.UYGULAMA_SURUMU,
+    dir: document.documentElement.dir,
+  };
+});
+if (kabuk.dir !== 'rtl' || kabuk.kenarX !== 0 || kabuk.kenarY !== 0 || Math.abs(kabuk.kenarH - kabuk.yukseklik) > 1
+    || kabuk.ustX !== kabuk.kenarW || kabuk.ustH !== 66 || kabuk.serit !== 48 || kabuk.seritX !== kabuk.kenarW
+    || kabuk.surum !== kabuk.beklenen) {
+  throw new Error('masaüstü kabuğu tasarımdaki yerde değil: ' + JSON.stringify(kabuk));
+}
+// Zil süs değil: bekleyen uyarı varsa noktası yanıyor, basınca uyarı kutusu
+// açılıyor, Escape kapatıyor.
+const zil = async () => sayfa.evaluate(() => ({
+  bant: document.getElementById('bantlar').childElementCount,
+  nokta: !!document.querySelector('.ust__zil-nokta')?.checkVisibility(),
+  kutu: !!document.getElementById('bantlar').checkVisibility(),
+  genislet: document.querySelector('.ust__zil')?.getAttribute('aria-expanded'),
+}));
+const zilOnce = await zil();
+await sayfa.click('.ust__zil');
+const zilAcik = await zil();
+await sayfa.keyboard.press('Escape');
+const zilKapali = await zil();
+if (zilOnce.nokta !== (zilOnce.bant > 0) || zilOnce.kutu || !zilAcik.kutu || zilAcik.genislet !== 'true'
+    || zilKapali.kutu || zilKapali.genislet !== 'false') {
+  throw new Error('zil çalışmıyor: ' + JSON.stringify({ zilOnce, zilAcik, zilKapali }));
+}
+// Telefonda şerit yok, zil yok; çekmece yine sağdan açılıyor.
+await sayfa.setViewportSize({ width: 390, height: 780 });
+await sayfa.waitForTimeout(100);
+const telSerit = await sayfa.evaluate(() => ({
+  serit: !!document.querySelector('.alt-serit')?.checkVisibility(),
+  zil: !!document.querySelector('.ust__zil')?.checkVisibility(),
+}));
+await sayfa.click('.ust__menu');
+await sayfa.waitForFunction(() => document.body.classList.contains('menu-acik'));
+await sayfa.waitForTimeout(400);
+const cekmeceSag = await sayfa.evaluate(() => Math.round(document.querySelector('.kenar').getBoundingClientRect().right) === innerWidth);
+await sayfa.keyboard.press('Escape');
+await sayfa.waitForTimeout(400);
+if (telSerit.serit || telSerit.zil || !cekmeceSag) {
+  throw new Error('telefon kabuğu değişmiş: ' + JSON.stringify({ ...telSerit, cekmeceSag }));
+}
+await sayfa.setViewportSize({ width: 1280, height: 900 });
+ok(`masaüstü kabuğu: kenar çubuğu x=0 tam boy (${kabuk.kenarH}px), üst çubuk x=${kabuk.ustX}, alt şerit ${kabuk.surum}; zil (${zilOnce.bant} uyarı) açılıp kapanıyor; telefonda şerit yok, çekmece sağdan`);
 
 await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
 await sayfa.waitForSelector('.recete-duzen .kagit');

@@ -1,7 +1,7 @@
 /* Yazdırma: ekranda gezinme olan her şey kâğıda çıkmaz.
    Reçete çıktısı bu kurallarla A4/A5 kâğıda sığar. */
 @media print {
-  .ust, .kenar, .alt, .bantlar, .sayfa-bas__eylem, .bildirimler, .sekmeler, .tarih-kutu, .yazdirma-disi { display: none !important; }
+  .ust, .kenar, .alt, .alt-serit, .bantlar, .sayfa-bas__eylem, .bildirimler, .sekmeler, .tarih-kutu, .yazdirma-disi { display: none !important; }
   body { background: #fff; color: #000; font-size: 11pt; }
   .govde, .icerik { display: block; padding: 0; margin: 0; max-inline-size: none; }
   .kart { box-shadow: none; border: 1px solid #999; break-inside: avoid; margin-block-end: 8mm; }
