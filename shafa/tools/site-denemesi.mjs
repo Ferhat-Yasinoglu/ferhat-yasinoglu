@@ -28,7 +28,7 @@ try {
 
 const KOK = fileURLToPath(new URL('../../', import.meta.url));   // depo kökü
 const SITE = join(tmpdir(), 'shafa-site-denemesi');
-const PORT = 8801;
+const PORT = Number(process.env.SITE_PORT) || 8801;
 
 /* ---- site.yml'nin "Siteyi hazirla" adımı ---- */
 await rm(SITE, { recursive: true, force: true });

@@ -26,7 +26,7 @@ try {
   process.exit(0);
 }
 
-const PORT = 8794;
+const PORT = Number(process.env.GORSEL_PORT) || 8794;
 const KOK = `http://localhost:${PORT}/?nosw=1`;
 const CIKTI = fileURLToPath(new URL('../tanitim/gorsel/', import.meta.url));
 

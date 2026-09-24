@@ -45,7 +45,7 @@ const taniAdi = (tr) => klinikAdi('tanilar', tr);
 const belirtiAdi = (tr) => klinikAdi('belirtiler', tr);
 const labAdi = (tr) => klinikAdi('laboratuvar', tr);
 
-const PORT = 8799;
+const PORT = Number(process.env.DENEME_PORT) || 8799;
 const KOK = `http://localhost:${PORT}/?nosw=1`;
 const ekranBayragi = process.argv.indexOf('--ekran');
 const EKRAN = ekranBayragi > -1 ? process.argv[ekranBayragi + 1] : '';
