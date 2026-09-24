@@ -58,15 +58,20 @@ a { color: rgb(var(--vurgu)); }
 .ara-kutu input {
   flex: 1; min-inline-size: 0; border: none; background: none; padding: 0; margin: 0;
   font: inherit; font-size: 14px; color: inherit; block-size: 100%;
+  /* Vazirmatn'ın alt payı derin (1100/2048): yazı satır kutusunda yukarıda
+     duruyor. 4 px üst dolgu onu 2 px indirip tasarımdaki yerine getiriyor. */
+  padding-block-start: 4px;
 }
 .ara-kutu input::placeholder { color: rgb(var(--metin-4) / .9); opacity: 1; }
 .ara-kutu input:focus { outline: none; }
 .ara-kutu input::-webkit-search-cancel-button { display: none; }
+/* Yazı tasarımdaki boyda (13 px); üst dolgu aynı derin alt payı dengeliyor,
+   yoksa "Ctrl + K" rozetin 2 px üstünde duruyordu. */
 .ara-kutu__kisayol {
   flex-shrink: 0; display: inline-grid; place-items: center;
-  block-size: 24px; padding-inline: 7px; border-radius: 4px;
+  block-size: 24px; padding-block: 6px 0; padding-inline: 7px; border-radius: 4px;
   background: rgb(var(--cizgi) / .04); border: 1px solid rgb(var(--cizgi) / .13);
-  font-family: inherit; font-size: 12px; font-weight: 500; line-height: 1; color: rgb(var(--metin-4));
+  font-family: inherit; font-size: 13px; font-weight: 500; line-height: 1; color: rgb(var(--metin-4));
 }
 
 /* Bugünün tarihi — yazı, seçici değil. Yazı başta, takvim simgesi sonda
@@ -79,6 +84,9 @@ a { color: rgb(var(--vurgu)); }
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .ust__tarih .simge { color: rgb(var(--metin-baslik)); }
+/* Latin rakamlar Vazirmatn'da satır kutusunun ~4 px üstünde duruyor (derin
+   alt pay); kutu ortalı olsa da tarih yukarı kaçmış görünüyordu. */
+.ust__tarih > span { position: relative; inset-block-start: 4px; }
 /* Tema ve zil: çerçevesiz, dolgulu simge (masaüstünde 36 px kutu). */
 .ust__tema, .ust__zil { color: rgb(var(--metin-baslik)); }
 /* Zil yalnız geniş ekranda (aşağıdaki masaüstü bloğu): telefonda uyarılar
@@ -109,7 +117,18 @@ a { color: rgb(var(--vurgu)); }
   position: sticky; inset-block-start: var(--ust-cubuk);
   block-size: calc(100vh - var(--ust-cubuk));
   overflow-y: auto;
+  /* Sığmadığı en kısa ekranlarda çıkan kaydırma çubuğu koyu kolonun
+     tonunda ve ince: tarayıcının açık gri çubuğu kolonun içinde bir yama
+     gibi duruyor, seçili hapı da daraltıyordu. */
+  scrollbar-width: thin; scrollbar-color: rgb(var(--kenar-cizgi) / .18) transparent;
 }
+/* Klavye odağı koyu kolonda kendi vurgusuyla ve İÇERİDE çiziliyor. Genel
+   halka (petrol, 2 px dışarıda) bu zeminde 1.7:1 kalıyordu; dışarı taşan
+   kenarı kolonun taşma kırpmasına, alt kenarı da bir sonraki satırın
+   zeminine gömülüyordu. Parlak turkuaz koyu zeminde ~7:1; seçili hapın
+   üstünde beyaz (turkuaz orada hapın kendi şeridiyle karışıyor). */
+.kenar :focus-visible { outline: 2px solid rgb(var(--kenar-vurgu)); outline-offset: -2px; }
+.kenar .menu a[aria-current="page"]:focus-visible { outline-color: rgb(var(--kenar-cizgi)); }
 
 /* ---------- Marka bloğu ---------- */
 /* Ölçüler tasarımdan (1536 px): 75 px blok (2 px çizgi dahil), simge 21 px
@@ -136,12 +155,18 @@ a { color: rgb(var(--vurgu)); }
 
 /* ---------- Menü ---------- */
 /* 52 px satır, aralık yok; simge 22 px kutuda, yazı simgeden 20 px sonra
-   (tasarımda bütün etiketler x=70'te başlıyor). */
-.menu { display: flex; flex-direction: column; gap: 0; padding-block: 11px; }
+   (tasarımda bütün etiketler x=70'te başlıyor).
+   Menü kolonda kalan yeri dolduruyor (slogan ve ayak böylece dibe
+   yaslanıyor); satırlar o yeri paylaşıp 52 px'e kadar uzuyor. Kolon
+   kısalınca (1366×768 dizüstü, tarayıcı içinde ~650 px) satırlar 40 px'e
+   kadar sıkışıyor: 52 px sabitken kolon 825 px istiyordu, altında ayak
+   ekrandan taşıp kolonda kaydırma çubuğu çıkıyordu. Satır sayısından
+   bağımsız: menüye kalem eklense de hesap kendiliğinden tutuyor. */
+.menu { flex: 1 1 auto; display: flex; flex-direction: column; gap: 0; padding-block: 11px; }
 .menu a {
   position: relative; overflow: hidden;
   display: flex; align-items: center; gap: 20px;
-  min-block-size: 52px; margin-inline-start: 1px;
+  flex: 1 1 0; min-block-size: 40px; max-block-size: 52px; margin-inline-start: 1px;
   padding-block: 0; padding-inline: 27px 12px;
   /* Seçili hap dış kenarda yuvarlak, iç uçta köşeli: iç uç kenar
      çubuğunun sınırına dayanıyor, orada yuvarlak bir uç boşluk bırakıyordu. */
@@ -187,8 +212,8 @@ a { color: rgb(var(--vurgu)); }
 .menu a[aria-current="page"] .menu__sayi { background: rgb(var(--kenar-cizgi) / .22); color: rgb(var(--kenar-cizgi)); }
 
 /* ---------- Slogan ve ayak ---------- */
-/* `auto` üst boşluk: menü kısa olsa da blok hep dibe yaslanır. */
-.kenar__slogan { margin-block-start: auto; padding-block: 24px 22px; padding-inline: 12px; text-align: center; }
+/* Dibe yaslanması menünün büyümesinden (yukarıda); kendi kenar payı yok. */
+.kenar__slogan { padding-block: 24px 22px; padding-inline: 12px; text-align: center; }
 .kenar__slogan-fa { font-size: 18px; font-weight: 500; line-height: 27px; color: rgb(var(--kenar-slogan)); }
 /* Dar genişlik tasarımdaki iki satırı veriyor ("Your Health," / "Our
    Priority"); 15 px'te tek satıra sığıp başka bir blok gibi duruyordu. */
@@ -266,17 +291,23 @@ a { color: rgb(var(--vurgu)); }
     display: flex; position: fixed; inset-block: 0; inset-inline-start: 0;
     z-index: 60; inline-size: min(82vw, 300px); block-size: 100dvh;
     box-shadow: var(--golge-3);
+    /* Kapalıyken görünmez: ekran dışına kaydırılsa da gölgesi ~16 px
+       ekrana taşıyor, her sayfanın kenarında gri bir şerit gibi duruyordu;
+       içindeki bağlantılar da klavyeyle görünmeden odaklanıyordu. */
+    visibility: hidden;
   }
   /* Kayma animasyonu ancak hekim ☰'ye BİR KEZ bastıktan sonra açılıyor.
      Yoksa geniş ekrandan dar ekrana geçildiği anda medya sorgusu da bir
      değer değişimi sayılıyor ve çekmece bir kez görünüp kayarak kapanıyordu.
      Telefonda olmaz ama bilgisayarda pencere daraltılınca gözle görülüyordu. */
-  body.menu-hazir .kenar { transition: translate var(--hiz-3) var(--egri); }
+  /* visibility de geçişte: kapanırken kayma bitene dek görünür kalıyor,
+     açılırken hemen görünüyor (görünür uç her zaman kazanır). */
+  body.menu-hazir .kenar { transition: translate var(--hiz-3) var(--egri), visibility var(--hiz-3); }
   /* Kapalıyken kendi kenarının dışına çıkıyor. Yön belgeden geliyor:
      uygulama sağdan sola ama bir gün soldan sağa açılırsa da doğru kalsın. */
   [dir="rtl"] .kenar { translate: 100% 0; }
   [dir="ltr"] .kenar { translate: -100% 0; }
-  body.menu-acik .kenar { translate: 0 0; }
+  body.menu-acik .kenar { translate: 0 0; visibility: visible; }
   .kenar-perde {
     position: fixed; inset: 0; z-index: 50; background: rgb(0 0 0 / .45);
     opacity: 0; pointer-events: none; transition: opacity var(--hiz-3) var(--egri);
@@ -381,11 +412,26 @@ a { color: rgb(var(--vurgu)); }
   }
   .govde { display: contents; }
   .ust { grid-area: ust; direction: ltr; padding-inline: 18px 22px; gap: 18px; }
-  .kenar { grid-area: kenar; direction: ltr; inset-block-start: 0; block-size: 100dvh; }
+  /* Sayfayla arasında 1 px açık çizgi (tasarımda x=189, üst çubuğun
+     yanından da geçiyor). Kolonun dışında: kenar çubuğu 189 px koyu
+     kalıyor. Gölge kayması fiziksel; bu blokta kolon hep solda.
+     z-index çizgi üst çubuğun (40) zemininin altında kalmasın diye;
+     zil kutusu (45), modal ve bildirimler yine üstte. */
+  .kenar {
+    grid-area: kenar; direction: ltr; inset-block-start: 0; block-size: 100dvh;
+    z-index: 41; box-shadow: 1px 0 0 rgb(var(--ust-cizgi));
+  }
   /* İçerik sağdan sola kalıyor: öbür sayfalar dokunulmadan duruyor. Kenar
      boşlukları tasarımdan: panellerin üstünde ve altında 12, solda
-     (kenar çubuğu yanında) 14, sağda 25. */
-  .icerik { grid-area: icerik; padding-block: 12px; padding-inline: 25px 14px; }
+     (kenar çubuğu yanında) 14, sağda 25.
+     1240 px'e sınırlı sütun geniş ekranda ORTADA: sağdan sola ızgarada
+     başlangıca (sağa) yaslanınca kenar çubuğunun yanında ölü bir şerit
+     kalıyor, üst çubukla sayfa kopuk görünüyordu. inline-size: 100%
+     şart: ortalanan ızgara öğesi yoksa içeriği kadar daralıyor. */
+  .icerik {
+    grid-area: icerik; padding-block: 12px; padding-inline: 25px 14px;
+    inline-size: 100%; justify-self: center;
+  }
   .alt-serit { grid-area: serit; direction: ltr; display: flex; }
 
   /* Sağdan sola kalan yapraklar */
@@ -407,6 +453,16 @@ a { color: rgb(var(--vurgu)); }
   .menu__sayi { display: none; }
   /* Sürüm masaüstünde alt şeritte; ayakta ikinci kez yazılmıyor. */
   .kenar__surum { display: none; }
+  /* Kısa ekran: menü satırları kendiliğinden sıkışıyor (Menü bölümü);
+     önce sloganın boşlukları, 740 px'in altında slogan gidiyor ki satırlar
+     ~650 px'lik pencerede de 50 px'e yakın kalsın. Menü 40 px'lik satırlarla
+     549 px'e kadar sığıyor; daha kısası kolonda ince çubukla kayar. */
+  @media (max-height: 824px) {
+    .kenar__slogan { padding-block: 12px 10px; }
+  }
+  @media (max-height: 740px) {
+    .kenar__slogan { display: none; }
+  }
 
   /* Uyarı bantları (yedek, depolama) sayfanın tepesini itmiyor: zilin
      açtığı kutuda duruyor. Zilin noktası bekleyen uyarı olduğunu söylüyor.

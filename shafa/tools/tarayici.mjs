@@ -10,6 +10,7 @@ import { createRequire } from 'node:module';
 import { readFile } from 'node:fs/promises';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
+import { inflateSync } from 'node:zlib';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -1171,6 +1172,148 @@ if (telSerit.serit || telSerit.zil || !cekmeceSag) {
 await sayfa.setViewportSize({ width: 1280, height: 900 });
 ok(`masaüstü kabuğu: kenar çubuğu x=0 tam boy (${kabuk.kenarH}px), üst çubuk x=${kabuk.ustX}, alt şerit ${kabuk.surum}; zil (${zilOnce.bant} uyarı) açılıp kapanıyor; telefonda şerit yok, çekmece sağdan`);
 
+// --- Kabuğun ince ayarları: gözle görülen ama DOM ölçüsünde görünmeyen
+// kusurlar ekran görüntüsünün piksellerinden denetleniyor (derleme yok,
+// bağımlılık yok: PNG'yi node:zlib açıyor).
+// Chromium 8 bit RGB/RGBA PNG veriyor; beş satır süzgecinin hepsi çözülüyor.
+const pngCoz = (b) => {
+  let i = 8, w = 0, h = 0, tur = 0;
+  const idat = [];
+  while (i < b.length) {
+    const n = b.readUInt32BE(i), ad = b.toString('latin1', i + 4, i + 8), v = b.subarray(i + 8, i + 8 + n);
+    if (ad === 'IHDR') { w = v.readUInt32BE(0); h = v.readUInt32BE(4); tur = v[9]; }
+    else if (ad === 'IDAT') idat.push(v);
+    i += 12 + n;
+  }
+  const bpp = tur === 6 ? 4 : 3, en = w * bpp, ham = inflateSync(Buffer.concat(idat)), px = Buffer.alloc(h * en);
+  for (let y = 0; y < h; y++) {
+    const f = ham[y * (en + 1)];
+    for (let x = 0; x < en; x++) {
+      const a = x >= bpp ? px[y * en + x - bpp] : 0, u = y ? px[(y - 1) * en + x] : 0;
+      const c = x >= bpp && y ? px[(y - 1) * en + x - bpp] : 0;
+      const p = a + u - c, pa = Math.abs(p - a), pb = Math.abs(p - u), pc = Math.abs(p - c);
+      const tahmin = [0, a, u, (a + u) >> 1, pa <= pb && pa <= pc ? a : pb <= pc ? u : c][f];
+      px[y * en + x] = (ham[y * (en + 1) + 1 + x] + tahmin) & 255;
+    }
+  }
+  return { w, h, rgb: (x, y) => [...px.subarray((y * w + x) * bpp, (y * w + x) * bpp + 3)] };
+};
+const goruntu = async (x, y, width = 1, height = 1) => pngCoz(await sayfa.screenshot({ clip: { x, y, width, height } }));
+const renkFarki = (a, b) => a.reduce((t, v, k) => t + Math.abs(v - b[k]), 0);
+// Kutudaki yazının mürekkebi (zeminden belirgin ayrılan satırlar) kutunun
+// dikey ortasında mı? Zemin, yazının hemen önündeki boş dolgudan okunuyor.
+const murekkepOrtasi = async (kutuSec, yaziSec) => {
+  const [k, y] = await sayfa.evaluate(([a, b]) => [a, b].map((s) => {
+    const r = document.querySelector(s).getBoundingClientRect();
+    return [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)];
+  }), [kutuSec, yaziSec]);
+  const g = await goruntu(y[0], k[1] + 2, y[2], k[3] - 4);
+  const zemin = (await goruntu(y[0] - 3, k[1] + Math.round(k[3] / 2))).rgb(0, 0);
+  const satirlar = [];
+  for (let sy = 0; sy < g.h; sy++) {
+    for (let sx = 0; sx < g.w; sx++) if (renkFarki(g.rgb(sx, sy), zemin) > 90) { satirlar.push(sy); break; }
+  }
+  return { fark: +((k[1] + 2 + (satirlar[0] + satirlar.at(-1) + 1) / 2) - (k[1] + k[3] / 2)).toFixed(1), satirlar: satirlar.length };
+};
+
+await sayfa.setViewportSize({ width: 1536, height: 1024 });
+await sayfa.goto(KOK + '#/hastalar', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('#sayfa h1');
+await sayfa.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {}))));
+// 1240 px'e sınırlı içerik sütunu ORTADA. Sağa yaslıyken kenar çubuğunun
+// yanında 107 px'lik (1920'de 491 px) ölü bir şerit kalıyordu.
+const sutun = await sayfa.evaluate(() => {
+  const i = document.querySelector('.icerik').getBoundingClientRect();
+  const k = document.querySelector('.kenar').getBoundingClientRect();
+  return { en: Math.round(i.width), sol: Math.round(i.left - k.right), sag: Math.round(innerWidth - i.right) };
+});
+if (sutun.en !== 1240 || Math.abs(sutun.sol - sutun.sag) > 1) {
+  throw new Error('içerik sütunu ortada değil: ' + JSON.stringify(sutun));
+}
+// Kenar çubuğuyla sayfa arasında 1 px çizgi (x=189), üst çubuğun yanında da;
+// iki komşusundan da ayrı bir renk (tema hangisiyse).
+const dikis = [];
+for (const y of [30, 500]) {
+  const g = await goruntu(186, y, 6, 1);
+  dikis.push({ y, kenar: g.rgb(2, 0), cizgi: g.rgb(3, 0), sayfa: g.rgb(5, 0) });
+}
+if (dikis.some((d) => renkFarki(d.cizgi, d.kenar) < 15 || renkFarki(d.cizgi, d.sayfa) < 15)) {
+  throw new Error('kenar çubuğuyla sayfa arasındaki çizgi yok: ' + JSON.stringify(dikis));
+}
+// Üst çubukta tarih ve Ctrl+K rozetinin yazısı kutunun ortasında (Latin
+// rakamlar Vazirmatn'ın derin alt payıyla ~4 px yukarıda duruyordu).
+const tarihOrta = await murekkepOrtasi('.ust__tarih', '.ust__tarih > span');
+const rozetOrta = await murekkepOrtasi('.ara-kutu__kisayol', '.ara-kutu__kisayol');
+if (Math.abs(tarihOrta.fark) > 1.5 || Math.abs(rozetOrta.fark) > 1.5 || tarihOrta.satirlar < 8 || rozetOrta.satirlar < 6) {
+  throw new Error('üst çubuk yazısı kutusunun ortasında değil: ' + JSON.stringify({ tarihOrta, rozetOrta }));
+}
+// Koyu kolonda klavye odağı görünür: halka zeminle en az 3:1 ve kutunun
+// İÇİNDE (dışa taşan halka kolonun kırpmasında ve komşu satırın altında
+// kayboluyordu). Seçili hapın üstünde de.
+const odakHalkasi = () => sayfa.evaluate(() => {
+  const isik = (c) => {
+    const [r, g, b] = c.match(/[\d.]+/g).slice(0, 3).map((v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const e = document.activeElement, cs = getComputedStyle(e);
+  const zemin = e.matches('[aria-current]') ? cs.backgroundColor : getComputedStyle(document.querySelector('.kenar')).backgroundColor;
+  const [a, b] = [isik(cs.outlineColor), isik(zemin)].sort((x, y) => y - x);
+  return { href: e.getAttribute('href'), gorunur: e.matches(':focus-visible') && cs.outlineStyle !== 'none',
+    karsitlik: +((a + 0.05) / (b + 0.05)).toFixed(2), kayma: parseFloat(cs.outlineOffset) };
+});
+await sayfa.focus('.kenar__marka');
+await sayfa.keyboard.press('Tab');
+const odakBos = await odakHalkasi();
+await sayfa.keyboard.press('Tab');
+const odakSecili = await odakHalkasi();
+await sayfa.keyboard.press('Escape');
+await sayfa.evaluate(() => document.activeElement?.blur());
+if ([odakBos, odakSecili].some((o) => !o.gorunur || o.karsitlik < 3 || o.kayma > 0) || odakSecili.href !== '#/hastalar') {
+  throw new Error('kenar çubuğunda odak halkası görünmüyor: ' + JSON.stringify({ odakBos, odakSecili }));
+}
+// Kısa dizüstü ekranında (1366×768; tarayıcı içinde ~650 px) kenar çubuğu
+// kaydırmasız sığıyor, ayak ekranda. Satırlar 52 px sabitken kolon 825 px
+// istiyordu; kolonda gri bir kaydırma çubuğu çıkıp ayak aşağıda kalıyordu.
+const kisaEkran = [];
+for (const [w, h] of [[1536, 1024], [1366, 768], [1280, 650]]) {
+  await sayfa.setViewportSize({ width: w, height: h });
+  await sayfa.waitForTimeout(100);
+  kisaEkran.push(await sayfa.evaluate(() => {
+    const k = document.querySelector('.kenar');
+    const satir = [...k.querySelectorAll('.menu a')].map((a) => a.getBoundingClientRect().height);
+    return { boy: innerHeight, tasma: k.scrollHeight - k.clientHeight,
+      ayak: Math.round(k.querySelector('.kenar__ayak').getBoundingClientRect().bottom),
+      satir: [Math.round(Math.min(...satir)), Math.round(Math.max(...satir))],
+      slogan: !!k.querySelector('.kenar__slogan')?.checkVisibility() };
+  }));
+}
+if (kisaEkran.some((d) => d.tasma > 0 || d.ayak > d.boy || d.satir[0] < 40)
+    || kisaEkran[0].satir.join() !== '52,52' || !kisaEkran[0].slogan) {
+  throw new Error('kenar çubuğu kısa ekrana sığmıyor ya da tam ekranda tasarımdan saptı: ' + JSON.stringify(kisaEkran));
+}
+// Telefonda kapalı çekmece görünmez: ekran dışına kaysa da gölgesi sayfanın
+// kenarında ~16 px gri bir şerit bırakıyordu.
+await sayfa.setViewportSize({ width: 390, height: 844 });
+await sayfa.goto(KOK + '#/panel', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('#sayfa h1');
+// Genişten dara geçişte çekmece (☰ daha önce açıldıysa) kayarak kapanıyor.
+await sayfa.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {}))));
+const kapaliCekmece = await sayfa.evaluate(() => ({
+  gorunur: document.querySelector('.kenar').checkVisibility({ visibilityProperty: true }),
+  zemin: getComputedStyle(document.body).backgroundColor.match(/\d+/g).map(Number),
+}));
+const kenarSeridi = await goruntu(376, 300, 14, 1);
+const seritFarki = Math.max(...Array.from({ length: 14 }, (_, x) => renkFarki(kenarSeridi.rgb(x, 0), kapaliCekmece.zemin)));
+if (kapaliCekmece.gorunur || seritFarki > 3) {
+  throw new Error(`kapalı çekmece ekranda iz bırakıyor: görünür=${kapaliCekmece.gorunur}, kenar şeridi zeminden ${seritFarki} farklı`);
+}
+// Sonraki adım reçete sayfasında, giriş animasyonu bitmiş hâlde başlıyor.
+await sayfa.setViewportSize({ width: 1280, height: 900 });
+await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.recete-duzen .kagit');
+await sayfa.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {}))));
+ok(`kabuk ince ayarı: içerik sütunu ortada (${sutun.sol}/${sutun.sag} px), kenar çizgisi yerinde, tarih ve Ctrl+K yazısı kutu ortasında (${tarihOrta.fark}/${rozetOrta.fark} px), odak halkası koyu kolonda ${odakBos.karsitlik}:1 / hapta ${odakSecili.karsitlik}:1, kenar çubuğu 768 ve 650 px'e kaydırmasız sığıyor (satır ${kisaEkran[2].satir[0]} px), kapalı çekmece iz bırakmıyor`);
+
 // --- Reçete formu tasarımdaki yerde (1536×1024): form paneli solda 683 px,
 // kâğıt sağda 609 px; panelin içi de tasarımdaki gibi soldan sağa (Clinical
 // ℞'nin solunda, ad alanı en solda). Bunu yalnız uygulama.css'in masaüstü
@@ -1178,6 +1321,9 @@ ok(`masaüstü kabuğu: kenar çubuğu x=0 tam boy (${kabuk.kenarH}px), üst çu
 await sayfa.setViewportSize({ width: 1536, height: 1024 });
 await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
 await sayfa.waitForSelector('.recete-duzen .kagit');
+// Sayfa zaten açıksa yeniden çizilmiyor; kâğıdın ölçeği boyut gözcüsüyle
+// bir kare sonra geliyor. Beklenmezse kâğıt eski genişlikte ölçülüyordu.
+await sayfa.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
 const formYeri = () => sayfa.evaluate(() => {
   const k = (e) => { const r = (typeof e === 'string' ? document.querySelector(e) : e).getBoundingClientRect(); return { x: Math.round(r.left), sag: Math.round(r.right), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) }; };
   const alanlar = [...document.querySelectorAll('.izgara--hasta > .alan')];
