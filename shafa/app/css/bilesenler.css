@@ -451,6 +451,13 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
   color: rgb(var(--metin-baslik));
 }
 .recete-panel__metin p { margin-block: 1px 0; margin-inline: 0; font-size: 14.5px; line-height: 1.35; color: rgb(var(--metin-2)); }
+/* Düzenlemede başlığın ardındaki reçete numarası: tirelerden bölünmüyor
+   (iki satıra dağılıp bandın dışına taşıyordu) ve başlıktan küçük. Başlık
+   bu yüzden uzun; şablon düğmeleri yalnız simge (adları title'da), başlık
+   tek satıra sığıyor. Düzenleme tasarımda yok, yeni reçete bandı aynı. */
+.recete-panel__no { white-space: nowrap; font-size: .78em; font-weight: 700; }
+.recete-panel__bas--duzenle .recete-panel__cam { inline-size: 32px; padding: 0; }
+.recete-panel__bas--duzenle .recete-panel__cam-metin { display: none; }
 /* Şablon düğmeleri bandın öbür ucunda, dalganın üstünde: yarı saydam
    "cam" düğmeler. Yalnız işe yaradıklarında çiziliyorlar. */
 .recete-panel__eylem { margin-inline-start: auto; display: flex; gap: 8px; flex-shrink: 0; }
@@ -822,6 +829,9 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
      oradan alıyor (içi boş düğmenin adı title). */
   .recete-panel__cam { inline-size: 32px; padding: 0; }
   .recete-panel__cam-metin { display: none; }
+  /* Telefonda numara başlığın yanına sığmıyor, ikinci satıra iniyor: bant
+     onunla uzuyor (sabit boyda yazı bandın üstünden taşıyordu). */
+  .recete-panel__bas--duzenle { block-size: auto; min-block-size: 64px; padding-block: 8px; }
   /* Hasta: ad tam satır, yaş ile tarih ikinci satırda, numara üçüncüde. */
   .izgara--hasta { grid-template-columns: 96px 1fr; gap: 12px 10px; }
   .izgara--hasta > .alan:first-child, .izgara--hasta > .alan:last-child { grid-column: 1 / -1; }
@@ -851,8 +861,11 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
   /* Düğmeler: asıl düğme önde ve iki sütun boyunca, altında önizle ve temizle. */
   .recete-eylem { grid-template-columns: 1fr 1fr; gap: 10px; margin-block-start: 14px; }
   .recete-eylem .recete-btn { block-size: 48px; min-height: 48px; }
-  .recete-eylem .recete-btn--asil { grid-column: 1 / -1; order: -1; }
-  .recete-eylem .recete-btn--sade { order: 1; }
+  .recete-eylem .recete-btn--asil, .modal--onizleme .recete-btn--asil { grid-column: 1 / -1; order: -1; }
+  .recete-eylem .recete-btn--sade, .modal--onizleme .recete-btn--sade { order: 1; }
+  /* Önizleme kutusunun ayağı da aynı dizilişte: simgeli üç düğme yan yana
+     sığmıyor, «بستن» kutunun dışına taşıyordu. */
+  .modal--onizleme .modal__ayak { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 }
 
 /* ---------- Şemsi tarih seçici ---------- */

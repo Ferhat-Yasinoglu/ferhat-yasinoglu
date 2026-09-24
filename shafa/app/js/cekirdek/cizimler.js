@@ -30,7 +30,6 @@ function svgKur(kutu, sinif, yollar) {
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', kutu);
   svg.setAttribute('class', sinif);
-  svg.setAttribute('role', 'img');
   for (const d of yollar) {
     const yol = document.createElementNS(NS, 'path');
     yol.setAttribute('fill', 'currentColor');
@@ -43,7 +42,8 @@ function svgKur(kutu, sinif, yollar) {
 /**
  * Rx işareti. Görünen şekil SVG; yanında görünmeyen «℞» metni duruyor:
  * ekran okuyucu ve sayfa içi arama (testler de) işareti metin olarak
- * buluyor. Dönen öğe bir <span>; renk currentColor'dan gelir.
+ * buluyor. Dönen öğe bir <span>; renk currentColor'dan gelir. Ad yalnız
+ * o metin: SVG'nin kendi adı («Rx») da olunca başlık «Rx ℞» okunuyordu.
  */
 export function rxIsareti({ sinif = '' } = {}) {
   const kap = document.createElement('span');
@@ -51,7 +51,7 @@ export function rxIsareti({ sinif = '' } = {}) {
   // Şekil soldan sağa bir Latin işareti: RTL sayfada da kendi yönünde.
   kap.dir = 'ltr';
   const svg = svgKur(RX_KUTU, 'rx-isaret__cizim', [RX_YOLU]);
-  svg.setAttribute('aria-label', 'Rx');
+  svg.setAttribute('aria-hidden', 'true');
   const metin = document.createElement('span');
   metin.className = 'gizli-metin';
   metin.textContent = '℞';
@@ -65,6 +65,7 @@ export function rxIsareti({ sinif = '' } = {}) {
  */
 export function hatCizimi({ sinif = '' } = {}) {
   const svg = svgKur(HAT_KUTU, ('hat-cizim ' + sinif).trim(), HAT_YOLLARI);
+  svg.setAttribute('role', 'img');
   const baslik = document.createElementNS(NS, 'title');
   baslik.textContent = HAT_METNI;
   svg.prepend(baslik);

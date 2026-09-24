@@ -15,14 +15,17 @@ afterAll(() => kaldir());
 const YOL_DESENI = /^[MLHVCSQTAZmlhvcsqtaz0-9.,\s-]+$/;
 
 describe('rxIsareti', () => {
-  it('currentColor ile boyanan, adı "Rx" olan bir SVG ve gizli «℞» metni kurar', () => {
+  // Ad yalnız gizli «℞»: SVG ekran okuyucudan saklı. İkisinin de adı
+  // olunca başlık «Rx ℞» diye iki kez okunuyordu.
+  it('currentColor ile boyanan, ekran okuyucudan saklı bir SVG ve tek ad olarak gizli «℞» metni kurar', () => {
     const kap = rxIsareti({ sinif: 'deneme' });
     expect(kap.className).toBe('rx-isaret deneme');
     expect(kap.dir).toBe('ltr');
     const [svg, metin] = kap.children;
     expect(svg.namespaceURI).toBe(SVG);
-    expect(svg.getAttribute('role')).toBe('img');
-    expect(svg.getAttribute('aria-label')).toBe('Rx');
+    expect(svg.getAttribute('aria-hidden')).toBe('true');
+    expect(svg.getAttribute('role')).toBeNull();
+    expect(svg.getAttribute('aria-label')).toBeNull();
     expect(svg.getAttribute('viewBox')).toMatch(/^-?\d+ -?\d+ \d+ \d+$/);
     const yollar = svg.torunlar().filter((o) => o.tagName === 'path');
     expect(yollar).toHaveLength(1);

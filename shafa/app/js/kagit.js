@@ -649,15 +649,22 @@ const oncekiGozcu = new WeakMap();
  * `gozlenen` genelde sayfa kökü: kenar çubuğu açılıp kapanınca da ölçüm
  * yenilensin. `pay`: kâğıdın iki yanında toplam bırakılan boşluk (px).
  * Reçete yazma sayfasında 0: kâğıt kendi sütununu tam dolduruyor.
+ * `yukseklik`: verilirse kâğıdın sığması gereken boyu (px) döndüren
+ * fonksiyon; kâğıt o zaman boyuna da sığacak kadar küçülüyor (önizleme
+ * kutusunda sayfanın tamamı kaydırmadan görünsün diye).
  */
-export function kagidiOlcekle(tuval, kagit, gozlenen = null, { pay = 8 } = {}) {
+export function kagidiOlcekle(tuval, kagit, gozlenen = null, { pay = 8, yukseklik = null } = {}) {
   // Aynı tuvale yeni kâğıt konunca eski gözcü bırakılıyor: bırakılmazsa
   // ayrılmış kâğıdın boyunu (0) tuvale yazmaya devam ediyordu. Çağıran
   // dönen fonksiyonu tutmasa da sızıntı olmasın diye burada.
   oncekiGozcu.get(tuval)?.();
   const uygula = () => {
     if (!tuval.isConnected) return;
-    const olcek = Math.min(1, Math.max(0.2, (tuval.clientWidth - pay) / KAGIT_PX));
+    const enine = (tuval.clientWidth - pay) / KAGIT_PX;
+    // 1 px pay: tuvalin boyu aşağıda yukarı yuvarlanıyor, küsuratlı bir
+    // boyda kâğıt 1 px taşıp kaydırma çubuğu açıyordu.
+    const boyuna = yukseklik && kagit.offsetHeight ? (yukseklik() - 1) / kagit.offsetHeight : Infinity;
+    const olcek = Math.min(1, Math.max(0.2, Math.min(enine, boyuna)));
     tuval.style.setProperty('--olcek', String(olcek));
     // Ölçeklenen öğe yerinde yer kaplamıyor; boyu elle veriliyor.
     tuval.style.blockSize = Math.ceil(kagit.offsetHeight * olcek) + 'px';
