@@ -28,6 +28,7 @@ import { satirKutusu } from '../ilac-satir-arayuz.js';
 import { sablonuUygula } from '../paylasilan/sablon.js';
 import { sablonSecKutusu, sablonKaydetKutusu } from '../sablon-arayuz.js';
 import { tamAd, hastaYasi, hastaAra, alerjiCakismasi } from '../paylasilan/hasta.js';
+import { ilacAdiFormsuz } from '../paylasilan/ilac.js';
 import { receteKaydet } from '../depo/recete.js';
 import { bugun, tarihMetni } from '../paylasilan/tarih.js';
 import { t } from '../i18n.js';
@@ -103,6 +104,11 @@ async function semsiKutusu(ctx, deger) {
 }
 
 const doluMu = (v) => String(v ?? '').trim() !== '';
+
+/* Formdaki ilaç tablosunda ad: şekil adı düşmüş (kâğıttaki gibi; sütun
+   dar), sayı birimine bölünmez boşlukla bağlı. Dar sütunda ad kelime
+   arasından kırılıyor: «Augmentin / 1000 mg», «1000 / mg Tablet» değil. */
+const tablodakiAd = (s) => ilacAdiFormsuz(s.ilacAdi, s.form).replace(/(\d) (?=\D)/g, '$1\u00a0');
 
 /* Formdaki ölçüm satırlarının simgeleri kâğıdın Clinical sütunuyla aynı
    adlar (kagit.js OLCUM_SIMGELERI, dolgulu tablodan): tek liste.
@@ -431,6 +437,8 @@ export default {
       // görünümünde: soluk kişi simgesi ve boşken yer tutucu renginde yazı.
       const hastaDugmesi = btn(null, {
         class: 'btn secim-alani secim-alani--girdi' + (hatalar.hastaId ? ' input--hata' : ''),
+        // Uzun ad kutuda üç noktayla kısalıyor; tamamı üzerine gelince okunsun.
+        title: hasta ? tamAd(hasta) : null,
         onclick: async () => { await eylemler.hasta(); ciz(); },
       },
         simge('hasta', { boy: 23, dolu: true, sinif: 'girdi-simgesi' }),
@@ -517,7 +525,7 @@ export default {
       const ilacListesi = el('div', { class: 'kart--rx__ilac' },
         el('div', { class: 'ilac-bas' },
           el('h2', {}, t('recete.ilac_listesi', 'İlaç listesi')),
-          btn(simge('arti', { boy: 18 }), {
+          btn(simge('arti', { boy: 20 }), {
             class: 'btn ilac-bas__ekle', onclick: async () => { await eylemler['ilac-ekle'](); ciz(); },
           }, t('recete.ilac_ekle', 'İlaç ekle'))),
         /* Tablo liste boşken de çiziliyor: başlık satırı hangi sütunlara ne
@@ -530,7 +538,8 @@ export default {
           el('thead', {}, el('tr', {},
             el('th', {}, '#'),
             el('th', {}, t('nav.ilac', 'İlaç')),
-            el('th', {}, t('recete.adet', 'Adet')),
+            // Kutudaki uzun etiket («… (بسته)») dar başlıkta iki satıra iniyordu.
+            el('th', {}, t('recete.adet_kisa', 'Adet')),
             el('th', {}, t('recete.kullanim', 'Kullanım')),
             el('th', {}, t('recete.sure', 'Süre')),
             el('th', {}, t('genel.islem', 'İşlem')))),
@@ -539,10 +548,13 @@ export default {
             // çizimlerde sınıf yok, hareket tekrarlanmıyor.
             ? el('tbody', {}, ...recete.satirlar.map((s, i) => el('tr', { class: i === yeni ? 'tablo__yeni' : null },
               el('td', {}, String(i + 1)),
-              el('td', { class: 'ilac-ad' }, s.ilacAdi || '—'),
+              // Latin ad sağdan sola hücrede kendi yönünde (bdi): sonu ")" olan
+              // ad aynalanmasın.
+              el('td', { class: 'ilac-ad', title: s.ilacAdi || null },
+                el('span', { class: 'ilac-ad__metin' }, el('bdi', {}, s.ilacAdi ? tablodakiAd(s) : '—'))),
               el('td', {}, String(s.adet ?? '')),
-              el('td', {}, s.kullanim || '—'),
-              el('td', {}, s.sure || '—'),
+              el('td', { title: s.kullanim || null }, s.kullanim || '—'),
+              el('td', { title: s.sure || null }, s.sure || '—'),
               el('td', {}, btn(simge('kalem', { boy: 16 }), {
                 class: 'btn btn--ikon ilac-duzenle', 'aria-label': t('genel.duzenle', 'Düzenle'),
                 onclick: async () => { await satirDuzenle(i); ciz(); },
@@ -570,7 +582,7 @@ export default {
         duzenleme
           ? eylemDugmesi(simge('kaydet', { boy: 20 }), t('recete.kaydet_degisiklik', 'Değişiklikleri kaydet'), 'ikincil', () => kaydet({}))
           : eylemDugmesi(simge('goz', { boy: 23, dolu: true }), t('recete.onizle', 'Önizle'), 'ikincil', onizlemeAc),
-        eylemDugmesi(simge('yazdir', { boy: 20, dolu: true }), t('recete.kaydet_yazdir', 'Kaydet ve yazdır'), 'asil', () => kaydet({ yazdir: true })));
+        eylemDugmesi(simge('yazdir', { boy: 21, dolu: true }), t('recete.kaydet_yazdir', 'Kaydet ve yazdır'), 'asil', () => kaydet({ yazdir: true })));
 
       const rxKarti = kart({ class: 'kart kart--rx' }, rxUst, ilacListesi);
 
@@ -590,6 +602,12 @@ export default {
         onizlemeKabi);
 
       kok.appendChild(el('div', { class: giris ? 'recete-duzen recete-duzen--giris' : 'recete-duzen' }, sol, sag));
+      // Geniş ekranda tablo kendi içinde kayıyor: yeni eklenen (hep sonda)
+      // ilaç görünsün. Sayfanın kaydırması değişmiyor.
+      if (yeni !== null) {
+        const kap = ilacListesi.querySelector('.tablo-kap');
+        kap.scrollTop = kap.scrollHeight;
+      }
       kagidiTazele();
 
       // Kâğıt da dokunulabilir kalıyor: soldan da sağdan da doldurulabilsin.

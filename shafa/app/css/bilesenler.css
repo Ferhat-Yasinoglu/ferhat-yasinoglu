@@ -55,8 +55,11 @@
   outline: 2px solid rgb(var(--vurgu)); outline-offset: 2px;
 }
 .input:focus:not(:focus-visible) { outline: none; }
-.input--hata { border-color: rgb(var(--kirmizi)); }
-.input--hata:focus { box-shadow: 0 0 0 3px rgb(var(--kirmizi) / .18); }
+/* Hata kenarı üzerine gelince ve odakta da kırmızı kalıyor: hover ve odak
+   kuralları (düğme görünümlü hasta seçicininki dahil) onu griye ya da
+   vurguya çeviriyordu, hekim fareyi alana götürdüğü anda işaret kayboluyordu. */
+.input--hata, .input--hata:hover:not(:disabled) { border-color: rgb(var(--kirmizi)); }
+.input--hata:focus { border-color: rgb(var(--kirmizi)); box-shadow: 0 0 0 3px rgb(var(--kirmizi) / .18); }
 textarea.input { min-height: 76px; resize: vertical; }
 select.input { cursor: pointer; }
 
@@ -377,32 +380,33 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
    ===================================================================== */
 
 /* ---- Sayfa çerçevesi ----
-   Dar ekranda tek sütun ve kâğıt formun ALTINDA: telefonda yan yana iki
-   sütun ikisini de okunmaz yapıyor. */
+   İki sütun yalnız form sütunu en az 620 px alabildiğinde, 1280 px ve
+   üstü ekranda: daha darında hasta adı, tarih, tablo başlıkları ve
+   Clinical kutuları kırpılıyordu. Form önce gelir; 620'nin altına inmiyor,
+   kâğıt kalan yere ölçekleniyor. Daha dar ekranda tek sütun ve kâğıt
+   formun ALTINDA: telefonda yan yana iki sütun ikisini de okunmaz yapıyor. */
 .recete-duzen {
-  display: grid; grid-template-columns: minmax(0, 683fr) minmax(0, 609fr);
+  display: grid; grid-template-columns: minmax(620px, 683fr) minmax(0, 609fr);
   gap: 16px; align-items: start;
 }
-@media (max-width: 1100px) { .recete-duzen { grid-template-columns: 1fr; } }
-
 /* Kâğıt kaydırmayla birlikte yukarıda kalıyor: hekim formu doldururken
    kâğıdı görmeye devam etsin. Üst çubuk da yapışkan; ofset onun altından
    başlamazsa kâğıdın tepesi çubuğun arkasında kalıyordu. */
 .recete-onizleme { min-inline-size: 0; position: sticky; inset-block-start: calc(var(--ust-cubuk) + 12px); }
-@media (max-width: 1100px) { .recete-onizleme { position: static; } }
 .recete-onizleme__bas {
   display: flex; align-items: center; gap: var(--b-2);
   font-size: .85rem; font-weight: 600; color: rgb(var(--metin-2));
   margin-block-end: var(--b-2);
 }
+@media (max-width: 1279px) {
+  .recete-duzen { grid-template-columns: 1fr; }
+  .recete-onizleme { position: static; }
+}
 /* Yan yana düzende kâğıt panelle aynı hizadan başlıyor (tasarım): başlık
-   görünmüyor ama bölgenin adı olarak ekran okuyucuda kalıyor
-   (.gizli-metin'in aynısı). Kâğıt formun altına indiğinde görünür. */
-@media (min-width: 1101px) {
-  .recete-onizleme__bas {
-    position: absolute; inline-size: 1px; block-size: 1px; margin: 0;
-    overflow: hidden; clip-path: inset(50%); white-space: nowrap;
-  }
+   çizilmiyor. Bölgenin adı yine o (aria-labelledby gizli ögeyi de okur);
+   kâğıt formun altına indiğinde görünür. */
+@media (min-width: 1280px) {
+  .recete-onizleme__bas { display: none; }
 }
 .recete-onizleme .kagit-tuval { padding-block: 0; }
 
@@ -473,8 +477,14 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 .kart__bas-simge { display: flex; flex-shrink: 0; color: rgb(var(--baslik-simge)); }
 .kart--hasta .kart__govde { padding-block: 20px 15px; padding-inline: 12px; }
 
-/* Dört alan tek satırda, tasarımdaki oranlarla (187/85/178/134). */
-.izgara--hasta { grid-template-columns: 187fr 85fr 178fr 134fr; gap: 12px 16px; }
+/* Dört alan tek satırda, tasarımdaki oranlarla (187/85/178/134). Dar
+   formda her sütun kendi içeriğinin altına inmiyor: kısa bir ad
+   («فاطمه احمدی», 84 px) simgesiyle, şemsi tarih takvim düğmesiyle,
+   «اختیاری» belge simgesiyle sığıyor; kalan yer oranla dağılıyor. */
+.izgara--hasta {
+  grid-template-columns: minmax(150px, 187fr) minmax(56px, 85fr) minmax(136px, 178fr) minmax(102px, 134fr);
+  gap: 12px 16px;
+}
 /* Etiketin satır kutusu yazının altında boşluk bırakıyor: aralık 1 px
    olunca mürekkep kutudan tasarımdaki gibi 7 px yukarıda kalıyor. */
 .izgara--hasta .alan { margin: 0; gap: 1px; min-inline-size: 0; }
@@ -492,7 +502,8 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
   min-height: 43px; padding-inline: 52px 12px; overflow: hidden;
   background: rgb(var(--yuzey)); font-weight: 400;
 }
-.secim-alani--girdi:hover:not(:disabled) { background: rgb(var(--yuzey)); border-color: rgb(var(--cizgi) / .3); }
+.secim-alani--girdi:hover:not(:disabled) { background: rgb(var(--yuzey)); }
+.secim-alani--girdi:hover:not(:disabled, .input--hata) { border-color: rgb(var(--cizgi) / .3); }
 .secim-alani--girdi:active:not(:disabled) { transform: none; }
 .secim-alani__metin {
   min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -521,10 +532,11 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 .izgara--hasta .tarih-secici__dugme .simge { inline-size: 26px; block-size: 26px; }
 
 /* ---- Clinical ve ℞ yan yana, aynı boyda ----
-   Clinical tasarımda 225 px; daha dar dizüstü ekranlarda 196'ya kadar
-   iniyor, ℞ satırları kalan yeri alıyor. */
+   Clinical tasarımda 225 px; en dar formda (620) 220'ye iniyor, ℞ kalan
+   yeri alıyor. Daha aşağısı olmuyor: «Temperature» satırında kutuya
+   «38.5», «Blood Gr.»da «AB Rh+» ancak bu genişlikte sığıyor. */
 .recete-ikili {
-  display: grid; grid-template-columns: clamp(196px, 34.2%, 225px) minmax(0, 1fr);
+  display: grid; grid-template-columns: clamp(220px, 34.2%, 225px) minmax(0, 1fr);
   gap: 9px; align-items: stretch;
 }
 @media (max-width: 760px) { .recete-ikili { grid-template-columns: 1fr; } }
@@ -564,15 +576,22 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
      yerine 440 aynı koyulukta görünüyor. */
   font-size: 13.5px; font-weight: 440; color: rgb(var(--metin-baslik)); white-space: nowrap;
 }
-/* Dar dizüstü ekranda (Clinical 196 px) kutu 40 px'e kadar daralabiliyor,
-   etiket kırpılmıyor. */
+/* Kutu sığmazsa etiketi değil kendini daraltıyor. Yan dolgular 7/8:
+   «mmHg / mmHg» (87 px) 105'lik kutuya tam sığıyor, tasarımda da iki
+   yanında ~8 px var. */
 .olcum-satir .input {
   flex: 0 1 105px; inline-size: 105px; min-inline-size: 40px; margin-inline-end: auto;
-  block-size: 38px; min-height: 0; padding-block: 0; padding-inline: 8px 10px;
+  block-size: 38px; min-height: 0; padding-block: 0; padding-inline: 7px 8px;
   border-radius: 5px; border-color: rgb(var(--olcum-cizgi)); background: rgb(var(--yuzey-olcum));
   font-size: 13.5px; text-align: end;
 }
 .olcum-satir--dar .input { flex-basis: 63px; inline-size: 63px; }
+/* Dar kutulu satırların etiketi en uzunu («Temperature») kadar yer tutuyor:
+   Clinical 225'ten daralınca dört dar kutu birlikte ve aynı hizada
+   küçülüyor (önce yalnız Temperature'ınki küçülüp sola kayıyordu). Yazı
+   simgeye yaslı: sağdan sola satırda simge sağda, soldan sağa etiketin
+   bitişi (masaüstü bloğunda başlangıç). */
+.olcum-satir--dar .olcum-satir__ad { min-inline-size: 76px; text-align: end; }
 .olcum-satir .input::placeholder { color: rgb(var(--metin-3)); font-size: 12.5px; opacity: 1; }
 
 /* ---- ℞ ve ilaç listesi: tek kart ----
@@ -597,7 +616,7 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
   display: flex; align-items: center;
   min-block-size: 43px; padding-block: 0; padding-inline: 11px 6px;
   background: rgb(var(--yuzey)); border: 1px solid rgb(var(--rx-satir-cizgi)); border-radius: 6px;
-  box-shadow: 0 1px 2px rgb(20 60 100 / .06);
+  box-shadow: var(--golge-1);
   cursor: pointer; text-align: start;
   transition: border-color var(--hiz-1) var(--egri), background var(--hiz-1) var(--egri), transform var(--hiz-1) var(--egri);
 }
@@ -608,15 +627,18 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
   flex-shrink: 0; margin-inline-end: 12px;
   font-size: 15.5px; font-weight: 700; line-height: 1.4; color: rgb(var(--metin-baslik));
 }
+/* Satırın üst/alt payı dış kenar payı: dolgu kırpma kutusunun içinde
+   kalıyordu, üç satırda kesilen metnin dördüncü satırının tepesi o
+   dolgunun içinde görünüyordu. */
 .rx-satir__deger {
-  min-inline-size: 0; margin-inline: auto 8px; padding-block: 7px;
+  min-inline-size: 0; margin-block: 7px; margin-inline: auto 8px;
   font-size: 13.5px; font-weight: 500; line-height: 1.45; color: rgb(var(--metin)); text-align: end;
   overflow-wrap: anywhere;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
 }
 /* Boşken yer tutucu tek satır, sığmazsa üç noktayla kısalıyor. */
 .rx-satir__deger.sessiz {
-  display: block; padding-block: 0;
+  display: block;
   font-size: 13px; font-weight: 400; color: rgb(var(--metin-3));
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
@@ -635,68 +657,100 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 .rx-satir__arti .simge { stroke-width: 4; }
 .rx-satir:hover .rx-satir__arti { background: rgb(var(--vurgu) / .08); }
 
-/* ---- İlaç listesi: ℞ satırlarının altında, ince bir çizgiyle ayrılmış ---- */
+/* ---- İlaç listesi: ℞ satırlarının altında, ince bir çizgiyle ayrılmış ----
+   Tablo kartın kenarından 8 px içeride bitiyor: kendi alt çizgisi kartın
+   kenarına yapışınca iki çizgi üst üste görünüyordu (karanlıkta belirgin). */
 .kart--rx__ilac {
   display: flex; flex-direction: column; gap: 10px; flex: 1;
-  padding-block: 10px 0; padding-inline: 4px 7px;
+  padding-block: 10px 8px; padding-inline: 4px 7px;
   border-block-start: 1px solid rgb(var(--rx-ayrac-bolum));
 }
 .ilac-bas { display: flex; align-items: center; justify-content: space-between; gap: var(--b-2); padding-inline-end: 2px; }
 .ilac-bas h2 { margin: 0; margin-block-start: 9px; font-size: 16px; font-weight: 700; line-height: 1.4; color: rgb(var(--metin-baslik)); }
 /* «+ افزودن دوا»: yatay gradyan, açık ucu solda (fiziksel; açı yönden
-   bağımsız). Artı tarafında dolgu dar. */
+   bağımsız). Artı tarafında dolgu dar. Tasarımda 127 px. */
 .ilac-bas__ekle {
-  min-height: 36px; block-size: 36px; padding-block: 3px 0; padding-inline: 14px 19px; gap: 8px;
+  min-height: 36px; block-size: 36px; min-inline-size: 127px;
+  padding-block: 3px 0; padding-inline: 14px 19px; gap: 8px;
   border: 0; border-radius: 7px;
   background: linear-gradient(90deg, rgb(var(--ekle-1)), rgb(var(--ekle-2)));
-  color: #fff; font-size: 14px; font-weight: 600;
+  color: rgb(var(--vurgu-yz)); font-size: 14px; font-weight: 600;
 }
 .ilac-bas__ekle:hover:not(:disabled) { background: rgb(var(--ekle-2)); }
-.ilac-bas__ekle .simge { stroke-width: 3.2; }
+.ilac-bas__ekle .simge { stroke-width: 2.2; }
 
-/* Tablo: sabit sütunlar, başlık ortada, dikey ayraçlar yalnız başlıkta. */
+/* Tablo: sabit sütunlar, başlık ortada, dikey ayraçlar yalnız başlıkta.
+   Sütunlar içeriğe göre: tek haneli sıra ve 28 px'lik düğme dar, ad en
+   geniş. En dar formda (620), tablonun kaydırma çubuğu da yer kaplarken
+   başlıkların hepsi tek satıra sığıyor. */
 .kart--rx__ilac .tablo-kap { flex: 1; border: 1px solid rgb(var(--tablo-cizgi)); border-radius: 6px; }
-.tablo--ilac { table-layout: fixed; }
-.tablo--ilac col:nth-child(1) { inline-size: 10.4%; }
-.tablo--ilac col:nth-child(2) { inline-size: 29.5%; }
-.tablo--ilac col:nth-child(3) { inline-size: 13%; }
-.tablo--ilac col:nth-child(4) { inline-size: 21.6%; }
-.tablo--ilac col:nth-child(5) { inline-size: 12%; }
-.tablo--ilac col:nth-child(6) { inline-size: 13.5%; }
+/* Ayrık kenar modeli: yapışkan başlığın alt çizgisi hücreyle birlikte
+   kalsın (birleşik kenarda çizgi tablonun, kayınca gidiyordu). Kenarlar
+   yalnız alt ve başlık aralarında olduğu için çift çizgi çıkmıyor. */
+.tablo--ilac { table-layout: fixed; border-collapse: separate; border-spacing: 0; }
+.tablo--ilac col:nth-child(1) { inline-size: 5%; }
+.tablo--ilac col:nth-child(2) { inline-size: 34%; }
+.tablo--ilac col:nth-child(3) { inline-size: 10%; }
+.tablo--ilac col:nth-child(4) { inline-size: 23%; }
+.tablo--ilac col:nth-child(5) { inline-size: 13%; }
+.tablo--ilac col:nth-child(6) { inline-size: 15%; }
+/* Başlık hiçbir genişlikte iki satıra inmiyor (tasarımda hepsi tek satır). */
 .tablo--ilac th {
   block-size: 37px; padding-block: 0; padding-inline: 4px; text-align: center;
   background: rgb(var(--yuzey-2)); color: rgb(var(--tablo-bas-metin));
-  font-size: 11px; font-weight: 600; line-height: 1.25; letter-spacing: 0; white-space: normal;
+  font-size: 11px; font-weight: 600; line-height: 1.25; letter-spacing: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   border-block-end: 1px solid rgb(var(--tablo-ayrac));
 }
 .tablo--ilac th + th { border-inline-start: 1px solid rgb(var(--tablo-ayrac)); }
-/* Dolu satır (tasarımda yok): başlıkla aynı hizada, ad kalın ve başta. */
+/* Dolu satır (tasarımda yok): başlıkla aynı hizada, ad kalın ve başta.
+   Satır 40 px; kullanım ve süre tek satır (sığmazsa üç nokta, tamamı
+   title'da ve kâğıtta). */
 .tablo--ilac td {
-  block-size: 40px; padding-block: 6px; padding-inline: 4px; text-align: center;
+  block-size: 40px; padding-block: 5px; padding-inline: 4px; text-align: center;
   font-size: 13px; font-weight: 500; line-height: 1.35; color: rgb(var(--metin));
-  overflow-wrap: anywhere; border-block-end: 1px solid rgb(var(--tablo-ayrac));
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  border-block-end: 1px solid rgb(var(--tablo-ayrac));
 }
-.tablo--ilac td.ilac-ad { text-align: start; padding-inline-start: 8px; font-weight: 600; }
+/* Ad en çok iki satır: doz sayısıyla birlikte kırılıyor («Augmentin» /
+   «1000 mg»), ortasından değil. Daha uzunu üç noktayla, tamamı title'da. */
+.tablo--ilac td.ilac-ad { text-align: start; padding-inline-start: 8px; font-weight: 600; white-space: normal; }
+.ilac-ad__metin {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  overflow: hidden; overflow-wrap: anywhere;
+}
 .tablo--ilac tbody tr:hover { background: rgb(var(--vurgu) / .04); }
+/* Satır çizgisinin ortasında: taban çizgisine oturunca satırı 2 px uzatıyordu. */
 .ilac-duzenle {
-  min-width: 28px; min-height: 28px; inline-size: 28px; block-size: 28px; padding: 0;
+  min-width: 28px; min-height: 28px; inline-size: 28px; block-size: 28px; padding: 0; vertical-align: middle;
   border-color: transparent; background: none; color: rgb(var(--simge-sessiz));
 }
 .ilac-duzenle:hover:not(:disabled) { background: rgb(var(--vurgu) / .08); border-color: transparent; color: rgb(var(--vurgu)); }
 /* Boş durum: ters çevrilmiş kapsül ve kısa yazı, ortada. Tasarımda
-   tablonun alt kenarı kartın kenarına yapışık; burada tablo kartın içinde
+   tablonun alt kenarı kartın kenarına yapışık; burada tablo 8 px içeride
    bitiyor ve boş durumun dolgusu o farkı yutuyor: kart 552 px, panel 886
    px kalıyor. */
 .tablo--ilac .tablo__bos td {
-  block-size: auto; padding-block: 13px 23px;
+  block-size: auto; padding-block: 13px 15px;
   font-size: 12.5px; font-weight: 400; line-height: 1.5; color: rgb(var(--metin-4));
-  border-block-end: none;
+  white-space: normal; border-block-end: none;
 }
 .tablo--ilac .tablo__bos .simge {
   display: block; margin-inline: auto; margin-block-end: 13px;
   color: rgb(var(--simge-sessiz) / .65); rotate: 180deg;
 }
 .tablo--ilac .tablo__bos:hover { background: none; }
+/* İki sütunlu düzende panel tasarımın boyunda (886) kalıyor: ℞ kartı en
+   az 552 px, ilaç eklendikçe tablonun gövdesi kendi içinde kayıyor ve
+   başlığı üstte duruyor. İlk ilaç eklenince hiçbir şey kısalmıyor, alt
+   düğmeler ilaç sayısıyla yer değiştirmiyor. ℞ satırları uzarsa tablo
+   başlık ve bir satır kalana dek daralıyor; ondan sonra kart uzuyor.
+   Tek sütunda (kâğıt altta) doğal boy yeterli. */
+@media (min-width: 1280px) {
+  .kart--rx { min-block-size: 552px; }
+  .kart--rx__ilac .tablo-kap { flex: 1 1 0; min-block-size: 78px; overflow-y: auto; scrollbar-width: thin; }
+  .tablo--ilac th { position: sticky; inset-block-start: 0; z-index: 1; }
+}
 
 /* ---- Alt düğmeler: üç eşit düğme, kart genişliğine yayılı ----
    Sınıflar önizleme kutusunun ayağında da kullanılıyor (aynı üç görünüş). */
@@ -711,7 +765,6 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 .recete-btn--ikincil { background: rgb(var(--btn-2-zemin)); border-color: rgb(var(--btn-2-cizgi)); color: rgb(var(--btn-2-metin)); }
 .recete-btn--sade:hover:not(:disabled) { background: rgb(var(--btn-3-zemin)); border-color: rgb(var(--vurgu) / .35); }
 .recete-btn--ikincil:hover:not(:disabled) { background: rgb(var(--btn-2-zemin)); border-color: rgb(var(--vurgu) / .45); }
-.recete-btn--sade .simge, .recete-btn--ikincil .simge { color: rgb(var(--baslik-simge)); }
 /* Asıl düğme düz renk (gradyansız), altta 2 px koyu kenar. */
 .recete-btn--asil {
   background: rgb(var(--vurgu)); border-color: transparent; color: rgb(var(--vurgu-yz));
@@ -751,8 +804,11 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
   .recete-panel__dalga { transform: scaleX(-1); }
 }
 @media (max-width: 760px) {
-  /* Clinical tam genişlikte: bütün kutular aynı genişlikte. */
-  .olcum-satir .input, .olcum-satir--dar .input { flex-basis: 150px; inline-size: 150px; block-size: 42px; }
+  /* Clinical tam genişlikte: bütün kutular aynı genişlikte ve etiketin
+     hemen yanında (etiket sütunu en uzun etiket kadar). Satırın öbür ucuna
+     itildiğinde 700 px'lik ekranda etiketle kutu arası 370 px'i buluyordu. */
+  .olcum-satir .input, .olcum-satir--dar .input { flex-basis: 150px; inline-size: 150px; block-size: 42px; margin-inline-end: 0; }
+  .olcum-satir .olcum-satir__ad { min-inline-size: 76px; text-align: end; }
   .olcum-liste { row-gap: 10px; }
 }
 @media (max-width: 560px) {
@@ -762,12 +818,10 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
   .recete-panel__simge .simge { inline-size: 30px; block-size: 30px; }
   .recete-panel__metin h1 { font-size: 20px; }
   .recete-panel__metin p { margin-block-start: 2px; font-size: 13px; }
-  /* Şablon düğmeleri yalnız simge; ad title'da ve ekran okuyucuda. */
+  /* Şablon düğmeleri yalnız simge; ad title'da, ekran okuyucu da adı
+     oradan alıyor (içi boş düğmenin adı title). */
   .recete-panel__cam { inline-size: 32px; padding: 0; }
-  .recete-panel__cam-metin {
-    position: absolute; inline-size: 1px; block-size: 1px;
-    overflow: hidden; clip-path: inset(50%); white-space: nowrap;
-  }
+  .recete-panel__cam-metin { display: none; }
   /* Hasta: ad tam satır, yaş ile tarih ikinci satırda, numara üçüncüde. */
   .izgara--hasta { grid-template-columns: 96px 1fr; gap: 12px 10px; }
   .izgara--hasta > .alan:first-child, .izgara--hasta > .alan:last-child { grid-column: 1 / -1; }

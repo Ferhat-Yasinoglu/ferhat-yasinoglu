@@ -141,6 +141,7 @@
   --btn-3-zemin: 243 247 248; --btn-3-cizgi: 230 241 245; --btn-3-metin: 9 32 82;
   --btn-2-zemin: 238 245 249; --btn-2-cizgi: 211 228 236; --btn-2-metin: 8 25 54;
   --ekle-1: 17 109 142; --ekle-2: 2 87 123;   /* ilaç ekle düğmesinin gradyanı */
+  --ust-golge: 0 2px 10px rgb(20 60 100 / .06);
   --baslik-simge: 4 49 72;
   /* Form başlığındaki dalganın katmanları (çizim sırasıyla, 2–7; 1. katman
      bandın kendi açık tonu, 8. katman 3'ün rengi). */
@@ -204,6 +205,9 @@
   --tablo-cizgi: 38 70 92; --tablo-ayrac: 30 56 74; --tablo-bas-metin: 200 220 232;
   --btn-3-zemin: 21 40 56; --btn-3-cizgi: 38 70 92; --btn-3-metin: 226 238 245;
   --btn-2-zemin: 29 53 72; --btn-2-cizgi: 45 78 100; --btn-2-metin: 226 238 245;
+  /* Ekle düğmesi asıl düğme gibi açık vurguda, yazısı koyu (--vurgu-yz). */
+  --ekle-1: 56 182 214; --ekle-2: 40 160 196;
+  --ust-golge: 0 2px 10px rgb(0 0 0 / .35);
   --baslik-simge: 150 214 232;
   --dalga-2: 20 58 74; --dalga-3: 18 82 100; --dalga-4: 14 104 124;
   --dalga-5: 22 70 88; --dalga-6: 10 92 114; --dalga-7: 20 116 136;

@@ -26,7 +26,7 @@ a { color: rgb(var(--vurgu)); }
   block-size: var(--ust-cubuk); padding-inline: var(--b-4);
   background: rgb(var(--bg));
   border-block-end: 1px solid rgb(var(--ust-cizgi));
-  box-shadow: 0 2px 10px rgb(20 60 100 / .06);
+  box-shadow: var(--ust-golge);
 }
 /* Marka geniş ekranda kenar çubuğunda; üst çubuktaki kopyası yalnız kenar
    çubuğu gizlendiğinde (dar ekran) görünür — iki yerde birden durunca
@@ -515,7 +515,7 @@ a { color: rgb(var(--vurgu)); }
   .recete-form .ilac-bas .btn { direction: rtl; }
   /* Ölçüm etiketi ve kutusu dir="ltr": kenar payları soldan sağa satırda
      başlangıç tarafına geçiyor (telefondaki bitiş kuralının karşılığı). */
-  .recete-form .olcum-satir__ad { margin-inline: 11px 0; }
+  .recete-form .olcum-satir__ad { margin-inline: 11px 0; text-align: start; }
   .recete-form .olcum-satir .input { margin-inline: auto 0; }
 }
 @keyframes zil-kutu-gir { from { opacity: 0; transform: translateY(-4px); } }
