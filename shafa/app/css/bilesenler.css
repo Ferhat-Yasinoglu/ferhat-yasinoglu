@@ -348,6 +348,20 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 .sessiz { color: rgb(var(--metin-3)); }
 .sayi-yazi { font-variant-numeric: tabular-nums; }
 .simge { flex-shrink: 0; }
+/* Görünmeyen ama okunan metin: ekran okuyucu ve metin araması için.
+   Rx işareti ve hat çizim olarak basılıyor; «℞» ve vecizenin kendisi
+   burada, erişilebilir metin olarak kalıyor. display:none olsaydı ekran
+   okuyucu da duymazdı. */
+.gizli-metin {
+  position: absolute; inline-size: 1px; block-size: 1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+/* Glif çizimleri (cekirdek/cizimler.js) yazının yerini tutuyor: varsayılan
+   ölçüleri yazı boyundan türüyor, boyut vermeyen bir yerde SVG'nin
+   300×150 varsayılanıyla patlamasınlar. Oran viewBox'tan gelir. */
+.rx-isaret { display: inline-flex; line-height: 1; }
+.rx-isaret__cizim { block-size: 1em; inline-size: auto; }
+.hat-cizim { inline-size: 6em; block-size: auto; }
 
 /* ---------- Reçete yazma: solda form, sağda canlı kâğıt ----------
    Hekim soldaki alanları doldurdukça sağdaki kâğıt yazılıyor. Dar ekranda

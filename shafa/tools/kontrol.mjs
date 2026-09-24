@@ -139,7 +139,7 @@ for (const [dil, sozluk] of Object.entries(sozlukler)) {
 dinamik.forEach(([a]) => kullanilan.add(a));
 
 // (7) Tanıtım sayfasındaki sürüm rozeti koddaki sürümle aynı mı?
-// İndirme bölümü "نسخه 0.2.0" yazıyor. Bu sayı elle yazıldığı için uygulama
+// İndirme bölümü "نسخه 1.0.0" yazıyor. Bu sayı elle yazıldığı için uygulama
 // sürümü yükselince geride kalır ve kimse fark etmez: ziyaretçi eski bir
 // sürüm indirdiğini sanır, oysa indirdiği hep en yenisi. Referans sitede de
 // aynı sayı (v1.0.15) dört yerde elle yazılmıştı. Denetim ikisini bağlıyor.

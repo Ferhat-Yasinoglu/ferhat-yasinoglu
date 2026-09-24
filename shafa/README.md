@@ -72,7 +72,7 @@ hâlükârda "ana ekrana ekle" kalır.
 
 ### Sürüm rozeti
 
-İndirme bölümü "نسخه 0.2.0" yazıyor. Bu sayı elle yazıldığı için uygulama sürümü
+İndirme bölümü "نسخه 1.0.0" yazıyor. Bu sayı elle yazıldığı için uygulama sürümü
 yükselince sessizce geride kalır. `npm run kontrol` rozeti `uygulama.js`'teki
 `UYGULAMA_SURUMU` ile karşılaştırıyor: ikisi ayrışırsa denetim patlar.
 Sürüm yükseltmek tek satır — `js/uygulama.js`; rozet peşinden gelir.
@@ -235,6 +235,17 @@ yükseklikleri oynuyor, nokta kümeleri birbirine giriyor, kalın gerektiğinde
 kalınlık sahteleniyor. Yazı tipi service worker'ın önbelleğinde, ilk açılıştan
 sonra çevrimdışı da geliyor; inene kadar metin sistem yazı tipiyle görünür
 kalıyor (`font-display: swap`). Reçete kâğıdı da bu yazı tipini kullanıyor.
+Kâğıttaki tek el yazısı satırı ("Healthy Life Brighter Tomorrow") **Kalam
+700** ile basılıyor: yalnız ASCII'ye indirilmiş 12 KB'lık bir dosya
+(`app/yazi/kalam-700.woff2`, OFL, `OFL-Kalam.txt`). Rx işareti ve «سلامت
+سرمایهٔ زندگی است» hattı yazı tipi dosyası değil, Noto Serif ve Noto Nastaliq
+Urdu'dan alınmış satır içi SVG yolları (`app/js/cekirdek/cizimler.js`, OFL,
+`OFL-Noto.txt`).
+
+**Dolgulu simgelerin bir kısmı bootstrap-icons 1.13.1'den** (MIT): yol
+verisi `app/js/cekirdek/simge.js` içinde satır içi, her girdi `// bi: <ad>` ile
+işaretli; lisans metni `app/js/cekirdek/bootstrap-icons-LICENSE.txt`. Paket
+bağımlılık olarak eklenmedi, dışarıdan hiçbir şey indirilmiyor.
 
 Arap yazısı Latin'den daha çok satır aralığı ister — harfler satırın altına ve
 üstüne uzanıyor — bu yüzden gövde satır aralığı 1.62.

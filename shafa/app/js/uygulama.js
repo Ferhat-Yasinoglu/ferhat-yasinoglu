@@ -17,7 +17,7 @@ import { tarihMetni, bugun } from './paylasilan/tarih.js';
 import { t, yukle as dilYukle, uygula as dilUygula, suankiDil } from './i18n.js';
 import { kurtar } from './cekirdek/kurtarma.js';
 
-export const UYGULAMA_SURUMU = '0.2.0';
+export const UYGULAMA_SURUMU = '1.0.0';
 globalThis.UYGULAMA_SURUMU = UYGULAMA_SURUMU;
 
 /* Menü TEK liste: tasarımda grup başlığı yok ve sıra hekimin iş akışını
