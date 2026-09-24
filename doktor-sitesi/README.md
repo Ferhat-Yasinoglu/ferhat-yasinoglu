@@ -25,6 +25,8 @@ WhatsApp'tan gelen bilgilerle dolduruldu:
   Teşhis Kliniği — Mezar-ı Şerif; Kunduz Bölge Hastanesi)
 - Telefon: `0791 448 001` — `tel:` ve `wa.me` bağlantılarında `+93791448001` olarak kullanıldı
 - Adres: verilen metin aynen kullanıldı ("بندر روضهٔ مبارک، فرهاد، ملتون")
+- Fotoğraf: `img/doktor.jpg` — gönderilen fotoğraf, orana sadık kalınarak
+  720px genişliğe küçültüldü ve JPEG'e (kalite 85) sıkıştırıldı (1,8MB → ~93KB).
 
 Hâlâ yer tutucu, gerçek bilgiyle değiştirilmeli:
 
@@ -32,8 +34,6 @@ Hâlâ yer tutucu, gerçek bilgiyle değiştirilmeli:
   kapalı — tahmini, doğrulanmadı.
 - **Harita**: `#iletisim` içindeki `.harita-yer-tutucu` notu — adres netleşince
   Google Haritalar gömme linki (`<iframe>`) buraya eklenebilir.
-- **Fotoğraf**: `img/doktor-yer-tutucu.svg` çizilmiş bir simge; gerçek bir
-  fotoğrafla değiştirilebilir (`index.html`'de `.kahraman-gorsel img`).
 - **E-posta yok**: iletişim bilinçli olarak yalnız telefon + WhatsApp üzerinden
   kuruldu (bkz. aşağıdaki not).
 
