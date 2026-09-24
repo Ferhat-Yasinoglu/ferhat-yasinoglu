@@ -242,6 +242,9 @@ const alanlar = await sayfa.$$eval('.kagit-tuval [data-alan]', (e) => e.map((x) 
 for (const beklenen of ['hasta', 'tarih', 'kanGrubu', 'tani', 'belirtiler', 'laboratuvar', 'ilac-ekle', 'notlar', 'olcum:bp']) {
   if (!alanlar.includes(beklenen)) throw new Error(`kâğıtta "${beklenen}" alanı dokunulabilir değil: ${alanlar.join(', ')}`);
 }
+// Adı olmayan alan (Age, No) işaretlenmemeli: "null" adıyla dokunulabilir
+// görünüp hiçbir şey açmıyordu.
+if (alanlar.some((a) => !a || a === 'null')) throw new Error('kâğıtta adsız dokunulabilir alan var: ' + alanlar.join(', '));
 ok(`kâğıt üzerinde ${alanlar.length} alan dokunulabilir`);
 
 // --- İki sütunlu düzen: solda form, sağda CANLI kâğıt.
@@ -621,6 +624,15 @@ ok('şablon ayarlarda listelendi');
 // Kaldığımız yere dön: sonraki adımlar kaydedilmiş reçetenin sayfasında.
 await sayfa.goto(KOK + `#/recete/${receteId}`);
 await sayfa.waitForSelector('.yazdir-alan', { state: 'attached' });
+
+// Kâğıdın el yazısı yüzü (Kalam) yazdırmadan ÖNCE inmiş olmalı:
+// window.print() eşzamanlı ve bu sayfada kâğıt ekranda gizli, yani yüzü
+// isteyen görünür bir yazı yok. Temiz bir belgede (yeniden yükleme)
+// kâğıt çizilince yükleme kendiliğinden başlamalı.
+await sayfa.reload({ waitUntil: 'load' });
+await sayfa.waitForSelector('.yazdir-alan', { state: 'attached' });
+const kalamHazir = await sayfa.evaluate(async () => { await document.fonts.ready; return document.fonts.check('700 10pt Kalam'); });
+if (!kalamHazir) throw new Error('kâğıt çizildi ama Kalam yüzü yüklenmedi: yazdırılan kâğıtta el yazısı yedek yüzle çıkar');
 
 // --- Yazdırma alanı: ekranda gizli, içeriği eksiksiz
 const yazdirMetni = await sayfa.textContent('.yazdir-alan');
@@ -1236,6 +1248,30 @@ if (Math.abs(kagitAntet.x - 902) > 1 || Math.abs(kagitAntet.w - 609) > 1 || kagi
     || kagitAntet.seritMetni.includes('—') || kagitAntet.seritCizgi < 2
     || kagitAntet.hucreTepe.length !== 4 || new Set(kagitAntet.hucreTepe).size !== 1) {
   throw new Error('canlı kâğıt tasarımdaki gibi değil: ' + JSON.stringify(kagitAntet));
+}
+// Kâğıdın alt yarısı: Clinical sütunu 46,9 mm ve satırlar tek satır (boş
+// değer etiketin yanında noktalı çizgi); el yazısı resmin içinde değil
+// yanında, Kalam yüzüyle; filigran düz açık renk (saydam değil, basılınca
+// aynı çıksın); ayak rozetleri beyaz disk değil yarı saydam halka.
+const kagitGovde = await sayfa.evaluate(() => {
+  const k = document.querySelector('.recete-onizleme .kagit');
+  const q = (s) => k.querySelector(s);
+  const yazi = q('.kagit__sutun-yazi');
+  const filigran = getComputedStyle(q('.kagit__filigran'));
+  const alfa = (renk) => Number((renk.match(/rgba\([^)]*,\s*([\d.]+)\)/) || [0, 1])[1]);
+  return {
+    sutunOran: Math.round(q('.kagit__klinik-sutun').getBoundingClientRect().width / k.getBoundingClientRect().width * 1000) / 1000,
+    tekSatir: [...k.querySelectorAll('.kagit__olcum')].every((o) => Math.abs(o.querySelector('b').getBoundingClientRect().top
+      - o.lastElementChild.getBoundingClientRect().top) < 2),
+    yaziResimde: !!yazi.closest('.kagit__sutun-resim'), yaziYuzu: getComputedStyle(yazi).fontFamily.split(',')[0].replace(/["']/g, ''),
+    filigran: [filigran.color, filigran.opacity],
+    rozet: [...k.querySelectorAll('.kagit__rozet-daire')].map((d) => alfa(getComputedStyle(d).backgroundColor)),
+  };
+});
+if (Math.abs(kagitGovde.sutunOran - 46.9 / 194) > 0.004 || !kagitGovde.tekSatir || kagitGovde.yaziResimde
+    || kagitGovde.yaziYuzu !== 'Kalam' || kagitGovde.filigran.join() !== 'rgb(220, 235, 241),1'
+    || kagitGovde.rozet.length !== 7 || kagitGovde.rozet.some((a) => a > 0.3)) {
+  throw new Error('kâğıdın gövdesi / ayağı tasarımdaki gibi değil: ' + JSON.stringify(kagitGovde));
 }
 // Telefonda form sağdan sola: ad alanı sağda tam satır, ölçüm kutuları solda hizalı.
 await sayfa.setViewportSize({ width: 390, height: 844 });

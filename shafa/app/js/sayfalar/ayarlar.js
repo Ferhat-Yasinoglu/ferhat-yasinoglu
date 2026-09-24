@@ -13,7 +13,7 @@ import { t } from '../i18n.js';
 import { sablonListesi } from '../sablon-arayuz.js';
 import { senkronKarti } from '../senkron-arayuz.js';
 import { kurulumKarti } from '../kurulum-arayuz.js';
-import { kagidiYazdir } from '../kagit.js';
+import { kagidiYazdir, QR_VARSAYILAN } from '../kagit.js';
 import { hataMetni } from '../hatalar.js';
 import { metniDogrula } from '../depo/dogrulama.js';
 
@@ -146,7 +146,7 @@ export default {
         ['klasik', t('ayar.stil_klasik', 'Klasik (basılı kâğıdın aynısı)')],
         ['sade', t('ayar.stil_sade', 'Sade (siyah-beyaz, az mürekkep)')],
       ], { name: 'kagitStili', value: ayar.kagitStili === 'renkli' ? 'klasik' : (ayar.kagitStili || 'modern') });
-      const qr = secim(QR_SECENEKLERI.map(([k, ad]) => [k, t('ayar.qr.' + k, ad)]), { name: 'qrIcerik', value: ayar.qrIcerik || 'recete' });
+      const qr = secim(QR_SECENEKLERI.map(([k, ad]) => [k, t('ayar.qr.' + k, ad)]), { name: 'qrIcerik', value: ayar.qrIcerik || QR_VARSAYILAN });
       const para = secim(PARA_BIRIMLERI, { name: 'paraBirimi', value: ayar.paraBirimi || 'AFN' });
 
       /* Clinical sütununun altındaki fotoğraf. Dosya CİHAZDA okunuyor,

@@ -48,6 +48,7 @@ export default {
         el('h2', {}, t('bos_kagit.onizleme', 'Basılacak kâğıt')),
         el('span', { class: 'kart__alt' }, ayar.yazdirmaBoyutu === 'A5' ? 'A5' : 'A4')),
       tuval));
-    kagidiOlcekle(tuval, kagit, kok);
+    // Sayfadan çıkınca boyut gözcüsü bırakılsın (yönlendirici temizleyiciyi çağırıyor).
+    return kagidiOlcekle(tuval, kagit, kok);
   },
 };

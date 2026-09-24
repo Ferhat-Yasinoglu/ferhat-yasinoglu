@@ -17,7 +17,7 @@ import { el, svgEl, temizle, btn, btnS, girdi, alan, kart, bosDurum, uyariSeridi
 import { tarihSecici } from '../cekirdek/tarih-secici.js';
 import { simge } from '../cekirdek/simge.js';
 import { rxIsareti } from '../cekirdek/cizimler.js';
-import { kagitCiz, kagidiYazdir, kagidiOlcekle } from '../kagit.js';
+import { kagitCiz, kagidiYazdir, kagidiOlcekle, OLCUM_SIMGELERI } from '../kagit.js';
 import {
   OLCUMLER, KAN_GRUPLARI, bosRecete, receteDogrula, receteUyarilari, sikIlaclar,
 } from '../paylasilan/recete.js';
@@ -104,13 +104,9 @@ async function semsiKutusu(ctx, deger) {
 
 const doluMu = (v) => String(v ?? '').trim() !== '';
 
-/* Formdaki ölçüm satırlarının simgeleri: dolgulu tablodan (simge.js
-   SIMGELER_DOLU), kâğıdın Clinical sütunuyla aynı yollar. */
-const OLCUM_SIMGE = {
-  bp: 'tansiyon', pr: 'nabiz', rr: 'akciger', bw: 'tarti',
-  temp: 'termometre', spo2: 'oksijen', ht: 'boy', kanGrubu: 'kan',
-};
-/* Simgelerin çizim kutusu (px). Kutu görünen çizimden büyük: her simgenin
+/* Formdaki ölçüm satırlarının simgeleri kâğıdın Clinical sütunuyla aynı
+   adlar (kagit.js OLCUM_SIMGELERI, dolgulu tablodan): tek liste.
+   Simgelerin çizim kutusu (px). Kutu görünen çizimden büyük: her simgenin
    viewBox'ındaki boşluk farklı, tasarımdaki mürekkep boyu (BP 33×30,
    Height 17×42 …) ancak kutu ayrı ayrı verilince tutuyor. */
 const OLCUM_SIMGE_BOY = {
@@ -490,7 +486,7 @@ export default {
         };
         return el('div', { class: 'olcum-satir' + (OLCUM_DAR.has(anahtar) ? ' olcum-satir--dar' : '') },
           el('span', { class: 'olcum-satir__simge' },
-            simge(OLCUM_SIMGE[anahtar], { boy: OLCUM_SIMGE_BOY[anahtar], dolu: true })),
+            simge(OLCUM_SIMGELERI[anahtar], { boy: OLCUM_SIMGE_BOY[anahtar], dolu: true })),
           el('span', { class: 'olcum-satir__ad', dir: 'ltr' }, OLCUM_ETIKET[anahtar] || anahtar),
           g);
       });

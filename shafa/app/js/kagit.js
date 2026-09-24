@@ -9,6 +9,7 @@
 import { el, svgEl, qrGorsel } from './cekirdek/dom.js';
 import { gorselMi } from './cekirdek/gorsel.js';
 import { simge } from './cekirdek/simge.js';
+import { rxIsareti, hatCizimi } from './cekirdek/cizimler.js';
 import { t } from './i18n.js';
 import { tamAd, hastaYasi } from './paylasilan/hasta.js';
 import { OLCUMLER } from './paylasilan/recete.js';
@@ -49,47 +50,6 @@ function amblemCiz() {
     // İki yılan x=34.5 ekseninde birbirinin aynası
     yilan('M27.5 31.2C24 32.5 21 29.5 22.5 26.5 24 23.8 29.5 24 34.5 33 40.8 33.6 46 35 46 38.8S40.8 43.9 34.5 44.5C29.3 45 25 46.3 25 49.5S29.3 54 34.5 54.5C38.2 54.9 41.3 55.9 41.3 58.5S38.2 62.1 34.5 62.5C31.6 62.9 29.3 63.7 29.3 66S31.6 69.2 34.5 69.5C36.7 69.8 38.5 70.6 38.5 72.5S36.7 75.2 34.5 75.5C31.5 77.5 32.7 79 34.5 81'),
     yilan('M41.5 31.2C45 32.5 48 29.5 46.5 26.5 45 23.8 39.5 24 34.5 33 28.2 33.6 23 35 23 38.8S28.2 43.9 34.5 44.5C39.7 45 44 46.3 44 49.5S39.7 54 34.5 54.5C30.8 54.9 27.7 55.9 27.7 58.5S30.8 62.1 34.5 62.5C37.4 62.9 39.7 63.7 39.7 66S37.4 69.2 34.5 69.5C32.3 69.8 30.5 70.6 30.5 72.5S32.3 75.2 34.5 75.5C37.5 77.5 36.3 79 34.5 81'));
-}
-
-/* Clinical sütununun dolgulu simgeleri. `simge()` her şeyi konturla çiziyor;
-   basılı kâğıtta bu sütunun simgeleri dolu siluet. Kâğıda ait oldukları için
-   simge setine değil buraya konuldular — `amblemCiz`, `filigran`, `dalga`
-   zaten aynı kalıpta. */
-const OLCUM_CIZIMLERI = {
-  kalp: [['path', { d: 'M12 21.2s-8.2-5.2-8.2-11.2a4.7 4.7 0 0 1 8.2-3.1 4.7 4.7 0 0 1 8.2 3.1c0 6-8.2 11.2-8.2 11.2z' }]],
-  ekg: [['path', { d: 'M1.8 12h3.8l2-6.6 3 13.2 2.5-8.2 1.8 4.1h7.3', fill: 'none', stroke: 'currentColor', 'stroke-width': 2.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }]],
-  akciger: [
-    ['path', { d: 'M11.15 2.8h1.7v8.6h-1.7z' }],
-    ['path', { d: 'M10.6 11.6c-2.9.5-4.7 3-4.7 6.1v1.6A2.5 2.5 0 0 0 8.4 21.8h1.5a2.5 2.5 0 0 0 2.5-2.5v-5.2c0-1.7-.6-2.8-1.8-2.5z' }],
-    ['path', { d: 'M13.4 11.6c2.9.5 4.7 3 4.7 6.1v1.6a2.5 2.5 0 0 1-2.5 2.5h-1.5a2.5 2.5 0 0 1-2.5-2.5v-5.2c0-1.7.6-2.8 1.8-2.5z' }],
-  ],
-  tarti: [
-    ['path', { d: 'M7.4 7.4h9.2a2.3 2.3 0 0 1 2.3 2l1.4 9.4a1.6 1.6 0 0 1-1.6 1.8H5.3a1.6 1.6 0 0 1-1.6-1.8l1.4-9.4a2.3 2.3 0 0 1 2.3-2z' }],
-    ['path', { d: 'M9.2 10.6a3 3 0 0 1 5.6 0', fill: 'none', stroke: '#fff', 'stroke-width': 1.5, 'stroke-linecap': 'round' }],
-    ['path', { d: 'M12 11.4v3.2', fill: 'none', stroke: '#fff', 'stroke-width': 1.5, 'stroke-linecap': 'round' }],
-  ],
-  termometre: [
-    ['path', { d: 'M12 2.2a2.5 2.5 0 0 0-2.5 2.5v9a4.2 4.2 0 1 0 5 0v-9A2.5 2.5 0 0 0 12 2.2z' }],
-    ['path', { d: 'M16.6 6.4h2.2M16.6 9.4h2.2', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round' }],
-  ],
-  oksijen: [['path', { d: 'M12 2.6s6.5 7.2 6.5 11.4a6.5 6.5 0 0 1-13 0C5.5 9.8 12 2.6 12 2.6z' }]],
-  kan: [
-    ['path', { d: 'M12 2.6s6.5 7.2 6.5 11.4a6.5 6.5 0 0 1-13 0C5.5 9.8 12 2.6 12 2.6z' }],
-    ['path', { d: 'M6.6 13.4h10.8', fill: 'none', stroke: '#fff', 'stroke-width': 1.6, 'stroke-linecap': 'round' }],
-  ],
-  // Basılı kâğıtta boy simgesi ayakta duran bir insan.
-  boy: [
-    ['circle', { cx: 12, cy: 4.6, r: 2.6 }],
-    ['path', { d: 'M12 8.2c-2.3 0-3.9 1.6-3.9 3.9v4.1h1.7v5.4h4.4v-5.4h1.7v-4.1c0-2.3-1.6-3.9-3.9-3.9z' }],
-  ],
-};
-
-/** Clinical sütunundaki dolgulu ölçüm simgesi. */
-function olcumSimgesi(ad) {
-  const parcalar = OLCUM_CIZIMLERI[ad] || OLCUM_CIZIMLERI.kalp;
-  return svgEl('svg', {
-    class: 'simge kagit__olcum-cizim', viewBox: '0 0 24 24', fill: 'currentColor', 'aria-hidden': 'true',
-  }, ...parcalar.map(([tag, attrs]) => svgEl(tag, attrs)));
 }
 
 /** Slogan bloğundaki logo: içinden kalp atışı geçen KONTUR kalp. Atış
@@ -151,21 +111,44 @@ function saglikResmi(ayar = {}) {
   return saglikCizimi();
 }
 
+/* Fotoğraf yoksa yerine duran çizim: tasarımdaki fotoğrafın vektör
+   karşılığı. Birebir olamaz (fotoğraf), ama aynı öğeler aynı yerde: parlak
+   koyu bir kalp ve üstünde beyaz nabız, kalbin çevresine sarılan stetoskop,
+   solda göğüs parçası, arkada yumuşak açık bir kart. Eski çizim beyaz bir
+   kutunun içinde ince çizgiydi; sütunun tam genişliğine yayılıyor.
+   viewBox tasarımdaki yuvanın pikseli (147×83 ≈ 46,9×26 mm). */
 function saglikCizimi() {
-  const boru = (d, kalinlik = 3) => svgEl('path', {
-    d, fill: 'none', stroke: 'currentColor', 'stroke-width': kalinlik,
-    'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+  const kalp = tekilKimlik('kagit-kalp');
+  const kart = tekilKimlik('kagit-kart');
+  const boru = (d, renk, kalinlik) => svgEl('path', {
+    d, fill: 'none', stroke: renk, 'stroke-width': kalinlik, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
   });
-  return svgEl('svg', { class: 'kagit__saglik-cizim', viewBox: '0 0 120 80', 'aria-hidden': 'true' },
-    svgEl('path', {
-      d: 'M62 72C44 60 32 48 32 36c0-9 7-15 15-15 6 0 11 3 15 9 4-6 9-9 15-9 8 0 15 6 15 15 0 12-12 24-30 36z',
-      fill: 'currentColor', opacity: .17,
-    }),
-    boru('M16 10v13a11 11 0 0 0 22 0V10'),
-    boru('M12 10h8M34 10h8'),
-    boru('M27 34v9c0 12 10 22 22 22h12'),
-    svgEl('circle', { cx: 69, cy: 65, r: 7.5, fill: 'none', stroke: 'currentColor', 'stroke-width': 3 }),
-    boru('M80 38h7l4-9 6 18 4-9h11', 2.4));
+  return svgEl('svg', { class: 'kagit__saglik-cizim', viewBox: '0 0 147 83', preserveAspectRatio: 'xMidYMid slice', 'aria-hidden': 'true' },
+    svgEl('defs', {},
+      svgEl('radialGradient', { id: kalp, cx: '.34', cy: '.3', r: '.8' },
+        svgEl('stop', { offset: 0, 'stop-color': '#4f7482' }),
+        svgEl('stop', { offset: 1, 'stop-color': '#14303d' })),
+      svgEl('linearGradient', { id: kart, x1: 0, y1: 0, x2: 0, y2: 1 },
+        svgEl('stop', { offset: 0, 'stop-color': '#fff', 'stop-opacity': 0.95 }),
+        svgEl('stop', { offset: 1, 'stop-color': '#e2f1f6', 'stop-opacity': 0.55 }))),
+    // Arkadaki açık kart: üst kenarı sağa doğru kalkıyor, köşesi yuvarlak.
+    svgEl('path', { d: 'M0 16C36 5 92 1 136 5Q147 6 147 17V83H0Z', fill: `url(#${kart})` }),
+    svgEl('path', { d: 'M0 50C34 42 76 58 110 72Q126 78 147 76V83H0Z', fill: '#d6eaf1', opacity: 0.6 }),
+    // Kalp ve üstündeki beyaz nabız; sol üstte hafif bir parıltı.
+    svgEl('path', { d: 'M81 77C66 66 55 55 55 41 55 31 62 25 69.5 25 74.5 25 78.8 28 81 32.5 83.2 28 87.5 25 92.5 25 100 25 107 31 107 41 107 55 96 66 81 77Z', fill: `url(#${kalp})` }),
+    svgEl('ellipse', { cx: 66, cy: 34, rx: 6, ry: 3.2, fill: '#fff', opacity: 0.22, transform: 'rotate(-28 66 34)' }),
+    boru('M58 51H72l2.4-4.2 3 10.4 3.6-18.6 3.2 15.2 2-4.8H104', '#fff', 1.6),
+    // Kulaklıklar sağ üstte; metal kollar kalbin iki yanından iniyor.
+    svgEl('rect', { x: 83, y: 5, width: 10, height: 5.6, rx: 2.8, fill: '#26343c', transform: 'rotate(8 88 8)' }),
+    svgEl('rect', { x: 97, y: 8, width: 10, height: 5.6, rx: 2.8, fill: '#26343c', transform: 'rotate(22 102 11)' }),
+    boru('M84 9C68 11 55 22 51 37', '#8d9ba2', 2.2),
+    boru('M106 13C121 21 127 34 123 47 119 60 105 68 90 70', '#8d9ba2', 2.2),
+    // Kauçuk hortum: soldan kıvrılıp göğüs parçasına iniyor, sağ kol da ona bağlanıyor.
+    boru('M51 37C48 46 43 49 33 50 18 52 8 58 10 66 12 74 24 74 32 69', '#26343c', 3.8),
+    boru('M90 70C74 72 58 71 45 67', '#26343c', 3.8),
+    svgEl('circle', { cx: 34, cy: 65, r: 11, fill: '#26343c' }),
+    svgEl('circle', { cx: 34, cy: 65, r: 7.4, fill: '#aab6bb' }),
+    svgEl('circle', { cx: 34, cy: 65, r: 4, fill: '#dde4e7' }));
 }
 
 /** Vecize kartuşu: uçları sivri kıvrımlı (ogee) turkuaz çerçeve, iki
@@ -198,25 +181,16 @@ function kartusCiz() {
  *  ya da değiştirmek için bu dosyayı düzenlemek gerekir — öyle istendi. */
 const VECIZE = 'طبیب حقیقی خداوند (ج) است';
 
-/** İmzanın karşısındaki hat yazısı. Vecize gibi kâğıda ait: ayarlardan
- *  gelmiyor, boş kâğıtta da basılıyor. */
-// Basılı kâğıtta iki satır: üstte küçük «سلامت», altında akışkan yazıyla
-// gerisi. Tek satır denendi, hat değil düz bir etiket gibi duruyordu.
-// Metin TEK yerde duruyor, satırlar ondan türetiliyor: iki ayrı sabit
-// olsaydı biri değişip öteki kalabilirdi. İlk satırın sonundaki boşluk
-// bilerek korunuyor — yoksa kâğıdın metni "سلامتسرمایهٔ" diye okunuyor
-// (ekran okuyucuda da, kopyalayınca da).
-const HAT_YAZISI = 'سلامت سرمایهٔ زندگی است';
-
 const KLINIK_ADLARI = { bp: 'BP', pr: 'PR', rr: 'RR', bw: 'BW', temp: 'Temperature', spo2: 'SpO2', ht: 'Height' };
 
 /* Her ölçümün yanında kendi simgesi duruyor: sütun bir etiket listesi değil,
-   bakışta taranabilen bir pano olsun. */
-const OLCUM_SIMGELERI = {
-  bp: 'kalp', pr: 'ekg', rr: 'akciger', bw: 'tarti',
-  temp: 'termometre', spo2: 'oksijen', ht: 'boy',
+   bakışta taranabilen bir pano olsun. Simgeler dolgulu tablodan (simge.js
+   SIMGELER_DOLU) ve formun Clinical kartıyla AYNI adlar: form da bu
+   tabloyu kullanıyor, iki yerde ayrı yol seti tutulmuyor. */
+export const OLCUM_SIMGELERI = {
+  bp: 'tansiyon', pr: 'nabiz', rr: 'akciger', bw: 'tarti',
+  temp: 'termometre', spo2: 'oksijen', ht: 'boy', kanGrubu: 'kan',
 };
-
 /* Hasta şeridindeki alanların dolgulu simgeleri, şeritteki sırayla: Name
    kişi, Age kum saati (tasarımdaki açık kitap yaşla ilgisiz bir üretim
    hatası), Date dolu belge, No kontur belge. */
@@ -236,7 +210,24 @@ const ANTET_DALGASI = [
 ];
 /** Bulanıklaştırılan (en açık) katman sayısı. */
 const YUMUSAK_KATMAN = 4;
-let dalgaSayaci = 0;
+
+/* SVG içindeki kimlikler (filtre, gradyan) belgede tekil olmalı: sayfada
+   aynı anda birden çok kâğıt olabiliyor (önizleme kutusu, yazdırma
+   kopyaları) ve aynı kimlik ikincide ilkini gösteriyordu. */
+let kimlikSayaci = 0;
+const tekilKimlik = (on) => `${on}-${++kimlikSayaci}`;
+
+/* Ayak bandının katmanları, arkadan öne. Birim tasarımdaki kâğıdın pikseli:
+   x 0–608, y 0 = gövde kutularının alt kenarı, 94 = kâğıdın dibi. Üst
+   kenarlar tasarımın parlaklık eşiklerinden sütun sütun ölçüldü (236 / 175
+   / 100) ve yumuşatıldı. Soluk katman sağ uçta ℞ kutusunun köşesinin
+   arkasına yükseliyor; kutular önde durduğu için yalnız aradaki boşlukta
+   görünüyor. */
+const AYAK_SOLUK = 'M0 -4C5 -3.2 20.8 -.5 30 1 39.2 2.5 47.5 4.5 55 5 62.5 5.5 67.5 4.5 75 4 82.5 3.5 82.5 2.2 100 2 117.5 1.8 155 3 180 3 205 3 230 1.5 250 2 270 2.5 283.3 4.2 300 6 316.7 7.8 331.7 10.3 350 13 368.3 15.7 393.3 22.7 410 22 426.7 21.3 438.3 11.5 450 9 461.7 6.5 470 6.8 480 7 490 7.2 500.8 9.8 510 10 519.2 10.2 525.8 9.3 535 8 544.2 6.7 556.2 3.7 565 2 573.8 .3 582.2 .3 588 -2 593.8 -4.3 596.7 -8.3 600 -12 603.3 -15.7 606.7 -22 608 -24V94H0Z';
+const AYAK_PARLAK = 'M0 25C4.2 23.3 16.7 17.7 25 15 33.3 12.3 41.7 10.7 50 9 58.3 7.3 66.7 6.2 75 5 83.3 3.8 82.5 2.3 100 2 117.5 1.7 153.3 2.8 180 3 206.7 3.2 240 2.3 260 3 280 3.7 285 5.3 300 7 315 8.7 333.3 10.7 350 13 366.7 15.3 383.3 18.8 400 21 416.7 23.2 434.2 24.8 450 26 465.8 27.2 480 28.2 495 28 510 27.8 528.3 26.3 540 25 551.7 23.7 556.7 22.3 565 20 573.3 17.7 582.8 14.8 590 11 597.2 7.2 605 -.7 608 -3V94H0Z';
+const AYAK_KOYU = 'M0 26C4.2 24.2 16.7 17.8 25 15 33.3 12.2 41.7 10.7 50 9 58.3 7.3 67.2 5.8 75 5 82.8 4.2 90.8 3 97 4 103.2 5 103.2 10.2 112 11 120.8 11.8 135.3 9 150 9 164.7 9 181.7 10 200 11 218.3 12 243.3 13.5 260 15 276.7 16.5 288.3 18.3 300 20 311.7 21.7 319.7 22 330 25 340.3 28 352.8 36.7 362 38 371.2 39.3 377 35 385 33 393 31 400.8 27.2 410 26 419.2 24.8 428.3 25.7 440 26 451.7 26.3 466.7 27.7 480 28 493.3 28.3 506.7 28.2 520 28 533.3 27.8 548.3 27.7 560 27 571.7 26.3 582 25 590 24 598 23 605 21.5 608 21V94H0Z';
+/** Koyu tabanı çapraz kesen açık turkuaz iz (iletişim bloğunun solunda). */
+const AYAK_IZ = 'M372 40C392 52 424 72 452 94H420C408 76 392 58 372 40Z';
 
 /** Köşe süsü ve ayak bandı için akan dalga çizimleri.
  *
@@ -255,7 +246,7 @@ function dalga(yer) {
     // basamak (poster gibi) duruyordu. Onlar hafifçe bulanıklaştırılıyor,
     // koyu kurdele ve çanak keskin kalıyor. Filtre kimliği her kâğıtta
     // tekil: sayfada birden çok kâğıt olabiliyor (önizleme, yazdırma kopyası).
-    const kimlik = 'kagit-dalga-' + (++dalgaSayaci);
+    const kimlik = tekilKimlik('kagit-dalga');
     return svgEl('svg', {
       class: 'kagit__dalga kagit__dalga--ust', viewBox: '0 0 609 193',
       preserveAspectRatio: 'none', 'aria-hidden': 'true',
@@ -266,22 +257,41 @@ function dalga(yer) {
       d, fill: renk, 'fill-rule': 'evenodd', filter: i < YUMUSAK_KATMAN ? `url(#${kimlik})` : null,
     })));
   }
-  // Ayak bandı: üst kenarı kâğıt renginde kesiliyor, içinde de kurdeleler akıyor.
+  // Ayak bandı: dört katman. Soluk turkuaz hale, parlak turkuaz kurdele,
+  // koyu petrol taban ve tabanı kesen açık iz. Zemin rengi CSS'te değil
+  // bu çizimde: "arka plan grafikleri" kapalı basılsa da bant çıksın.
+  const soluk = tekilKimlik('kagit-ayak-soluk');
+  const parlak = tekilKimlik('kagit-ayak-parlak');
+  const taban = tekilKimlik('kagit-ayak-taban');
+  const dikey = (id, duraklar) => svgEl('linearGradient', { id, gradientUnits: 'userSpaceOnUse', x1: 0, y1: -24, x2: 0, y2: 40 },
+    ...duraklar.map(([offset, renk]) => svgEl('stop', { offset, 'stop-color': renk })));
   return svgEl('svg', {
-    class: 'kagit__dalga kagit__dalga--alt', viewBox: '0 0 1000 150',
+    class: 'kagit__dalga kagit__dalga--alt', viewBox: '0 -24 608 118',
     preserveAspectRatio: 'none', 'aria-hidden': 'true',
   },
-  svgEl('path', { class: 'kagit__dalga-kesim', d: 'M0 0H1000V52C874 96 742 30 606 52 470 74 352 18 214 40 140 52 68 70 0 58Z' }),
-  svgEl('path', { class: 'kagit__dalga-ak', d: 'M0 96C140 62 300 118 470 92 640 66 820 120 1000 82V104C820 142 640 88 470 114 300 140 140 84 0 118Z' }),
-  svgEl('path', { class: 'kagit__dalga-2', d: 'M0 62C82 90 168 44 268 58 386 74 470 114 592 100 704 87 812 42 1000 80V0H0Z' }));
+  svgEl('defs', {},
+    dikey(soluk, [[0, '#eef9fc'], [0.4, '#cdeff5'], [0.75, '#98dde8'], [1, '#7fd3df']]),
+    dikey(parlak, [[0.35, '#0a9bad'], [0.6, '#0a8a9e'], [1, '#0b687b']]),
+    svgEl('linearGradient', { id: taban, x1: 0, y1: 0, x2: 1, y2: 0 },
+      ...[[0, '#013d4e'], [0.3, '#014d5e'], [0.7, '#014d5e'], [1, '#013d4e']].map(([offset, renk]) => svgEl('stop', { offset, 'stop-color': renk })))),
+  svgEl('path', { d: AYAK_SOLUK, fill: `url(#${soluk})` }),
+  svgEl('path', { d: AYAK_PARLAK, fill: `url(#${parlak})` }),
+  svgEl('path', { d: AYAK_KOYU, fill: `url(#${taban})` }),
+  svgEl('path', { d: AYAK_IZ, fill: '#2f8ea2', opacity: 0.5 }));
 }
 
 const doluMu = (v) => String(v ?? '').trim() !== '';
 const satirlara = (metin) => String(metin ?? '').split('\n').map((x) => x.trim()).filter(Boolean);
 
+/** QR ayarı hiç kaydedilmemişse ne basılır. Ayarlar sayfası da bunu
+ *  seçili gösteriyor: önceden orada «reçete metni» seçili duruyor, kâğıt
+ *  ise WhatsApp basıyordu. WhatsApp, çünkü QR'ın altında "Scan for
+ *  Contact" yazıyor ve boş kâğıtta da basılabilen tek içerik bu. */
+export const QR_VARSAYILAN = 'whatsapp';
+
 /** Kâğıdın üstündeki QR'ın içeriği. Ayarlardan seçilir. */
 export function qrIcerigi(ayar, recete, hasta, { bos = false } = {}) {
-  const secim = ayar.qrIcerik || 'whatsapp';
+  const secim = ayar.qrIcerik || QR_VARSAYILAN;
   if (secim === 'yok') return '';
   if (secim === 'recete' && !bos && recete) {
     // Doğrulanabilir içerik: kanonik özet + kod. Eczaneci QR'ı okutup kâğıttaki
@@ -293,21 +303,30 @@ export function qrIcerigi(ayar, recete, hasta, { bos = false } = {}) {
   return numara ? `https://wa.me/${numara}` : '';
 }
 
-/** ℞ alanının arkasındaki soluk kalp + kalp atışı çizimi. */
+/** ℞ alanının arkasındaki filigran: kalın-ince (hat kalemiyle çizilmiş
+ *  gibi) altı açık bir kalp ve alanı boydan boya geçen üç atımlı bir
+ *  nabız çizgisi. Tasarımdaki gibi: sağ kol ucun ötesine, sol alta doğru
+ *  incelerek uzanıyor; nabız kalbin çizgisini kestiği yerde kalbi yarıyor.
+ *  viewBox'ın birimi tasarımdaki ℞ kutusunun pikseli (426 geniş): çizim
+ *  kutunun tam genişliğine yayılınca oranlar kendiliğinden tutuyor.
+ *  Renk düz ve opak (--m-filigran): basılınca da aynı açıklıkta çıksın;
+ *  yalnız nabzın iki ucu solarak bitiyor. */
 function filigran() {
-  return svgEl('svg', { class: 'kagit__filigran', viewBox: '0 0 240 120', 'aria-hidden': 'true' },
-    svgEl('path', {
-      d: 'M120 96c-1.5 0-26-16-32-30-4.5-10.5 1-21 11-23.5 7.5-1.9 15.4 1.2 21 8 5.6-6.8 13.5-9.9 21-8 10 2.5 15.5 13 11 23.5-6 14-30.5 30-32 30z',
-      fill: 'none', stroke: 'currentColor', 'stroke-width': 1.6,
-    }),
-    svgEl('path', {
-      d: 'M120 62c-4 8-8 14-12 18-3-14-6-28-9-38-3 10-5 18-8 22H2',
-      fill: 'none', stroke: 'currentColor', 'stroke-width': 1.6, 'stroke-linejoin': 'round',
-    }),
-    svgEl('path', {
-      d: 'M238 64h-53c-3-4-5-12-8-22-3 10-6 24-9 38-4-4-8-10-12-18',
-      fill: 'none', stroke: 'currentColor', 'stroke-width': 1.6, 'stroke-linejoin': 'round',
-    }));
+  const solma = tekilKimlik('kagit-filigran');
+  const NABIZ = 'M24 110H87l5-14 10 36 8-71 7 83 8-47 5 13H173l7-16 13 48 15-75 12 62 8-22 H253M287 110h5l8-13 7 47 7-83 10 71 8-36 7 14H392';
+  return svgEl('svg', { class: 'kagit__filigran', viewBox: '0 0 426 200', 'aria-hidden': 'true' },
+    svgEl('defs', {},
+      svgEl('linearGradient', { id: solma, gradientUnits: 'userSpaceOnUse', x1: 24, y1: 0, x2: 392, y2: 0 },
+        svgEl('stop', { offset: 0, 'stop-color': 'currentColor', 'stop-opacity': 0 }),
+        svgEl('stop', { offset: 0.14, 'stop-color': 'currentColor' }),
+        svgEl('stop', { offset: 0.86, 'stop-color': 'currentColor' }),
+        svgEl('stop', { offset: 1, 'stop-color': 'currentColor', 'stop-opacity': 0 }))),
+    // Kalbin iki kolu ayrı hilaller: tepede ince, loblarda kalın.
+    svgEl('path', { fill: 'currentColor', d: 'M208 47C196 30 181 23 163 24 140 25 123 42 124 62 125 88 148 113 199 172 160 128 134 100 134 64 134 46 147 33 163 33 180 33 196 40 205 52Z' }),
+    svgEl('path', { fill: 'currentColor', d: 'M210 47C221 31 236 23 253 24 276 25 295 43 294 66 293 96 262 131 184 193 244 136 285 100 285 66 285 46 270 32 253 32 236 32 222 40 213 52Z' }),
+    // Nabız, altında kâğıt renginde bir pay: kalbin çizgisini keserek geçiyor.
+    svgEl('path', { d: NABIZ, fill: 'none', stroke: '#fff', 'stroke-width': 9, 'stroke-linejoin': 'round' }),
+    svgEl('path', { d: NABIZ, fill: 'none', stroke: `url(#${solma})`, 'stroke-width': 3, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
 }
 
 /**
@@ -332,24 +351,37 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
   const stilSinifi = stilAdi === 'klasik' ? '' : ` kagit--${stilAdi}`;
   const stil = el('style', {});
   // ℞ alanı sayfanın kalanını doldursun: boş kâğıtta yazmaya bol yer kalır.
+  // A4'te 140 mm: tasarımdaki 155 mm'lik gövde A4'e sığmıyor (tasarımın
+  // kâğıdı basılabilir alandan 10 mm uzun); kısalan yalnız bu esnek bölüm,
+  // antet ve ayak tasarımdaki oranlarını koruyor.
   stil.textContent = `@page { size: ${boyut}; margin: ${boyut === 'A5' ? '6mm' : '8mm'}; }`
-    + ` .kagit { --rx-boy: ${boyut === 'A5' ? '62mm' : '150mm'}; }`;
+    + ` .kagit { --rx-boy: ${boyut === 'A5' ? '62mm' : '140mm'}; }`;
+
+  // "Healthy Life Brighter Tomorrow" el yazısı yüzüyle (Kalam) basılıyor.
+  // window.print() eşzamanlı: yüz o an inmemişse satır yedek yazıyla
+  // çıkar. Kâğıt çizilirken yükleme başlatılıyor, beklenmiyor; hekim
+  // yazdır'a bastığında dosya çoktan gelmiş oluyor.
+  if (stilAdi === 'modern') document.fonts?.load('700 10pt Kalam').catch(() => {});
 
   const yas = hasta ? hastaYasi(hasta) : null;
 
   /** Alanı düzenleme ekranına tanıtır. Düzenlenebilir değilse öğeyi
    *  olduğu gibi bırakır: basılan kâğıtta hiçbir iz kalmaz. */
+  // Adı olmayan alan (Age, No) dokunulabilir değil: işaretlenseydi
+  // data-alan="null" alıyor, üstüne gelince çerçeve çıkıp hiçbir şey açmıyordu.
   const duz = (ad, oge) => {
-    if (!duzenlenebilir || !oge) return oge;
+    if (!duzenlenebilir || !oge || !ad) return oge;
     oge.setAttribute('data-alan', ad);
     oge.setAttribute('tabindex', '0');
     oge.setAttribute('role', 'button');
     oge.classList.add('kagit__duz');
     return oge;
   };
-  /** Boş alanın yer tutucusu: düzenlerken görünür, basarken çizilmez. */
+  /** Boş alanın yer tutucusu: düzenlerken görünür, basarken çizilmez.
+   *  "+" ayrı ve kalın bir çizim, okuyucuya yalnız etiket düşüyor. */
   const yerTutucu = (ad, metin) => duzenlenebilir
-    ? duz(ad, el('div', { class: 'kagit__duz-bos' }, el('span', {}, '+ ' + metin)))
+    ? duz(ad, el('div', { class: 'kagit__duz-bos' },
+      simge('arti', { boy: 12, sinif: 'kagit__duz-arti' }), el('span', {}, metin)))
     : null;
   const cizgi = (genislik) => el('span', { class: 'kagit__cizgi', style: genislik ? { inlineSize: genislik } : null }, ' ');
 
@@ -446,39 +478,49 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
     alan('No', bos ? '' : recete.receteNo, '28mm', SERIT_SIMGELERI[3], null));
 
   /* ---- Clinical sütunu: ölçümler, altta stetoskop ve QR ---- */
+  // Her ölçüm tek satır: simge, etiket ve hemen yanında değer; altta
+  // noktalı yazı çizgisi. Girilmemiş ölçüm tire değil çizgi basılır: doktor
+  // çıktının üstüne kalemle yazabilsin.
+  const olcumSatiri = (anahtar, etiket, deger, sinif = '') => duz(anahtar === 'kanGrubu' ? 'kanGrubu' : 'olcum:' + anahtar,
+    el('div', { class: ('kagit__olcum ' + sinif).trim() },
+      el('span', { class: 'kagit__olcum-simge' },
+        // Kutu boyu CSS'te, her simge için ayrı: viewBox'lardaki boşluk farklı.
+        simge(OLCUM_SIMGELERI[anahtar], { dolu: true, sinif: 'kagit__olcum-cizim--' + anahtar })),
+      el('b', {}, `${etiket} :`),
+      doluMu(deger) ? el('span', { dir: 'ltr' }, deger) : cizgi()));
   const qr = qrGorsel(qrIcerigi(ayar, recete, hasta, { bos }), { boy: 76, sinif: 'kagit__qr' });
+  // Sessiz alan 4 değil 2 modül: kâğıtta QR'ın çevresinde ayrıca beyaz bir
+  // kart payı var. Dört modülde kod 17 mm'lik kartın ancak üçte ikisiydi;
+  // tasarımda kart neredeyse tamamen koddan oluşuyor.
+  if (qr) {
+    const kutu = Number(qr.getAttribute('viewBox').split(' ')[2]);
+    qr.setAttribute('viewBox', `2 2 ${kutu - 4} ${kutu - 4}`);
+  }
   const sutun = el('aside', { class: 'kagit__klinik-sutun', dir: 'ltr' },
     el('div', { class: 'kagit__sutun-bas' },
       el('span', {}, t('kagit.klinik', 'Clinical')),
-      simge('stetoskop', { boy: 24 })),
+      simge('stetoskop', { boy: 24, dolu: true })),
     el('div', { class: 'kagit__olcumler' },
-      // Girilmemiş ölçüm tire değil çizgi basılır: doktor çıktının üstüne
-      // kalemle yazabilsin. Kâğıt hem dolu hem elle tamamlanabilir olsun diye.
-      ...OLCUMLER.map(([anahtar, , , birim]) => duz('olcum:' + anahtar, el('div', { class: 'kagit__olcum' },
-        el('span', { class: 'kagit__olcum-simge' }, olcumSimgesi(OLCUM_SIMGELERI[anahtar] || 'kalp')),
-        el('b', {}, `${KLINIK_ADLARI[anahtar]} :`),
-        !bos && doluMu(recete.olcumler?.[anahtar])
-          ? el('span', { dir: 'ltr' }, `${recete.olcumler[anahtar]} ${birim}`)
-          : cizgi()))),
+      // Birimin yalnız ilk parçası basılıyor: BP'nin birimi formda iki
+      // kutuyu anlatan «mmHg / mmHg»; kâğıtta «120/80 mmHg» yazılır.
+      ...OLCUMLER.map(([anahtar, , , birim]) => olcumSatiri(anahtar, KLINIK_ADLARI[anahtar],
+        !bos && doluMu(recete.olcumler?.[anahtar]) ? `${recete.olcumler[anahtar]} ${birim.split(' / ')[0]}` : '')),
       // Kan grubu ölçüm değil, hastanın künyesi — ama hekim onu da burada
       // arıyor. Ölçümlerle aynı satır düzeninde, en altta. Ayırt edici
       // sınıfı var: deneme ölçüm sayarken bunu saymasın.
-      duz('kanGrubu', el('div', { class: 'kagit__olcum kagit__olcum--kan' },
-        el('span', { class: 'kagit__olcum-simge' }, olcumSimgesi('kan')),
-        el('b', {}, 'Blood Gr. :'),
-        !bos && doluMu(recete.kanGrubu)
-          ? el('span', { dir: 'ltr' }, recete.kanGrubu)
-          : cizgi()))),
+      olcumSatiri('kanGrubu', 'Blood Gr.', bos ? '' : recete.kanGrubu, 'kagit__olcum--kan')),
     !bos && doluMu(recete.dogrulamaKodu)
       ? el('div', { class: 'kagit__kod' },
         el('span', { class: 'kagit__olcum-simge' }, simge('kilit', { boy: 15 })),
         el('b', {}, t('kagit.kod', 'کد تأیید') + ': '), el('span', { dir: 'ltr' }, recete.dogrulamaKodu))
       : null,
+    // Resim sütunun tam genişliğinde; altında solda QR, sağında eğik el
+    // yazısı. Yazı resmin içinde değil yanında bir kardeş: ızgarada QR'ın
+    // karşısına oturuyor ve resmin alt köşesine biniyor (tasarımdaki gibi).
     el('div', { class: 'kagit__sutun-ayak' },
-      el('div', { class: 'kagit__sutun-resim' },
-        saglikResmi(ayar),
-        el('div', { class: 'kagit__sutun-yazi' },
-          ...satirlara(t('kagit.saglik_sozu', 'Healthy\nLife\nBrighter\nTomorrow')).map((x) => el('div', {}, x)))),
+      el('div', { class: 'kagit__sutun-resim' }, saglikResmi(ayar)),
+      el('div', { class: 'kagit__sutun-yazi' },
+        ...satirlara(t('kagit.saglik_sozu', 'Healthy\nLife\nBrighter\nTomorrow')).map((x) => el('div', {}, x))),
       el('div', { class: 'kagit__qr-kutu' }, qr,
         el('span', { class: 'kagit__qr-alt' }, t('kagit.qr_alt', 'Scan for Contact')))));
 
@@ -532,15 +574,14 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
     el('span', { class: 'kagit__imza-etiket' }, t('kagit.imza', 'امضا')));
 
   // Hat yazısı imzanın KARŞI köşesinde. İmza 42mm'lik dar bir sütun, içine
-  // koyunca sığmıyor; kendi başına konumlanıyor.
-  const [hatIlk, ...hatKalan] = HAT_YAZISI.split(' ');
-  const hat = el('div', { class: 'kagit__hat' },
-    el('span', { class: 'kagit__hat-ust' }, hatIlk + ' '),
-    el('span', { class: 'kagit__hat-alt' }, hatKalan.join(' ')));
+  // koyunca sığmıyor; kendi başına konumlanıyor. Nestalik çizim (SVG):
+  // metin <title>'da, okuyucu ve arama onu buluyor.
+  const hat = el('div', { class: 'kagit__hat' }, hatCizimi({ sinif: 'kagit__hat-cizim' }));
 
   const rx = el('section', { class: 'kagit__rx' },
     filigran(),
-    el('div', { class: 'kagit__rx-isaret', dir: 'ltr' }, '℞'),
+    // Rx çizimi; yanında görünmeyen «℞» metni (okuyucu ve arama için).
+    rxIsareti({ sinif: 'kagit__rx-isaret' }),
     el('div', { class: 'kagit__rx-govde' }, belirtiler, tani, alerji, ilacGovdesi,
       bos ? null : yerTutucu('ilac-ekle', t('recete.ilac_ekle', 'İlaç ekle')),
       laboratuvar,
@@ -553,8 +594,10 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
   const rozetler = String(ayar.ayakEtiketleri ?? t('kagit.ayak_etiketleri', 'قلب, شش, معده, گرده, شکر, روماتیزم, سردرد'))
     .split(',').map((x) => x.trim()).filter(Boolean).slice(0, 8);
   // Basılı kâğıtta hekimin ilgilendiği alanlar rozet olarak diziliyor.
-  // Sıra ayardaki etiket sırasını izliyor; fazlası 'kalp' ile doluyor.
-  const ROZET_SIMGE = ['kalp', 'akciger', 'mide', 'bobrek', 'seker', 'eklem', 'beyin', 'cocuk'];
+  // Sıra ayardaki etiket sırasını izliyor (varsayılan: قلب, شش, معده, گرده,
+  // شکر, روماتیزم, سردرد); sekizinciye ve fazlasına düz kalp düşüyor.
+  // Halkanın içinde beyaz, dolgulu simgeler (simge.js SIMGELER_DOLU).
+  const ROZET_SIMGE = ['tani', 'akciger', 'mide', 'bobrek', 'sise', 'romatizma', 'bas-agrisi', 'kalp'];
   // Basılı kâğıtta iki numara var (doktor ve klinik). İkincisi boşsa
   // basılmıyor; etiketler ayarlardan, boşsa tek ortak etiket kullanılıyor.
   const etiketler = String(ayar.telefonEtiket ?? '').split(',').map((x) => x.trim());
@@ -562,18 +605,18 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
     .filter((x) => doluMu(x.no));
   const telefonSatirlari = numaralar.map(({ no, etiket }) =>
     el('div', { class: 'kagit__iletisim-satir' },
-      simge('telefon', { boy: 16 }),
+      simge('telefon', { boy: 16, dolu: true }),
       el('span', {}, `${doluMu(etiket) ? etiket : t('kagit.tel', 'شماره تماس')} : `),
       el('span', { dir: 'ltr' }, no)));
 
   const ayak = el('footer', { class: 'kagit__ayak' },
     dalga('alt'),
     el('div', { class: 'kagit__iletisim' },
-      doluMu(ayar.adres) ? el('div', { class: 'kagit__iletisim-satir' }, simge('konum', { boy: 16 }), el('span', {}, `${t('kagit.adres', 'آدرس')} : ${ayar.adres}`)) : null,
+      doluMu(ayar.adres) ? el('div', { class: 'kagit__iletisim-satir' }, simge('konum', { boy: 16, dolu: true }), el('span', {}, `${t('kagit.adres', 'آدرس')} : ${ayar.adres}`)) : null,
       ...telefonSatirlari),
     rozetler.length
       ? el('div', { class: 'kagit__rozetler', dir: 'ltr' }, ...rozetler.map((etiket, i) =>
-        el('div', { class: 'kagit__rozet' }, el('span', { class: 'kagit__rozet-daire' }, simge(ROZET_SIMGE[i] || 'kalp', { boy: 20 })), el('span', {}, etiket))))
+        el('div', { class: 'kagit__rozet' }, el('span', { class: 'kagit__rozet-daire' }, simge(ROZET_SIMGE[i] || 'kalp', { boy: 20, dolu: true })), el('span', {}, etiket))))
       : null);
 
   // Tek bant, tam genişlik: kurdeleler kâğıdın bir ucundan ötekine akıyor.
@@ -598,6 +641,9 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
  *  çıktı o. Kâğıt kabına göre ölçeklenir. */
 export const KAGIT_PX = 733;
 
+/** Tuval → onu ölçekleyen gözcüyü bırakan fonksiyon. */
+const oncekiGozcu = new WeakMap();
+
 /**
  * Ekrandaki kâğıdı kabına sığdırır ve kap yeniden boyutlandıkça korur.
  * `gozlenen` genelde sayfa kökü: kenar çubuğu açılıp kapanınca da ölçüm
@@ -605,6 +651,10 @@ export const KAGIT_PX = 733;
  * Reçete yazma sayfasında 0: kâğıt kendi sütununu tam dolduruyor.
  */
 export function kagidiOlcekle(tuval, kagit, gozlenen = null, { pay = 8 } = {}) {
+  // Aynı tuvale yeni kâğıt konunca eski gözcü bırakılıyor: bırakılmazsa
+  // ayrılmış kâğıdın boyunu (0) tuvale yazmaya devam ediyordu. Çağıran
+  // dönen fonksiyonu tutmasa da sızıntı olmasın diye burada.
+  oncekiGozcu.get(tuval)?.();
   const uygula = () => {
     if (!tuval.isConnected) return;
     const olcek = Math.min(1, Math.max(0.2, (tuval.clientWidth - pay) / KAGIT_PX));
@@ -619,7 +669,9 @@ export function kagidiOlcekle(tuval, kagit, gozlenen = null, { pay = 8 } = {}) {
   const gozcu = new ResizeObserver(uygula);
   if (gozlenen) gozcu.observe(gozlenen);
   gozcu.observe(kagit);
-  return () => gozcu.disconnect();
+  const birak = () => { gozcu.disconnect(); if (oncekiGozcu.get(tuval) === birak) oncekiGozcu.delete(tuval); };
+  oncekiGozcu.set(tuval, birak);
+  return birak;
 }
 
 /**
