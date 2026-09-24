@@ -1214,6 +1214,29 @@ if (fm.dugmeler.some((d) => Math.abs(d.w - fm.dugmeler[0].w) > 1) || fm.dugmeler
     || fm.dugmeler[1].x < fm.dugmeler[0].sag) rxHata.push('düğmeler ' + JSON.stringify(fm.dugmeler));
 if (fm.dugmeler.some((d) => d.h !== 52)) rxHata.push('düğme boyu ' + fm.dugmeler.map((d) => d.h));
 if (rxHata.length) throw new Error('℞ kartı / düğmeler tasarımdaki gibi değil: ' + rxHata.join('; '));
+// Canlı kâğıt: tuval A4'ün basılabilir alanı (194 mm), payı yok, sütunun
+// tam genişliğinde. Antet dalgası yalnız sol yarıda; ad ve ihtisas rozeti
+// aynı başlangıç kenarına yaslı; hasta şeridinde boş değer tire değil çizgi.
+const kagitAntet = await sayfa.evaluate(() => {
+  const r = (s) => document.querySelector('.recete-onizleme ' + s).getBoundingClientRect();
+  const kagit = r('.kagit');
+  const svg = document.querySelector('.recete-onizleme .kagit__dalga--ust');
+  const dalgaSag = Math.max(...[...svg.querySelectorAll('path')].map((y) => { const b = y.getBBox(); return b.x + b.width; }));
+  const serit = document.querySelector('.recete-onizleme .kagit__serit');
+  return {
+    x: Math.round(kagit.left), w: Math.round(kagit.width), h: Math.round(kagit.height),
+    dalgaOran: Math.round(dalgaSag / svg.viewBox.baseVal.width * 100),
+    adSag: Math.round(r('.kagit__ad-blok').right), rozetSag: Math.round(r('.kagit__unvan span').right),
+    seritMetni: serit.textContent, seritCizgi: serit.querySelectorAll('.kagit__cizgi').length,
+    hucreTepe: [...serit.querySelectorAll('.kagit__alan')].map((h) => Math.round(h.getBoundingClientRect().top)),
+  };
+});
+if (Math.abs(kagitAntet.x - 902) > 1 || Math.abs(kagitAntet.w - 609) > 1 || kagitAntet.h < 870
+    || kagitAntet.dalgaOran > 75 || Math.abs(kagitAntet.adSag - kagitAntet.rozetSag) > 2
+    || kagitAntet.seritMetni.includes('—') || kagitAntet.seritCizgi < 2
+    || kagitAntet.hucreTepe.length !== 4 || new Set(kagitAntet.hucreTepe).size !== 1) {
+  throw new Error('canlı kâğıt tasarımdaki gibi değil: ' + JSON.stringify(kagitAntet));
+}
 // Telefonda form sağdan sola: ad alanı sağda tam satır, ölçüm kutuları solda hizalı.
 await sayfa.setViewportSize({ width: 390, height: 844 });
 await sayfa.waitForTimeout(100);
@@ -1223,7 +1246,7 @@ if (fmTel.yon !== 'rtl' || fmTel.ad.sag < fmTel.no.sag - 1 || fmTel.bp.x !== fmT
   throw new Error('telefonda reçete formu bozuk: ' + JSON.stringify(fmTel));
 }
 await sayfa.setViewportSize({ width: 1280, height: 900 });
-ok(`reçete formu tasarımdaki yerde: panel x=${fm.form.x} ${fm.form.w}×${fm.panelBoy}px, ℞ satırları ${fm.rxSatir[0].w}×${fm.rxSatir[0].h}, kâğıt tuvali sütunu dolduruyor, kâğıt x=${fm.kagit.x} ${fm.kagit.w}px (yapışkan ${fm.yapiskan}); başlık panelde; Clinical ${fm.klinik.w}px ℞'nin solunda; ölçüm kutuları ${fm.bp.w}/${fm.ates.w}; telefonda sağdan sola`);
+ok(`reçete formu tasarımdaki yerde: kâğıt ${kagitAntet.w}×${kagitAntet.h}px, dalga sol %${kagitAntet.dalgaOran}; panel x=${fm.form.x} ${fm.form.w}×${fm.panelBoy}px, ℞ satırları ${fm.rxSatir[0].w}×${fm.rxSatir[0].h}, kâğıt tuvali sütunu dolduruyor, kâğıt x=${fm.kagit.x} ${fm.kagit.w}px (yapışkan ${fm.yapiskan}); başlık panelde; Clinical ${fm.klinik.w}px ℞'nin solunda; ölçüm kutuları ${fm.bp.w}/${fm.ates.w}; telefonda sağdan sola`);
 
 await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
 await sayfa.waitForSelector('.recete-duzen .kagit');
@@ -1295,7 +1318,7 @@ await sayfa.waitForSelector('.kagit-tuval .kagit');
 const bosSayfaKagidi = await sayfa.$eval('.kagit-tuval .kagit', (k) => ({
   antet: !!k.querySelector('.kagit__doktor'),
   cizgi: k.querySelectorAll('.kagit__cizgi').length,
-  ilac: k.querySelectorAll('.kagit__ilac').length,
+  ilac: k.querySelectorAll('.kagit__ilaclar li').length,
 }));
 const adetSecenekleri = await sayfa.$$eval('select[name="adet"] option', (os) => os.length);
 if (!bosSayfaKagidi.antet || bosSayfaKagidi.ilac !== 0 || adetSecenekleri !== 5) {

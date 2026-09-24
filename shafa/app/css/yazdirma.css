@@ -29,29 +29,39 @@
 /* Dokunulabilir alanlar: yalnız düzenleme tuvalinde işaretli.
    Basılan kâğıtta hiçbir iz kalmıyor — kurallar .kagit-tuval altında. */
 .kagit-tuval .kagit__duz { cursor: pointer; border-radius: 1.5mm; transition: background .12s ease, outline-color .12s ease; outline: 1px dashed transparent; outline-offset: 2px; }
-.kagit-tuval .kagit__duz:hover { background: rgb(13 115 119 / .09); outline-color: rgb(13 115 119 / .45); }
-.kagit-tuval .kagit__duz:focus-visible { outline: 2px solid rgb(13 115 119); outline-offset: 2px; }
+.kagit-tuval .kagit__duz:hover { background: rgb(5 118 138 / .09); outline-color: rgb(5 118 138 / .45); }
+.kagit-tuval .kagit__duz:focus-visible { outline: 2px solid rgb(5 118 138); outline-offset: 2px; }
 .kagit-tuval .kagit__duz-bos {
   display: block; margin-block: 1.5mm; padding: 1.8mm 3mm;
-  border: 1px dashed rgb(13 115 119 / .5); border-radius: 1.5mm;
-  color: rgb(13 115 119); font-size: 9pt; font-weight: 600; text-align: start;
+  border: 1px dashed rgb(5 118 138 / .5); border-radius: 1.5mm;
+  color: rgb(5 118 138); font-size: 9pt; font-weight: 600; text-align: start;
 }
-.kagit-tuval .kagit__duz-bos:hover { background: rgb(13 115 119 / .09); }
+.kagit-tuval .kagit__duz-bos:hover { background: rgb(5 118 138 / .09); }
 
 .kagit-tuval .yazdir-alan {
   /* flex-shrink: 0 ŞART. Tuval bir flex kabı; kâğıt varsayılan olarak
      büzülüp 210mm yerine kabın genişliğine iniyordu (794 → 358 px), sonra
      ölçek onu bir kez daha küçültüyordu. Kâğıdın mm ölçüleri sabit kalmalı,
      küçülmeyi yalnız ölçek yapmalı. */
-  display: flex; flex-shrink: 0; inline-size: 210mm; min-block-size: 297mm;
+  /* 194 mm: A4'ün basılabilir alanı (bkz. kagit.js KAGIT_PX). Boy 281 mm
+     = 297 − 2×8 mm; tasarımdaki kâğıdın oranı da tam bu (886/608). */
+  display: flex; flex-shrink: 0; inline-size: 194mm; min-block-size: 281mm;
   background: #fff; color: #0c1d21;
-  box-shadow: 0 2px 24px rgb(0 0 0 / .13); border-radius: 3px;
   /* Kâğıt her ekranda AYNI tek uzun sayfa. mm ölçüleri değişmiyor,
      yalnız ölçekleniyor: telefonda da masaüstünde de aynı düzen.
      Genişliği daraltmak yerine ölçeklemek şart — mm'ler yeniden
      akmadığı için daraltmak antedi ve sütunu kırardı. */
   transform: scale(var(--olcek, 1));
   transform-origin: top center;
+}
+/* Ekrandaki çerçeve: yuvarlak köşe, ince açık kenar ve yumuşak gölge —
+   tasarımdaki kâğıt kartı. Yalnız ekranda; basılan kâğıtta çerçeve yok.
+   overflow: köşedeki antet dalgası yuvarlak köşeden taşmasın. */
+@media screen {
+  .kagit-tuval .yazdir-alan {
+    border: 1px solid #e2eff5; border-radius: 3mm; overflow: hidden;
+    box-shadow: 0 3px 12px rgb(20 50 80 / .12);
+  }
 }
 /* Ölçek CSS kırılma noktalarıyla değil, kabın gerçek genişliğinden
    hesaplanıyor (bkz. sayfalar/kagit-yaz.js). Kırılma noktaları denendi:
@@ -107,6 +117,8 @@
   }
   .kagit__amblem-cizim { inline-size: 13mm; block-size: 13mm; color: #fff; }
   .kagit__klinik-ad { font-size: 8pt; font-weight: 600; opacity: .85; }
+  /* Klasik ve sade antette logo metnin rengini alıyor (koyu antette beyaz). */
+  .kagit__slogan-cizim { inline-size: 6.4mm; block-size: 6.4mm; }
   /* line-height: gövdenin 1.62'si üç satırlık slogan bloğunu gereksiz
      yükseltiyor ve kâğıdı A4'ten taşırıyordu. */
   .kagit__slogan {
@@ -182,9 +194,12 @@
     padding: 1mm 5mm; text-align: center;
     font-size: 10pt; font-weight: 700; line-height: 1.3;
   }
-  /* Süsler metne yapışmasın: modern kâğıtta çerçeve, ötekilerde yalnız boşluk. */
+  /* Artılar metne yapışmasın. Kartuş çizimi modern stile ait; klasik ve
+     sade kâğıtta yalnız metin ve iki artı. */
   .kagit__vecize-cerceve { display: inline-flex; align-items: center; gap: 3mm; }
-  .kagit__vecize-sus { opacity: .6; font-size: 8pt; }
+  .kagit__vecize-arti { display: inline-flex; }
+  .kagit__vecize-arti .simge { inline-size: 3mm; block-size: 3mm; }
+  .kagit__kartus { display: none; }
 
   /* ---------- Hasta şeridi ---------- */
   .kagit__serit {
@@ -193,7 +208,8 @@
     border-block: 0.8pt solid var(--mavi);
   }
   .kagit__alan { display: inline-flex; align-items: flex-end; gap: 1.5mm; }
-  .kagit__cizgi { border-block-end: 0.6pt solid #7f93b4; min-inline-size: 20mm; display: inline-block; }
+  .kagit__alan-simge { inline-size: 4mm; block-size: 4mm; flex-shrink: 0; }
+  .kagit__cizgi { border-block-end: 0.6pt solid #7f93b4; inline-size: var(--cizgi-boy, auto); min-inline-size: 20mm; display: inline-block; }
 
   /* ---------- Gövde: ℞ (sağ) + Clinical (sol) ---------- */
   .kagit__govde { display: flex; flex: 1; gap: 3mm; padding: 3mm 5mm; min-block-size: var(--rx-boy, 150mm); }
@@ -307,51 +323,50 @@
    Mürekkep derdi olanlar için Ayarlar'da "sade" var: aynı düzen, renksiz.
    ============================================================ */
 @media print, screen {
+  /* Renkler tasarımdaki kâğıttan ölçüldü (iki temada aynı: basılan kâğıt
+     hep beyaz). Turkuaz eskisinden mavimsi, metin lacivert. */
   .kagit--modern {
-    --m-vurgu: #0d7377;
-    --m-koyu: #0a5558;
-    --m-acik: #e6f4f3;
-    --m-cok-acik: #f3faf9;
-    --m-ink: #0c1d21;
-    --m-sessiz: #5b6f73;
-    --m-cizgi: #d6e2e2;
-    /* Antet bandının iki ucu ile ortası; ihtisas rozeti için koyu lacivert. */
-    --m-tepe-1: #cbe8ee;
-    --m-tepe-2: #edf9fb;
-    --m-lacivert: #0e3f52;
+    --m-vurgu: #05768a;
+    --m-koyu: #014d5e;
+    --m-acik: #eaf6fa;
+    --m-cok-acik: #f0fafc;
+    --m-ink: #0b2350;
+    --m-simge: #04334a;
+    --m-sessiz: #36617c;
+    --m-cizgi: #8cc7d4;
+    --m-nokta: #b9d4df;
+    --m-cerceve: #12949e;
+    --m-sus: #2d95ab;
+    --m-serit-1: #e3f7fa;
+    --m-serit-2: #68c1cd;
+    --m-daire: #054b64;
+    --m-filigran: #dcebf1;
+    --m-rx: #04305a;
     color: var(--m-ink);
     position: relative;
-    border-block-start: 1.4mm solid var(--m-vurgu);
   }
 
   /* ---------- Dalgalar ----------
      CSS zemini değil SVG öğesi: zemin dolguları tarayıcının "arka plan
      grafikleri" seçeneğine bağlı, SVG içeriği her zaman basılır. */
   .kagit--modern .kagit__dalga { display: block; position: absolute; z-index: 0; }
-  .kagit--modern .kagit__dalga-1 { fill: var(--m-vurgu); opacity: .14; }
-  .kagit--modern .kagit__dalga-2 { fill: var(--m-vurgu); opacity: .3; }
-  .kagit--modern .kagit__dalga-3 { fill: var(--m-koyu); opacity: .55; }
-  /* Antet bandı: ad, ihtisas rozeti ve hizmetler AYNI açık zeminin içinde.
-     Önce koyu bir şerit yalnız kâğıdın tepesini kaplıyor, ad ve rozet onun
-     altında beyaz zeminde kalıyordu. Dalgalar artık bu bandın içinde ve
-     açık tonlu: koyu kurdeleler açık zeminde leke gibi duruyordu. */
+  /* Antet bandı: ad, ihtisas rozeti ve hizmetler aynı bandın içinde. Zemin
+     BEYAZ; renk yalnız sol yarıdaki dalgadan geliyor (tasarımdaki gibi).
+     Tepedeki 1,4 mm'lik turkuaz şerit kalktı: tasarımda koyu çanak doğrudan
+     kâğıdın üst kenarına oturuyor. */
   .kagit--modern .kagit__tepe {
     /* flex-shrink: 0 ŞART: .kagit bir flex sütunu, bant varsayılan olarak
        büzülüyor ve hizmetlerin ikinci satırını kırpıyordu. */
     flex-shrink: 0;
     position: relative; overflow: hidden;
-    background: linear-gradient(160deg, var(--m-tepe-1) 0%, var(--m-tepe-2) 46%, var(--m-tepe-1) 100%);
-    padding-block-end: 1mm;
+    background: #fff;
+    padding-block-end: 1.9mm;
   }
   .kagit--modern .kagit__dalga--ust {
     inset-block-start: 0; inset-inline: 0;
     inline-size: 100%; block-size: 100%;
     /* preserveAspectRatio yok: dalga bandın boyuna göre uzuyor. */
   }
-  .kagit--modern .kagit__dalga--ust .kagit__dalga-1 { fill: #ffffff; opacity: .55; }
-  .kagit--modern .kagit__dalga--ust .kagit__dalga-2 { fill: #bfe3e8; opacity: .5; }
-  .kagit--modern .kagit__dalga--ust .kagit__dalga-3 { fill: #ffffff; opacity: .72; }
-  .kagit--modern .kagit__dalga--ust .kagit__dalga-ak { fill: #8fd0d8; opacity: .28; }
   /* Ayak bandının üstünü kâğıt renginde kesiyor: bant kıvrımlı başlıyor. */
   .kagit--modern .kagit__dalga--alt {
     inset-block-start: -0.2mm; inset-inline-start: 0;
@@ -366,115 +381,152 @@
   .kagit--modern .kagit__unvan,
   .kagit--modern .kagit__hizmet { position: relative; z-index: 1; }
 
-  /* ---------- Antet ---------- */
+  /* ---------- Antet ----------
+     Ölçüler tasarımdaki kâğıttan (1 px = 0,319 mm): kadüse sağ kenardan
+     7 mm içeride, ad bloğu onun ayracına yaslı, slogan sol üst köşede.
+     Kadüse ve slogan mutlak konumlu: bloklar kendi yükseklikleriyle satırı
+     itseydi ihtisas rozeti adın hemen altına değil kadüsenin altına
+     düşüyordu. Bitiş dolgusu sloganın yeri: uzun ad slogana binmesin. */
   .kagit--modern .kagit__antet {
-    background: none; color: var(--m-ink);
-    /* Alt çizgi yok: bandın kendisi anteti gövdeden ayırıyor. */
-    border-block-end: none;
-    border-radius: 0; padding: 2.6mm 5mm 0.4mm; align-items: center;
+    display: block; background: none; color: var(--m-ink); border-block-end: none; border-radius: 0;
+    padding-block: 9.1mm 0; padding-inline: 36.4mm 52mm;
   }
+  .kagit--modern .kagit__ad-blok { text-align: start; }
   .kagit--modern .kagit__doktor {
-    font-size: 16pt; font-weight: 800; color: var(--m-vurgu); letter-spacing: -.01em;
+    font-size: 18pt; font-weight: 900; line-height: 1.3; color: #082758; letter-spacing: 0;
   }
-  .kagit--modern .kagit__doktor-alt { font-size: 11pt; font-weight: 600; color: var(--m-sessiz); }
-  /* Amblem antetin başlangıç kenarında, adın yanında. Ortada durduğunda iki
-     metin bloğunun arasında başıboş bir simge gibi kalıyordu. */
+  /* Latin satır adın başlangıç kenarından biraz içeride: tasarımda öyle. */
+  .kagit--modern .kagit__doktor-alt {
+    font-size: 14.5pt; font-weight: 400; line-height: 1.2; color: #082757;
+    margin-block-start: 2.2mm; padding-inline-start: 3.4mm;
+  }
   .kagit--modern .kagit__amblem {
-    order: -1; background: none; border: none; border-radius: 0;
-    inline-size: auto; block-size: auto; align-self: center;
-    padding-inline-end: 4mm; border-inline-end: 0.5pt solid var(--m-cizgi);
-    margin-inline-end: 2mm;
+    position: absolute; inset-block-start: 8.3mm; inset-inline-start: 7mm;
+    display: flex; align-items: center; block-size: 26.5mm; inline-size: auto;
+    background: none; border: none; border-radius: 0;
+    padding-inline-end: 3.2mm; border-inline-end: 0.4mm solid #81a0b6;
   }
-  .kagit--modern .kagit__amblem-cizim { color: var(--m-vurgu); inline-size: 17mm; block-size: 17mm; }
-  /* Slogan köşe dalgasının üstünde duruyor: soluk gri okunmuyordu. */
-  .kagit--modern .kagit__slogan { color: var(--m-koyu); font-size: 8.5pt; font-weight: 700; gap: .6mm; position: relative; z-index: 1; }
-  .kagit--modern .kagit__slogan .simge { color: #fff; }
-  .kagit__slogan-cizim { inline-size: 6.4mm; block-size: 6.4mm; color: #fff; }
-  /* Logo yuvarlak bir rozetin içinde: basılı kâğıtta da öyle. */
+  .kagit--modern .kagit__amblem-cizim { color: #075e73; inline-size: 22mm; block-size: 26.5mm; }
+  /* Slogan: logo solda, iki Farsça satır sağında, Latin satır altta sağa
+     yaslı. Latin satır logonun alt ucunun yanına kadar uzuyor. */
+  .kagit--modern .kagit__slogan {
+    position: absolute; inset-block-start: 8.6mm; inset-inline-end: 7.3mm; z-index: 1;
+    display: block; inline-size: auto; min-block-size: 17.5mm;
+    padding-block-start: 3.2mm; padding-inline-end: 21.2mm;
+    color: #041f39; font-size: 11.5pt; font-weight: 700; line-height: 1.2; text-align: start;
+  }
   .kagit--modern .kagit__slogan-daire {
-    display: inline-flex; align-items: center; justify-content: center;
-    inline-size: 10mm; block-size: 10mm; border-radius: 50%;
-    background: var(--m-vurgu); margin-block-end: .8mm;
+    position: absolute; inset-block-start: 0; inset-inline-end: 0;
+    display: block; inline-size: 19mm; block-size: 17.5mm;
   }
+  .kagit--modern .kagit__slogan-cizim { display: block; inline-size: 100%; block-size: 100%; color: #063750; }
   .kagit--modern .kagit__slogan-alt {
-    color: var(--m-ink); font-size: 8pt; font-weight: 800;
-    letter-spacing: .01em; margin-block-start: .4mm;
+    margin-block-start: 1.6mm; margin-inline-start: -6mm;
+    color: #25566c; font-size: 7pt; font-weight: 600; letter-spacing: -.01em;
+    text-align: end; white-space: nowrap;
   }
   .kagit--modern .kagit__klinik-ad { color: var(--m-sessiz); font-size: 8pt; font-weight: 700; opacity: 1; }
 
   /* ---------- Uzmanlık ve hizmetler ---------- */
-  /* Rozet ADIN ALTINDA, sayfanın ortasında değil. Asimetrik iç boşluk onu ad
-     bloğunun hizasına çekiyor: solda slogan (~34mm), sağda kadüse (~26mm)
-     var; aradaki alanın ortası adın da ortası. DOM'a dokunulmadı — rozeti ad
-     bloğunun içine taşımak klasik ve sade stilleri de değiştirirdi. */
+  /* Rozet ADIN ALTINDA, başlangıç kenarı adınkiyle aynı hizada (kadüse
+     22 mm + ayraç payı). DOM'a dokunulmadı — rozeti ad bloğunun içine
+     taşımak klasik ve sade stilleri de değiştirirdi. */
   .kagit--modern .kagit__unvan {
-    justify-content: center; padding: 0 26mm 1.8mm 34mm;
-    position: relative; z-index: 1;
+    justify-content: flex-start; padding-block: 1.9mm 0; padding-inline: 36.1mm 0;
   }
+  /* backgroundColor düz #05768a KALMALI: deneme rozetin koyuluğunu oradan
+     okuyor (parlaklık ≤ 90). Açık uçlar yalnız background-image'da. */
   .kagit--modern .kagit__unvan span {
-    background: var(--m-lacivert); color: #fff;
-    padding: 1.4mm 7mm; border-radius: var(--r-tam, 999px);
-    font-size: 11.5pt; font-weight: 800; letter-spacing: 0;
+    display: flex; align-items: center; justify-content: center;
+    min-inline-size: 83mm; max-inline-size: 100%; block-size: 7.7mm; padding-inline: 6mm;
+    border-radius: var(--r-tam, 999px);
+    background-color: #05768a;
+    background-image: linear-gradient(90deg, #60cad4 0%, #12abb9 7%, #0393a7 13%, #047f94 25%, #05768a 32%, #05667f 60%, #018398 94%, #08a0b0 100%);
+    color: #f3fafa; font-size: 11.5pt; font-weight: 600; line-height: 1; letter-spacing: 0;
   }
+  /* Hizmetler ve aile bloğu AYNI ızgara hücresinde üst üste: aile sağda,
+     hizmetler onun bittiği yerden (sağdan 68,6 mm) başlıyor, ilgi alanları
+     satırı ise tasarımdaki gibi sayfanın ortasına yakın, aile yazısının
+     altına kadar uzanıyor. Ayrı sütunlar olsaydı bu satır sola kayardı. */
   .kagit--modern .kagit__hizmet {
-    background: none; border: none; padding: 0.8mm 5mm 1.6mm;
-    color: var(--m-sessiz); font-size: 8.5pt;
-    /* Hizmetler ortada, ikinci amblem sağ kenarda: satır bir flex kabı.
-       flex-direction ŞART — taban kural (.kagit__hizmet) column veriyor ve
-       onu ezmezsek amblem hizmetlerin ÜSTÜNE, sayfanın ortasına oturuyor. */
-    display: flex; flex-direction: row; align-items: center; gap: 3mm;
+    display: grid; background: none; border: none;
+    padding-block: 4.7mm 0; padding-inline: 0;
   }
-  .kagit--modern .kagit__hizmet-govde { flex: 1; min-inline-size: 0; }
-  /* İkinci amblem: kalbin içinde aile, üstünde ve altında birer satır. */
+  .kagit--modern .kagit__hizmet > * { grid-area: 1 / 1; }
+  .kagit--modern .kagit__hizmet-govde { flex: none; min-inline-size: 0; }
+  /* Aile bloğu: kalp sağda, «با ما» onun solunda alt yarıda, uzun satır
+     altta sağa yaslı. */
   .kagit--modern .kagit__cagri {
-    flex-shrink: 0; inline-size: 26mm; text-align: center;
-    color: var(--m-koyu); font-size: 7.5pt; font-weight: 700; line-height: 1.25;
+    justify-self: start; align-self: start; z-index: 1;
+    display: grid; grid-template-columns: auto auto; grid-template-areas: "amblem ust" "alt alt";
+    align-items: end; justify-content: start; column-gap: 0.3mm;
+    inline-size: auto; margin-inline-start: 9.9mm; margin-block-start: -2.9mm;
+    color: #0b3357; font-size: 9pt; font-weight: 600; line-height: 1.2; text-align: start;
   }
-  .kagit--modern .kagit__cagri-amblem {
-    display: block; margin-block: .6mm;
+  .kagit--modern .kagit__cagri-amblem { grid-area: amblem; display: block; margin: 0; }
+  .kagit--modern .kagit__cagri-ust { grid-area: ust; margin-block-end: 2.6mm; }
+  .kagit--modern .kagit__cagri-alt { grid-area: alt; margin-block-start: -2.2mm; color: #0b3357; white-space: nowrap; }
+  .kagit--modern .kagit__aile-cizim { inline-size: 15.6mm; block-size: 15.2mm; color: #0b6176; }
+  .kagit--modern .kagit__hizmet-satir {
+    display: flex; flex-wrap: nowrap; justify-content: flex-start; gap: 0;
+    padding-inline-start: 68.6mm;
   }
-  .kagit--modern .kagit__aile-cizim {
-    inline-size: 11mm; block-size: 11mm; color: var(--m-vurgu);
-  }
-  .kagit--modern .kagit__cagri-alt { color: var(--m-vurgu); }
+  /* Daire metnin SOLUNDA (order: 1 → satır sonu), ayraç her öğenin
+     başlangıç kenarında: ilkinin ayracı aile bloğunu ayırıyor, en solda
+     ayraç yok. Metin iki satıra kırılıyor. */
   .kagit--modern .kagit__hizmet-oge {
-    display: inline-flex; align-items: center; gap: 2mm;
-    padding-inline: 5mm; border-inline-end: 0.6pt solid var(--m-acik);
+    display: inline-flex; align-items: center; gap: 3.2mm;
+    padding-inline: 4.1mm 4.8mm; border-inline-end: none; border-inline-start: 0.6pt solid #4e8aa0;
+    color: #0a2459; font-size: 11pt; font-weight: 600; line-height: 1.35; text-align: center;
   }
-  .kagit--modern .kagit__hizmet-oge:last-child { border-inline-end: none; }
+  .kagit--modern .kagit__hizmet-oge > span:last-child { max-inline-size: 36mm; }
+  /* Daire ayraçtan 1,5 mm uzun: öğe ayraç boyunda kalsın diye taşıyor. */
   .kagit--modern .kagit__hizmet-daire {
-    display: inline-flex; align-items: center; justify-content: center;
-    inline-size: 7mm; block-size: 7mm; border-radius: 50%;
-    background: var(--m-vurgu); flex-shrink: 0;
+    order: 1; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    inline-size: 12mm; block-size: 12mm; margin-block: -0.75mm; border-radius: 50%;
+    background: var(--m-daire); border: 0.5mm solid #043d54; color: #fff;
   }
   /* Taban kuralı (.kagit__hizmet-oge .simge) rengi eziyordu; daire içindeki
-     simge beyaz kalmalı. */
-  .kagit--modern .kagit__hizmet-daire .simge { color: #fff; }
-  .kagit--modern .kagit__hizmet-alan { text-align: center; margin-block-start: 1mm; }
-  /* Sabıka satırı tam genişlikte koyu bir bant: basılı kâğıtta da öyle. */
+     simge beyaz ve ince kalmalı (çizimlerin kendi kalınlığı 12 mm'lik
+     dairede fazla ağır). */
+  .kagit--modern .kagit__hizmet-daire .simge { color: #fff; inline-size: 7mm; block-size: 7mm; }
+  .kagit--modern .kagit__hizmet-daire .simge path { stroke-width: 1.3; }
+  .kagit--modern .kagit__hizmet-alan {
+    margin-block-start: 3.2mm; padding-inline: 38.3mm 44.7mm;
+    color: #071c52; font-size: 11pt; font-weight: 600; line-height: 1.35; text-align: center;
+  }
+  /* Sabıka satırı tam genişlikte bir bant: ilk üçte ikisi soluk, sağ uca
+     doğru turkuaza koyulaşıyor. Başlık kalın, gerisi normal. */
   .kagit--modern .kagit__deneyim {
-    background: var(--m-acik); color: var(--m-koyu);
-    border-block: 0.6pt solid rgb(13 115 119 / .3); border-radius: 0;
-    padding: 2mm 5mm; font-size: 9pt; font-weight: 700; text-align: center;
+    display: flex; align-items: center; justify-content: center; gap: 1.2mm;
+    block-size: 8.6mm; padding: 0 5mm;
+    background: linear-gradient(90deg, var(--m-serit-1) 0%, #e0f6fa 50%, #d1f0f6 74%, #bce4ed 86%, #8cd0dc 94%, var(--m-serit-2) 100%);
+    border-block: 0.8pt solid #c8e9ee; border-radius: 0;
+    color: #061f44; font-size: 11pt; font-weight: 500; line-height: 1.2; text-align: center;
     position: relative; z-index: 1;
   }
+  .kagit--modern .kagit__deneyim b { font-weight: 800; }
 
   /* ---------- Vecize: süslü kartuş ---------- */
   .kagit--modern .kagit__vecize {
-    background: none; border: none; padding: 0.9mm 5mm 0.7mm; text-align: center;
+    background: none; border: none; padding: 0.5mm 5mm 0; text-align: center; line-height: 1;
   }
-  /* Çift kenarlık: dıştaki ince turkuaz, içteki altın. Basılı kâğıttaki
-     kartuşun sade ama tanınır karşılığı. */
+  /* Kartuş çizimi arkada, metin ve artılar önünde. Ölçü tasarımdaki
+     kartuşun kendisi (süsler ve kıl çizgiler dahil 92,5 × 12,1 mm). */
   .kagit--modern .kagit__vecize-cerceve {
-    display: inline-flex; align-items: center; gap: 3.5mm;
-    border: 0.8pt solid var(--m-vurgu); border-radius: 1.5mm;
-    outline: 0.5pt solid #b8912f; outline-offset: -1.1mm;
-    padding: 0.8mm 7mm; background: var(--m-cok-acik);
+    position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 2.6mm;
+    inline-size: 92.5mm; block-size: 12.1mm; vertical-align: top;
   }
-  .kagit--modern .kagit__vecize-sus { color: #b8912f; font-size: 9pt; opacity: 1; display: inline-flex; }
-  .kagit__sus-cizim { inline-size: 11mm; block-size: 4mm; }
-  .kagit__sus-cizim--ayna { transform: scaleX(-1); }
-  .kagit--modern .kagit__vecize-metin { color: var(--m-vurgu); font-size: 10.5pt; font-weight: 700; }
+  .kagit--modern .kagit__kartus {
+    display: block; position: absolute; inset: 0; inline-size: 100%; block-size: 100%;
+    color: var(--m-cerceve);
+  }
+  .kagit--modern .kagit__kartus-sus { color: var(--m-sus); }
+  .kagit--modern .kagit__vecize-arti { position: relative; color: #056077; }
+  .kagit--modern .kagit__vecize-arti .simge { inline-size: 4.8mm; block-size: 4.8mm; }
+  .kagit--modern .kagit__vecize-metin {
+    position: relative; color: #031e4f; font-size: 12.5pt; font-weight: 800;
+  }
 
   /* ---------- Hasta şeridi ---------- */
   /* Hekimin kendi fotoğrafı çizimle aynı yeri kaplıyor: fotoğraf konunca
@@ -484,33 +536,45 @@
     object-fit: contain; display: block;
   }
 
+  /* Name / Age / Date / No: 12 mm'lik tek kutu, hücreler tasarımdaki
+     oranlarda (30 / 24,8 / 24,8 / 20,3). Ayraçlar kutunun dolgusu kadar
+     içeride bitiyor. Her hücrede simge → etiket → hücrenin sonuna kadar
+     noktalı yazı çizgisi; değer varsa çizginin üstünde duruyor. Hücreler
+     sabit: boş kâğıtta da "No:" alta kaçamıyor (eskiden içerik kadar
+     genişlerdi ve çizgiler taşırıyordu). Şerit dir=ltr: başlangıç = sol. */
   .kagit--modern .kagit__serit {
+    display: grid; grid-template-columns: 30fr 24.8fr 24.8fr 20.3fr; gap: 0;
+    block-size: 12.1mm; margin-block: 0.8mm 0; margin-inline: 5.4mm 4.8mm; padding: 1.6mm 0;
     background: var(--m-cok-acik); color: var(--m-ink);
-    border: 0.5pt solid var(--m-cizgi); border-radius: 2mm;
-    margin-inline: 5mm; padding: 1.6mm 4mm; gap: 4mm;
-    /* Dört alan TEK satırda. Boş kâğıtta doldurma çizgileri tam boylarına
-       açılınca satır taşıyor ve "No:" alta kaçıyordu. */
-    flex-wrap: nowrap;
+    border: 1.1pt solid var(--m-cizgi); border-radius: 2mm;
   }
-  /* Çizgiler kalan yeri paylaşıyor; mm ölçüleri oran olarak korunuyor,
-     yani Name en geniş kalıyor. */
-  .kagit--modern .kagit__alan { flex: 0 1 auto; min-inline-size: 0; }
-  .kagit--modern .kagit__cizgi { flex: 1 1 auto; min-inline-size: 7mm; }
-  .kagit--modern .kagit__alan { display: inline-flex; align-items: center; gap: 1.5mm; }
-  /* Alanlar arası dikey ayraç: basılı kâğıtta her alan kendi hücresinde. */
-  .kagit--modern .kagit__alan + .kagit__alan {
-    border-inline-start: 0.5pt solid var(--m-cizgi); padding-inline-start: 4mm;
+  .kagit--modern .kagit__alan {
+    display: flex; align-items: center; gap: 0; min-inline-size: 0;
+    padding-inline: 2.5mm 2.9mm; font-size: 10.5pt;
   }
-  .kagit--modern .kagit__alan .simge { color: var(--m-vurgu); }
-  .kagit--modern .kagit__alan b { color: var(--m-vurgu); font-weight: 700; }
-  .kagit--modern .kagit__cizgi { border-block-end-color: #9bb3b5; }
+  .kagit--modern .kagit__alan + .kagit__alan { border-inline-start: 0.7pt solid #80bdc7; }
+  /* Simgelerin mürekkebi farklı oranda: hepsi ≈ 6,5 mm boy görünsün. */
+  .kagit--modern .kagit__alan-simge { flex-shrink: 0; inline-size: 6.5mm; block-size: 6.5mm; color: var(--m-simge); }
+  .kagit--modern .kagit__alan-simge--hasta { inline-size: 7.6mm; block-size: 7.6mm; margin-inline: -0.5mm -0.6mm; }
+  .kagit--modern .kagit__alan-simge--kum-saati { inline-size: 7mm; block-size: 7mm; }
+  .kagit--modern .kagit__alan b {
+    margin-inline: 2.9mm 1.9mm; color: #0c2a55; font-weight: 500; white-space: nowrap;
+  }
+  .kagit--modern .kagit__serit .kagit__cizgi,
+  .kagit--modern .kagit__alan-deger {
+    flex: 1 1 0; inline-size: auto; min-inline-size: 0; align-self: flex-end;
+    margin-block-end: 0.9mm; border-block-end: 0.8pt dotted var(--m-nokta);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .kagit--modern .kagit__alan-deger { font-size: 9.5pt; font-weight: 600; line-height: 1.25; color: var(--m-ink); }
 
   /* ---------- ℞ alanı ---------- */
   .kagit--modern .kagit__rx {
     border: 0.5pt solid var(--m-cizgi); border-radius: 2mm; background: #fff;
   }
-  .kagit--modern .kagit__filigran { color: var(--m-vurgu); opacity: .1; }
-  .kagit--modern .kagit__rx-isaret { color: var(--m-vurgu); font-size: 30pt; font-family: Georgia, "Times New Roman", serif; }
+  /* Filigran düz açık renk, saydamlık yok: basıldığında da aynı açıklıkta çıksın. */
+  .kagit--modern .kagit__filigran { color: var(--m-filigran); opacity: 1; }
+  .kagit--modern .kagit__rx-isaret { color: var(--m-rx); font-size: 30pt; font-family: Georgia, "Times New Roman", serif; }
   .kagit--modern .kagit__tani { color: var(--m-sessiz); }
   .kagit--modern .kagit__belirti { color: var(--m-sessiz); }
   .kagit--modern .kagit__form { color: var(--m-vurgu); }
@@ -587,8 +651,7 @@
   .kagit--modern .kagit__olcum > span:not(.kagit__olcum-simge),
   .kagit--modern .kagit__olcum > .kagit__cizgi { font-size: 10.5pt; font-weight: 700; color: var(--m-ink); line-height: 1.2; }
   /* Doldurulacak yer noktalı: kalemle yazılacağı belli olsun. */
-  .kagit--modern .kagit__olcum > .kagit__cizgi,
-  .kagit--modern .kagit__alan .kagit__cizgi { border-block-end-style: dotted; border-block-end-width: 0.8pt; }
+  .kagit--modern .kagit__olcum > .kagit__cizgi { border-block-end: 0.8pt dotted var(--m-nokta); }
   .kagit--modern .kagit__kod {
     display: grid; grid-template-columns: auto 1fr; gap: 0 2.5mm; align-items: center;
     border-block-start: none; color: var(--m-ink); padding-block-start: 1.2mm;

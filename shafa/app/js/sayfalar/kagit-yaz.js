@@ -348,7 +348,8 @@ export default {
       tazeleZamani = setTimeout(kagidiTazele, 180);
     }
 
-    const olcekle = (tuval, kagit) => kagidiOlcekle(tuval, kagit, kok);
+    // Pay yok: kâğıt önizleme sütununun (609 px) tam genişliğinde, tasarımdaki gibi.
+    const olcekle = (tuval, kagit) => kagidiOlcekle(tuval, kagit, kok, { pay: 0 });
 
     /** Soldaki formun bir satırı: etiket, değer ve "+" kutusu. */
     function rxSatiri(etiket, deger, ipucu, eylem) {
