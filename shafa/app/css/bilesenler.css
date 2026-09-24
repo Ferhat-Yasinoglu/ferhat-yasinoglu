@@ -409,7 +409,7 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 /* ---- Panel: formun tamamı tek kart ---- */
 .recete-panel {
   display: flex; flex-direction: column; gap: 10px; min-inline-size: 0;
-  padding-inline: 11px; padding-block-end: 11px;
+  padding-inline: 11px; padding-block-end: 12px;
   background: rgb(var(--yuzey)); border: 1px solid rgb(var(--panel-cizgi)); border-radius: 10px;
   /* Üst kenarı başlık bandı çiziyor: açık renk çizgi bandın üstünde soluk
      bir şerit gibi kalıyordu. */
@@ -575,61 +575,174 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 .olcum-satir--dar .input { flex-basis: 63px; inline-size: 63px; }
 .olcum-satir .input::placeholder { color: rgb(var(--metin-3)); font-size: 12.5px; opacity: 1; }
 
-/* ---- ℞ ve ilaç listesi: tek kart ---- */
+/* ---- ℞ ve ilaç listesi: tek kart ----
+   Tasarımda 425×552: üstte Rx işareti ve beş satır (350 px), 1 px çizgi,
+   altta liste (201 px). Kartın boyu Clinical'la aynı; ikisi birlikte
+   paneli 886 px'te tutuyor. */
 .kart--rx { display: flex; flex-direction: column; border-color: rgb(var(--rx-cizgi)); }
-.kart--rx__ust { padding-block: 8px 16px; padding-inline: 8px; }
-.kart__bas .rx-baslik {
-  font-family: Georgia, "Times New Roman", serif; font-style: italic;
-  font-size: 2.25rem; line-height: 1; color: rgb(var(--vurgu-2)); margin: 0;
+.kart--rx__ust {
+  display: flex; flex-direction: column; gap: 7.5px;
+  padding-block: 12px 38px; padding-inline: 6px 8px;
 }
-.kart__bas--cizgisiz { border-block-end: none; padding-block-end: 0; }
-.rx-satir {
-  display: flex; align-items: center; gap: var(--b-2);
-  padding-block: var(--b-2); padding-inline: var(--b-3);
-  margin-block-start: var(--b-2);
-  background: rgb(var(--yuzey)); border: var(--kenarlik-2); border-radius: var(--r-kucuk);
-  cursor: pointer; text-align: start;
-  transition: border-color var(--hiz-1) var(--egri), background var(--hiz-1) var(--egri);
+/* Rx çizimi 43 px (mürekkep boyu), kâğıttakiyle aynı lacivert. */
+.rx-baslik {
+  margin: 0; margin-inline-start: 10px; margin-block-end: 3.5px;
+  font-size: 43px; line-height: 1; color: rgb(var(--rx-isaret));
 }
-.rx-satir:hover { border-color: rgb(var(--vurgu) / .5); background: rgb(var(--vurgu) / .04); }
-.rx-satir:focus-visible { outline: 2px solid rgb(var(--vurgu)); outline-offset: 2px; }
-.rx-satir__etiket { font-weight: 600; font-size: .88rem; color: rgb(var(--vurgu-2)); flex-shrink: 0; }
-/* Değer/yer tutucu satırın öteki ucuna yaslanır, aradaki boşluk esner. */
-.rx-satir__deger {
-  font-size: .85rem; overflow-wrap: anywhere; margin-inline-start: auto;
-  text-align: end; color: rgb(var(--metin-2));
-}
-.rx-satir__deger.sessiz { color: rgb(var(--vurgu) / .55); }
-/* Yer tutucu ile "+" arasında ince dikey çizgi. */
-.rx-satir__ayrac { flex-shrink: 0; inline-size: 1px; block-size: 20px; background: rgb(var(--cizgi) / .2); }
-.rx-satir__arti {
-  flex-shrink: 0;
-  inline-size: 26px; block-size: 26px; min-inline-size: 26px; min-height: 26px;
-  padding: 0;
-  background: rgb(var(--vurgu) / .1); border: 1px solid rgb(var(--vurgu) / .28);
-  color: rgb(var(--vurgu-2));
-}
-.rx-satir__arti .simge { inline-size: 15px; block-size: 15px; }
-.rx-satir:hover .rx-satir__arti { background: rgb(var(--vurgu) / .18); }
+.rx-baslik__isaret { display: flex; }
 
-/* İlaç listesi ℞ satırlarının altında, ince bir çizgiyle ayrılmış. */
+/* Satır: 43 px kutu; etiket başta, yer tutucu sona yaslı, ayraç ve "+".
+   Dolu değer sarıyor (en çok üç satır), satır onunla uzuyor. */
+.rx-satir {
+  display: flex; align-items: center;
+  min-block-size: 43px; padding-block: 0; padding-inline: 11px 6px;
+  background: rgb(var(--yuzey)); border: 1px solid rgb(var(--rx-satir-cizgi)); border-radius: 6px;
+  box-shadow: 0 1px 2px rgb(20 60 100 / .06);
+  cursor: pointer; text-align: start;
+  transition: border-color var(--hiz-1) var(--egri), background var(--hiz-1) var(--egri), transform var(--hiz-1) var(--egri);
+}
+.rx-satir:hover { border-color: rgb(var(--vurgu) / .45); background: rgb(var(--vurgu) / .03); }
+.rx-satir:active { transform: scale(.99); }
+.rx-satir:focus-visible { outline: 2px solid rgb(var(--vurgu)); outline-offset: 2px; }
+.rx-satir__etiket {
+  flex-shrink: 0; margin-inline-end: 12px;
+  font-size: 15.5px; font-weight: 700; line-height: 1.4; color: rgb(var(--metin-baslik));
+}
+.rx-satir__deger {
+  min-inline-size: 0; margin-inline: auto 8px; padding-block: 7px;
+  font-size: 13.5px; font-weight: 500; line-height: 1.45; color: rgb(var(--metin)); text-align: end;
+  overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+}
+/* Boşken yer tutucu tek satır, sığmazsa üç noktayla kısalıyor. */
+.rx-satir__deger.sessiz {
+  display: block; padding-block: 0;
+  font-size: 13px; font-weight: 400; color: rgb(var(--metin-3));
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rx-satir__ayrac {
+  flex-shrink: 0; inline-size: 2px; block-size: 23px; margin-inline-end: 5px;
+  border-radius: 1px; background: rgb(var(--rx-ayrac));
+}
+.rx-satir__arti {
+  flex-shrink: 0; display: grid; place-items: center;
+  inline-size: 26px; block-size: 26px;
+  background: rgb(var(--arti-zemin)); border: 1px solid rgb(var(--arti-cizgi)); border-radius: 5px;
+  color: rgb(var(--arti-renk));
+  transition: background var(--hiz-1) var(--egri);
+}
+/* 24'lük çizgi simgesi 12 px'te 4 kalınlıkla: 9 px'lik, 2 px çizgili artı. */
+.rx-satir__arti .simge { stroke-width: 4; }
+.rx-satir:hover .rx-satir__arti { background: rgb(var(--vurgu) / .08); }
+
+/* ---- İlaç listesi: ℞ satırlarının altında, ince bir çizgiyle ayrılmış ---- */
 .kart--rx__ilac {
-  display: flex; flex-direction: column; gap: 11px; flex: 1;
-  padding-block: 11px 8px; padding-inline: 8px;
+  display: flex; flex-direction: column; gap: 10px; flex: 1;
+  padding-block: 10px 0; padding-inline: 4px 7px;
   border-block-start: 1px solid rgb(var(--rx-ayrac-bolum));
 }
-.ilac-bas { display: flex; align-items: center; justify-content: space-between; gap: var(--b-2); }
-.ilac-bas h2 { margin: 0; font-size: 16px; font-weight: 700; }
-.kart--rx__ilac .tablo-kap { border: 1px solid rgb(var(--tablo-cizgi)); border-radius: 6px; }
-/* İlaç tablosu liste boşken de duruyor; boş satır tabloyu doldurmasın. */
-.tablo__bos td { text-align: center; color: rgb(var(--metin-3)); font-weight: 500; padding-block: var(--b-5); }
-.tablo__bos .simge { display: block; margin-inline: auto; margin-block-end: var(--b-2); color: rgb(var(--metin-3)); }
+.ilac-bas { display: flex; align-items: center; justify-content: space-between; gap: var(--b-2); padding-inline-end: 2px; }
+.ilac-bas h2 { margin: 0; margin-block-start: 9px; font-size: 16px; font-weight: 700; line-height: 1.4; color: rgb(var(--metin-baslik)); }
+/* «+ افزودن دوا»: yatay gradyan, açık ucu solda (fiziksel; açı yönden
+   bağımsız). Artı tarafında dolgu dar. */
+.ilac-bas__ekle {
+  min-height: 36px; block-size: 36px; padding-block: 3px 0; padding-inline: 14px 19px; gap: 8px;
+  border: 0; border-radius: 7px;
+  background: linear-gradient(90deg, rgb(var(--ekle-1)), rgb(var(--ekle-2)));
+  color: #fff; font-size: 14px; font-weight: 600;
+}
+.ilac-bas__ekle:hover:not(:disabled) { background: rgb(var(--ekle-2)); }
+.ilac-bas__ekle .simge { stroke-width: 3.2; }
 
-/* Alt düğmeler: üçü eşit genişlikte, kart genişliğine yayılı.
-   İçerik kadar dar dururlarken satırın bir ucunda geniş boşluk kalıyordu. */
-.recete-eylem { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--b-2); }
+/* Tablo: sabit sütunlar, başlık ortada, dikey ayraçlar yalnız başlıkta. */
+.kart--rx__ilac .tablo-kap { flex: 1; border: 1px solid rgb(var(--tablo-cizgi)); border-radius: 6px; }
+.tablo--ilac { table-layout: fixed; }
+.tablo--ilac col:nth-child(1) { inline-size: 10.4%; }
+.tablo--ilac col:nth-child(2) { inline-size: 29.5%; }
+.tablo--ilac col:nth-child(3) { inline-size: 13%; }
+.tablo--ilac col:nth-child(4) { inline-size: 21.6%; }
+.tablo--ilac col:nth-child(5) { inline-size: 12%; }
+.tablo--ilac col:nth-child(6) { inline-size: 13.5%; }
+.tablo--ilac th {
+  block-size: 37px; padding-block: 0; padding-inline: 4px; text-align: center;
+  background: rgb(var(--yuzey-2)); color: rgb(var(--tablo-bas-metin));
+  font-size: 11px; font-weight: 600; line-height: 1.25; letter-spacing: 0; white-space: normal;
+  border-block-end: 1px solid rgb(var(--tablo-ayrac));
+}
+.tablo--ilac th + th { border-inline-start: 1px solid rgb(var(--tablo-ayrac)); }
+/* Dolu satır (tasarımda yok): başlıkla aynı hizada, ad kalın ve başta. */
+.tablo--ilac td {
+  block-size: 40px; padding-block: 6px; padding-inline: 4px; text-align: center;
+  font-size: 13px; font-weight: 500; line-height: 1.35; color: rgb(var(--metin));
+  overflow-wrap: anywhere; border-block-end: 1px solid rgb(var(--tablo-ayrac));
+}
+.tablo--ilac td.ilac-ad { text-align: start; padding-inline-start: 8px; font-weight: 600; }
+.tablo--ilac tbody tr:hover { background: rgb(var(--vurgu) / .04); }
+.ilac-duzenle {
+  min-width: 28px; min-height: 28px; inline-size: 28px; block-size: 28px; padding: 0;
+  border-color: transparent; background: none; color: rgb(var(--simge-sessiz));
+}
+.ilac-duzenle:hover:not(:disabled) { background: rgb(var(--vurgu) / .08); border-color: transparent; color: rgb(var(--vurgu)); }
+/* Boş durum: ters çevrilmiş kapsül ve kısa yazı, ortada. Tasarımda
+   tablonun alt kenarı kartın kenarına yapışık; burada tablo kartın içinde
+   bitiyor ve boş durumun dolgusu o farkı yutuyor: kart 552 px, panel 886
+   px kalıyor. */
+.tablo--ilac .tablo__bos td {
+  block-size: auto; padding-block: 13px 23px;
+  font-size: 12.5px; font-weight: 400; line-height: 1.5; color: rgb(var(--metin-4));
+  border-block-end: none;
+}
+.tablo--ilac .tablo__bos .simge {
+  display: block; margin-inline: auto; margin-block-end: 13px;
+  color: rgb(var(--simge-sessiz) / .65); rotate: 180deg;
+}
+.tablo--ilac .tablo__bos:hover { background: none; }
+
+/* ---- Alt düğmeler: üç eşit düğme, kart genişliğine yayılı ----
+   Sınıflar önizleme kutusunun ayağında da kullanılıyor (aynı üç görünüş). */
+.recete-eylem {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  margin-block-start: 21px;
+}
 .recete-eylem .btn { inline-size: 100%; justify-content: center; }
-@media (max-width: 560px) { .recete-eylem { grid-template-columns: 1fr; } }
+.recete-btn { gap: 12px; border-radius: 8px; font-size: 15px; font-weight: 600; }
+.recete-eylem .recete-btn { block-size: 52px; min-height: 52px; }
+.recete-btn--sade { background: rgb(var(--btn-3-zemin)); border-color: rgb(var(--btn-3-cizgi)); color: rgb(var(--btn-3-metin)); }
+.recete-btn--ikincil { background: rgb(var(--btn-2-zemin)); border-color: rgb(var(--btn-2-cizgi)); color: rgb(var(--btn-2-metin)); }
+.recete-btn--sade:hover:not(:disabled) { background: rgb(var(--btn-3-zemin)); border-color: rgb(var(--vurgu) / .35); }
+.recete-btn--ikincil:hover:not(:disabled) { background: rgb(var(--btn-2-zemin)); border-color: rgb(var(--vurgu) / .45); }
+.recete-btn--sade .simge, .recete-btn--ikincil .simge { color: rgb(var(--baslik-simge)); }
+/* Asıl düğme düz renk (gradyansız), altta 2 px koyu kenar. */
+.recete-btn--asil {
+  background: rgb(var(--vurgu)); border-color: transparent; color: rgb(var(--vurgu-yz));
+  box-shadow: inset 0 -2px 0 rgb(var(--vurgu-2));
+}
+.recete-btn--asil:hover:not(:disabled) { background: rgb(var(--vurgu-2)); border-color: transparent; }
+
+/* Önizleme kutusu: kâğıt kutunun genişliğine ölçekli (kagidiOlcekle).
+   Genişlik ekrana göre veriliyor: örtü bir ızgara ve yüzdeli genişlik
+   içeriğe (794 px'lik kâğıda) göre çözülüyordu, telefonda kutu taşıyordu.
+   Kâğıdın ölçeklenmemiş kutusu tuvalden taşıyor; görünen ölçekli hâli
+   içeride kaldığı için taşan kısım kırpılıyor. */
+.modal--onizleme { inline-size: min(880px, calc(100vw - 2 * var(--b-4))); }
+.modal--onizleme .modal__govde { min-inline-size: 0; padding: var(--b-3); background: rgb(var(--bg)); }
+.modal--onizleme .kagit-tuval { padding-block: 0; overflow: hidden; }
+.modal--onizleme .modal__ayak .btn { flex: 1; min-height: 44px; }
+
+/* ---- Giriş hareketi: yalnız sayfaya gelişte (recete-duzen--giris) ----
+   Kartlar 40 ms arayla yükseliyor, kâğıt panelden sonra beliriyor. Sonlu;
+   hareket azaltılmışsa hiç yok (gecikmeli "backwards" dolgu da yok). */
+@media (prefers-reduced-motion: no-preference) {
+  .recete-duzen--giris :is(.kart--hasta, .kart--klinik, .kart--rx, .recete-eylem) {
+    animation: sira-gir var(--hiz-2) var(--egri) backwards;
+  }
+  .recete-duzen--giris .kart--klinik { animation-delay: 40ms; }
+  .recete-duzen--giris .kart--rx { animation-delay: 80ms; }
+  .recete-duzen--giris .recete-eylem { animation-delay: 120ms; }
+  .recete-duzen--giris .recete-onizleme { animation: onizleme-gir var(--hiz-2) var(--egri) 200ms backwards; }
+  .tablo--ilac .tablo__yeni { animation: sira-gir var(--hiz-2) var(--egri); }
+}
+@keyframes onizleme-gir { from { opacity: 0; } }
 
 /* ---- Dar ekran: sağdan sola ---- */
 @media (max-width: 860px) {
@@ -659,6 +772,33 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
   .izgara--hasta { grid-template-columns: 96px 1fr; gap: 12px 10px; }
   .izgara--hasta > .alan:first-child, .izgara--hasta > .alan:last-child { grid-column: 1 / -1; }
   .izgara--hasta :is(.input, .secim-alani, .tarih-secici) { block-size: 44px; min-block-size: 44px; }
+  /* ℞ satırları parmak boyunda: satır 48, "+" 32×32. */
+  .rx-satir { min-block-size: 48px; }
+  .rx-satir__arti { inline-size: 32px; block-size: 32px; }
+  /* İlaç tablosu altı sütuna sığmıyor: her satır iki satırlık blok.
+     Birinci satırda sıra ve ad, ikincide adet · kullanım · süre; düzenle
+     düğmesi iki satır boyunca sonda. Başlık satırı gerekmiyor. */
+  .tablo--ilac thead, .tablo--ilac colgroup { display: none; }
+  .tablo--ilac:has(tbody tr:not(.tablo__bos)), .tablo--ilac:has(tbody tr:not(.tablo__bos)) tbody { display: block; }
+  .tablo--ilac tbody tr:not(.tablo__bos) {
+    display: grid; grid-template-columns: 28px auto auto auto 1fr auto; align-items: center;
+    column-gap: 6px; padding-block: 8px; padding-inline: 10px 6px;
+    border-block-end: 1px solid rgb(var(--tablo-ayrac));
+  }
+  .tablo--ilac tbody tr:not(.tablo__bos):last-child { border-block-end: none; }
+  .tablo--ilac tbody tr:not(.tablo__bos) td { block-size: auto; padding: 0; border: none; text-align: start; }
+  .tablo--ilac tbody tr:not(.tablo__bos) td:nth-child(1) { grid-row: 1 / 3; font-weight: 600; }
+  .tablo--ilac tbody tr:not(.tablo__bos) td:nth-child(2) { grid-column: 2 / 6; padding: 0; }
+  .tablo--ilac tbody tr:not(.tablo__bos) td:nth-child(n+3):nth-child(-n+5) {
+    grid-row: 2; font-size: 12.5px; color: rgb(var(--metin-2)); white-space: nowrap;
+  }
+  .tablo--ilac tbody tr:not(.tablo__bos) td:nth-child(n+4):nth-child(-n+5)::before { content: '·'; margin-inline-end: 6px; }
+  .tablo--ilac tbody tr:not(.tablo__bos) td:nth-child(6) { grid-column: 6; grid-row: 1 / 3; }
+  /* Düğmeler: asıl düğme önde ve iki sütun boyunca, altında önizle ve temizle. */
+  .recete-eylem { grid-template-columns: 1fr 1fr; gap: 10px; margin-block-start: 14px; }
+  .recete-eylem .recete-btn { block-size: 48px; min-height: 48px; }
+  .recete-eylem .recete-btn--asil { grid-column: 1 / -1; order: -1; }
+  .recete-eylem .recete-btn--sade { order: 1; }
 }
 
 /* ---------- Şemsi tarih seçici ---------- */

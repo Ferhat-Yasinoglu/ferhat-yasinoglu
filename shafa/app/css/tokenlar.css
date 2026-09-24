@@ -133,6 +133,7 @@
   --yuzey-salt: 246 249 252; --salt-cizgi: 219 230 238;
   --rx-cizgi: 211 235 240; --rx-ayrac-bolum: 234 247 250;
   --rx-satir-cizgi: 205 223 232; --rx-ayrac: 218 230 238;
+  --rx-isaret: 4 48 90;        /* formdaki Rx çizimi: kâğıttaki lacivertle aynı (#04305a) */
   --arti-zemin: 251 252 253; --arti-cizgi: 238 247 250; --arti-renk: 12 74 110;
   --tablo-cizgi: 226 236 242; --tablo-ayrac: 235 243 247; --tablo-bas-metin: 27 46 72;
   --btn-3-zemin: 243 247 248; --btn-3-cizgi: 230 241 245; --btn-3-metin: 9 32 82;
@@ -196,6 +197,7 @@
   --yuzey-salt: 19 36 51; --salt-cizgi: 40 66 86;
   --rx-cizgi: 38 70 92; --rx-ayrac-bolum: 30 56 74;
   --rx-satir-cizgi: 45 78 100; --rx-ayrac: 45 78 100;
+  --rx-isaret: 150 214 232;
   --arti-zemin: 21 40 56; --arti-cizgi: 38 70 92; --arti-renk: 150 214 232;
   --tablo-cizgi: 38 70 92; --tablo-ayrac: 30 56 74; --tablo-bas-metin: 200 220 232;
   --btn-3-zemin: 21 40 56; --btn-3-cizgi: 38 70 92; --btn-3-metin: 226 238 245;

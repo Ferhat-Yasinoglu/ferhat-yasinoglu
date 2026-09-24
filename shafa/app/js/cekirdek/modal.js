@@ -2,7 +2,9 @@
 import { el, btn } from './dom.js';
 import { simge } from './simge.js';
 
-export function modal({ baslik, govde, dugmeler = [], kapatilabilir = true, genis = false }) {
+// `sinif`: kutuya ek sınıf; bir sayfanın kendi kutusunu (ör. reçete
+// önizlemesi) öbür kutuları etkilemeden biçimlemek için.
+export function modal({ baslik, govde, dugmeler = [], kapatilabilir = true, genis = false, sinif = '' }) {
   return new Promise((cozul) => {
     const kapat = (deger) => { document.removeEventListener('keydown', tus); ortu.remove(); cozul(deger); };
     const tus = (e) => {
@@ -15,7 +17,7 @@ export function modal({ baslik, govde, dugmeler = [], kapatilabilir = true, geni
         else if (!e.shiftKey && i === odak.length - 1) { e.preventDefault(); odak[0].focus(); }
       }
     };
-    const kutu = el('div', { class: `modal${genis ? ' modal--genis' : ''}`, role: 'dialog', 'aria-modal': 'true', 'aria-label': baslik },
+    const kutu = el('div', { class: `modal${genis ? ' modal--genis' : ''}${sinif ? ' ' + sinif : ''}`, role: 'dialog', 'aria-modal': 'true', 'aria-label': baslik },
       el('header', { class: 'modal__bas' },
         el('h2', {}, baslik),
         kapatilabilir ? btn(simge('kapat'), { class: 'btn btn--ikon btn--sade', 'aria-label': 'Kapat', onclick: () => kapat(null) }) : null),

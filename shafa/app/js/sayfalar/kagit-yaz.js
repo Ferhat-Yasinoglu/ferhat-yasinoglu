@@ -16,6 +16,7 @@
 import { el, svgEl, temizle, btn, btnS, girdi, alan, kart, bosDurum, uyariSeridi } from '../cekirdek/dom.js';
 import { tarihSecici } from '../cekirdek/tarih-secici.js';
 import { simge } from '../cekirdek/simge.js';
+import { rxIsareti } from '../cekirdek/cizimler.js';
 import { kagitCiz, kagidiYazdir, kagidiOlcekle } from '../kagit.js';
 import {
   OLCUMLER, KAN_GRUPLARI, bosRecete, receteDogrula, receteUyarilari, sikIlaclar,
@@ -203,6 +204,9 @@ export default {
     }
     let hatalar = {};
     const sikYazilanlar = sikIlaclar(gecmisReceteler, ilaclar);
+    // Az önce eklenen ilaç satırının sırası: bir sonraki çizimde o satır
+    // yükselerek giriyor, sonra sıfırlanıyor.
+    let yeniSatir = null;
 
     /* --- Kâğıttaki alan → ne açılacak --- */
     const eylemler = {
@@ -239,7 +243,7 @@ export default {
       laboratuvar: () => klinikSec('laboratuvar', klinik?.laboratuvar, klinik?.labGruplari, t('recete.lab_sec', 'Laboratuvar / görüntüleme seç')),
       'ilac-ekle': async () => {
         const y = await satirKutusu(ctx, ilaclar, hasta, null, sikYazilanlar);
-        if (y) recete.satirlar = [...recete.satirlar, y];
+        if (y) { recete.satirlar = [...recete.satirlar, y]; yeniSatir = recete.satirlar.length - 1; }
       },
       notlar: async () => {
         const n = await degerKutusu(ctx, { baslik: t('recete.not', 'Reçete notu'), deger: recete.notlar });
@@ -281,9 +285,14 @@ export default {
       if (d !== null) recete.olcumler = { ...recete.olcumler, [anahtar]: d };
     }
 
+    // Kayıt sürerken ikinci bir kayıt başlamasın: Ctrl+S basılı tutulunca ya
+    // da düğmeye art arda basılınca aynı reçete iki kez yazılıyordu.
+    let kaydediliyor = false;
     async function kaydet({ yazdir = false } = {}) {
+      if (kaydediliyor) return;
       hatalar = receteDogrula(recete);
       if (Object.keys(hatalar).length) { ciz(); hata(dogrulaMetni(Object.values(hatalar)[0])); return; }
+      kaydediliyor = true;
       try {
         const kayit = await receteKaydet(depo, recete);
         basari(t('recete.kaydedildi', 'Reçete kaydedildi'));
@@ -291,19 +300,47 @@ export default {
         // doğrulama kodu var, ikisi de kaydederken üretiliyor.
         if (yazdir) kagidiYazdir({ ayar, recete: kayit, hasta });
         git('/recete/' + kayit.id);
-      } catch (e) { hata(hataMetni(e)); }
+      } catch (e) { hata(hataMetni(e)); } finally { kaydediliyor = false; }
+    }
+
+    /* Önizleme: kâğıt kutunun genişliğine ölçeklenmiş. Tasarımın ortadaki
+       düğmesi bu; yalnız kaydetmek de buradan (ya da Ctrl+S). Telefonda
+       kâğıt formun altında kaldığı için onu görmenin en kısa yolu da bu.
+       Kâğıt dokunulamaz çiziliyor: kutudaki kopya yalnız bakmak için,
+       data-alan işaretleri sayfadaki asıl kâğıtta kalıyor. */
+    async function onizlemeAc() {
+      const kagit = kagitCiz({ ayar, recete, hasta });
+      const tuval = el('div', { class: 'kagit-tuval' }, kagit);
+      const secim = ctx.modal({
+        baslik: t('recete.onizleme', 'Basılacak kâğıt'), genis: true, sinif: 'modal--onizleme',
+        govde: tuval,
+        dugmeler: [
+          { metin: t('genel.kapat', 'Kapat'), sinif: 'recete-btn recete-btn--sade', deger: null },
+          { metin: t('recete.kaydet', 'Reçeteyi kaydet'), sinif: 'recete-btn recete-btn--ikincil', deger: 'kaydet' },
+          { metin: t('recete.kaydet_yazdir', 'Kaydet ve yazdır'), sinif: 'recete-btn recete-btn--asil', deger: 'yazdir' },
+        ],
+      });
+      const birak = kagidiOlcekle(tuval, kagit, tuval.parentElement);
+      const sonuc = await secim;
+      birak();
+      if (sonuc === 'kaydet') kaydet({});
+      else if (sonuc === 'yazdir') kaydet({ yazdir: true });
     }
 
     /** Kâğıdı yeniden çizer. Formun HER tuşunda sayfanın tamamını çizmek
      *  yazarken odağı düşürüyordu; yalnız önizleme tazeleniyor. */
     let onizlemeKabi = null;
     let tazeleZamani = 0;
+    // Önceki kâğıdın boyut gözcüsü: her tazelemede yenisi kuruluyor, eskisi
+    // bırakılmazsa aynı tuvale ayrılmış kâğıdın boyunu (0) yazıyordu.
+    let olcekBirak = null;
     function kagidiTazele() {
       if (!onizlemeKabi || !onizlemeKabi.isConnected) return;
       temizle(onizlemeKabi);
       const kagit = kagitCiz({ ayar, recete, hasta, duzenlenebilir: true });
       onizlemeKabi.appendChild(kagit);
-      olcekle(onizlemeKabi, kagit);
+      olcekBirak?.();
+      olcekBirak = olcekle(onizlemeKabi, kagit);
     }
     /** Yazarken her tuşta kâğıt yeniden çizilmesin: QR üretimi pahalı. */
     function tazeleGecikmeli() {
@@ -313,7 +350,7 @@ export default {
 
     const olcekle = (tuval, kagit) => kagidiOlcekle(tuval, kagit, kok);
 
-    /** Soldaki formun bir satırı: etiket, değer ve "+" düğmesi. */
+    /** Soldaki formun bir satırı: etiket, değer ve "+" kutusu. */
     function rxSatiri(etiket, deger, ipucu, eylem) {
       // Satırın tamamı bir kutu ve tıklanabilir: "+" küçük olduğu için
       // parmakla ıskalanıyordu; asıl hedef satırın kendisi.
@@ -324,7 +361,10 @@ export default {
         el('span', { class: doluMu(deger) ? 'rx-satir__deger' : 'rx-satir__deger sessiz' },
           doluMu(deger) ? deger : ipucu),
         el('span', { class: 'rx-satir__ayrac', 'aria-hidden': 'true' }),
-        btnS('arti', '', { class: 'btn btn--ikon rx-satir__arti', 'aria-label': etiket, onclick: ac }));
+        // "+" yalnız görünüş: kendi tıklaması yok, tık satıra kabarıyor.
+        // Önce ayrı bir düğmeydi ve satırla birlikte İKİ kez açıyordu (üst
+        // üste iki kutu); satırın içinde ikinci bir sekme durağı da oluyordu.
+        el('span', { class: 'rx-satir__arti', 'aria-hidden': 'true' }, simge('arti', { boy: 12 })));
     }
 
     /* Kart başlığı: okuma yönünde önce simge, sonra başlık. Simge kutusuz,
@@ -335,9 +375,15 @@ export default {
         el('h2', latin ? { dir: 'ltr' } : {}, baslik));
     }
 
+    // Kartların sırayla belirmesi yalnız sayfaya gelişte: ciz() her kutudan
+    // sonra sayfayı baştan kuruyor, hareket her dokunuşta tekrarlanmasın.
+    let ilkCizim = true;
+
     function ciz() {
       if (benimSira !== cizimSirasi) return;
       temizle(kok);
+      const giris = ilkCizim;
+      ilkCizim = false;
 
       /* ---- Panel başlığı: simge, başlık ve şablon düğmeleri ----
          Sayfa başlığı (sayfaBas) bu sayfada yok: başlık panelin kendi
@@ -454,8 +500,9 @@ export default {
       /* ℞ alanları ve ilaç listesi TEK kart: üstte satırlar, çizginin
          altında eklenen dawalar. */
       const rxUst = el('div', { class: 'kart--rx__ust' },
-        // Başlığın altında çizgi YOK: ℞ sembolü ile satırlar tek blok akıyor.
-        el('div', { class: 'kart__bas kart__bas--cizgisiz' }, el('h2', { class: 'rx-baslik', dir: 'ltr' }, '℞')),
+        // Başlık tasarımdaki "Rx" çizimi (kâğıttakiyle aynı yol); gizli «℞»
+        // metni ekran okuyucu ve arama için yanında duruyor.
+        el('h2', { class: 'rx-baslik' }, rxIsareti({ sinif: 'rx-baslik__isaret' })),
         rxSatiri(t('kagit.belirtiler', 'Belirtiler'), recete.belirtiler,
           t('recete.belirti_ipucu', 'Belirti seç ya da yaz…'), eylemler.belirtiler),
         rxSatiri(t('recete.tani', 'Tanı'), [recete.tani, recete.taniKodu].filter(doluMu).join(' · '),
@@ -468,14 +515,21 @@ export default {
           t('recete.not_ipucu', 'Özel not ya da öneri…'), eylemler.notlar));
 
       /* İlaç listesi: eklenenler tabloda, satır başına düzenle/sil. */
+      const yeni = yeniSatir;
+      yeniSatir = null;
       const ilacListesi = el('div', { class: 'kart--rx__ilac' },
         el('div', { class: 'ilac-bas' },
           el('h2', {}, t('recete.ilac_listesi', 'İlaç listesi')),
-          btnS('arti', t('recete.ilac_ekle', 'İlaç ekle'), { class: 'btn btn--birincil btn--kucuk', onclick: async () => { await eylemler['ilac-ekle'](); ciz(); } })),
+          btn(simge('arti', { boy: 18 }), {
+            class: 'btn ilac-bas__ekle', onclick: async () => { await eylemler['ilac-ekle'](); ciz(); },
+          }, t('recete.ilac_ekle', 'İlaç ekle'))),
         /* Tablo liste boşken de çiziliyor: başlık satırı hangi sütunlara ne
            gireceğini önceden söylüyor. Önce boş durum tabloyu tamamen
-           götürüyordu ve kart ilk ilaç eklenene kadar bomboş duruyordu. */
+           götürüyordu ve kart ilk ilaç eklenene kadar bomboş duruyordu.
+           Sütun genişlikleri sabit (colgroup, oranlar CSS'te): içerik
+           değiştikçe başlık ayraçları kaymasın. */
         el('div', { class: 'tablo-kap' }, el('table', { class: 'tablo tablo--ilac' },
+          el('colgroup', {}, ...Array.from({ length: 6 }, () => el('col'))),
           el('thead', {}, el('tr', {},
             el('th', {}, '#'),
             el('th', {}, t('nav.ilac', 'İlaç')),
@@ -484,31 +538,42 @@ export default {
             el('th', {}, t('recete.sure', 'Süre')),
             el('th', {}, t('genel.islem', 'İşlem')))),
           recete.satirlar.length
-            ? el('tbody', {}, ...recete.satirlar.map((s, i) => el('tr', {},
+            // Az önce eklenen satır bir kez yükselerek giriyor; sonraki
+            // çizimlerde sınıf yok, hareket tekrarlanmıyor.
+            ? el('tbody', {}, ...recete.satirlar.map((s, i) => el('tr', { class: i === yeni ? 'tablo__yeni' : null },
               el('td', {}, String(i + 1)),
-              el('td', {}, s.ilacAdi || '—'),
+              el('td', { class: 'ilac-ad' }, s.ilacAdi || '—'),
               el('td', {}, String(s.adet ?? '')),
               el('td', {}, s.kullanim || '—'),
               el('td', {}, s.sure || '—'),
-              el('td', {}, btnS('kalem', '', {
-                class: 'btn btn--ikon btn--kucuk', 'aria-label': t('genel.duzenle', 'Düzenle'),
+              el('td', {}, btn(simge('kalem', { boy: 16 }), {
+                class: 'btn btn--ikon ilac-duzenle', 'aria-label': t('genel.duzenle', 'Düzenle'),
                 onclick: async () => { await satirDuzenle(i); ciz(); },
               })))))
             : el('tbody', {}, el('tr', { class: 'tablo__bos' },
               el('td', { colspan: '6' },
-                simge('ilac', { boy: 20 }),
+                simge('kapsul', { boy: 37, dolu: true }),
                 el('span', {}, t('recete.ilac_bos_kisa', 'Henüz ilaç eklenmedi.'))))))));
 
-      /* Alt düğmeler */
-      const altDugmeler = el('div', { class: 'satir recete-eylem' },
-        btnS('cop', t('genel.temizle', 'Temizle'), { class: 'btn btn--sade', onclick: async () => {
-          if (await onayla(t('recete.temizle_soru', 'Girilen bilgiler silinsin mi?'), { evet: t('genel.temizle', 'Temizle') })) {
-            recete = bosRecete(ayar, bugun()); hasta = null; hatalar = {}; ciz();
-          }
-        } }),
-        btnS('kaydet', duzenleme ? t('recete.kaydet_degisiklik', 'Değişiklikleri kaydet') : t('recete.kaydet', 'Reçeteyi kaydet'),
-          { class: 'btn', onclick: () => kaydet({}) }),
-        btnS('yazdir', t('recete.kaydet_yazdir', 'Kaydet ve yazdır'), { class: 'btn btn--birincil', onclick: () => kaydet({ yazdir: true }) }));
+      /* Alt düğmeler: temizle · önizle · kaydet ve yazdır. Yalnız kaydetmek
+         önizleme kutusunun içinde ve Ctrl+S'te. Düzenlemede ortadaki düğme
+         doğrudan kaydediyor: yazım hatası düzelten hekim bir kutudan
+         geçmek zorunda kalmasın. */
+      const eylemDugmesi = (simgesi, metin, tur, onclick) =>
+        btn(simgesi, { class: 'btn recete-btn recete-btn--' + tur, onclick }, metin);
+      const altDugmeler = el('div', { class: 'recete-eylem' },
+        eylemDugmesi(simge('cop', { boy: 22, dolu: true }), t('genel.temizle', 'Temizle'), 'sade', async () => {
+          if (!await onayla(t('recete.temizle_soru', 'Girilen bilgiler silinsin mi?'), { evet: t('genel.temizle', 'Temizle') })) return;
+          // Düzenlemede temizlemek düzenlemeden de çıkarıyor: yalnız formu
+          // boşaltınca başlık «ویرایش نسخه» kalıyor, kaydet ise eski
+          // reçetenin yerine YENİ bir reçete yazıyordu.
+          if (duzenleme) { git('/recete/kagit'); return; }
+          recete = bosRecete(ayar, bugun()); hasta = null; hatalar = {}; ciz();
+        }),
+        duzenleme
+          ? eylemDugmesi(simge('kaydet', { boy: 20 }), t('recete.kaydet_degisiklik', 'Değişiklikleri kaydet'), 'ikincil', () => kaydet({}))
+          : eylemDugmesi(simge('goz', { boy: 23, dolu: true }), t('recete.onizle', 'Önizle'), 'ikincil', onizlemeAc),
+        eylemDugmesi(simge('yazdir', { boy: 20, dolu: true }), t('recete.kaydet_yazdir', 'Kaydet ve yazdır'), 'asil', () => kaydet({ yazdir: true })));
 
       const rxKarti = kart({ class: 'kart kart--rx' }, rxUst, ilacListesi);
 
@@ -527,7 +592,7 @@ export default {
           el('span', {}, t('recete.onizleme', 'Basılacak kâğıt'))),
         onizlemeKabi);
 
-      kok.appendChild(el('div', { class: 'recete-duzen' }, sol, sag));
+      kok.appendChild(el('div', { class: giris ? 'recete-duzen recete-duzen--giris' : 'recete-duzen' }, sol, sag));
       kagidiTazele();
 
       // Kâğıt da dokunulabilir kalıyor: soldan da sağdan da doldurulabilsin.
@@ -550,5 +615,22 @@ export default {
     }
 
     ciz();
+
+    /* Ctrl+S yalnız kaydediyor, yazdırmadan; tarayıcının "sayfayı kaydet"
+       penceresi açılmıyor. Tuşun yeri (KeyS) okunuyor: Farsça klavyede
+       aynı tuş «س» yazıyor. Açık bir kutu varken (ilaç, tanı…) kaydetmiyor:
+       yarım kalan giriş arkadan kaydedilmesin. Dinleyici yalnız bu sayfada;
+       yönlendirici sayfadan çıkarken aşağıdaki temizleyiciyi çağırıyor. */
+    const kisayol = (e) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || e.code !== 'KeyS') return;
+      e.preventDefault();
+      if (!document.querySelector('.ortu')) kaydet({});
+    };
+    document.addEventListener('keydown', kisayol);
+    return () => {
+      document.removeEventListener('keydown', kisayol);
+      clearTimeout(tazeleZamani);
+      olcekBirak?.();
+    };
   },
 };
