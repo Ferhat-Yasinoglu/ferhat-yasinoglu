@@ -230,6 +230,14 @@ button { font: inherit; }
 }
 
 /* ---------- Hakkımda ---------- */
+.hakkimda-banner {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--r-buyuk);
+  box-shadow: var(--golge-3);
+  margin-block-end: var(--b-7);
+}
 .hakkimda-ic { display: grid; grid-template-columns: 1fr 1fr; gap: var(--b-7); align-items: start; }
 .hakkimda p { color: rgb(var(--metin-2)); margin-block-end: var(--b-4); }
 .mini-baslik { font-size: var(--f-xs); text-transform: uppercase; letter-spacing: .06em; color: rgb(var(--metin-3)); margin-block-end: var(--b-2); }
