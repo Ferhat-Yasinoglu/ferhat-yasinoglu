@@ -13,7 +13,7 @@
 // şey buraya taşındı: alerji uyarıları, şablonlar, düzenleme ve ilaç satırı
 // kutusu — sonuncusu artık ilac-satir-arayuz.js'te, iki yerden de kullanılsın
 // diye değil, tek yerde dursun diye.
-import { el, temizle, btn, btnS, girdi, alan, kart, bosDurum, sayfaBas, uyariSeridi } from '../cekirdek/dom.js';
+import { el, svgEl, temizle, btn, btnS, girdi, alan, kart, bosDurum, uyariSeridi } from '../cekirdek/dom.js';
 import { tarihSecici } from '../cekirdek/tarih-secici.js';
 import { simge } from '../cekirdek/simge.js';
 import { kagitCiz, kagidiYazdir, kagidiOlcekle } from '../kagit.js';
@@ -103,12 +103,21 @@ async function semsiKutusu(ctx, deger) {
 
 const doluMu = (v) => String(v ?? '').trim() !== '';
 
-/* Formdaki ölçüm satırlarının simgeleri; kâğıttakiyle aynı sıra. */
+/* Formdaki ölçüm satırlarının simgeleri: dolgulu tablodan (simge.js
+   SIMGELER_DOLU), kâğıdın Clinical sütunuyla aynı yollar. */
 const OLCUM_SIMGE = {
-  // BP nabız çizgili kalp: düz kalp bir ölçümden çok "beğen" gibi duruyordu.
-  bp: 'nabiz-kalp', pr: 'ekg', rr: 'akciger', bw: 'tarti',
+  bp: 'tansiyon', pr: 'nabiz', rr: 'akciger', bw: 'tarti',
   temp: 'termometre', spo2: 'oksijen', ht: 'boy', kanGrubu: 'kan',
 };
+/* Simgelerin çizim kutusu (px). Kutu görünen çizimden büyük: her simgenin
+   viewBox'ındaki boşluk farklı, tasarımdaki mürekkep boyu (BP 33×30,
+   Height 17×42 …) ancak kutu ayrı ayrı verilince tutuyor. */
+const OLCUM_SIMGE_BOY = {
+  bp: 46, pr: 32, rr: 36, bw: 37, temp: 37, spo2: 36, ht: 42, kanGrubu: 36,
+};
+/* Tasarımda Temperature, SpO2 ve Height kutuları dar (63 px), öbürleri
+   geniş (105 px); uygulamanın sekizinci satırı Blood Gr. de dar. */
+const OLCUM_DAR = new Set(['temp', 'spo2', 'ht', 'kanGrubu']);
 
 /* Etiketler kâğıttakinin AYNISI olsun: hekim solda "T" görüp sağda
    "Temperature" okumasın. */
@@ -116,6 +125,32 @@ const OLCUM_ETIKET = {
   bp: 'BP', pr: 'PR', rr: 'RR', bw: 'BW',
   temp: 'Temperature', spo2: 'SpO2', ht: 'Height', kanGrubu: 'Blood Gr.',
 };
+
+/* Form başlığındaki dalga. Tasarımın yönünde çizildi: büyük dalga sağ
+   uçta, kâğıda bakan kenarda; masaüstünde çevrilmiyor (sayfa yerleşimi
+   orada soldan sağa). Telefonda başlık sağdan sola dizildiği için CSS onu
+   aynalıyor. Yollar tasarımdaki renk bantlarının izine oturtuldu, çizerin
+   eğrilerinin kopyası değil. Renkler CSS'te (sınıf başına bir token):
+   karanlık temada ayrı tonlar alabilsin. */
+const DALGA_YOLLARI = [
+  // 1: sol alttan yükselen açık şerit
+  'M0 62C90 50 200 28 262 0H330C270 30 170 62 110 76H0Z',
+  // 2–4: sol üst köşedeki üç kat (açıktan koyuya)
+  'M0 0H110C80 10 40 30 0 58Z',
+  'M0 0H52C35 12 18 26 0 39Z',
+  'M0 0H35C22 8 10 18 0 32Z',
+  // 5: sağdaki dalganın önündeki soluk gölge
+  'M381 0H521C530 8 545 15 562 22C585 30 615 34 683 40V50C640 46 600 42 575 34C550 26 530 20 505 16C460 10 420 4 381 0Z',
+  // 6: koyu dalga
+  'M513 0H683V36C668 34 650 31 630 31C605 31 585 28 565 23C545 17 528 9 513 0Z',
+  // 7: koyunun üstündeki açık başlık; koyudan yalnız alttaki şerit kalıyor
+  'M585 0H683V21C668 23 655 25 640 25C620 24 605 17 595 10C590 6 587 3 585 0Z',
+  // 8: sağ uçta, açık şeridin altındaki ince ikinci bant
+  'M600 45C625 44 645 42 660 36C670 32 677 30 683 28V38C672 40 660 44 640 46C625 47 612 47 600 45Z',
+];
+const baslikDalgasi = () => svgEl('svg', {
+  class: 'recete-panel__dalga', viewBox: '0 0 683 76', preserveAspectRatio: 'none', 'aria-hidden': 'true',
+}, DALGA_YOLLARI.map((d, i) => svgEl('path', { class: 'recete-panel__dalga-' + (i + 1), d })));
 
 // Gezinme sırası: kâğıt veriyi beklerken başka bir sayfaya geçilirse eski
 // çizim geri dönüp yeni sayfanın üstüne yazıyordu.
@@ -292,12 +327,11 @@ export default {
         btnS('arti', '', { class: 'btn btn--ikon rx-satir__arti', 'aria-label': etiket, onclick: ac }));
     }
 
-    /* Kart başlığı: okuma yönünde önce simge kutusu, sonra başlık.
-       Şeridin kendi zemini var — ince gri çizgi tek başına kartın gövdesinden
-       ayırmaya yetmiyordu. */
-    function kartBasligi(simgeAdi, baslik, { latin = false } = {}) {
+    /* Kart başlığı: okuma yönünde önce simge, sonra başlık. Simge kutusuz,
+       doğrudan şeridin üstünde (tasarımda karo yok). */
+    function kartBasligi(simgeAdi, boy, baslik, { latin = false } = {}) {
       return el('div', { class: 'kart__bas kart__bas--serit' },
-        el('span', { class: 'kart__bas-simge' }, simge(simgeAdi, { boy: 22 })),
+        el('span', { class: 'kart__bas-simge' }, simge(simgeAdi, { boy, dolu: true })),
         el('h2', latin ? { dir: 'ltr' } : {}, baslik));
     }
 
@@ -305,44 +339,60 @@ export default {
       if (benimSira !== cizimSirasi) return;
       temizle(kok);
 
-      /* ---- Sayfa başlığı ve şablon düğmeleri ---- */
+      /* ---- Panel başlığı: simge, başlık ve şablon düğmeleri ----
+         Sayfa başlığı (sayfaBas) bu sayfada yok: başlık panelin kendi
+         bandında ve h1 o — yönlendirici odağı ona veriyor. */
+      const sablonDugmesi = (ad, metin, onclick) => btn(simge(ad, { boy: 16 }), {
+        class: 'btn recete-panel__cam', title: metin, onclick,
+      }, el('span', { class: 'recete-panel__cam-metin' }, metin));
       const eylemDugmeleri = [];
       if (sablonlar.length) {
-        eylemDugmeleri.push(btnS('recete', t('sablon.doldur', 'Şablondan doldur'), { class: 'btn', onclick: async () => {
+        eylemDugmeleri.push(sablonDugmesi('recete', t('sablon.doldur', 'Şablondan doldur'), async () => {
           const s = await sablonSecKutusu(ctx, sablonlar);
           if (!s) return;
           Object.assign(recete, sablonuUygula(recete, s));
           basari(t('sablon.uygulandi', '"{ad}" uygulandı', { ad: s.ad }));
           ciz();
-        } }));
+        }));
       }
       if (recete.satirlar.length) {
-        eylemDugmeleri.push(btnS('kaydet', t('sablon.kaydet', 'Şablon olarak kaydet'), { class: 'btn', onclick: async () => {
+        eylemDugmeleri.push(sablonDugmesi('kaydet', t('sablon.kaydet', 'Şablon olarak kaydet'), async () => {
           if (await sablonKaydetKutusu(ctx, recete)) {
             sablonlar = await depo.listele('sablonlar', { sirala: 'ad' });
             ciz();
           }
-        } }));
+        }));
       }
-      kok.append(sayfaBas(
-        duzenleme ? `${t('recete.duzenle', 'Reçeteyi düzenle')} · ${duzenleme.receteNo || ''}` : t('recete.yeni', 'Yeni reçete'),
-        { alt: t('recete.yeni_alt', 'Hasta ve reçete bilgilerini gir.'), eylemler: eylemDugmeleri },
-      ));
+      const panelBasi = el('header', { class: 'recete-panel__bas' },
+        baslikDalgasi(),
+        el('span', { class: 'recete-panel__simge' }, simge('yeni-recete', { boy: 45, dolu: true })),
+        el('div', { class: 'recete-panel__metin' },
+          el('h1', {}, duzenleme
+            ? `${t('recete.duzenle', 'Reçeteyi düzenle')} · ${duzenleme.receteNo || ''}`
+            : t('recete.yeni', 'Yeni reçete')),
+          el('p', {}, t('recete.yeni_alt', 'Hasta ve reçete bilgilerini gir.'))),
+        eylemDugmeleri.length ? el('div', { class: 'recete-panel__eylem' }, ...eylemDugmeleri) : null);
 
       // Alerji ve çift etken madde uyarıları: kâğıda basılmıyorlar ama hekim
-      // kaydetmeden önce görmeli. Hiçbiri kaydetmeyi engellemiyor.
+      // kaydetmeden önce görmeli. Hiçbiri kaydetmeyi engellemiyor. Panelin
+      // içinde, başlıkla hasta kartı arasında duruyorlar; yalnız varken yer
+      // kaplıyorlar.
       const uyarilar = receteUyarilari(recete.satirlar, hasta, ilaclar, { alerjiBul: alerjiCakismasi });
       const serit = uyariSeridi(uyarilar.map((u) => ({ tur: u.tur, metin: uyariMetni(u) })));
-      if (serit) kok.appendChild(serit);
       const ilkHata = hatalar.hastaId || hatalar.satirlar || hatalar.tarih;
-      if (ilkHata) kok.appendChild(el('div', { class: 'uyari uyari--hata' }, el('span', {}, dogrulaMetni(ilkHata))));
+      const hataSeridi = ilkHata ? el('div', { class: 'uyari uyari--hata' }, el('span', {}, dogrulaMetni(ilkHata))) : null;
 
-      /* ---- Sol sütun: form ---- */
+      /* ---- Hasta kartı ---- */
       const yas = hasta ? hastaYasi(hasta) : null;
-      const hastaDugmesi = btn(hasta ? tamAd(hasta) : t('recete.hasta_sec', 'Hasta seç'), {
-        class: 'btn secim-alani' + (hatalar.hastaId ? ' input--hata' : ''),
+      // Hasta listeden seçiliyor ama tasarımdaki gibi bir giriş kutusu
+      // görünümünde: soluk kişi simgesi ve boşken yer tutucu renginde yazı.
+      const hastaDugmesi = btn(null, {
+        class: 'btn secim-alani secim-alani--girdi' + (hatalar.hastaId ? ' input--hata' : ''),
         onclick: async () => { await eylemler.hasta(); ciz(); },
-      });
+      },
+        simge('hasta', { boy: 23, dolu: true, sinif: 'girdi-simgesi' }),
+        el('span', { class: 'secim-alani__metin' + (hasta ? '' : ' sessiz') },
+          hasta ? tamAd(hasta) : t('recete.hasta_sec', 'Hasta seç')));
       // Kutu da takvim de ŞEMSİ. Depoda tarih yine miladi ISO — seçici onu
       // gizli alanda taşıyor. Önce miladi bir kutu vardı ve şemsi karşılığı
       // altında yazıyordu; hekim her seferinde kafadan çeviriyordu.
@@ -350,22 +400,31 @@ export default {
         name: 'tarih', value: recete.tarih,
         degisti: (iso) => { recete.tarih = iso; tazeleGecikmeli(); },
       });
+      // Numara ipucu görünür satır olarak kartı 36 px uzatıyordu; artık
+      // üzerine gelince (title) ve ekran okuyucuya (aria-describedby) söyleniyor.
+      const numaraIpucu = t('recete.numara_ipucu', 'Kaydedilince verilir');
+      const numaraGirdisi = el('span', { class: 'girdi-simgeli' },
+        simge('recete', { boy: 22, dolu: true, sinif: 'girdi-simgesi' }),
+        girdi({
+          value: recete.receteNo || '', readonly: true, title: numaraIpucu,
+          placeholder: t('recete.numara_yer', 'İsteğe bağlı'), 'aria-describedby': 'recete-no-ipucu',
+        }));
 
-      const hastaKarti = kart({},
-        kartBasligi('hasta', t('recete.hasta_bilgileri', 'Hasta bilgileri')),
-        // Dört alan TEK satırda, genişlikleri içeriğe göre: ad en geniş,
-        // yaş en dar. Eşit dört kutuda "Yaş" için ayrılan yer boşa gidiyordu.
-        el('div', { class: 'izgara izgara--hasta' },
+      const hastaKarti = kart({ class: 'kart kart--hasta' },
+        kartBasligi('hasta-grup', 28, t('recete.hasta_bilgileri', 'Hasta bilgileri')),
+        // Dört alan TEK satırda, genişlikleri tasarımdaki gibi: ad en geniş,
+        // yaş en dar.
+        el('div', { class: 'kart__govde' }, el('div', { class: 'izgara izgara--hasta' },
           alan(t('nav.hasta', 'Hasta'), hastaDugmesi, { gerekli: true }),
+          // Yaş hastadan türüyor, elle yazılmıyor: gölgeli salt okunur kutu.
+          // Yıldızı tasarımdaki gibi: hasta zorunlu olduğu için o da hep dolu.
           alan(t('hasta.yas_etiket', 'Yaş'), girdi({
-            value: yas !== null ? String(yas) : '', readonly: true,
+            class: 'input input--salt', value: yas !== null ? String(yas) : '', readonly: true,
             placeholder: t('hasta.yas_birim', 'yıl'), dir: 'ltr',
-          })),
+          }), { gerekli: true }),
           alan(t('genel.tarih', 'Tarih'), tarihGirdisi, { gerekli: true }),
-          alan(t('recete.numara', 'Reçete no'), girdi({
-            value: recete.receteNo || '', readonly: true,
-            placeholder: t('recete.numara_yer', 'İsteğe bağlı'),
-          }), { ipucu: t('recete.numara_ipucu', 'Kaydedilince verilir') })));
+          alan(t('recete.numara', 'Reçete no'), [numaraGirdisi,
+            el('span', { class: 'gizli-metin', id: 'recete-no-ipucu' }, numaraIpucu)]))));
 
       /* Clinical: ölçümler. Yazdıkça kâğıt tazeleniyor. */
       const olcumSatirlari = [...OLCUMLER, ['kanGrubu', 'Kan grubu', '', '']].map(([anahtar, , , birim]) => {
@@ -382,17 +441,19 @@ export default {
           else recete.olcumler = { ...recete.olcumler, [anahtar]: g.value };
           tazeleGecikmeli();
         };
-        return el('div', { class: 'olcum-satir' },
-          el('span', { class: 'olcum-satir__simge' }, simge(OLCUM_SIMGE[anahtar] || 'kalp', { boy: 21 })),
+        return el('div', { class: 'olcum-satir' + (OLCUM_DAR.has(anahtar) ? ' olcum-satir--dar' : '') },
+          el('span', { class: 'olcum-satir__simge' },
+            simge(OLCUM_SIMGE[anahtar], { boy: OLCUM_SIMGE_BOY[anahtar], dolu: true })),
           el('span', { class: 'olcum-satir__ad', dir: 'ltr' }, OLCUM_ETIKET[anahtar] || anahtar),
           g);
       });
-      const klinikKarti = kart({},
-        kartBasligi('stetoskop', t('kagit.klinik', 'Clinical'), { latin: true }),
+      const klinikKarti = kart({ class: 'kart kart--klinik' },
+        kartBasligi('stetoskop', 45, t('kagit.klinik', 'Clinical'), { latin: true }),
         el('div', { class: 'olcum-liste' }, ...olcumSatirlari));
 
-      /* ℞ alanları: her biri kendi kutusunu açıyor. */
-      const rxKarti = kart({ class: 'kart kart--rx' },
+      /* ℞ alanları ve ilaç listesi TEK kart: üstte satırlar, çizginin
+         altında eklenen dawalar. */
+      const rxUst = el('div', { class: 'kart--rx__ust' },
         // Başlığın altında çizgi YOK: ℞ sembolü ile satırlar tek blok akıyor.
         el('div', { class: 'kart__bas kart__bas--cizgisiz' }, el('h2', { class: 'rx-baslik', dir: 'ltr' }, '℞')),
         rxSatiri(t('kagit.belirtiler', 'Belirtiler'), recete.belirtiler,
@@ -407,8 +468,8 @@ export default {
           t('recete.not_ipucu', 'Özel not ya da öneri…'), eylemler.notlar));
 
       /* İlaç listesi: eklenenler tabloda, satır başına düzenle/sil. */
-      const ilacKarti = kart({},
-        el('div', { class: 'kart__bas' },
+      const ilacListesi = el('div', { class: 'kart--rx__ilac' },
+        el('div', { class: 'ilac-bas' },
           el('h2', {}, t('recete.ilac_listesi', 'İlaç listesi')),
           btnS('arti', t('recete.ilac_ekle', 'İlaç ekle'), { class: 'btn btn--birincil btn--kucuk', onclick: async () => { await eylemler['ilac-ekle'](); ciz(); } })),
         /* Tablo liste boşken de çiziliyor: başlık satırı hangi sütunlara ne
@@ -449,14 +510,20 @@ export default {
           { class: 'btn', onclick: () => kaydet({}) }),
         btnS('yazdir', t('recete.kaydet_yazdir', 'Kaydet ve yazdır'), { class: 'btn btn--birincil', onclick: () => kaydet({ yazdir: true }) }));
 
-      const sol = el('div', { class: 'recete-form' }, hastaKarti,
-        el('div', { class: 'recete-ikili' }, klinikKarti, rxKarti),
-        ilacKarti, altDugmeler);
+      const rxKarti = kart({ class: 'kart kart--rx' }, rxUst, ilacListesi);
 
-      /* ---- Sağ sütun: canlı kâğıt ---- */
+      /* Formun tamamı TEK panel: başlık bandı, uyarılar, hasta kartı,
+         Clinical ile ℞ yan yana, alt düğmeler. */
+      const sol = el('div', { class: 'recete-form recete-panel' }, panelBasi, serit, hataSeridi, hastaKarti,
+        el('div', { class: 'recete-ikili' }, klinikKarti, rxKarti),
+        altDugmeler);
+
+      /* ---- Sağ sütun: canlı kâğıt ----
+         Başlık («basılacak kâğıt») geniş ekranda görünmüyor, kâğıt panelle
+         aynı hizadan başlıyor; bölgenin adı olarak ekran okuyucuda kalıyor. */
       onizlemeKabi = el('div', { class: 'kagit-tuval' });
-      const sag = el('div', { class: 'recete-onizleme' },
-        el('div', { class: 'recete-onizleme__bas' }, simge('yazdir', { boy: 16 }),
+      const sag = el('section', { class: 'recete-onizleme', 'aria-labelledby': 'recete-onizleme-bas' },
+        el('div', { class: 'recete-onizleme__bas', id: 'recete-onizleme-bas' }, simge('yazdir', { boy: 16 }),
           el('span', {}, t('recete.onizleme', 'Basılacak kâğıt'))),
         onizlemeKabi);
 

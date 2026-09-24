@@ -69,7 +69,8 @@ export function tarihSecici({ value = '', name = '', degisti = () => {}, id = ''
     // tanıtılıyordu. Etiketsiz kullanılacak yerlerde çağıran etiket verir.
     'aria-label': etiket || undefined,
   });
-  const dugme = btn(simge('takvim', { boy: 17 }), {
+  // Dolgulu takvim: üst çubuktaki tarih kutusuyla aynı çizim.
+  const dugme = btn(simge('takvim', { boy: 18, dolu: true }), {
     class: 'tarih-secici__dugme',
     'aria-label': t('tarih.takvim_ac', 'Takvimi aç'),
     'aria-expanded': 'false',

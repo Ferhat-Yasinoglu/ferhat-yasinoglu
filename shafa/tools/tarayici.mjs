@@ -1102,6 +1102,50 @@ if (telSerit.serit || telSerit.zil || !cekmeceSag) {
 await sayfa.setViewportSize({ width: 1280, height: 900 });
 ok(`masaüstü kabuğu: kenar çubuğu x=0 tam boy (${kabuk.kenarH}px), üst çubuk x=${kabuk.ustX}, alt şerit ${kabuk.surum}; zil (${zilOnce.bant} uyarı) açılıp kapanıyor; telefonda şerit yok, çekmece sağdan`);
 
+// --- Reçete formu tasarımdaki yerde (1536×1024): form paneli solda 683 px,
+// kâğıt sağda 609 px; panelin içi de tasarımdaki gibi soldan sağa (Clinical
+// ℞'nin solunda, ad alanı en solda). Bunu yalnız uygulama.css'in masaüstü
+// bloğu veriyor; telefonda aynı form sağdan sola kalmalı.
+await sayfa.setViewportSize({ width: 1536, height: 1024 });
+await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.recete-duzen .kagit');
+const formYeri = () => sayfa.evaluate(() => {
+  const k = (e) => { const r = (typeof e === 'string' ? document.querySelector(e) : e).getBoundingClientRect(); return { x: Math.round(r.left), sag: Math.round(r.right), y: Math.round(r.top), w: Math.round(r.width) }; };
+  const alanlar = [...document.querySelectorAll('.izgara--hasta > .alan')];
+  const onizleme = document.querySelector('.recete-onizleme');
+  const baslik = document.querySelector('.recete-onizleme__bas');
+  const tarih = document.querySelector('.recete-form .tarih-secici');
+  return {
+    yon: getComputedStyle(document.querySelector('.recete-form')).direction,
+    form: k('.recete-form'), kagit: k(onizleme), yapiskan: getComputedStyle(onizleme).top,
+    sayfaBasi: document.querySelectorAll('#sayfa .sayfa-bas').length,
+    h1: !!document.querySelector('.recete-panel__bas h1'),
+    onizlemeAdi: document.getElementById(onizleme.getAttribute('aria-labelledby') || '-')?.textContent.trim(),
+    onizlemeGorunur: baslik.getBoundingClientRect().width > 1,
+    klinik: k('.kart--klinik'), rx: k('.kart--rx'), ad: k(alanlar[0]), no: k(alanlar[3]),
+    takvimSolda: k(tarih.querySelector('.tarih-secici__dugme')).sag <= k(tarih.querySelector('input[type=text]')).x,
+    bp: k('input[name=olcum_bp]'), ates: k('input[name=olcum_temp]'), kan: k('input[name=olcum_kanGrubu]'),
+  };
+});
+const fm = await formYeri();
+if (fm.yon !== 'ltr' || Math.abs(fm.form.x - 203) > 1 || Math.abs(fm.form.w - 683) > 1 || fm.form.y !== 78
+    || Math.abs(fm.kagit.x - 902) > 1 || Math.abs(fm.kagit.w - 609) > 1 || fm.kagit.y !== 78 || fm.yapiskan !== '78px'
+    || fm.sayfaBasi !== 0 || !fm.h1 || fm.onizlemeAdi !== T('recete.onizleme') || fm.onizlemeGorunur
+    || fm.klinik.w !== 225 || fm.klinik.sag > fm.rx.x || fm.ad.sag > fm.no.x || !fm.takvimSolda
+    || fm.bp.w !== 105 || fm.ates.w !== 63 || fm.kan.w !== 63 || fm.bp.sag !== fm.ates.sag) {
+  throw new Error('reçete formu tasarımdaki yerde değil: ' + JSON.stringify(fm));
+}
+// Telefonda form sağdan sola: ad alanı sağda tam satır, ölçüm kutuları solda hizalı.
+await sayfa.setViewportSize({ width: 390, height: 844 });
+await sayfa.waitForTimeout(100);
+const fmTel = await formYeri();
+if (fmTel.yon !== 'rtl' || fmTel.ad.sag < fmTel.no.sag - 1 || fmTel.bp.x !== fmTel.ates.x || fmTel.bp.x !== fmTel.kan.x
+    || !fmTel.onizlemeGorunur) {
+  throw new Error('telefonda reçete formu bozuk: ' + JSON.stringify(fmTel));
+}
+await sayfa.setViewportSize({ width: 1280, height: 900 });
+ok(`reçete formu tasarımdaki yerde: panel x=${fm.form.x} ${fm.form.w}px, kâğıt x=${fm.kagit.x} ${fm.kagit.w}px (yapışkan ${fm.yapiskan}); başlık panelde; Clinical ${fm.klinik.w}px ℞'nin solunda; ölçüm kutuları ${fm.bp.w}/${fm.ates.w}; telefonda sağdan sola`);
+
 await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
 await sayfa.waitForSelector('.recete-duzen .kagit');
 // Clinical ve ℞ kartları: birimler İngilizce, ℞ satırları kendi kutusunda.

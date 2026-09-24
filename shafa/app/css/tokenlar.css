@@ -139,6 +139,10 @@
   --btn-2-zemin: 238 245 249; --btn-2-cizgi: 211 228 236; --btn-2-metin: 8 25 54;
   --ekle-1: 17 109 142; --ekle-2: 2 87 123;   /* ilaç ekle düğmesinin gradyanı */
   --baslik-simge: 4 49 72;
+  /* Form başlığındaki dalganın katmanları (çizim sırasıyla, 2–7; 1. katman
+     bandın kendi açık tonu, 8. katman 3'ün rengi). */
+  --dalga-2: 168 224 235; --dalga-3: 85 192 208; --dalga-4: 19 158 181;
+  --dalga-5: 179 229 238; --dalga-6: 4 137 163; --dalga-7: 82 192 204;
   --ust-cizgi: 225 233 240;
   --alt-serit-metin: 115 134 155;
 
@@ -197,6 +201,8 @@
   --btn-3-zemin: 21 40 56; --btn-3-cizgi: 38 70 92; --btn-3-metin: 226 238 245;
   --btn-2-zemin: 29 53 72; --btn-2-cizgi: 45 78 100; --btn-2-metin: 226 238 245;
   --baslik-simge: 150 214 232;
+  --dalga-2: 20 58 74; --dalga-3: 18 82 100; --dalga-4: 14 104 124;
+  --dalga-5: 22 70 88; --dalga-6: 10 92 114; --dalga-7: 20 116 136;
   --ust-cizgi: 30 50 66;
   --alt-serit-metin: 140 162 180;
 

@@ -433,5 +433,33 @@ a { color: rgb(var(--vurgu)); }
   /* Tasarımda sayfa tam genişlikte; öbür sayfalardaki 1240 px sınırı
      okunurluk için, burada iki panel yan yana ekranı dolduruyor. */
   .icerik:has(.recete-duzen) { max-inline-size: none; }
+  .recete-duzen { direction: ltr; }
+  /* Kâğıt kendi yönünü koruyor: antet ve satırlar sağdan sola. */
+  .recete-duzen > .recete-onizleme { direction: rtl; }
+
+  /* ---- 3. Form: yerleşim soldan sağa, yazı yaprakları sağdan sola ----
+     Tasarımdaki gibi: başlık simgesi solda, ad alanı en solda, Clinical ℞'nin
+     solunda, asıl düğme kâğıdın yanında. Formda serbest Farsça yazılan kutu
+     yok (hasta listeden seçiliyor, ölçümler soldan sağa), bu yüzden yazma
+     rahatlığından bir şey gitmiyor. Soldan sağa yön .recete-duzen'den
+     miras geliyor. */
+  /* Başlık ve alt yazı simgeye yaslı (sağdan sola blokta bitiş = sol). */
+  .recete-form .recete-panel__metin > * { direction: rtl; text-align: end; }
+  /* «* etiket» kutunun sol kenarında, yıldız solda. */
+  .recete-form .alan__etiket { direction: rtl; align-self: flex-start; }
+  /* Kenar payı taşıyan yazılar: yalnız harf sırası sağdan sola. */
+  .recete-form :is(.rx-satir__deger, .secim-alani__metin) { unicode-bidi: plaintext; }
+  .recete-form :is(.uyarilar, .uyari) { direction: rtl; }
+  /* Takvim açılır kutusu alanın hesaplanan yönüne bakıyor; düğme sağdan
+     sola kapta kendiliğinden solda (tasarımdaki gibi). */
+  .recete-form .tarih-secici { direction: rtl; }
+  /* Tablo tasarımda sağdan sola: # sütunu sağda. */
+  .recete-form .tablo-kap { direction: rtl; }
+  /* «+ افزودن دوا»: tasarımda artı yazının sağında. */
+  .recete-form .ilac-bas .btn { direction: rtl; }
+  /* Ölçüm etiketi ve kutusu dir="ltr": kenar payları soldan sağa satırda
+     başlangıç tarafına geçiyor (telefondaki bitiş kuralının karşılığı). */
+  .recete-form .olcum-satir__ad { margin-inline: 11px 0; }
+  .recete-form .olcum-satir .input { margin-inline: auto 0; }
 }
 @keyframes zil-kutu-gir { from { opacity: 0; transform: translateY(-4px); } }
