@@ -3,7 +3,7 @@
 // burada kurucuların bunları gerçekten ürettiği kanıtlanıyor.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { sahteDomKur } from './sahte-dom.js';
-import { rxIsareti, hatCizimi, HAT_METNI } from '../app/js/cekirdek/cizimler.js';
+import { rxIsareti, hatCizimi, HAT_METNI, vecizeCizimi, VECIZE_METNI } from '../app/js/cekirdek/cizimler.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 let kaldir;
@@ -58,5 +58,47 @@ describe('hatCizimi', () => {
       expect(y.getAttribute('fill')).toBe('currentColor');
       expect(y.getAttribute('d')).toMatch(YOL_DESENI);
     }
+  });
+});
+
+/** Yolun kaba sınır kutusu: «x y» çiftleri (H/V tek sayıları atlanıyor, kutu için yeter). */
+const kutu = (d) => {
+  const p = [...d.matchAll(/(-?\d+)[ ,](-?\d+)/g)].map((m) => [Number(m[1]), Number(m[2])]);
+  const xs = p.map((q) => q[0]), ys = p.map((q) => q[1]);
+  return { x0: Math.min(...xs), x1: Math.max(...xs), en: Math.max(...xs) - Math.min(...xs), boy: Math.max(...ys) - Math.min(...ys) };
+};
+
+describe('vecizeCizimi', () => {
+  it('metni <title> olarak taşıyan, glif başına bir tamsayı yolu olan bir SVG kurar', () => {
+    const svg = vecizeCizimi({ sinif: 'deneme' });
+    expect(svg.namespaceURI).toBe(SVG);
+    expect(svg.className).toBe('vecize-cizim deneme');
+    expect(svg.getAttribute('role')).toBe('img');
+    const [baslik, ...yollar] = svg.children;
+    expect(baslik.tagName).toBe('title');
+    expect(baslik.textContent).toBe('طبیب حقیقی خداوند (ج) است');
+    expect(VECIZE_METNI).toBe(baslik.textContent);
+    expect(yollar.length).toBeGreaterThan(20);
+    for (const y of yollar) {
+      expect(y.tagName).toBe('path');
+      expect(y.getAttribute('fill')).toBe('currentColor');
+      expect(y.getAttribute('d')).toMatch(YOL_DESENI);
+      // Yuvarlanmış koordinatlar: ondalık yok (yol verisi yarı yarıya kısa).
+      expect(y.getAttribute('d')).not.toMatch(/\d\.\d/);
+    }
+  });
+
+  // Yazı tipinin Arapça alt kümesinde parantez yok: oradan dizilince «( )»
+  // boş kutu (.notdef) olarak çıkıyordu. Parantez uzun ve dar bir glif;
+  // tam iki tane olmalı ve «ج»yi iki yandan sarmalı.
+  it('parantezler gerçek glif: iki uzun dar yol «ج»nin iki yanında', () => {
+    const kutular = vecizeCizimi().children.slice(1).map((y) => kutu(y.getAttribute('d')));
+    const parantez = kutular.filter((k) => k.boy > 850 && k.boy / k.en > 3);
+    expect(parantez).toHaveLength(2);
+    const [sol, sag] = parantez.sort((a, b) => a.x0 - b.x0);
+    // Arada yalnız «ج»: gövdesi ve noktası.
+    const icerde = kutular.filter((k) => k.x0 > sol.x1 && k.x1 < sag.x0);
+    expect(icerde).toHaveLength(2);
+    expect(Math.max(...icerde.map((k) => k.boy))).toBeGreaterThan(800);
   });
 });

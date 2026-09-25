@@ -66,14 +66,14 @@ const YEREL_SECIMLER = ['ekle', 'temizle'];
 
 /**
  * Ayar kaydı hekime ait bir şey taşıyor mu: kendi yazdığı antet (örnek
- * antetten farklı bir değer), Clinical görseli ya da reçete doğrulama
+ * antetten farklı bir değer), Clinical ya da imza görseli, reçete doğrulama
  * anahtarı. Tema, kâğıt boyu gibi tercihler kişisel değil, sayılmaz.
  * Doğrulama anahtarı tek başına da yeter: başka bir hesaba giderse o hesabın
  * bütün cihazları bu cihazın bastığı reçeteleri "geçerli" sayar.
  */
 export function kisiselAyarMi(ayar) {
   if (!ayar || ayar.silindi) return false;
-  if (ayar.dogrulamaAnahtari || ayar.eskiAnahtarlar?.length || ayar.saglikGorseli) return true;
+  if (ayar.dogrulamaAnahtari || ayar.eskiAnahtarlar?.length || ayar.saglikGorseli || ayar.imzaGorseli) return true;
   return ANTET_ALANLARI.some(([a]) => {
     const deger = String(ayar[a] ?? '').trim();
     return deger !== '' && deger !== String(ORNEK_ANTET[a] ?? '').trim();

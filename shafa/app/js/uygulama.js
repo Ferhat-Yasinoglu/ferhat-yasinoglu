@@ -5,6 +5,7 @@ import { yerelDepoAc } from './depo/idb.js';
 import { hatirlatmaGerekli, yedekOlustur, indir } from './depo/yedek.js';
 import { hazirListeyiTazele } from './depo/hazir-ilaclar.js';
 import { eskiSenkronAyarlariniSil } from './depo/senkron.js';
+import { kagitStiliGecisi } from './paylasilan/antet.js';
 import { HesapServisi } from './senkron/hesap-servisi.js';
 import { senkronOzeti, hesapBandi } from './hesap-arayuz.js';
 import { kur, kurulabilirMi, kuruluMu, elleKurulur, dinle as kurulumuDinle } from './cekirdek/kurulum.js';
@@ -332,6 +333,14 @@ async function baslat() {
   // Google döneminin ayarları (kasa anahtarı dahil) bir kez silinir. Google
   // yedeği kalktı; bu değerlerin cihazda durmasının bir getirisi yok.
   await eskiSenkronAyarlariniSil(depo);
+  // Lacivert kâğıt varsayılan oldu: eski sürümün sessizce kaydettiği
+  // 'modern' bir kez laciverte dönüyor (paylasilan/antet.js). Doğrudan
+  // yazılıyor, değişiklik sayılmıyor: hekimin yaptığı bir şey değil, yedek
+  // hatırlatması ve eşitleme için boşuna bir değişiklik olurdu. Ayar kaydı
+  // hiç yoksa yazılacak bir şey de yok: boş stil zaten lacivert çiziliyor.
+  const kayitliAyar = await depo._oku('ayarlar', 'genel');
+  const stilGecisi = kayitliAyar && kagitStiliGecisi(kayitliAyar);
+  if (stilGecisi) await depo._yaz('ayarlar', { ...kayitliAyar, ...stilGecisi });
   const ayar = await depo.ayarlar();
 
   // Hazır ilaç listesi eski bir sürümden yüklenmişse adları bir kez yenile:

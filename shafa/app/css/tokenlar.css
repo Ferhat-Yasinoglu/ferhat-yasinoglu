@@ -33,6 +33,22 @@
   unicode-range: U+0020-007E, U+00A0, U+2019;
 }
 
+/* Cinzel 500–700: yalnız lacivert reçete kâğıdında (Latin hekim adı, Latin
+   ihtisas satırı, mühür halkasının yazısı) — lisans yazi/OFL-Cinzel.txt.
+   Dosya Temel Latin'e ve iki kalınlık arasına indirildi (15,6 KB).
+   Küçük harfleri zaten küçük büyük harf: «Dr. Nemuna Ahmadi» tasarımdaki
+   gibi uzun baş harfli büyük harflerle çıkıyor, CSS'te büyütülmüyor.
+   font-display: block — kâğıt yedek yazıyla basılmasın; yazdırmadan önce
+   kagidiYazdir yüzün inmesini ayrıca bekliyor. */
+@font-face {
+  font-family: 'Cinzel';
+  src: url('../yazi/cinzel-kagit.woff2') format('woff2');
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+0020-007E, U+00A0, U+00B7, U+2013-2014, U+2018-2019, U+201C-201D;
+}
+
 :root {
   /* Renkler reçete sayfası tasarımından ölçüldü (hedef görüntüden piksel
      örneği). Zemin mavi-gri, vurgu petrol (#015277). Eski yeşil-turkuaz

@@ -18,6 +18,8 @@ const GEREKEN = [
   'tansiyon', 'nabiz', 'akciger', 'tarti', 'termometre', 'oksijen', 'boy', 'kan',
   'kapsul', 'cop', 'goz', 'yazdir', 'kalp',
   'kum-saati', 'belge', 'arti-kalin', 'mide', 'bobrek', 'sise', 'romatizma', 'bas-agrisi', 'konum', 'telefon',
+  // Lacivert kâğıdın antedindeki «Professional Experience:» maddesi.
+  'canta',
 ];
 
 const ozellikler = (svg) => Object.fromEntries(svg.attributes);
@@ -30,6 +32,10 @@ describe('simge — çizgi tablosu', () => {
       'stroke-width': '1.8', 'aria-hidden': 'true', class: 'simge x',
     });
     expect(svg.children.map((c) => c.tagName)).toEqual(['rect', 'path']);
+  });
+  // Önizleme panelinin başlık düğmeleri (büyük önizleme, ذخیره PDF).
+  it('önizleme başlığının çizgi simgeleri var', () => {
+    for (const ad of ['pdf', 'genislet']) expect(simgeVar(ad)).toBe(true);
   });
   it('simgeVar yalnız çizgi tablosuna bakar', () => {
     expect(simgeVar('takvim')).toBe(true);

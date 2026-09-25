@@ -26,6 +26,7 @@ import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { gercekVeriBul } from './gercek-veri.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -142,6 +143,10 @@ async function bitir(sayfa) {
   await sayfa.waitForTimeout(900);
   const kalan = await sayfa.$$eval('.ortu, .tarih-kutu, .bildirim', (a) => a.map((x) => x.className));
   if (kalan.length) throw new Error('görüntüye kutu ya da bildirim girecekti: ' + kalan.join(', '));
+  // Görüntünün kendisi taranamıyor (JPEG); içindeki yazı çekimden ÖNCE
+  // taranıyor: tasarım görselinin gerçek görünen verisi tanıtıma girmesin.
+  const gercek = gercekVeriBul(await sayfa.evaluate(() => document.body.textContent));
+  if (gercek.length) throw new Error(`görüntüye gerçek görünen veri girecekti (${gercek.length} ifade)`);
 }
 
 /** Reçete sayfasını hekimin yaptığı gibi doldurur: hasta, ölçümler, tanı ve
@@ -169,7 +174,7 @@ async function receteDoldur(sayfa) {
     await sayfa.click(`.modal button:has-text("${T('genel.ekle')}")`);
     await sayfa.waitForSelector('.ortu', { state: 'detached' });
   }
-  await sayfa.waitForSelector('.kagit__ilaclar li >> nth=1');
+  await sayfa.waitForSelector('.kagit-tuval [data-rol=ilac] >> nth=1');
 }
 
 /** Kâğıdı basıldığı gibi kurar: örnek hastaya kayıtlı bir reçete (numarası
@@ -235,7 +240,7 @@ const raporlar = [];
   // Kesim içeriye yuvarlanıyor: öğenin kutusu küsuratlı ve öğe görüntüsü
   // dışarı yuvarlıyordu; sağda ve altta 2 piksellik sayfa zemini ile
   // kenarlıktan taşan renk izleri kalıyordu.
-  const k = await sayfa.locator('.gorsel-tuval .kagit').boundingBox();
+  const k = await sayfa.locator('.gorsel-tuval [data-rol=sayfa] >> nth=0').boundingBox();
   const x = Math.ceil(k.x), y = Math.ceil(k.y);
   await sayfa.screenshot({
     path: CIKTI + 'recete.jpg', type: 'jpeg', quality: 88,

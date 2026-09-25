@@ -162,7 +162,9 @@ export default {
           el('td', { class: 'sayi' }, String(i + 1)),
           el('td', {},
             el('div', { class: 'liste__baslik' }, el('bdi', {}, satirAdi(s))),
-            el('div', { class: 'liste__alt' }, [s.kullanim, s.sure].filter(Boolean).join(' \u00b7 ') || '\u2014'),
+            // Kâğıttaki ikinci satırın sırası: kullanım, yemek zamanı, süre, yol.
+            // Zaman kâğıda basılıp burada görünmezse hekim kaydında basılandan azını okur.
+            el('div', { class: 'liste__alt' }, [s.kullanim, s.zaman, s.sure, s.yol].filter(Boolean).join(' \u00b7 ') || '\u2014'),
             s.not ? el('div', { class: 'liste__alt' }, s.not) : null,
             ...satirUyarilari.map((u) => el('div', { class: 'alan__hata', style: u.tur === 'uyari' ? { color: 'rgb(var(--sari))' } : null }, uyariMetni(u)))),
           el('td', { class: 'sayi' }, String(s.adet))));

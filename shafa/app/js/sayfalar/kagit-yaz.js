@@ -40,6 +40,10 @@ import { t, secenekAdi } from '../i18n.js';
 import { dogrulaMetni, hataMetni, uyariMetni } from '../hatalar.js';
 import { enterleOnayla, kutuyuOnayla } from '../cekirdek/modal.js';
 
+/* «ذخیره PDF» ipucu oturumda bir kez: tarayıcı PDF hedefini kendisi
+   seçtiremiyor, hekime bir kez söylemek yetiyor. */
+let pdfIpucuGosterildi = false;
+
 /** Basit liste kutusu: ara, seç. Hasta ve kan grubu için. */
 async function listeKutusu(ctx, { baslik, kayitlar, ara, etiket, alt }) {
   const { modal } = ctx;
@@ -407,7 +411,7 @@ export default {
     // Kayıt sürerken ikinci bir kayıt başlamasın: Ctrl+S basılı tutulunca ya
     // da düğmeye art arda basılınca aynı reçete iki kez yazılıyordu.
     let kaydediliyor = false;
-    async function kaydet({ yazdir = false } = {}) {
+    async function kaydet({ yazdir = false, pdf = false } = {}) {
       if (kaydediliyor) return;
       hatalar = receteDogrula(recete);
       if (Object.keys(hatalar).length) { ciz(); hata(dogrulaMetni(Object.values(hatalar)[0])); return; }
@@ -421,7 +425,15 @@ export default {
         if (!aktif) return;
         // Yazdırma KAYITTAN SONRA: basılan kâğıtta reçete numarası ve
         // doğrulama kodu var, ikisi de kaydederken üretiliyor.
-        if (yazdir) kagidiYazdir({ ayar, recete: kayit, hasta });
+        // Beklenmeli: yazdırma yazı yüzünü bekliyor, git() o arada sayfayı
+        // değiştirip basılacak kâğıdı söküyordu.
+        if (yazdir) {
+          if (pdf && !pdfIpucuGosterildi) {
+            pdfIpucuGosterildi = true;
+            ctx.bildir(t('recete.pdf_ipucu', 'Yazdırma penceresinde hedef olarak «PDF olarak kaydet»i seçin.'));
+          }
+          await kagidiYazdir({ ayar, recete: kayit, hasta, pdf });
+        }
         git('/recete/' + kayit.id);
       } catch (e) { hata(hataMetni(e)); } finally { kaydediliyor = false; }
     }
@@ -502,7 +514,9 @@ export default {
       if (!ikiSutun.matches || !duzen) return Infinity;
       const ust = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ust-cubuk'));
       const alti = document.documentElement.scrollHeight - scrollY - duzen.getBoundingClientRect().bottom;
-      return innerHeight - ust - 10 - Math.max(12, alti);
+      // Panelin başlık satırı ve kenarlığı da kâğıdın üstünde yer tutuyor.
+      const bas = kok.querySelector('.recete-onizleme__bas')?.offsetHeight || 0;
+      return innerHeight - ust - 10 - Math.max(12, alti) - bas - 2;
     };
     const olcekle = (tuval, kagit) => kagidiOlcekle(tuval, kagit, kok, { pay: 0, yukseklik: sigacakBoy });
 
@@ -753,12 +767,27 @@ export default {
         altKartlar, notKarti, altDugmeler);
 
       /* ---- Sağ sütun: canlı kâğıt ----
-         Başlık («basılacak kâğıt») geniş ekranda görünmüyor, kâğıt panelle
-         aynı hizadan başlıyor; bölgenin adı olarak ekran okuyucuda kalıyor. */
+         Formla aynı biçimde bir panel. Başlık satırında başlık (solda) ve
+         üç düğme (sağda): büyük önizleme, «چاپ», «ذخیره PDF». Bu sütun
+         yapışkan: tablo uzayıp sayfa kaydıkça yazdır düğmesi hep görünür
+         kalıyor (alttaki «ذخیره و چاپ» ekranın dışına inse de). Yazdır ve
+         PDF alttaki düğmenin yolu: önce kaydet (numara ve doğrulama kodu
+         kayıtta üretiliyor), sonra bas. */
       onizlemeKabi = el('div', { class: 'kagit-tuval' });
-      const sag = el('section', { class: 'recete-onizleme', 'aria-labelledby': 'recete-onizleme-bas' },
-        el('div', { class: 'recete-onizleme__bas', id: 'recete-onizleme-bas' }, simge('yazdir', { boy: 16 }),
-          el('span', {}, t('recete.onizleme', 'Basılacak kâğıt'))),
+      const onizlemeEylem = (simgeOge, metin, odakAdi, onclick) => btn(simgeOge, {
+        class: 'btn recete-onizleme__dugme', 'data-odak-adi': odakAdi, onclick,
+      }, metin);
+      const sag = el('section', { class: 'recete-onizleme recete-panel recete-panel--onizleme', 'aria-labelledby': 'recete-onizleme-bas' },
+        el('div', { class: 'recete-onizleme__bas' },
+          el('div', { class: 'recete-onizleme__eylem' },
+            btn(simge('genislet', { boy: 16 }), {
+              class: 'btn recete-onizleme__dugme recete-onizleme__ikon', 'data-odak-adi': 'onizleme-genis',
+              'aria-label': t('recete.onizleme_genis', 'بزرگ نمایی'), title: t('recete.onizleme_genis', 'بزرگ نمایی'), onclick: onizlemeAc,
+            }),
+            onizlemeEylem(simge('yazdir', { boy: 16, dolu: true }), t('genel.yazdir', 'چاپ'), 'onizleme-yazdir', () => kaydet({ yazdir: true })),
+            onizlemeEylem(simge('pdf', { boy: 16 }), t('recete.pdf_kaydet', 'ذخیره PDF'), 'onizleme-pdf', () => kaydet({ yazdir: true, pdf: true }))),
+          el('h2', { class: 'recete-onizleme__baslik', id: 'recete-onizleme-bas' },
+            el('span', {}, t('recete.onizleme_bas', 'پیش نمایش نسخه')), simge('yeni-recete', { boy: 30, dolu: true }))),
         onizlemeKabi);
 
       kok.appendChild(el('div', { class: giris ? 'recete-duzen recete-duzen--giris' : 'recete-duzen' }, sol, sag));

@@ -234,11 +234,13 @@ describe('iki cihaz', () => {
     }
   });
 
-  it('parola cihazda kalıyor, buluta gitmiyor', async () => {
-    await a.ayarKaydet({ senkronParolasi: PAROLA, senkronIstemciId: 'gizli.apps', doktorAd: 'Ahmad' });
+  it('parola ve imza görseli cihazda kalıyor, buluta gitmiyor', async () => {
+    await a.ayarKaydet({ senkronParolasi: PAROLA, senkronIstemciId: 'gizli.apps', doktorAd: 'Ahmad', imzaGorseli: 'data:image/jpeg;base64,IMZA' });
     await es(a);
     const icerik = await kasadanAl(bulut.icerik, PAROLA);
     const ayar = icerik.koleksiyonlar.ayarlar[0];
+    expect(CIHAZA_OZEL_AYARLAR).toContain('imzaGorseli');
+    expect(JSON.stringify(icerik)).not.toContain('IMZA');
     for (const alan of CIHAZA_OZEL_AYARLAR) expect(ayar[alan]).toBeUndefined();
     expect(ayar.doktorAd).toBe('Ahmad');
   });
@@ -439,7 +441,8 @@ describe('örnek kayıtlar eşitlenmiyor', () => {
 });
 
 describe('cihaza özel ayarlar dosya yedeğine ve içe aktarmaya karışmıyor', () => {
-  const SIRLAR = { senkronParolasi: 'GIZLI-KASA-KODU', senkronIstemciId: 'x.apps', senkronAcik: 1, hesapJetonu: 'jeton-gizli' };
+  // İmza görseli de cihaza özel: imza cihazdan çıkarsa sahte reçete basılır.
+  const SIRLAR = { senkronParolasi: 'GIZLI-KASA-KODU', senkronIstemciId: 'x.apps', senkronAcik: 1, hesapJetonu: 'jeton-gizli', imzaGorseli: 'data:image/jpeg;base64,IMZA-VERISI' };
 
   it('yedek dosyasında jeton, K ya da Google dönemi sırrı yok', async () => {
     const d = await new IdbDepo('yedek-sir-' + Math.random().toString(36).slice(2)).ac();
@@ -468,6 +471,7 @@ describe('cihaza özel ayarlar dosya yedeğine ve içe aktarmaya karışmıyor',
       expect(ayar.senkronParolasi).toBe('BENIM');
       expect(ayar.hesapJetonu).toBeUndefined();
       expect(ayar.senkronIstemciId).toBeUndefined();
+      expect(ayar.imzaGorseli).toBeUndefined();
     });
   }
 

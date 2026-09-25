@@ -627,8 +627,11 @@ describe('hesap değişimi sorusu: antet ve doğrulama anahtarı da sayılıyor'
     expect((await servis.hesapDegisimi('dr.ccc')).soru).toBe(true);
   });
 
-  it('yalnız doğrulama anahtarı ya da Clinical görseli olan cihaz da soruluyor', async () => {
-    for (const ayar of [{ dogrulamaAnahtari: 'QS1LRVk=' }, { eskiAnahtarlar: ['QS1LRVk='] }, { saglikGorseli: 'data:image/png;base64,AAAA' }]) {
+  // İmza görseli ve lacivert kâğıdın İngilizce antet alanları da hekimin
+  // kendi bilgisi: başka bir hesaba sorusuz akmamalı.
+  it('yalnız doğrulama anahtarı, Clinical ya da imza görseli, İngilizce antet alanı olan cihaz da soruluyor', async () => {
+    for (const ayar of [{ dogrulamaAnahtari: 'QS1LRVk=' }, { eskiAnahtarlar: ['QS1LRVk='] }, { saglikGorseli: 'data:image/png;base64,AAAA' },
+      { imzaGorseli: 'data:image/jpeg;base64,AAAA' }, { uzmanlikEn: 'Internal Medicine' }, { muhurAlt: 'Care' }]) {
       const { depo, servis } = await servisKur('anahtar');
       await depo.ayarKaydet(ayar);
       expect(await servis.hesapDegisimi('dr.bbb')).toMatchObject({ soru: true, sayi: 1, antet: true });

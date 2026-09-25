@@ -41,11 +41,18 @@ export const ORNEK_ANTET = {
   doktorAd: 'نمونه احمدی',
   doktorAdAlt: 'Dr. Nemuna Ahmadi',
   uzmanlik: 'معالج امراض داخله عمومی و اطفال',
+  // Lacivert kâğıdın İngilizce sütunu. Uydurma ve açıkça örnek: gerçek bir
+  // hekimin ya da kurumun adı değil.
+  uzmanlikEn: 'Physician specializing in Internal Medicine and Pediatrics',
+  hizmetlerEn: 'Specialist in Internal Medicine\nECG Recording and Interpretation\nTreatment of Heart, Lung, Stomach, Kidney Diseases\nDiabetes, Hypertension, Chronic Headaches',
+  // Tek satır: sol sütunun altı madde satırına (4 hizmet, başlık, yer) sığsın.
+  deneyimEn: 'Sample Hospital, Sample Diagnostic Clinic',
   slogan: 'سلامتی شما\nهدف ماست',
   hizmetler: 'ثبت و تشخیص گراف برقی قلب (ECG)\nماهر معاینات تلویزیونی (التراساند)',
   hizmetAlanlari: '(قلب ، شش ، معده ، گرده ، شکر ، روماتیزم ، سردردی دوامدار)',
   deneyim: 'سابقه کاری : شفاخانه نمونه و کلینیک تشخیصیه نمونه',
   adres: 'کابل، افغانستان',
+  adresEn: 'Kabul, Afghanistan',
   telefon: '0700000000',
   ulkeKodu: '93',
   ayakEtiketleri: 'قلب, شش, معده, گرده, شکر, روماتیزم, سردرد',

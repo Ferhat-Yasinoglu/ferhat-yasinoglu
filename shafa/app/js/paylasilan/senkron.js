@@ -27,8 +27,9 @@ export const ESKI_SENKRON_AYARLARI = ['senkronParolasi', 'senkronIstemciId', 'se
 /** Eşitlemeyle gidip gelmeyen, yedek dosyasına da girmeyen, her cihazda
  *  kendine ait kalan ayarlar. Hesabın durumu (jeton, K) ayarlarda değil,
  *  meta deposunda duruyor; buradaki hesap adları yalnız savunma: biri bu
- *  adlarla bir alan yazsa bile cihazdan çıkmasın. */
-export const CIHAZA_OZEL_AYARLAR = [...ESKI_SENKRON_AYARLARI, 'hesap', 'hesapKullanici', 'hesapJetonu', 'hesapSunucu'];
+ *  adlarla bir alan yazsa bile cihazdan çıkmasın. İmza görseli de burada:
+ *  hekimin imzası çalınırsa sahte reçete basılır, cihazdan hiç çıkmıyor. */
+export const CIHAZA_OZEL_AYARLAR = [...ESKI_SENKRON_AYARLARI, 'hesap', 'hesapKullanici', 'hesapJetonu', 'hesapSunucu', 'imzaGorseli'];
 
 /** Kayıttan cihaza özel alanları söker (yeni nesne döner). */
 export function cihazaOzelSiz(kayit) {

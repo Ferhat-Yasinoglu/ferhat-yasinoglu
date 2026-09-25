@@ -2,7 +2,7 @@
 // ürettiğimiz matris gerçek bir QR okuyucudan geçiyor mu?
 import { describe, it, expect } from 'vitest';
 import jsQR from 'jsqr';
-import { qrMatris, qrYolu, surumSec, QrHatasi } from '../app/js/paylasilan/qr.js';
+import { qrMatris, qrYolu, surumSec, QrHatasi, qrOkunurMu, QR_EN_KUCUK_MODUL_MM } from '../app/js/paylasilan/qr.js';
 
 /** Matrisi jsQR'ın beklediği RGBA görüntüye çevirir (modül başına `olcek` piksel). */
 function goruntule({ boy, modul }, olcek = 4, sessiz = 4) {
@@ -80,4 +80,30 @@ describe('qrYolu', () => {
     expect(yol.startsWith('M')).toBe(true);
   });
   it('boş içeriği reddeder', () => expect(() => qrYolu('')).toThrow(QrHatasi));
+});
+
+// Basılı QR'ın okunabilirliği: modül eni = basılı en / (modül sayısı + 2 ×
+// sessiz alan). Reçete özeti QR'ı tek ilaçta bile 0,17 mm'ye iniyordu, on
+// ilaçta hiç kurulamıyor ve kâğıttaki yer sessizce boş kalıyordu.
+describe('qrOkunurMu', () => {
+  it('eşik 0,30 mm', () => expect(QR_EN_KUCUK_MODUL_MM).toBe(0.3));
+  it('WhatsApp bağlantısı 10 mm\'de okunur (sürüm 2: 25 + 4 modül)', () => {
+    const baglanti = 'https://wa.me/93700000000';
+    expect(qrMatris(baglanti).surum).toBe(2);
+    expect(qrOkunurMu(baglanti, 10)).toBe(true);
+    // 29 modül × 0,30 mm = 8,7 mm: altı okunmaz.
+    expect(qrOkunurMu(baglanti, 8.6)).toBe(false);
+  });
+  it('uzun reçete özeti okunmaz sayılıyor; sürüm 20\'yi aşan metin hata atmıyor, okunmaz', () => {
+    expect(qrOkunurMu('x'.repeat(260), 16)).toBe(false);
+    expect(qrOkunurMu('x'.repeat(5000), 16)).toBe(false);
+  });
+  it('boş metin okunmaz', () => expect(qrOkunurMu('', 16)).toBe(false));
+  it('karar gerçek matrisin sürümüyle aynı', () => {
+    for (const n of [10, 40, 90, 150]) {
+      const metin = 'a'.repeat(n);
+      const { boy } = qrMatris(metin);
+      expect(qrOkunurMu(metin, 12)).toBe(12 / (boy + 4) >= 0.3);
+    }
+  });
 });

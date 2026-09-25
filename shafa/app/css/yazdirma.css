@@ -31,6 +31,8 @@
 /* Düzenleme tuvali: reçete kâğıdı ekranda, üzerinde çalışılabilir hâlde.
    Kâğıt A4 genişliğinde sabit; tuval dar ekranda onu ölçekliyor. */
 .kagit-tuval { display: flex; justify-content: center; padding-block: var(--b-3); }
+/* Çok yapraklı kâğıt: tuval ekrana sığıyor, yapraklar içinde kayıyor. */
+.kagit-tuval[data-cok-yaprak] { overflow-y: auto; overscroll-behavior: contain; }
 /* Dokunulabilir alanlar: yalnız düzenleme tuvalinde işaretli.
    Basılan kâğıtta hiçbir iz kalmıyor — kurallar .kagit-tuval altında. */
 .kagit-tuval .kagit__duz { cursor: pointer; border-radius: 1.5mm; transition: background .12s ease, outline-color .12s ease; outline: 1px dashed transparent; outline-offset: 2px; }
@@ -866,6 +868,225 @@
      başlangıç payı sağ yanına düşüyordu, «N=2» metne yapışıyordu. */
   .kagit--sik .kagit__ilac-ad { display: inline-flex; margin-inline-end: 2.5mm; }
   .kagit--sik .kagit__kullanim { display: inline; }
+
+  /* ================= Lacivert (sürmeli ve altın) kâğıt =================
+     kagit-lacivert.js. Yaprak sabit 194 × 272 mm ve taşanı kesiyor: kip ve
+     sayfa bölünmesi içerikten hesaplanıyor (paylasilan/kagit-yogunluk.js),
+     buradaki kip değişkenleri o hesabın ölçüleri — biri değişirse öbürü de.
+     Sınıflar `kagit__l-` önekli: yukarıdaki `.kagit__*` kuralları kapsamsız.
+     Renkler tasarımdan ölçüldü (yeni/kagit.md §3.2). */
+  .kagit--lacivert {
+    --l-lacivert: #0B1E72;
+    --l-altin: #D9B25F;
+    --l-altin-koyu: #B07824;
+    --l-altin-parlak: #E9B450;
+    position: relative; display: flex; flex-direction: column;
+    /* min-block-size: eski `.kagit`in %100'ü sarmalayıcının boyunu alıyor,
+       çok yapraklı kâğıtta her yaprak bütün yığın kadar uzuyordu. */
+    inline-size: 194mm; block-size: 272mm; min-block-size: 0; flex-shrink: 0; box-sizing: border-box;
+    overflow: hidden; border-radius: 3mm;
+    background: #FBF8EE; color: #23304F;
+    font-family: var(--yazi); font-size: 9pt; line-height: 1.3; text-align: start;
+  }
+  .kagit--lacivert *, .kagit--lacivert *::before, .kagit--lacivert *::after { box-sizing: border-box; }
+  .kagit--l-rahat {
+    --l-tepe: 63mm; --l-kose: 30mm; --l-amblem: 15mm; --l-vecize-ust: 4.2mm; --l-vecize: 9.5mm; --l-motto-ust: 15.6mm; --l-motto: 9pt;
+    --l-antet-ust: 19.5mm; --l-ad: 17pt; --l-uz-lat: 6.8pt; --l-uz-fa: 9pt; --l-madde-lat: 7.3pt; --l-madde-fa: 8.5pt;
+    --l-adim-lat: 4mm; --l-adim-fa: 4.3mm; --l-muhur: 37mm; --l-muhur-ust: .6mm;
+    --l-serit: 9.5mm; --l-serit-ust: 1.8mm; --l-serit-alt: 2.6mm; --l-serit-etiket: 7.5pt; --l-serit-deger: 9.5pt;
+    --l-bas: 9.5pt; --l-bas-ust: 3mm; --l-metin: 9.5pt; --l-satir: 1.4; --l-olcum: 5.4mm; --l-not: 11mm;
+    --l-rx: 12mm; --l-sira: 6mm; --l-ilac-pay: 1.6mm; --l-ad-pt: 11pt; --l-ad-satir: 1.3; --l-kul: 9pt; --l-kul-satir: 1.35;
+    --l-imza-etiket: 9pt; --l-imza-yer: 12mm;
+    --l-ayak: 24mm; --l-ayak-alt: 4mm; --l-ayak-yazi: 9pt; --l-ayak-en: 7.5pt; --l-qr: 14mm; --l-tel: 12pt;
+  }
+  .kagit--l-orta {
+    --l-tepe: 53mm; --l-kose: 27mm; --l-amblem: 13mm; --l-vecize-ust: 3.8mm; --l-vecize: 8.2mm; --l-motto-ust: 13.4mm; --l-motto: 8pt;
+    --l-antet-ust: 18mm; --l-ad: 14.5pt; --l-uz-lat: 6.5pt; --l-uz-fa: 8.5pt; --l-madde-lat: 6.8pt; --l-madde-fa: 7.5pt;
+    --l-adim-lat: 3.75mm; --l-adim-fa: 3.9mm; --l-muhur: 31mm; --l-muhur-ust: .2mm;
+    --l-serit: 8.5mm; --l-serit-ust: 1.5mm; --l-serit-alt: 2mm; --l-serit-etiket: 7pt; --l-serit-deger: 9pt;
+    --l-bas: 8.5pt; --l-bas-ust: 2.2mm; --l-metin: 8.5pt; --l-satir: 1.35; --l-olcum: 4.7mm; --l-not: 9mm;
+    --l-rx: 9.5mm; --l-sira: 5.5mm; --l-ilac-pay: .8mm; --l-ad-pt: 9.5pt; --l-ad-satir: 1.22; --l-kul: 8pt; --l-kul-satir: 1.25;
+    --l-imza-etiket: 8.5pt; --l-imza-yer: 10mm;
+    --l-ayak: 22mm; --l-ayak-alt: 3.5mm; --l-ayak-yazi: 8.5pt; --l-ayak-en: 7pt; --l-qr: 13mm; --l-tel: 11pt;
+  }
+  .kagit--l-sik {
+    --l-tepe: 46mm; --l-kose: 23mm; --l-amblem: 11mm; --l-vecize-ust: 3mm; --l-vecize: 7mm; --l-motto-ust: 10.8mm; --l-motto: 7pt;
+    --l-antet-ust: 15mm; --l-ad: 13pt; --l-uz-lat: 6pt; --l-uz-fa: 8pt; --l-madde-lat: 6.3pt; --l-madde-fa: 7pt;
+    --l-adim-lat: 3.3mm; --l-adim-fa: 3.5mm; --l-muhur: 28mm; --l-muhur-ust: 0mm;
+    --l-serit: 7.5mm; --l-serit-ust: 1.2mm; --l-serit-alt: 1.6mm; --l-serit-etiket: 6.8pt; --l-serit-deger: 8.5pt;
+    --l-bas: 8pt; --l-bas-ust: 1.8mm; --l-metin: 8pt; --l-satir: 1.3; --l-olcum: 4.2mm; --l-not: 8mm;
+    --l-rx: 7mm; --l-sira: 5mm; --l-ilac-pay: .4mm; --l-ad-pt: 8.2pt; --l-ad-satir: 1.18; --l-kul: 7.2pt; --l-kul-satir: 1.18;
+    --l-imza-etiket: 8pt; --l-imza-yer: 9mm;
+    --l-ayak: 19mm; --l-ayak-alt: 3mm; --l-ayak-yazi: 8pt; --l-ayak-en: 6.5pt; --l-qr: 12mm; --l-tel: 10pt;
+  }
+
+  /* Çerçeve en üstte, köşeler en altta; yazılar arada. */
+  .kagit__l-cerceve { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; z-index: 3; pointer-events: none; }
+  .kagit__l-kose { position: absolute; inset-block-start: 0; inset-inline: 0; inline-size: 100%; block-size: var(--l-kose); z-index: 0; }
+  /* Kadüse sağ üst köşede, lacivert kıvrımın içinde; altın tonlu. */
+  .kagit__l-amblem { position: absolute; inset-block-start: 3.7mm; inset-inline-start: 4.6mm; z-index: 1; display: block; block-size: var(--l-amblem); inline-size: calc(var(--l-amblem) * 69 / 83); }
+  .kagit__l-amblem .kagit__amblem-cizim { display: block; inline-size: 100%; block-size: 100%; }
+  .kagit__l-amblem .kagit__amblem-ust { stop-color: #F6C150; }
+  .kagit__l-amblem .kagit__amblem-orta { stop-color: #E9B450; }
+  .kagit__l-amblem .kagit__amblem-alt { stop-color: #B07824; }
+  .kagit__l-amblem .kagit__amblem-uc { stop-color: #D9A54A; }
+
+  /* ---- Tepe: vecize, İngilizce karşılığı, antet, ayraç ---- */
+  .kagit__l-tepe { position: relative; z-index: 1; flex: none; block-size: var(--l-tepe); padding-block-start: var(--l-antet-ust); padding-inline: 9mm 7.6mm; overflow: hidden; }
+  .kagit__l-tepe--kisa { block-size: 31mm; }
+  .kagit__l-vecize { position: absolute; inset-block-start: var(--l-vecize-ust); inset-inline: 0; block-size: var(--l-vecize); display: flex; justify-content: center; align-items: center; gap: 3.4mm; color: var(--l-lacivert); }
+  .kagit__l-vecize-cizim { display: block; block-size: 100%; inline-size: auto; }
+  .kagit__l-sus { flex: none; inline-size: 17.7mm; block-size: 5.8mm; }
+  .kagit--l-sik .kagit__l-sus { display: none; }
+  .kagit__l-motto { position: absolute; inset-block-start: var(--l-motto-ust); inset-inline: 0; text-align: center; font-size: var(--l-motto); font-weight: 500; line-height: 1.2; color: #233984; }
+  .kagit__l-antet { display: grid; grid-template-columns: 66mm 1fr 66mm; align-items: start; }
+  .kagit__l-antet-bos { display: flex; justify-content: center; padding-block-start: 4mm; }
+  .kagit__l-lat, .kagit__l-fa { min-inline-size: 0; color: var(--l-lacivert); }
+  .kagit__l-ad-lat, .kagit__l-ad-fa { font-size: min(var(--l-ad), var(--l-ad-sigdir, 99pt)); line-height: 1.12; white-space: nowrap; }
+  .kagit__l-ad-lat { font-family: 'Cinzel', var(--yazi); font-weight: 700; }
+  .kagit__l-ad-fa { font-weight: 800; }
+  .kagit__l-ad-lat--kir, .kagit__l-ad-fa--kir { white-space: normal; }
+  .kagit__l-uz-lat { margin-block: 1mm 1.6mm; font-family: 'Cinzel', var(--yazi); font-weight: 500; font-size: var(--l-uz-lat); line-height: 1.25; color: #3B5289; max-block-size: 2.5em; overflow: hidden; }
+  .kagit__l-uz-fa { margin-block: .6mm 1.4mm; font-weight: 600; font-size: var(--l-uz-fa); line-height: 1.3; }
+  .kagit__l-maddeler { list-style: none; margin: 0; padding: 0; }
+  .kagit__l-maddeler li { display: flex; align-items: center; gap: 1.5mm; min-block-size: var(--l-adim-lat); line-height: 1.15; }
+  .kagit__l-maddeler--lat li { font-size: var(--l-madde-lat); color: #3B5289; }
+  .kagit__l-maddeler--lat .simge { flex: none; inline-size: 3.4mm; block-size: 3.4mm; color: var(--l-lacivert); }
+  .kagit__l-madde--kalin { font-weight: 700; }
+  .kagit__l-maddeler--fa li { min-block-size: var(--l-adim-fa); font-size: var(--l-madde-fa); color: #1E3576; }
+  .kagit__l-maddeler--fa li::before { content: ''; flex: none; inline-size: 1.1mm; block-size: 1.1mm; border-radius: 50%; background: var(--l-lacivert); }
+  /* Mühür İngilizce vecizenin altından başlıyor (tasarımda arada boşluk var);
+     yukarı çekilince halkası yazıya biniyordu. */
+  .kagit__l-muhur { justify-self: center; margin-block-start: var(--l-muhur-ust); inline-size: var(--l-muhur); block-size: var(--l-muhur); }
+  .kagit__l-muhur-cizim { display: block; inline-size: 100%; block-size: 100%; overflow: visible; }
+  .kagit__l-muhur-ust, .kagit__l-muhur-alt { font-family: 'Cinzel', var(--yazi); font-weight: 700; }
+  .kagit__l-muhur .kagit__amblem-ust { stop-color: #0B1E72; }
+  .kagit__l-muhur .kagit__amblem-orta { stop-color: #0B1E72; }
+  .kagit__l-muhur .kagit__amblem-alt { stop-color: #05214F; }
+  .kagit__l-muhur .kagit__amblem-uc { stop-color: #05214F; }
+  .kagit__l-ayrac { position: absolute; inset-block-end: 0; inset-inline: 5mm; inline-size: calc(100% - 10mm); block-size: 6mm; }
+
+  /* ---- Hasta şeridi ---- */
+  .kagit__l-serit {
+    position: relative; z-index: 1; flex: none;
+    display: grid; grid-template-columns: max-content minmax(30mm, 1fr) 21mm 17mm 38mm; align-items: center;
+    block-size: var(--l-serit); margin-block: var(--l-serit-ust) var(--l-serit-alt); margin-inline: 5mm;
+    background: #F1F3F7; border: .25mm solid #C9D5E5; border-radius: 1.8mm;
+  }
+  /* Hücre şeridin tam boyu (değerin Dari harfleri kesilmesin); ayraç
+     çizgisi boyun ortadaki %60'ında. */
+  .kagit__l-hucre {
+    display: flex; align-items: center; gap: 1.5mm; block-size: 100%; min-inline-size: 0; padding-inline: 2.5mm; white-space: nowrap; overflow: hidden;
+    border-inline-start: .25mm solid transparent; border-image: linear-gradient(transparent 20%, #C9D5E5 20% 80%, transparent 80%) 1;
+  }
+  .kagit__l-hucre:first-child { border-inline-start: 0; }
+  .kagit__l-hucre b { flex: none; font-size: var(--l-serit-etiket); font-weight: 700; color: #193282; }
+  .kagit__l-no { display: inline-flex; align-items: center; gap: .8mm; flex: none; }
+  .kagit__l-no .simge { inline-size: 4mm; block-size: 4mm; color: var(--l-lacivert); }
+  .kagit__l-hucre--no .kagit__l-deger { overflow: visible; }
+  .kagit__l-yaprak { flex: none; font-size: var(--l-serit-etiket); font-weight: 700; color: #193282; }
+  .kagit__l-deger { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; font-size: var(--l-serit-deger); font-weight: 500; line-height: 1.6; color: #143489; }
+  .kagit__l-hucre .kagit__cizgi { flex: 1; min-inline-size: 4mm; border-block-end-color: #9aa6c0; }
+
+  /* ---- Gövde: solda klinik, sağda Rx ---- */
+  .kagit__l-govde { position: relative; z-index: 1; flex: 1; min-block-size: 0; display: grid; grid-template-columns: 78mm 1fr; margin-inline: 5mm; padding-block-end: 1.5mm; }
+  .kagit--l-sik .kagit__l-govde { padding-block-end: .8mm; }
+  .kagit--l-sik .kagit__l-sag { padding-block-start: .5mm; }
+  .kagit--l-sik .kagit__l-ilaclar { margin-block-start: .6mm; }
+  .kagit__l-sol {
+    display: flex; flex-direction: column; min-block-size: 0; padding-block: 1mm 0; padding-inline: 3mm 4mm;
+    border-inline-end: .35mm solid transparent;
+    border-image: linear-gradient(transparent, var(--l-altin) 6%, var(--l-altin) 94%, transparent) 1;
+  }
+  .kagit__l-bolum + .kagit__l-bolum, .kagit__l-bolum + .kagit__duz-bos { margin-block-start: var(--l-bas-ust); }
+  .kagit__l-bas { font-size: var(--l-bas); font-weight: 800; line-height: 1.2; letter-spacing: .02em; text-transform: uppercase; color: #102885; }
+  .kagit__l-bas::after { content: ''; display: block; inline-size: 16mm; block-size: .7mm; margin-block: .7mm .9mm; border-radius: .3mm; background: var(--l-altin); }
+  .kagit__l-liste { list-style: none; margin: 0; padding: 0; font-size: var(--l-metin); line-height: var(--l-satir); color: #23304F; }
+  .kagit__l-liste li { position: relative; padding-inline-start: 4.5mm; break-inside: avoid; }
+  .kagit__l-liste li::before { content: ''; position: absolute; inset-inline-start: .6mm; inset-block-start: calc(var(--l-satir) * .5em - .6mm); inline-size: 1.2mm; block-size: 1.2mm; border-radius: 50%; background: var(--l-lacivert); }
+  .kagit__l-liste--iki { columns: 2; column-gap: 3mm; }
+  .kagit__l-kalem { display: block; block-size: 4mm; border-block-end: .25mm dotted #A9A18A; }
+  .kagit__l-olcumler { font-size: var(--l-metin); line-height: 1.2; }
+  /* Etiket, değer ve birim aynı taban çizgisinde (tasarımdaki gibi), satır
+     kutusunun dibinde; değerin altındaki noktalı çizgi kalemle yazılacak yer. */
+  /* Değer sütunu en az 20 mm, uzun (eski, serbest yazılmış) değerde genişliyor:
+     değer kesilmiyor, birimi yana itiyor. */
+  .kagit__l-olcum { display: grid; grid-template-columns: 22mm minmax(20mm, max-content) 1fr; align-items: baseline; align-content: end; block-size: var(--l-olcum); padding-block-end: .2mm; white-space: nowrap; }
+  .kagit__l-olcum b { font-weight: 700; color: #1B3783; }
+  /* Satır kutusu (sık kipte 4,2 mm) değerin yazı ve çizgisini tam almalı:
+     taşan ızgara satırını Chromium basarken hiç çizmiyordu. */
+  .kagit__l-olcum-deger { margin-inline-end: 3mm; min-block-size: 1.2em; border-block-end: .25mm dotted #BDB49A; font-weight: 600; line-height: 1.3; color: #12277E; }
+  .kagit__l-olcum i { font-style: normal; font-size: .9em; color: #364E8D; }
+  .kagit__l-not { min-block-size: var(--l-not); padding: 1mm 2mm; border: .3mm dashed #D2D0C8; border-radius: 2mm; font-size: var(--l-metin); line-height: var(--l-satir); white-space: pre-line; color: #23304F; }
+
+  .kagit__l-sag { position: relative; z-index: 0; display: flex; flex-direction: column; min-block-size: 0; min-inline-size: 0; padding-block: 1mm 0; padding-inline: 5mm 1mm; }
+  .kagit__l-rx { flex: none; display: flex; flex-direction: column; align-items: flex-start; block-size: var(--l-rx); color: var(--l-lacivert); }
+  .kagit__l-rx .rx-isaret__cizim { display: block; block-size: calc(var(--l-rx) - 1.4mm); inline-size: auto; fill: currentColor; }
+  .kagit__l-rx::after { content: ''; inline-size: 21mm; block-size: .35mm; margin-block-start: .4mm; background: linear-gradient(90deg, var(--l-altin), transparent); }
+  .kagit__l-alerji { display: flex; flex-wrap: wrap; align-items: center; gap: 1mm; margin-block-start: 1mm; font-size: 8.5pt; font-weight: 700; color: #9B1C1C; }
+  .kagit__l-alerji .simge { inline-size: 3.2mm; block-size: 3.2mm; }
+  .kagit__l-ilaclar { list-style: none; margin: 0; margin-block-start: 1mm; padding: 0; }
+  .kagit__l-ilaclar > li { display: grid; grid-template-columns: var(--l-sira) 1fr; padding-block: var(--l-ilac-pay); border-block-end: .25mm dashed #DCDCD8; break-inside: avoid; }
+  .kagit__l-ilaclar > li:last-child { border-block-end: 0; }
+  .kagit__l-sira, .kagit__l-i1 { font-size: var(--l-ad-pt); line-height: var(--l-ad-satir); font-weight: 700; }
+  .kagit__l-sira { color: #0C1F7B; }
+  .kagit__l-i1 { color: #091A7E; }
+  .kagit__l-form { margin-inline-end: 1.8mm; color: #0C1F7B; }
+  .kagit__l-i2 { display: flex; align-items: baseline; column-gap: 1.6mm; font-size: var(--l-kul); line-height: var(--l-kul-satir); color: #385698; }
+  .kagit__l-kul { display: flex; flex-wrap: wrap; column-gap: 1.6mm; min-inline-size: 0; }
+  .kagit__l-adet { font-weight: 600; }
+  .kagit__l-ayir { color: var(--l-altin-koyu); }
+  .kagit__l-devam-var { margin-block-start: 1mm; font-size: 8pt; color: #385698; }
+  /* Filigran sağ sütunun arkasında, boyunun %60'ında; sık kipte daha soluk. */
+  .kagit__l-filigran { position: absolute; z-index: -1; inset-block-start: 60%; inset-inline-start: 50%; translate: -50% -50%; inline-size: 72mm; block-size: 72mm; color: var(--l-lacivert); opacity: .07; pointer-events: none; }
+  .kagit__l-filigran .kagit__amblem-cizim { color: var(--l-lacivert); }
+  .kagit--l-sik .kagit__l-filigran { opacity: .05; }
+
+  .kagit__l-imza-satir { flex: none; display: flex; justify-content: space-between; align-items: flex-end; gap: 3mm; margin-block-start: auto; padding-block-start: 2mm; }
+  .kagit__l-kod { display: flex; align-items: center; gap: 1mm; white-space: nowrap; font-size: 7pt; color: #304465; }
+  .kagit__l-kod b { font-weight: 600; }
+  .kagit__l-kod bdi { font-weight: 700; letter-spacing: .06em; }
+  .kagit__l-kod .simge { inline-size: 3mm; block-size: 3mm; }
+  .kagit__l-imza { flex: none; inline-size: 42mm; text-align: center; }
+  /* Sık kipte imza satırı 78 mm'lik sol sütunda: kodun yanına sığsın. */
+  .kagit--l-sik .kagit__l-imza { inline-size: 34mm; }
+  .kagit__l-imza-etiket { font-size: var(--l-imza-etiket); font-weight: 700; color: #0D207A; }
+  .kagit__l-imza-yer { display: flex; align-items: flex-end; justify-content: center; block-size: var(--l-imza-yer); border-block-end: .3mm solid #1A2B75; }
+  /* Beyaz zeminli imza fotoğrafı fildişi kâğıda karışsın. */
+  .kagit__l-imza-gorsel { display: block; max-inline-size: 40mm; max-block-size: 100%; object-fit: contain; mix-blend-mode: multiply; }
+  .kagit__l-imza-en { font-size: calc(var(--l-imza-etiket) - .5pt); color: #304465; }
+
+  /* Devam sayfası: klinik sütun bittiyse ilaçlar tam en, iki sütun. */
+  .kagit__l-govde--genis { display: flex; flex-direction: column; padding-inline: 3mm; padding-block-start: 1mm; }
+  .kagit__l-ilaclar--genis { flex: 1 1 0; min-block-size: 0; columns: 2; column-gap: 8mm; column-fill: auto; column-rule: .25mm solid var(--l-altin); }
+  .kagit__l-govde--genis > .kagit__l-filigran { inset-inline-start: 50%; }
+
+  /* ---- Ayak ---- */
+  .kagit__l-ayak {
+    position: relative; z-index: 2; flex: none;
+    display: grid; grid-template-columns: 1fr 26mm 1fr; align-items: end;
+    block-size: var(--l-ayak); padding-inline: 7mm; padding-block-end: var(--l-ayak-alt); color: #fff;
+  }
+  .kagit__l-dalga { position: absolute; z-index: -1; inset-block-end: 0; inset-inline: 0; inline-size: 100%; block-size: calc(var(--l-ayak) + 6mm); }
+  .kagit__l-adres { display: flex; align-items: center; gap: 2.5mm; min-inline-size: 0; }
+  .kagit__l-adres > .simge, .kagit__l-tel > .simge { flex: none; color: var(--l-altin-parlak); }
+  .kagit__l-adres > .simge { inline-size: 5.5mm; block-size: 5.5mm; }
+  .kagit__l-klinik { font-size: var(--l-ayak-yazi); font-weight: 700; }
+  /* Dari satır da İngilizcesiyle aynı kenardan (simgenin yanından) başlıyor. */
+  .kagit__l-adres-fa { font-size: var(--l-ayak-yazi); line-height: 1.35; text-align: end; }
+  .kagit__l-adres-en { font-size: var(--l-ayak-en); line-height: 1.35; color: #E6ECF5; }
+  .kagit__l-adres-en b { font-weight: 700; }
+  .kagit__l-qr-kutu { justify-self: center; display: flex; flex-direction: column; align-items: center; gap: .5mm; }
+  .kagit__l-qr-kart { display: block; inline-size: var(--l-qr); block-size: var(--l-qr); padding: 1mm; border-radius: .8mm; background: #fff; }
+  .kagit__l-qr { display: block; inline-size: 100%; block-size: 100%; }
+  .kagit__l-qr-alt { font-size: 5.8pt; line-height: 1.1; color: #C9D3E3; white-space: nowrap; }
+  .kagit__l-tel { justify-self: end; display: flex; align-items: center; gap: 2.5mm; }
+  .kagit__l-tel > .simge { inline-size: 6.5mm; block-size: 6.5mm; }
+  .kagit__l-tel > div { text-align: center; }
+  .kagit__l-tel-etiket { font-size: var(--l-ayak-yazi); line-height: 1.3; }
+  .kagit__l-tel-no { display: block; font-size: var(--l-tel); font-weight: 600; line-height: 1.2; }
+  .kagit__l-tel-2 { margin-block-start: .6mm; }
+  .kagit__l-tel-2 .kagit__l-tel-no { font-size: 9pt; }
 }
 
 /* Ayak hiçbir zaman iki sayfaya bölünmüyor: kâğıt yine de taşarsa (çok
@@ -878,4 +1099,23 @@
      dibinden 17 mm yukarıda bitiyordu. Gövde ve ayak ekrandaki gibi
      esniyor. 272 mm'nin üstü ikinci sayfaya taşma sınırına çok yakın. */
   .kagit--modern { min-block-size: var(--baski-boy, auto); }
+  /* Lacivert: sarmalayıcıda bir ya da daha çok yaprak, her biri kendi
+     sayfasında. Yaprak sabit boylu, sayfanın içinde bölünmüyor. */
+  .yazdir-alan--lacivert { display: block; }
+  .kagit--lacivert { break-inside: avoid; }
+  .kagit--lacivert + .kagit--lacivert { break-before: page; }
 }
+
+/* Ekrandaki lacivert kâğıt: yapraklar alt alta, aralarında boşluk. Eski
+   stillerin kart çerçevesi, gölgesi ve beyaz zemini yok — kenarı altın
+   çerçeve çiziyor. Dokunulabilir alanların vurgusu turkuaz değil lacivert. */
+/* align-self: tuval bir flex kabı ve boyunu kâğıttan alıyor; gerilen
+   sarmalayıcı tuvalin ilk (0) boyunu alıp kâğıdı hiç göstermiyordu. */
+.kagit-tuval .yazdir-alan--lacivert { flex-direction: column; align-self: flex-start; gap: 12px; min-block-size: 0; background: none; }
+@media screen {
+  .kagit-tuval .yazdir-alan--lacivert { border: 0; border-radius: 0; box-shadow: none; overflow: visible; }
+}
+.kagit-tuval .kagit--lacivert .kagit__duz:hover { background: rgb(11 30 114 / .07); outline-color: rgb(11 30 114 / .4); }
+.kagit-tuval .kagit--lacivert .kagit__duz:focus-visible { outline-color: rgb(11 30 114); }
+.kagit-tuval .kagit--lacivert .kagit__duz-bos { border-color: rgb(11 30 114 / .35); color: #0B1E72; font-size: 9pt; block-size: 8mm; margin-block: 1mm; }
+.kagit-tuval .kagit--lacivert .kagit__duz-bos:hover { background: rgb(11 30 114 / .07); }

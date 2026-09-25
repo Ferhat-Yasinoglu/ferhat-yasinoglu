@@ -4,6 +4,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { listeyiDenetle, YASAK_KAYNAK } from './ilac-uret.mjs';
+import { gercekVeriBul } from './gercek-veri.mjs';
 
 const KOK = new URL('../app/', import.meta.url).pathname;
 let hata = 0;
@@ -245,6 +246,51 @@ const nuskhaKopyasi = JSON.parse(await readFile(new URL('./kaynak/nuskha-ilaclar
 for (const d of nuskhaKopyasi.drugs || []) {
   const sizan = YASAK_KAYNAK.filter((k) => k in d);
   if (sizan.length) hataVer(`tools/kaynak/nuskha-ilaclar.json: ${d.brand || d.generic} ilaç başına kullanım taşıyor (${sizan.join(', ')})`);
+}
+
+// (12) Gerçek kişi verisi yok (depo herkese açık). Hekimlerin getirdiği
+// tasarım görselinde gerçek görünen bir adres, iş yerleri ve telefon vardı;
+// kâğıt yeniden kurulurken bunlardan biri örnek veriye, sözlüğe ya da bir
+// denemeye sızarsa yayına gider. Liste ve neden tam ifade: gercek-veri.mjs.
+const METIN_UZANTILARI = ['.js', '.mjs', '.json', '.css', '.html', '.md', '.txt', '.py', '.svg', '.webmanifest'];
+const DEPO = new URL('../', import.meta.url).pathname;
+const taranacak = [join(DEPO, 'README.md')];
+for (const dizin of ['app', 'tanitim', 'tools', 'test', 'sunucu']) {
+  for (const uzanti of METIN_UZANTILARI) taranacak.push(...(await dosyalar(join(DEPO, dizin), uzanti)));
+}
+for (const f of taranacak) {
+  for (const ifade of gercekVeriBul(await readFile(f, 'utf8'))) hataVer(`${f}: tasarım görselindeki gerçek görünen veri (${ifade.slice(0, 3)}…)`);
+}
+
+// (13) Sonsuz hareket yok: dikkat dağıtıyor, pili yiyor ve azaltılmış
+// hareket tercihini deliyor. Tarayıcı denemesi getAnimations() ile de bakıyor;
+// bu denetim çalışma anında hiç görünmeyen (ör. yalnız bir durumda açılan)
+// kuralları da yakalıyor.
+for (const f of [...(await dosyalar(join(KOK, 'css'), '.css')), ...(await dosyalar(join(KOK, 'js'), '.js'))]) {
+  const s = await readFile(f, 'utf8');
+  if (/animation[\w-]*\s*:[^;{}]*\binfinite\b/.test(s) || /iterations\s*:\s*Infinity/.test(s)) hataVer(`${f}: sonsuz hareket`);
+}
+
+// (14) Service worker'ın önbellek listesi (KABUK) eksiksiz: caches.addAll
+// bir tek dosya 404 verirse BÜTÜN kurulum düşüyor, uygulama internetsiz
+// açılmıyor. Kâğıdın yazı tipleri (Cinzel) listeye eklenince tam bu risk.
+// Önbellek adı 'ecz-' önekiyle ve veritabanı 'eczane' adıyla kalmalı:
+// ikisi değişirse hekimin cihazındaki eski önbellek temizlenmez, kayıtları
+// yeni adla boş bir veritabanında kaybolmuş görünür.
+{
+  const sw = await oku('sw.js');
+  const kabuk = sw.match(/const KABUK = \[([\s\S]*?)\];/);
+  if (!kabuk) hataVer('sw.js: KABUK listesi bulunamadı');
+  else {
+    for (const [, yol] of kabuk[1].matchAll(/'\.\/([^']*)'/g)) {
+      try { await readFile(join(KOK, yol || 'index.html')); } catch { hataVer(`sw.js KABUK: app/${yol} yok, service worker kurulamaz`); }
+    }
+    for (const yazi of await readdir(join(KOK, 'yazi'))) {
+      if (yazi.endsWith('.woff2') && !kabuk[1].includes(`'./yazi/${yazi}'`)) hataVer(`sw.js KABUK: yazi/${yazi} önbellekte değil, kâğıt internetsiz yedek yazıyla basılır`);
+    }
+  }
+  if (!/const ONBELLEK = 'ecz-' \+/.test(sw)) hataVer("sw.js: önbellek adı 'ecz-' önekini kaybetti");
+  if (!/const VT_ADI = 'eczane';/.test(await oku('js/depo/idb.js'))) hataVer("depo/idb.js: veritabanı adı 'eczane' olmalı");
 }
 
 console.log(hata ? `${hata} sorun` : `✓ statik denetimler geçti (${kullanilan.size} çeviri anahtarı yerinde)`);

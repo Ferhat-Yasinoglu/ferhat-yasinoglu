@@ -403,23 +403,46 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 /* Kâğıt kaydırmayla birlikte yukarıda kalıyor: hekim formu doldururken
    kâğıdı görmeye devam etsin. Form uzun (ilaç eklendikçe tablo sayfanın
    akışında uzuyor); ofset formun tepesiyle aynı hizada. */
+/* Önizleme paneli: formla aynı panel, içinde başlık satırı (57 px) ve
+   kâğıt. Kâğıt satırın hemen altından başlıyor, panelin içinde ortalı. */
 .recete-onizleme { min-inline-size: 0; position: sticky; inset-block-start: calc(var(--ust-cubuk) + 10px); }
-.recete-onizleme__bas {
-  display: flex; align-items: center; gap: var(--b-2);
-  font-size: .85rem; font-weight: 600; color: rgb(var(--metin-2));
-  margin-block-end: var(--b-2);
+.recete-panel.recete-panel--onizleme { gap: 0; padding-inline: 0; padding-block-end: 0; container-type: inline-size; }
+.recete-onizleme__bas { display: flex; align-items: center; gap: 10px; block-size: 57px; padding-inline: 13px 21px; }
+.recete-onizleme__eylem { display: flex; gap: 10px; }
+.recete-onizleme__dugme {
+  block-size: 34px; min-block-size: 34px; padding-inline: 12px; gap: 7px; border-radius: 7px;
+  background: rgb(var(--btn-3-zemin)); border: 1px solid rgb(var(--btn-3-cizgi));
+  color: rgb(var(--btn-3-metin)); font-size: 13px; font-weight: 500;
+}
+.recete-onizleme__ikon { inline-size: 35px; padding: 0; justify-content: center; }
+/* Simge yazının bitişinde (sağdan sola düğmede solda), tasarımdaki gibi. */
+.recete-onizleme__dugme:not(.recete-onizleme__ikon) { flex-direction: row-reverse; }
+.recete-onizleme__baslik {
+  display: flex; align-items: center; gap: 14px; margin: 0; margin-inline-start: auto;
+  font-size: 20px; font-weight: 700; line-height: 1.2; color: rgb(var(--form-baslik)); white-space: nowrap;
+}
+.recete-onizleme__baslik .simge { flex-shrink: 0; color: rgb(var(--baslik-simge)); }
+:root[data-tema="karanlik"] .recete-onizleme__baslik { color: #fff; }
+/* Dar panel (1280'de ≈ 440 px): başlık ile üç düğme tek satıra sığsın diye
+   başlık ve düğme payları küçülüyor; yoksa simge «ذخیره PDF»in altına giriyordu. */
+@container (max-width: 480px) {
+  .recete-onizleme__bas { gap: 6px; padding-inline: 10px 12px; }
+  .recete-onizleme__eylem { gap: 6px; }
+  .recete-onizleme__dugme { padding-inline: 8px; gap: 5px; }
+  .recete-onizleme__baslik { gap: 8px; font-size: 16px; }
+  .recete-onizleme__baslik .simge { inline-size: 24px; block-size: 24px; }
 }
 @media (max-width: 1279px) {
   .recete-duzen { grid-template-columns: 1fr; }
   .recete-onizleme { position: static; }
+  /* Tek sütunda başlık kendi satırında, düğmeler altında. */
+  .recete-onizleme__bas { flex-wrap: wrap-reverse; block-size: auto; padding-block: 10px; row-gap: 10px; }
 }
-/* Yan yana düzende kâğıt panelle aynı hizadan başlıyor (tasarım): başlık
-   çizilmiyor. Bölgenin adı yine o (aria-labelledby gizli ögeyi de okur);
-   kâğıt formun altına indiğinde görünür. */
-@media (min-width: 1280px) {
-  .recete-onizleme__bas { display: none; }
+@media (pointer: coarse) {
+  .recete-onizleme__dugme { block-size: 44px; min-block-size: 44px; }
+  .recete-onizleme__ikon { inline-size: 44px; }
 }
-.recete-onizleme .kagit-tuval { padding-block: 0; }
+.recete-onizleme .kagit-tuval { padding-block: 0 8px; }
 
 /* ---- Panel: formun tamamı tek kart ----
    `overflow: clip`, hidden DEĞİL: hidden bir kaydırma kabı kuruyor ve
