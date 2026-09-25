@@ -8,7 +8,8 @@
 <meta name="color-scheme" content="light">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231b8754'/%3E%3Ctext x='32' y='46' font-size='38' text-anchor='middle' fill='white' font-family='serif'%3E℞%3C/text%3E%3C/svg%3E">
 <style>
-  @page { size: A4 portrait; margin: 10mm; }
+  /* حاشیه صفر: کروم در حاشیه، تاریخ و آدرس فایل چاپ نمی‌کند؛ حاشیه‌ی ۱۰ ملی‌متری را خود ورق دارد. */
+  @page { size: A4 portrait; margin: 0; }
   :root {
     --bg: #f1f5f3;
     --card: #ffffff;
@@ -44,6 +45,7 @@
   .topbar .logout:hover { background: #eafaf1; }
 
   main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 18px 16px 30px; }
+  main.wide { max-width: none; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
   .card h2 { margin: 0 0 12px; font-size: 1.05rem; color: var(--brand-dark); }
   .page-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -136,16 +138,18 @@
   .vit { display: grid; grid-template-columns: auto 1fr auto; gap: 1px 6px; align-items: baseline; }
   .vit .u { color: #444; font-size: .9em; }
   .vit .v { border-bottom: 1px dotted #888; min-height: 1.35em; }
-  .notes-p { white-space: pre-wrap; }
+  .vit .bp { display: flex; gap: 3px; align-items: baseline; }
+  .vit .bp .v, .vit .bp .inp { flex: 1; min-width: 0; }
+  .notes-p { white-space: pre-wrap; text-align: start; }
+  .sh-left li { text-align: start; }
   .sh-rx { padding: 8px 0 8px 12px; direction: ltr; text-align: left; display: flex; flex-direction: column; }
   .rx-sym { font-family: serif; font-size: 2.6em; line-height: 1; color: var(--brand-dark); margin-bottom: 6px; }
   ol.items { list-style: none; margin: 0; padding: 0; }
   ol.items li { padding: 5px 0; border-bottom: 1px dotted #bbb; break-inside: avoid; }
   ol.items li:last-child { border-bottom: 0; }
-  .it1 { display: flex; gap: 8px; align-items: baseline; font-weight: 600; }
+  .it1 { display: flex; gap: 8px; align-items: baseline; }
   .it1 .nm { flex: 1; }
-  .it1 .n { white-space: nowrap; }
-  .it2 { direction: rtl; text-align: right; font-size: .95em; color: #222; }
+  .it1 .nm > bdi:first-of-type { font-weight: 600; }
   .sh-foot { border-top: 2px solid var(--brand); padding-top: 5px; margin-top: 6px; font-size: .9em; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 16px; }
   .sh-foot .note { flex-basis: 100%; font-weight: 600; }
 
@@ -202,7 +206,7 @@
   tr:hover td { background: #fafdfb; }
   td.ltr { direction: ltr; text-align: left; }
   .nowrap { white-space: nowrap; }
-  td.clip { min-width: 120px; max-width: 220px; }
+  td.clip { min-width: 90px; max-width: 220px; }
   td .ops { display: inline-flex; gap: 4px; }
   .empty-row { text-align: center; color: var(--muted); padding: 28px 10px !important; }
   .pager { display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 10px; }
@@ -256,10 +260,14 @@
   }
 
   @media print {
-    html, body { background: #fff; min-height: 0; }
-    body > *:not(#print-area) { display: none !important; }
+    body.printing { background: #fff; min-height: 0; }
+    body.printing > *:not(#print-area) { display: none !important; }
     #print-area { display: block; }
-    #print-area .sheet { width: auto; min-height: 276mm; padding: 0; box-shadow: none; }
+    #print-area .sheet { width: auto; min-height: 296mm; padding: 10mm; box-shadow: none; }
+    /* نام دراز مریض ورق را از کاغذ بیرون نکند: فقط خانه‌ی نام خورد و دو سطره می‌شود. */
+    #print-area .sh-meta { grid-template-columns: auto minmax(0, 2.6fr) minmax(max-content, .8fr) minmax(max-content, .8fr) minmax(max-content, 1.3fr); }
+    #print-area .sh-meta .m.name { white-space: normal; min-width: 0; }
+    #print-area .sh-meta .m.name > span { overflow-wrap: anywhere; }
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 </style>
@@ -294,7 +302,7 @@
     <div class="card status">
       <div class="who">
         <div class="av" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
-        <div><b>مدیر سیستم</b><span class="sub" id="home-user" dir="auto"></span></div>
+        <div><b>مدیر سیستم</b><span class="sub" dir="ltr">super_admin</span></div>
       </div>
       <div>امروز: <b id="home-date" dir="ltr"></b></div>
     </div>
@@ -415,6 +423,7 @@
         <label class="f"><span>دوز پیش‌فرضی</span><input name="dose" list="dl-dose" dir="rtl"></label>
         <label class="f"><span>زمان مصرف پیش‌فرضی</span><input name="timing" list="dl-timing" dir="rtl"></label>
         <label class="f span2"><span>دستور مصرف پیش‌فرضی</span><input name="tariqa" list="dl-tariqa" dir="rtl"></label>
+        <label class="f span2"><span>زمان‌های مصرف پیش‌فرضی</span><input name="times" list="dl-times" dir="rtl" placeholder="صبح و شام"></label>
         <label class="f"><span>قدرت</span><input name="strength" dir="ltr" placeholder="500"></label>
         <label class="f"><span>واحد</span><input name="unit" list="dl-unit" dir="ltr" placeholder="mg"></label>
         <label class="f"><span>فرم</span><input name="form" list="dl-form" dir="ltr" placeholder="Tab"></label>
@@ -519,6 +528,7 @@
 <datalist id="dl-dose"></datalist>
 <datalist id="dl-timing"></datalist>
 <datalist id="dl-tariqa"></datalist>
+<datalist id="dl-times"><option value="صبح"><option value="شب"><option value="صبح و شام"><option value="صبح، چاشت و شام"><option value="وقت خواب"></datalist>
 <datalist id="dl-unit"><option value="mg"><option value="g"><option value="mcg"><option value="IU"><option value="ml"><option value="mg/5ml"><option value="mg/ml"><option value="%"></datalist>
 <datalist id="dl-form"><option value="Tab"><option value="Cap"><option value="Syp"><option value="Susp"><option value="Drops"><option value="Inj"><option value="Amp"><option value="Vial"><option value="Inf"><option value="Cream"><option value="Oint"><option value="Gel"><option value="Eye Drops"><option value="Ear Drops"><option value="Nasal Spray"><option value="Inhaler"><option value="Supp"><option value="Sachet"><option value="Lotion"></datalist>
 
@@ -557,8 +567,6 @@ const DEFAULT_LOGO = `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32
 /* ================= کمک‌ها ================= */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
-const FA_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
-const fa = v => String(v).replace(/\d/g, d => FA_DIGITS[d]);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 /** ارقام دری و عربی را لاتین می‌کند. */
 const latinDigits = v => String(v ?? '')
@@ -702,6 +710,7 @@ function route() {
   if (!configured()) view = 'settings';                 // بار اول
   else if (!loggedIn()) view = 'login';
   for (const v of VIEWS) $('#view-' + v).hidden = v !== view;
+  $('main').classList.toggle('wide', view === 'patients');
   $('#topbar').hidden = view === 'login';
   $('#logout-btn').hidden = !configured();
   $('#settings-btn').hidden = !configured();
@@ -723,8 +732,9 @@ $('#settings-btn').addEventListener('click', () => { location.hash = '#/settings
 
 /* ================= صفحه اصلی ================= */
 function renderHome() {
-  $('#home-user').textContent = S.settings.user;
-  $('#home-date').textContent = shamsi();
+  const d = new Date();
+  const pad = x => String(x).padStart(2, '0');
+  $('#home-date').textContent = `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
 }
 
 /* ================= سرخط و پایین نسخه ================= */
@@ -742,12 +752,16 @@ function footHtml(s = S.settings) {
 
 /* ================= نوشتن نسخه ================= */
 // نسخه‌ای که روی صفحه است. id وقتی پر است که یک بار چاپ و ذخیره شده باشد.
-const C = { id: null, sana: null, symptoms: [], labs: [], diagnosis: [], items: [], dirty: false };
+// autoSeq: شماره‌ای که برنامه خودش گذاشته؛ اگر داکتر دست نزده باشد، هنگام ذخیره از نو حساب می‌شود.
+const C = { id: null, sana: null, symptoms: [], labs: [], diagnosis: [], items: [], dirty: false, autoSeq: null };
 
+// BP مثل ویدیو دو خانه دارد (___/___) و به شکل «120/80» ذخیره می‌شود.
 function buildVitalsInputs() {
-  $('#c-vitals').innerHTML = VITALS.map(([k, label, unit]) =>
-    `<b>${label}:</b><input class="inp" name="v_${k}" dir="ltr" aria-label="${label}"><span class="u">${unit}</span>`).join('');
+  $('#c-vitals').innerHTML = VITALS.map(([k, label, unit]) => k === 'bp'
+    ? `<b>BP:</b><span class="bp"><input class="inp" name="v_bp_s" dir="ltr" aria-label="BP systolic">/<input class="inp" name="v_bp_d" dir="ltr" aria-label="BP diastolic"></span><span class="u">${unit}</span>`
+    : `<b>${label}:</b><input class="inp" name="v_${k}" dir="ltr" aria-label="${label}"><span class="u">${unit}</span>`).join('');
 }
+const splitBp = v => { const [a = '', b = ''] = String(v || '').split('/'); return [a.trim(), b.trim()]; };
 
 /** شماره‌ی مریض امروز: هر روز از ۱ شروع می‌شود. */
 function nextSeq() {
@@ -768,13 +782,14 @@ $('#sheet').addEventListener('click', e => {
   markDirty();
 });
 
-const itemLine2 = it => [it.timing, it.dose, it.tariqa].filter(Boolean).map(esc).join(' | ');
+/** مثل ویدیو: «1- Cap: Zetrol (Azithromycin) 250 mg | N=12 | قبل از غذا | طبق هدایت». هر بخش جدا (bdi) تا دری و انگلیسی جابه‌جا نشوند. */
+function itemLine(it, i) {
+  const parts = [it.n ? `N=${esc(it.n)}` : '', ...[it.timing, it.dose, it.tariqa].filter(Boolean).map(x => `<bdi>${esc(x)}</bdi>`)].filter(Boolean);
+  return `${i + 1}- <bdi>${esc(it.name)}</bdi>${parts.map(x => ' | ' + x).join('')}`;
+}
 function itemHtml(it, i, withActions) {
-  return `<li>
-    <div class="it1"><span class="nm">${i + 1}- ${esc(it.name)}</span>${it.n ? `<span class="n">N=${esc(it.n)}</span>` : ''}
-      ${withActions ? `<span class="it-acts"><button type="button" data-edit="${i}" title="تغییر" aria-label="تغییر">✎</button><button type="button" class="rm" data-del="${i}" title="حذف" aria-label="حذف">×</button></span>` : ''}</div>
-    ${itemLine2(it) ? `<div class="it2">${itemLine2(it)}</div>` : ''}
-  </li>`;
+  return `<li><div class="it1"><span class="nm">${itemLine(it, i)}</span>
+    ${withActions ? `<span class="it-acts"><button type="button" data-edit="${i}" title="تغییر" aria-label="تغییر">✎</button><button type="button" class="rm" data-del="${i}" title="حذف" aria-label="حذف">×</button></span>` : ''}</div></li>`;
 }
 function renderItems() { $('#c-items').innerHTML = C.items.map((it, i) => itemHtml(it, i, true)).join(''); }
 $('#c-items').addEventListener('click', e => {
@@ -791,7 +806,8 @@ function setMeta(rec) {
   f.age.value = rec.age || '';
   f.sex.value = rec.sex || '';
   f.notes.value = rec.notes || '';
-  for (const [k] of VITALS) f['v_' + k].value = rec.vitals?.[k] || '';
+  for (const [k] of VITALS) if (k !== 'bp') f['v_' + k].value = rec.vitals?.[k] || '';
+  [f.v_bp_s.value, f.v_bp_d.value] = splitBp(rec.vitals?.bp);
 }
 function renderComposerAll() {
   for (const k of ['symptoms', 'labs', 'diagnosis']) renderSelected(k);
@@ -801,8 +817,8 @@ function renderComposerAll() {
 }
 
 function clearComposer() {
-  Object.assign(C, { id: null, sana: null, symptoms: [], labs: [], diagnosis: [], items: [], dirty: false });
-  setMeta({ seq: nextSeq() });
+  Object.assign(C, { id: null, sana: null, symptoms: [], labs: [], diagnosis: [], items: [], dirty: false, autoSeq: String(nextSeq()) });
+  setMeta({ seq: C.autoSeq });
   renderComposerAll();
   saveDraft();
 }
@@ -812,9 +828,9 @@ function loadIntoComposer(rec) {
   Object.assign(C, {
     id: null, sana: null, dirty: true,
     symptoms: [...(rec.symptoms || [])], labs: [...(rec.labs || [])], diagnosis: [...(rec.diagnosis || [])],
-    items: (rec.items || []).map(x => ({ ...x })),
+    items: (rec.items || []).map(x => ({ ...x })), autoSeq: String(nextSeq()),
   });
-  setMeta({ ...rec, seq: nextSeq() });
+  setMeta({ ...rec, seq: C.autoSeq });
   renderComposerAll();
   saveDraft();
 }
@@ -822,15 +838,20 @@ function loadIntoComposer(rec) {
 function enterComposer() {
   $('#c-head').innerHTML = headHtml();
   $('#c-foot').innerHTML = footHtml();
-  // نسخه‌ی خالی که از دیروز مانده، تاریخ و شماره‌ی امروز را بگیرد.
-  if (!C.dirty && C.id == null) { $('#sheet').elements.seq.value = nextSeq(); $('#c-date').textContent = shamsi(); }
+  // نسخه‌ی چاپ‌شده از روز دیگر پاک شود؛ نسخه‌ی خالی شماره‌ی امروز را بگیرد.
+  const old = C.id != null ? S.rx.find(x => x.id === C.id) : null;
+  if (old && !C.dirty && old.shamsi !== shamsi()) clearComposer();
+  else if (!C.dirty && C.id == null) { C.autoSeq = String(nextSeq()); $('#sheet').elements.seq.value = C.autoSeq; }
+  $('#c-date').textContent = shamsi(C.sana || new Date());
   setTimeout(() => (!$('#sheet').elements.name.value ? $('#sheet').elements.name : $('#drug-q')).focus(), 0);
 }
 
 function readComposer() {
   const f = $('#sheet').elements;
   const vitals = {};
-  for (const [k] of VITALS) { const v = f['v_' + k].value.trim(); if (v) vitals[k] = v; }
+  for (const [k] of VITALS) { if (k === 'bp') continue; const v = f['v_' + k].value.trim(); if (v) vitals[k] = v; }
+  const bs = f.v_bp_s.value.trim(), bd = f.v_bp_d.value.trim();
+  if (bs || bd) vitals.bp = `${bs}/${bd}`;
   return {
     seq: f.seq.value.trim(), name: f.name.value.trim(), age: f.age.value.trim(), sex: f.sex.value,
     notes: f.notes.value.trim(), vitals,
@@ -852,13 +873,13 @@ let draftTimer;
 function saveDraft() {
   clearTimeout(draftTimer);
   draftTimer = setTimeout(() => {
-    DB.set('draft', { ...readComposer(), C: { id: C.id, sana: C.sana, dirty: C.dirty } }).catch(() => {});
+    DB.set('draft', { ...readComposer(), C: { id: C.id, sana: C.sana, dirty: C.dirty, autoSeq: C.autoSeq } }).catch(() => {});
   }, 400);
 }
 function restoreDraft(d) {
   if (!d) return false;
   Object.assign(C, {
-    id: d.C?.id ?? null, sana: d.C?.sana ?? null, dirty: !!d.C?.dirty,
+    id: d.C?.id ?? null, sana: d.C?.sana ?? null, dirty: !!d.C?.dirty, autoSeq: d.C?.autoSeq ?? null,
     symptoms: d.symptoms || [], labs: d.labs || [], diagnosis: d.diagnosis || [], items: d.items || [],
   });
   if (C.id != null && !S.rx.some(r => r.id === C.id)) { C.id = null; C.sana = null; }
@@ -867,10 +888,22 @@ function restoreDraft(d) {
   return true;
 }
 
-async function saveComposer() {
+async function saveComposer({ silent = false } = {}) {
   const r = readComposer();
-  if (!r.name) { toast('نام مریض را بنویسید', true); $('#sheet').elements.name.focus(); return null; }
-  if (!r.items.length && !confirm('هیچ دوایی نوشته نشده. باز هم چاپ و ذخیره شود؟')) return null;
+  if (!r.name) { if (!silent) { toast('نام مریض را بنویسید', true); $('#sheet').elements.name.focus(); } return null; }
+  if (!silent && !r.items.length && !confirm('هیچ دوایی نوشته نشده. باز هم چاپ و ذخیره شود؟')) return null;
+  // همان مریض در همان روز: نسخه‌ی قبلی تازه می‌شود. مریض دیگر روی ورق چاپ‌شده، یا ورق روز دیگر: نسخه‌ی نو.
+  if (C.id != null) {
+    const old = S.rx.find(x => x.id === C.id);
+    if (!old || norm(old.name) !== norm(r.name) || old.shamsi !== shamsi()) Object.assign(C, { id: null, sana: null, autoSeq: r.seq });
+  }
+  // شماره‌ی خودکار هنگام ذخیره از دیتابیس حساب شود (روز عوض شده، یا برنامه در دو تب باز است).
+  if (C.id == null && r.seq === String(C.autoSeq)) {
+    S.rx = await DB.all('rx');
+    sortRx();
+    r.seq = C.autoSeq = String(nextSeq());
+    $('#sheet').elements.seq.value = r.seq;
+  }
   const now = new Date().toISOString();
   const sana = C.sana || now;
   const rec = { ...r, sana, shamsi: shamsi(sana) };
@@ -881,6 +914,7 @@ async function saveComposer() {
   sortRx();
   Object.assign(C, { id: rec.id, sana: rec.sana, dirty: false });
   $('#saved-tag').textContent = 'چاپ و ذخیره شده';
+  $('#c-date').textContent = rec.shamsi;
   saveDraft();
   await learnCustom(rec);
   return rec;
@@ -898,15 +932,17 @@ $('#new-btn').addEventListener('click', () => {
   clearComposer();
   $('#sheet').elements.name.focus();
 });
-// Ctrl+P در صفحه نسخه همان «چاپ نسخه» است (ذخیره هم می‌کند).
+// Ctrl+P در صفحه نسخه همان «چاپ نسخه» است (ذخیره هم می‌کند). code برای کیبورد دری (ح) هم کار کند.
 window.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p' && !$('#view-composer').hidden) { e.preventDefault(); printComposer(); }
+  if ((e.ctrlKey || e.metaKey) && (e.code === 'KeyP' || e.key.toLowerCase() === 'p') && !$('#view-composer').hidden) { e.preventDefault(); printComposer(); }
 });
 
 /* ================= چاپ ================= */
 function sheetHtml(rec) {
-  const list = arr => arr?.length ? `<ul>${arr.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
-  const vit = VITALS.map(([k, label, unit]) => `<b>${label}:</b><span class="v">${esc(rec.vitals?.[k] || '')}</span><span class="u">${unit}</span>`).join('');
+  const list = arr => arr?.length ? `<ul>${arr.map(x => `<li dir="auto">${esc(x)}</li>`).join('')}</ul>` : '';
+  const vit = VITALS.map(([k, label, unit]) => k === 'bp'
+    ? `<b>BP:</b><span class="bp">${splitBp(rec.vitals?.bp).map(x => `<span class="v">${esc(x)}</span>`).join('/')}</span><span class="u">${unit}</span>`
+    : `<b>${label}:</b><span class="v">${esc(rec.vitals?.[k] || '')}</span><span class="u">${unit}</span>`).join('');
   return `<div class="sheet">
     <div class="sh-head">${headHtml()}</div>
     <div class="sh-meta">
@@ -929,10 +965,24 @@ function sheetHtml(rec) {
     <div class="sh-foot">${footHtml()}</div>
   </div>`;
 }
+// فقط وقتی body.printing است، چاپ به‌جای صفحه ورق نسخه را نشان می‌دهد؛ بعد از چاپ ورق پاک می‌شود
+// تا چاپ بعدی (مثلاً از منوی مرورگر) هیچ‌وقت نسخه‌ی مریض قبلی را نبرد.
 function printRecord(rec) {
   $('#print-area').innerHTML = sheetHtml(rec);
+  document.body.classList.add('printing');
   window.print();
 }
+window.addEventListener('afterprint', () => {
+  document.body.classList.remove('printing');
+  $('#print-area').innerHTML = '';
+});
+// چاپ از منوی مرورگر در صفحه‌ی نسخه: همان ورق روی صفحه چاپ و مثل «چاپ نسخه» ذخیره شود.
+window.addEventListener('beforeprint', () => {
+  if (document.body.classList.contains('printing') || $('#view-composer').hidden) return;
+  $('#print-area').innerHTML = sheetHtml({ ...readComposer(), shamsi: shamsi(C.sana || new Date()) });
+  document.body.classList.add('printing');
+  saveComposer({ silent: true }).catch(err => { console.error(err); toast('ذخیره نشد: ' + errText(err), true); });
+});
 
 /* ================= جستجوی دوا در نسخه ================= */
 let ddList = [];
@@ -981,7 +1031,8 @@ function chooseDropdown(li) {
   $('#drug-q').value = '';
   if (li.dataset.i === 'new') { openItemDialog({ name: q }, null); return; }
   const d = ddList[Number(li.dataset.i)];
-  openItemDialog({ name: d.name, dose: d.dose, timing: d.timing, tariqa: d.tariqa, n: d.n }, null);
+  const timing = [d.timing, d.times].filter(Boolean).join('، ');
+  openItemDialog({ name: d.name, dose: d.dose, timing, tariqa: d.tariqa, n: d.n }, null);
 }
 $('#drug-q').addEventListener('input', renderDropdown);
 $('#drug-q').addEventListener('keydown', e => {
@@ -1016,7 +1067,11 @@ $('#item-form').addEventListener('submit', e => {
   $('#item-dlg').close();
 });
 $$('dialog [data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
-$$('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
+// فقط وقتی بسته شود که فشار و رها کردن موس هر دو بیرون پنجره باشد (نه وقتی متن انتخاب می‌شود).
+$$('dialog').forEach(d => {
+  d.addEventListener('mousedown', e => { d._downOutside = e.target === d; });
+  d.addEventListener('click', e => { if (e.target === d && d._downOutside) d.close(); });
+});
 $('#item-dlg').addEventListener('close', () => { if (!$('#view-composer').hidden) $('#drug-q').focus(); });
 
 /* ================= انتخاب علائم، لابراتوار و تشخیص ================= */
@@ -1076,7 +1131,10 @@ function openPicker(kind, anchor) {
     e.preventDefault();
     const v = input.value.trim();
     if (!v) return;
-    const val = pickGroups(kind).flatMap(g => g.items).find(x => norm(x) === norm(v)) || v;
+    // Enter همان چیزی را می‌گیرد که در لیست دیده می‌شود؛ متن تازه فقط وقتی که لیست خالی است.
+    const q = norm(v);
+    const visible = pickGroups(kind).flatMap(g => g.items.filter(x => norm(x).includes(q) || norm(g.group).includes(q)));
+    const val = visible.find(x => norm(x) === q) || visible[0] || v;
     if (!C[kind].some(x => norm(x) === norm(val))) { C[kind].push(val); renderSelected(kind); markDirty(); }
     input.value = '';
     render();
@@ -1134,10 +1192,10 @@ function renderPatients() {
   const shown = found.slice(0, pLimit);
   const join = a => (a || []).map(esc).join(', ');
   $('#p-body').innerHTML = shown.length ? shown.map((r, i) => `<tr data-id="${r.id}">
-      <td>${fa(i + 1)}</td>
+      <td>${i + 1}</td>
       <td class="ltr">${esc(r.seq)}</td>
       <td class="nowrap"><b dir="auto">${esc(r.name)}</b></td>
-      <td>${esc(r.age)}</td>
+      <td><bdi>${esc(r.age)}</bdi></td>
       <td>${sexFa(r.sex)}</td>
       <td class="ltr nowrap">${esc(r.shamsi)}</td>
       <td class="ltr clip">${join(r.symptoms)}</td>
@@ -1151,7 +1209,7 @@ function renderPatients() {
         <button type="button" class="icon-btn blue" data-a="open" title="باز کردن در نسخه" aria-label="باز کردن در نسخه"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg></button>
       </span></td></tr>`).join('')
     : `<tr><td colspan="13" class="empty-row">${S.rx.length ? 'چیزی پیدا نشد' : 'هنوز هیچ نسخه‌ای ثبت نشده'}</td></tr>`;
-  $('#p-count').textContent = `${fa(found.length)} مورد`;
+  $('#p-count').textContent = `${found.length} مورد`;
   $('#p-more').hidden = found.length <= shown.length;
 }
 for (const id of ['#p-q', '#p-from', '#p-to']) $(id).addEventListener('input', () => { pLimit = 50; renderPatients(); });
@@ -1172,12 +1230,12 @@ $('#p-body').addEventListener('click', e => {
 });
 function openDetails(rec) {
   const row = (k, v, ltr) => v ? `<dt>${k}</dt><dd${ltr ? ' dir="ltr" style="text-align:left"' : ''}>${v}</dd>` : '';
-  const items = (rec.items || []).map((it, i) => `<div>${i + 1}- ${esc(it.name)}${it.n ? ` &nbsp; N=${esc(it.n)}` : ''}${itemLine2(it) ? `<div dir="rtl" style="text-align:right" class="sub">${itemLine2(it)}</div>` : ''}</div>`).join('');
+  const items = (rec.items || []).map((it, i) => `<div>${itemLine(it, i)}</div>`).join('');
   $('#detail-title').textContent = 'مشاهده جزئیات — ' + rec.name;
   $('#detail-body').innerHTML = `<dl class="kv">
     ${row('شماره مریضان', esc(rec.seq))}
     ${row('نام مریض', esc(rec.name))}
-    ${row('سن', esc(rec.age))}
+    ${row('سن', rec.age ? `<bdi>${esc(rec.age)}</bdi>` : '')}
     ${row('جنسیت', sexFa(rec.sex))}
     ${row('تاریخ', `<span dir="ltr">${esc(rec.shamsi)}</span>`)}
     ${row('علائم و نشانه‌ها', (rec.symptoms || []).map(esc).join(', '), true)}
@@ -1209,7 +1267,7 @@ function renderMedicines() {
   mPage = Math.max(0, Math.min(mPage, pages - 1));
   const shown = found.slice(mPage * per, mPage * per + per);
   $('#m-body').innerHTML = shown.length ? shown.map((d, i) => `<tr data-id="${d.id}">
-      <td>${fa(mPage * per + i + 1)}</td>
+      <td>${mPage * per + i + 1}</td>
       <td class="ltr"><b>${esc(d.name)}</b>${d.notes ? `<div class="sub" dir="auto">${esc(d.notes)}</div>` : ''}</td>
       <td class="ltr">${esc(d.brand)}</td>
       <td>${esc(d.dose)}</td>
@@ -1223,7 +1281,7 @@ function renderMedicines() {
         <button type="button" class="icon-btn red" data-a="del" title="حذف" aria-label="حذف"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
       </span></td></tr>`).join('')
     : `<tr><td colspan="10" class="empty-row">${S.drugs.length ? 'دوایی پیدا نشد' : 'لیست داروها خالی است'}</td></tr>`;
-  $('#m-count').textContent = `${fa(found.length.toLocaleString('en'))} مجموع | صفحه ${fa(mPage + 1)} از ${fa(pages)}`;
+  $('#m-count').textContent = `${found.length.toLocaleString('en')} مجموع | صفحه ${mPage + 1} از ${pages}`;
   $('#m-prev').disabled = mPage === 0;
   $('#m-next').disabled = mPage >= pages - 1;
 }
@@ -1232,7 +1290,7 @@ $('#m-per').addEventListener('change', () => { mPage = 0; renderMedicines(); });
 $('#m-prev').addEventListener('click', () => { mPage--; renderMedicines(); });
 $('#m-next').addEventListener('click', () => { mPage++; renderMedicines(); });
 
-const MED_FIELDS = ['name', 'dose', 'timing', 'tariqa', 'strength', 'unit', 'form', 'brand', 'notes', 'n'];
+const MED_FIELDS = ['name', 'dose', 'timing', 'tariqa', 'times', 'strength', 'unit', 'form', 'brand', 'notes', 'n'];
 function medEdit(d) {
   medEditId = d ? d.id : null;
   const f = $('#med-form').elements;
@@ -1387,7 +1445,9 @@ async function seedDrugs() {
     await DB.open();
     await loadAll();
     await seedDrugs();
-    if (!restoreDraft(await DB.get('draft'))) clearComposer();
+    // ورقی که چاپ و ذخیره شده دوباره باز نشود؛ فقط نسخه‌ی نیمه‌کاره برگردد.
+    const draft = await DB.get('draft');
+    if (!draft || (draft.C?.id != null && !draft.C.dirty) || !restoreDraft(draft)) clearComposer();
   } catch (err) {
     console.error(err);
     $('#notices').innerHTML = '<div class="notice err">این مرورگر اجازه ذخیره معلومات را نمی‌دهد. لطفاً برنامه را در Google Chrome یا Microsoft Edge باز کنید (نه در حالت Incognito).</div>';
