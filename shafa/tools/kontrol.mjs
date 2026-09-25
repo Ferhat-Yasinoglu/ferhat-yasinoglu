@@ -133,15 +133,16 @@ for (const m of (await oku('js/uygulama.js')).matchAll(/anahtar:\s*'([^']+)'/g))
 }
 
 // 6f. Önekle kurulan öbür anahtarlar: Ayarlar'daki antet alanları
-// (`t('ayar.' + anahtar)` ve ipucu için `…_ipucu`), QR seçenekleri ve Clinical
-// ölçümleri. Antete ikinci telefon eklenince iki alanın etiketi de ipucu da
-// sözlüğe girmedi; hekim Ayarlar'da «İkinci telefon» diye Türkçe okudu.
-const antetGovde = ayarlarKaynak.match(/const ANTET_ALANLARI\s*=\s*\[(.*?)\n\];/s);
-if (!antetGovde) hataVer('ayarlar.js: ANTET_ALANLARI okunamadı — antet etiketleri doğrulanamıyor');
+// (`t('ayar.' + anahtar)` ve ipucu için `…_ipucu`; liste paylasilan/antet.js'te),
+// QR seçenekleri ve Clinical ölçümleri. Antete ikinci telefon eklenince iki
+// alanın etiketi de ipucu da sözlüğe girmedi; hekim Ayarlar'da «İkinci telefon»
+// diye Türkçe okudu.
+const antetGovde = (await oku('js/paylasilan/antet.js')).match(/const ANTET_ALANLARI\s*=\s*\[(.*?)\n\];/s);
+if (!antetGovde) hataVer('paylasilan/antet.js: ANTET_ALANLARI okunamadı — antet etiketleri doğrulanamıyor');
 else {
   for (const m of antetGovde[1].matchAll(/\[\s*'(\w+)',\s*'[^']*',\s*'([^']*)'/g)) {
-    dinamik.push([`ayar.${m[1]}`, 'ANTET_ALANLARI (ayarlar.js)']);
-    if (m[2]) dinamik.push([`ayar.${m[1]}_ipucu`, 'ANTET_ALANLARI (ayarlar.js)']);
+    dinamik.push([`ayar.${m[1]}`, 'ANTET_ALANLARI (paylasilan/antet.js)']);
+    if (m[2]) dinamik.push([`ayar.${m[1]}_ipucu`, 'ANTET_ALANLARI (paylasilan/antet.js)']);
   }
 }
 for (const [yol, ad, onek] of [

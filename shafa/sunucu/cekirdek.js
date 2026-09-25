@@ -32,6 +32,7 @@ export const AYAR = Object.freeze({
   kilitTaban: DAKIKA,
   kilitTavan: SAAT,
   kilitTemizlik: GUN,
+  oturumHataSiniri: 5,
   ipPencereleri: { giris: { sayi: 60, sure: 10 * DAKIKA }, kayit: { sayi: 20, sure: SAAT } },
   ipBellekTavani: 20000,
   gunlukKayit: 300,
@@ -115,6 +116,8 @@ export function jetonKullanicisi(jeton) {
 }
 
 const oturumAnahtari = async (jeton) => 'oturum:' + hex(await ozet(utf8(jeton)));
+/** Oturumun yanlış parola sayacı ayrı bir anahtarda (bkz. girisGerekli). */
+const hataAnahtari = (oturum) => 'hata:' + oturum.slice('oturum:'.length);
 
 // --- istek gövdesi ----------------------------------------------------------
 
@@ -276,6 +279,8 @@ export class HesapCekirdek {
   constructor(depo) {
     this.depo = depo;
     this.yuklendi = null;
+    /** Oturum başına yanlış parola sayısının bellek kopyası (bkz. girisGerekli). */
+    this.oturumHatalari = new Map();
   }
 
   /* Bu nesnenin durumu (hesap, kasa başlığı, yazım temposu) bellekte tutulur.
@@ -308,12 +313,22 @@ export class HesapCekirdek {
     return { tuz, ozet: await this.ozetle(tuz, anahtarB64) };
   }
 
-  /** `giris` ya da `kurtarma` anahtarı hesaptakiyle tutuyor mu? Hesap yoksa
-   *  sahte tuzla aynı iş yapılır ve false döner. */
+  /**
+   * `giris` ya da `kurtarma` anahtarı hesaptakiyle tutuyorsa DOĞRULANAN hesap
+   * kaydını, tutmuyorsa null döndürür. Hesap yoksa sahte tuzla aynı iş yapılır.
+   *
+   * Dönen kayıt await'ten ÖNCE alınmış olandır ve çağıranlar hep onu
+   * kullanır (sirlariDegistir'e o gider). Döndükten sonra `this.hesap`
+   * okunsaydı, arada başka bir istek hesabı değiştirdiğinde (kurtarma, parola)
+   * ESKİ kodla doğrulanmış istek YENİ kaydın üstüne yazabilirdi: tek
+   * kullanımlık kurtarma kodu aynı anda gelen iki istekle iki kez kullanılırdı.
+   * Böyle bir yarışta sirlariDegistir'in `this.hesap !== h` denetimi 409 verir.
+   */
   async anahtarTutar(tur, anahtarB64) {
     const h = this.hesap;
     const hesaplanan = await this.ozetle(h ? h[tur + 'Tuzu'] : null, anahtarB64);
-    return esitMi(hesaplanan, h ? h[tur + 'Ozeti'] : SAHTE_OZET) && !!h;
+    const tutar = esitMi(hesaplanan, h ? h[tur + 'Ozeti'] : SAHTE_OZET);
+    return tutar && h ? h : null;
   }
 
   async oturumHazirla(u) {
@@ -324,7 +339,13 @@ export class HesapCekirdek {
   /** Oturum sınırı aşılacaksa en uzun süredir kullanılmayanlar düşer. */
   async fazlaOturumlar() {
     const liste = [...(await this.depo.list({ prefix: 'oturum:' }))].sort((a, b) => a[1].son - b[1].son);
-    return liste.slice(0, Math.max(0, liste.length - AYAR.enFazlaOturum + 1)).map(([a]) => a);
+    return liste.slice(0, Math.max(0, liste.length - AYAR.enFazlaOturum + 1)).flatMap(([a]) => [a, hataAnahtari(a)]);
+  }
+
+  /** Oturum ve yanlış parola sayacı birlikte gider. */
+  oturumuSil(anahtar) {
+    this.oturumHatalari.delete(anahtar);
+    return this.depo.delete([anahtar, hataAnahtari(anahtar)]);
   }
 
   async oturumDogrula(jeton) {
@@ -335,7 +356,7 @@ export class HesapCekirdek {
     if (!o) throw new ApiHatasi(401, 'oturum');
     const simdi = Date.now();
     if (simdi - o.son > AYAR.oturumOmru) {
-      await this.yaz([this.depo.delete(anahtar)]);
+      await this.yaz([this.oturumuSil(anahtar)]);
       throw new ApiHatasi(401, 'oturum');
     }
     // Son kullanım günde en çok bir kez yazılır: her eşitlemede satır yazmasın.
@@ -365,9 +386,12 @@ export class HesapCekirdek {
 
   async giris(g) {
     await this.yukle();
-    if (!(await this.anahtarTutar('giris', g.giris))) throw new ApiHatasi(401, 'yanlis');
-    const h = this.hesap;
+    const h = await this.anahtarTutar('giris', g.giris);
+    if (!h) throw new ApiHatasi(401, 'yanlis');
     const [oturum, fazla] = await Promise.all([this.oturumHazirla(h.kullanici), this.fazlaOturumlar()]);
+    // Arada parola değiştiyse (öbür oturumlar düşürüldü) eski parolayla
+    // doğrulanmış bu giriş o düşürmeden SONRA yeni bir oturum yazmasın.
+    if (this.hesap !== h) throw new ApiHatasi(409, 'cakisma');
     const simdi = Date.now();
     const yazma = [this.depo.put(oturum.anahtar, { olusturuldu: simdi, son: simdi })];
     if (fazla.length) yazma.push(this.depo.delete(fazla));
@@ -377,8 +401,9 @@ export class HesapCekirdek {
 
   async kurtarAc(g) {
     await this.yukle();
-    if (!(await this.anahtarTutar('kurtarma', g.kurtarma))) throw new ApiHatasi(401, 'yanlis');
-    return { kurtarmaSarili: this.hesap.kurtarmaSarili };
+    const h = await this.anahtarTutar('kurtarma', g.kurtarma);
+    if (!h) throw new ApiHatasi(401, 'yanlis');
+    return { kurtarmaSarili: h.kurtarmaSarili };
   }
 
   /**
@@ -394,8 +419,12 @@ export class HesapCekirdek {
       hesaplar[tur + 'Tuzu'] = y.tuz;
     }
     const oturum = oturumlariSifirla ? await this.oturumHazirla(h.kullanici) : null;
-    const eskiler = oturumlariSifirla ? [...(await this.depo.list({ prefix: 'oturum:' })).keys()] : [];
+    const eskiler = [];
+    if (oturumlariSifirla) {
+      for (const onek of ['oturum:', 'hata:']) eskiler.push(...(await this.depo.list({ prefix: onek })).keys());
+    }
     if (this.hesap !== h) throw new ApiHatasi(409, 'cakisma');
+    if (oturumlariSifirla) this.oturumHatalari.clear();
     const hesap = { ...h, ...hesaplar, ...yama.alanlar };
     const girdiler = { hesap };
     const simdi = Date.now();
@@ -413,8 +442,8 @@ export class HesapCekirdek {
      kodu "yenilemiş gibi" yapan biri) reddedilir. */
   async kurtarBitir(g) {
     await this.yukle();
-    if (!(await this.anahtarTutar('kurtarma', g.kurtarma))) throw new ApiHatasi(401, 'yanlis');
-    const h = this.hesap;
+    const h = await this.anahtarTutar('kurtarma', g.kurtarma);
+    if (!h) throw new ApiHatasi(401, 'yanlis');
     if (await this.anahtarTutar('kurtarma', g.yeniKurtarma)) throw new ApiHatasi(400, 'gecersiz');
     return this.sirlariDegistir(h, {
       anahtarlar: { giris: g.giris, kurtarma: g.yeniKurtarma },
@@ -422,10 +451,39 @@ export class HesapCekirdek {
     }, { oturumlariSifirla: true });
   }
 
+  /**
+   * Jetonlu ve parolalı işlemler (parola değiştirme, kod yenileme, silme).
+   * Döner: doğrulanan hesap kaydı (bkz. anahtarTutar).
+   *
+   * Yanlış parola OTURUM başına sayılır, kullanıcı adının kilidine değil. O
+   * kilidi adı bilen herkes /giris'e yanlış deneme yağdırarak doldurabiliyor;
+   * bu işlemler ona bağlıyken bir yabancı saatte bir denemeyle hekimin parolayı
+   * değiştirmesini — yani çalınan bir cihazın oturumunu düşürmesini — sonsuza
+   * dek engelleyebiliyordu. Oturum sayacına ise yalnız jetonu tutan dokunabilir.
+   *
+   * Deneme sonucu beklenmeden sayılır (hesap kilidindeki gibi: paralel
+   * denemeler de tek tek), sayı bellekte eşzamanlı artar, sonra depoya yazılır.
+   * Sınıra gelen yanlışta oturum silinir: jetonu çalan biri parolayı en çok
+   * 5 kez dener, sonra yeniden girmek zorundadır ve orada hesap kilidine takılır.
+   * Sayaç oturum kaydından AYRI anahtarda: gecikmiş bir sayaç yazması düşürülmüş
+   * bir oturumu (parola değişince) geri getiremesin.
+   */
   async girisGerekli(jeton, girisB64) {
-    await this.oturumDogrula(jeton);
-    if (!(await this.anahtarTutar('giris', girisB64))) throw new ApiHatasi(401, 'yanlis');
-    return this.hesap;
+    const anahtar = await this.oturumDogrula(jeton);
+    const kayitli = Number(await this.depo.get(hataAnahtari(anahtar))) || 0;
+    const sayi = Math.max(this.oturumHatalari.get(anahtar) || 0, kayitli) + 1;
+    if (sayi > AYAR.oturumHataSiniri) throw new ApiHatasi(401, 'oturum');
+    this.oturumHatalari.set(anahtar, sayi);
+    await this.yaz([this.depo.put(hataAnahtari(anahtar), sayi)]);
+    const h = await this.anahtarTutar('giris', girisB64);
+    if (h) {
+      this.oturumHatalari.delete(anahtar);
+      await this.yaz([this.depo.delete(hataAnahtari(anahtar))]);
+      return h;
+    }
+    if (sayi < AYAR.oturumHataSiniri) throw new ApiHatasi(401, 'yanlis');
+    await this.yaz([this.oturumuSil(anahtar)]);
+    throw new ApiHatasi(401, 'oturum');
   }
 
   async kurtarmaYenile(jeton, g) {
@@ -446,12 +504,15 @@ export class HesapCekirdek {
 
   async cikis(jeton) {
     await this.yukle();
-    if (this.hesap && typeof jeton === 'string') await this.yaz([this.depo.delete(await oturumAnahtari(jeton))]);
+    if (this.hesap && typeof jeton === 'string') await this.yaz([this.oturumuSil(await oturumAnahtari(jeton))]);
     return { ok: true };
   }
 
   async sil(jeton, g) {
-    await this.girisGerekli(jeton, g.giris);
+    const h = await this.girisGerekli(jeton, g.giris);
+    // Parola arada değiştiyse eski parolayla doğrulanmış silme yapılmaz.
+    if (this.hesap !== h) throw new ApiHatasi(409, 'cakisma');
+    this.oturumHatalari.clear();
     const yazma = this.depo.deleteAll();
     this.hesap = this.bas = this.yazim = null;
     await this.yaz([yazma]);
@@ -612,8 +673,8 @@ export class SinirCekirdek {
    *
    * İlk 10 deneme serbest; 10. ve sonrakiler 60 sn × 2^(n−10) kilit bırakır
    * (en çok 1 saat). Kilit yalnız YENİ girişi durdurur: açık oturumlar
-   * eşitlemeye devam eder, yani adı bilen biri hekimin çalışan cihazlarını
-   * kilitleyemez.
+   * eşitlemeye, parola değiştirmeye ve silmeye devam eder, yani adı bilen biri
+   * hekimin çalışan cihazlarını kilitleyemez.
    */
   async kilitDene() {
     await this.yukle();

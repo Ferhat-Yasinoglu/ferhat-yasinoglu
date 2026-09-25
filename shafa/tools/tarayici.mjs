@@ -6,6 +6,7 @@
 // Playwright bu projenin bağımlılığı değil (tarayıcı indirmesi ağır): kurulu
 // değilse betik atlanır. Kurmak için: npm i -D playwright && npx playwright install chromium
 import { createRequire } from 'node:module';
+import { createServer } from 'node:http';
 import { readFile, readdir } from 'node:fs/promises';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -73,8 +74,16 @@ const resim = async (sayfa, ad, sec) => {
 // denemenin kendi uydurması; yayındaki sunucunun kodu değil.
 const DAVET = 'deneme-davet-1405';
 const sunucu = yerelSunucu({ davet: DAVET });
-await new Promise((c, r) => sunucu.once('error', r).listen(PORT, c));
-const kapat = () => { try { sunucu.close(); sunucu.closeAllConnections?.(); } catch { /* zaten kapalı */ } };
+// Yalnız geri döngü adreslerinde: aynı ağdaki biri denemenin sunucusuna
+// ulaşamasın. Sunucusuz kart denemesi aynı uygulamayı 127.0.0.2'den açıyor
+// (bu makine, ama sunucu-adresi.js'in yerel listesinde değil): o adreste
+// ikinci bir dinleyici aynı sunucuya aktarır.
+await new Promise((c, r) => sunucu.once('error', r).listen(PORT, '127.0.0.1', c));
+const ikinciAdres = createServer((istek, yanit) => sunucu.emit('request', istek, yanit));
+await new Promise((c, r) => ikinciAdres.once('error', r).listen(PORT, '127.0.0.2', c));
+const kapat = () => {
+  for (const s of [sunucu, ikinciAdres]) { try { s.close(); s.closeAllConnections?.(); } catch { /* zaten kapalı */ } }
+};
 process.on('exit', kapat);
 
 const tarayici = await chromium.launch();
@@ -3046,12 +3055,15 @@ async function cihazAc(ad, { en = 1280, boy = 900, ua } = {}) {
   acikBaglamlar.push(baglam);
   await baglam.clock.install();
   const istek = [];
+  const yazimlar = [];     // PUT /v1/veri yanıtlarının durum kodları, sırayla
   baglam.on('request', (r) => {
     const yol = new URL(r.url()).pathname;
     if (yol.startsWith('/v1/')) istek.push(`${r.method()} ${yol}`);
   });
   baglam.on('response', (r) => {
-    if (r.request().method() === 'PUT' && new URL(r.url()).pathname === '/v1/veri' && r.ok()) sonYazim = Date.now();
+    if (r.request().method() !== 'PUT' || new URL(r.url()).pathname !== '/v1/veri') return;
+    yazimlar.push(r.status());
+    if (r.ok()) sonYazim = Date.now();
   });
   const s = await baglam.newPage();
   s.on('console', (m) => {
@@ -3059,13 +3071,15 @@ async function cihazAc(ad, { en = 1280, boy = 900, ua } = {}) {
     // Sunucunun 401/409/429'u bu denemede BEKLENEN yanıtlar (yanlış parola,
     // kilit, düşen oturum); Chromium onları konsola "Failed to load resource"
     // diye yazıyor. Hekimin gördüğü Dari cümleler ayrıca denetleniyor.
-    if (/status of 4\d\d/.test(m.text()) && (m.location()?.url || '').includes('/v1/')) return;
+    // Çevrimdışı denemede (ERR_INTERNET_DISCONNECTED) ve denemenin bilerek
+    // düşürdüğü istekte (ERR_FAILED) de istek düşüyor.
+    if (/status of 4\d\d|ERR_INTERNET_DISCONNECTED|ERR_FAILED/.test(m.text()) && (m.location()?.url || '').includes('/v1/')) return;
     hatalar.push(`${ad} console: ${m.text()}`);
   });
   s.on('pageerror', (e) => hatalar.push(`${ad} pageerror: ${e.message}`));
   await s.goto(KOK + '#/ayarlar', { waitUntil: 'load' });
   await s.waitForSelector('#hesap-karti form');
-  return { ad, baglam, sayfa: s, istek, kart: s.locator('#hesap-karti') };
+  return { ad, baglam, sayfa: s, istek, yazimlar, kart: s.locator('#hesap-karti') };
 }
 
 /** Sunucunun iki PUT arası 5 sn kuralı: bir önceki yazımdan bu yana bekle. */
@@ -3126,6 +3140,27 @@ const istekBekle = async (c, istek, onceki = 0, sure = 20000) => {
   }
 };
 const sayi = (c, istek) => c.istek.filter((x) => x === istek).length;
+/** Hastayı ARAYÜZDEN ekler (depo'ya doğrudan yazmak uygulamanın değişiklik
+ *  olayını tetiklemez) ve değişiklik sayılana kadar bekler: sayılmadan saat
+ *  ileri alınırsa 2 dakikalık zamanlayıcı ileri alınan sürenin SONUNDA kurulur. */
+async function arayuzdenHasta(c, ad, soyad) {
+  await c.sayfa.evaluate(() => { location.hash = '#/hastalar'; });
+  await c.sayfa.click(`button:has-text("${T('hasta.ekle')}")`);
+  await c.sayfa.fill('.modal input[name=ad]', ad);
+  await c.sayfa.fill('.modal input[name=soyad]', soyad);
+  await c.sayfa.click('.modal .modal__ayak .btn--birincil');
+  await c.sayfa.waitForSelector('.modal', { state: 'detached' });
+  await c.sayfa.waitForFunction(async () => {
+    const { yerelDepoAc } = await import('./js/depo/idb.js');
+    const d = await yerelDepoAc();
+    return ((await d.meta()).senkronSayaci || 0) > ((await d.hesap()).esitlenenSayac || 0);
+  }, null, { timeout: 10000 });
+  await c.sayfa.waitForTimeout(300);
+}
+const hastaVar = (c, ad) => c.sayfa.waitForFunction(async (a) => {
+  const { yerelDepoAc } = await import('./js/depo/idb.js');
+  return (await (await yerelDepoAc()).listele('hastalar')).some((h) => h.ad === a);
+}, ad, { timeout: 20000 });
 const kodOku = (c) => c.sayfa.textContent('.modal--kod code.kod--buyuk');
 const modalDugmesi = (c, metin) => c.sayfa.locator(`.modal .modal__ayak button:has-text("${metin}")`);
 const basariBekle = (c, anahtar) => c.sayfa.locator(`.bildirim--basari:has-text("${T(anahtar)}")`).first().waitFor({ timeout: 30000 });
@@ -3206,20 +3241,7 @@ if (!bHastalari.includes('زرغونه آزمایشی') || bHastalari.includes('
 ok(`telefon (B, 390×844) giriş: kendi kaydı olduğu için soruldu (üç düğmeli kutu ekrana sığıyor); «${T('hesap.temizle')}» önce yedek indirtti, sonra B'nin kaydı silindi ve A'nınkiler geldi (${bHastalari.join(', ')})`);
 
 // --- 3. B'de değişiklik → 2 dk sonra kendiliğinden yükleme; A ön denetimle (veri/surum) görüp indiriyor.
-await B.sayfa.evaluate(() => { location.hash = '#/hastalar'; });
-await B.sayfa.click(`button:has-text("${T('hasta.ekle')}")`);
-await B.sayfa.fill('.modal input[name=ad]', 'نسرین');
-await B.sayfa.fill('.modal input[name=soyad]', 'دومی');
-await B.sayfa.click('.modal .modal__ayak .btn--birincil');
-await B.sayfa.waitForSelector('.modal', { state: 'detached' });
-// Kayıt sayıldı mı (gönderilmemiş değişiklik var mı)? Sayılmadan saat ileri
-// alınırsa 2 dakikalık zamanlayıcı ileri alınan sürenin SONUNDA kurulur.
-await B.sayfa.waitForFunction(async () => {
-  const { yerelDepoAc } = await import('./js/depo/idb.js');
-  const d = await yerelDepoAc();
-  return ((await d.meta()).senkronSayaci || 0) > ((await d.hesap()).esitlenenSayac || 0);
-}, null, { timeout: 10000 });
-await B.sayfa.waitForTimeout(300);
+await arayuzdenHasta(B, 'نسرین', 'دومی');
 await tempo();
 const bPut = sayi(B, 'PUT /v1/veri');
 await B.baglam.clock.runFor(2 * 60 * 1000 + 1000);
@@ -3233,10 +3255,7 @@ await A.baglam.clock.runFor(31000);
 await istekBekle(A, 'GET /v1/veri', sayi(A, 'GET /v1/veri'));
 const aTur = A.istek.slice(aOnce);
 if (aTur[0] !== 'GET /v1/veri/surum' || !aTur.includes('GET /v1/veri')) throw new Error('A ön denetimle başlamadı: ' + aTur.join(', '));
-await A.sayfa.waitForFunction(async () => {
-  const { yerelDepoAc } = await import('./js/depo/idb.js');
-  return (await (await yerelDepoAc()).listele('hastalar')).some((h) => h.ad === 'نسرین');
-}, null, { timeout: 20000 });
+await hastaVar(A, 'نسرین');
 await A.sayfa.locator(`.bildirim:has-text("${T('hesap.indi').split('{n}')[1].trim()}")`).first().waitFor({ timeout: 10000 });
 const aOnce2 = A.istek.length;
 await A.sayfa.evaluate(() => dispatchEvent(new Event('online')));
@@ -3247,10 +3266,73 @@ if (A.istek.slice(aOnce2).some((x) => x === 'GET /v1/veri' || x === 'PUT /v1/ver
 await sunucudaYok(['نسرین', 'دومی', 'زرغونه'], 'B yükleyince');
 ok(`B'deki yeni hasta 2 dk sonra kendiliğinden gitti; A internet gelince önce ${aTur[0]} sonra tam tur yaptı ve kaydı aldı (bildirimle); değişiklik yokken yalnız ön denetim; sunucuda yine yalnız şifreli veri`);
 
+// --- 3b. İki cihaz AYNI ANDA yazıyor: sunucunun yazım temposu (hesap başına
+// iki PUT arası 5 sn) kaybedene 429 veriyor. Kaybeden, hekim hiçbir şey
+// yapmadan kendiliğinden yeniden deniyor; kazanan da kaybedenin kaydını bir
+// sonraki olağan tetikte alıyor. (Önceden kaybedenin değişikliği, hekim başka
+// bir şey yazana kadar cihazda kalıyordu.)
+await arayuzdenHasta(A, 'بصیر', 'همزمان');
+await arayuzdenHasta(B, 'شکریه', 'همزمان');
+await Promise.all([A, B].map((c) => c.sayfa.evaluate(() => { location.hash = '#/ayarlar'; })));
+await tempo();
+const yazimOnce = { A: A.yazimlar.length, B: B.yazimlar.length };
+await Promise.all([A, B].map((c) => c.baglam.clock.runFor(2 * 60 * 1000 + 1000)));
+const ikisiYazdi = async () => {
+  const son = Date.now() + 30000;
+  while (A.yazimlar.length === yazimOnce.A || B.yazimlar.length === yazimOnce.B) {
+    if (Date.now() > son) throw new Error(`iki cihaz da yazmadı: A ${A.yazimlar.join(',')} B ${B.yazimlar.join(',')}`);
+    await new Promise((r) => setTimeout(r, 100));
+  }
+};
+await ikisiYazdi();
+const kaybeden = A.yazimlar.at(-1) === 200 ? B : A;
+const kazanan = kaybeden === A ? B : A;
+if (kazanan.yazimlar.at(-1) !== 200 || kaybeden.yazimlar.at(-1) !== 429) {
+  throw new Error(`aynı anda yazmada beklenen 200 + 429 değil: A ${A.yazimlar.slice(yazimOnce.A)} B ${B.yazimlar.slice(yazimOnce.B)}`);
+}
+const kaybedenYazim = kaybeden.yazimlar.length;
+await kaybeden.sayfa.waitForFunction(async () => {
+  const { yerelDepoAc } = await import('./js/depo/idb.js');
+  return ['cok_istek', ''].includes((await (await yerelDepoAc()).hesap()).hataKodu);
+}, null, { timeout: 20000 });
+const kaybedenKart = await kaybeden.kart.textContent();
+if (kaybedenKart.includes(T('hata.cok_istek').split('{')[0]) || await kaybeden.kart.locator('.uyari--hata').count()) throw new Error('geçici 429 kartta hata olarak göründü');
+// Yeniden deneme sayfanın saatiyle (sunucunun söylediği 5 sn + pay) kurulu;
+// sayfanın saati gerçek zamanla da akıyor, deneme bu arada kendiliğinden
+// olmuş olabilir. Sunucunun temposu gerçek saatle: yine 429 alırsa bir sonraki
+// deneme kurulur. Saat, kaybeden 200 alana kadar ileri alınır.
+const son429 = Date.now() + 60000;
+while (!kaybeden.yazimlar.slice(kaybedenYazim).includes(200)) {
+  if (Date.now() > son429) throw new Error(`${kaybeden.ad} kendiliğinden yeniden denemedi: ${kaybeden.yazimlar.slice(kaybedenYazim)} · ${kaybeden.istek.slice(-6).join(', ')}`);
+  await tempo();
+  await kaybeden.baglam.clock.runFor(11000);
+  await new Promise((r) => setTimeout(r, 500));
+}
+await kaybeden.sayfa.waitForFunction(async () => {
+  const { yerelDepoAc } = await import('./js/depo/idb.js');
+  const d = await yerelDepoAc();
+  const h = await d.hesap();
+  return ((await d.meta()).senkronSayaci || 0) <= (h.esitlenenSayac || 0) && !h.hataKodu;
+}, null, { timeout: 20000 });
+await tempo();
+await kazanan.sayfa.evaluate(() => dispatchEvent(new Event('online')));
+await kazanan.baglam.clock.runFor(31000);
+await hastaVar(kazanan, kaybeden === A ? 'بصیر' : 'شکریه');
+await hastaVar(kaybeden, kazanan === A ? 'بصیر' : 'شکریه');
+await sunucudaYok(['بصیر', 'شکریه', 'همزمان'], 'aynı anda yazınca');
+ok(`iki cihaz aynı anda yazdı: ${kazanan.ad} 200, ${kaybeden.ad} 429 (yazım temposu; kartta hata yok); ${kaybeden.ad} hekim hiçbir şey yapmadan yeniden denedi ve yükledi, ${kazanan.ad} bir sonraki tetikte kaydı aldı — iki hasta iki cihazda`);
+
 // --- 4. Yanlış parola ve kilit (C, Instagram'ın içinden). A bu arada eşitlemeye devam ediyor.
 const C = await cihazAc('C', { en: 390, boy: 844, ua: INSTAGRAM });
 if (!(await C.kart.textContent()).includes(T('hesap.uygulama_ici'))) throw new Error('uygulama içi tarayıcı uyarısı yok');
 await hazirYaziAra('hesap kartı (uygulama içi tarayıcı)', C.sayfa);
+// Çevrimdışıyken formun metni eşitlemeyi değil formu anlatmalı: "internet
+// gelince eşitlenir" dese hekim hesabın sonra kendiliğinden açılacağını sanır.
+await C.baglam.setOffline(true);
+await gonder(C, 'giris', { kullanici: KULLANICI, parola: P1 });
+const cevrimdisi = await formHatasi(C, 'giris');
+await C.baglam.setOffline(false);
+if (cevrimdisi !== T('hesap.ag_form')) throw new Error('çevrimdışı giriş formu: ' + cevrimdisi);
 const yanlisParola = 'این رمز درست نیست';
 await gonder(C, 'giris', { kullanici: KULLANICI, parola: yanlisParola });
 await C.sayfa.waitForFunction(() => document.querySelector('#hesap-karti')?.getAttribute('aria-busy') === 'true');
@@ -3273,7 +3355,7 @@ const aGet = sayi(A, 'GET /v1/veri');
 await A.kart.locator(`button:has-text("${T('hesap.simdi')}")`).click();
 await basariBekle(A, 'hesap.esitlendi');
 await istekBekle(A, 'GET /v1/veri', aGet);
-ok(`yanlış parola «${ilkYanlis}» (türetme sürerken «${mesgul.metin}», bütün düğmeler kapalı); 10 yanlıştan sonra doğru parola da «${kilitMetni}»; A bu arada eşitlemeye devam etti; C'de uygulama içi tarayıcı uyarısı var`);
+ok(`çevrimdışı giriş «${cevrimdisi}»; yanlış parola «${ilkYanlis}» (türetme sürerken «${mesgul.metin}», bütün düğmeler kapalı); 10 yanlıştan sonra doğru parola da «${kilitMetni}»; A bu arada eşitlemeye devam etti; C'de uygulama içi tarayıcı uyarısı var`);
 
 // --- 5. B çıkış (kayıtlar kalıyor) ve kurtarma: yeni kod ancak eski kod TUTUNCA; eski kod sonra geçmiyor.
 await B.kart.locator(`button:has-text("${T('hesap.cikis')}")`).click();
@@ -3323,9 +3405,27 @@ await B.kart.locator(`button:has-text("${T('hesap.simdi')}")`).click();
 await B.kart.locator('form[data-form=oturum]').waitFor({ timeout: 20000 });
 await gonder(B, 'oturum', { parola: P2 });
 const eskiParola = await formHatasi(B, 'oturum');
-if (eskiParola !== T('hesap.parola_yanlis')) throw new Error('oturum formunda eski parola: ' + eskiParola);
+if (eskiParola !== T('hesap.oturum_yanlis')) throw new Error('oturum formunda eski parola: ' + eskiParola);
 await gonder(B, 'oturum', { parola: P3 });
 await girisliBekle(B);
+// Yanlış parolayla yeni kod kutusu HİÇ açılmamalı: hekim geçersiz bir kodu
+// "güvenli yere yazdım" diye onaylayıp eski kâğıdı atmasın.
+const kodYenileOnce = sayi(A, 'POST /v1/kurtarma/yenile');
+await gonder(A, 'kod', { kodParola: P2 });
+const kodYanlis = await formHatasi(A, 'kod');
+if (kodYanlis !== T('hesap.parola_yanlis')) throw new Error('kod yenilemede yanlış parola: ' + kodYanlis);
+if (await A.sayfa.locator('.modal--kod').count()) throw new Error('yanlış parolada yeni kurtarma kodu gösterildi');
+if (sayi(A, 'POST /v1/kurtarma/yenile') !== kodYenileOnce) throw new Error('yanlış parola sunucuya gitti (yerelde denetlenmeliydi)');
+// Kod gösterilip onaylandıktan SONRA istek düşerse hekim, yazdığı kodun
+// geçersiz ve eskisinin geçerli olduğunu açıkça okumalı.
+await A.baglam.route('**/v1/kurtarma/yenile', (r) => r.abort());
+await gonder(A, 'kod', { kodParola: P3 });
+await A.sayfa.waitForSelector('.modal--kod');
+await A.sayfa.check('.modal--kod input[name=kodOnay]');
+await modalDugmesi(A, T('hesap.devam')).click();
+const kodKaydedilmedi = await formHatasi(A, 'kod');
+await A.baglam.unroute('**/v1/kurtarma/yenile');
+if (!kodKaydedilmedi.includes(T('hesap.kod_kaydedilmedi'))) throw new Error('onaydan sonra düşen kod yenilemesi: ' + kodKaydedilmedi);
 await gonder(A, 'kod', { kodParola: P3 });
 await A.sayfa.waitForSelector('.modal--kod');
 const kodC = await kodOku(A);
@@ -3334,7 +3434,7 @@ await modalDugmesi(A, T('hesap.devam')).click();
 await basariBekle(A, 'hesap.yeni_kod_hazir');
 if (kodC === kodB) throw new Error('yeni kurtarma kodu eskisinin aynısı');
 await hazirYaziAra('hesap kartı (girişli, gelişmiş açık)', A.sayfa);
-ok(`A parolayı değiştirdi → B'nin oturumu düştü, eski parola «${eskiParola}», yenisiyle döndü; A «${T('hesap.yeni_kod')}» ile yeni kod aldı (kutu yine önce)`);
+ok(`A parolayı değiştirdi → B'nin oturumu düştü, eski parola «${eskiParola}», yenisiyle döndü; A «${T('hesap.yeni_kod')}»: yanlış parolada kutu açılmadan «${kodYanlis}» (sunucuya gitmeden), onaydan sonra istek düşünce «${T('hesap.kod_kaydedilmedi')}», doğrusuyla yeni kod (kutu yine önce)`);
 
 // --- 8. B: silerek çıkış; yeniden giriş; Ayarlar'daki «tüm verileri sil» önce çıkış yapıyor.
 await tempo();
@@ -3390,6 +3490,9 @@ if (!(await A.sayfa.textContent('#bantlar [data-bant="hesap"]')).includes(T('hat
 ok(`sunucuya konan şifresiz paket reddedildi: A'da «${T('hata.kasa_bozuk').slice(0, 40)}…» kartta ve bantta, sahte hasta A'ya girmedi`);
 
 // --- 10. Hesabı sil (A): sunucuda hiçbir şey kalmıyor, A'nın kayıtları duruyor.
+// B de girişli: A silince B'nin kartı doğru parolayı "yanlış" demekle kalmamalı.
+await gonder(B, 'giris', { kullanici: KULLANICI, parola: P3 });
+await girisliBekle(B);
 await gonder(A, 'sil', { silParola: P3 });
 await A.sayfa.waitForSelector(`.modal:has-text("${KULLANICI}")`);
 await A.sayfa.click('.modal .modal__ayak .btn--tehlike');
@@ -3403,8 +3506,15 @@ await C.kart.locator(`button:has-text("${T('hesap.girise_don')}")`).click();
 await gonder(C, 'giris', { kullanici: KULLANICI, parola: P3 });
 const silinmisGiris = await formHatasi(C, 'giris');
 if (silinmisGiris !== T('hata.yanlis')) throw new Error('silinmiş hesaba giriş: ' + silinmisGiris);
+await B.kart.locator(`button:has-text("${T('hesap.simdi')}")`).click();
+await B.kart.locator('form[data-form=oturum]').waitFor({ timeout: 20000 });
+if (!(await B.kart.textContent()).includes(T('hata.oturum'))) throw new Error('hesap silinince B\'nin kartı: ' + (await B.kart.textContent()).slice(0, 160));
+await gonder(B, 'oturum', { parola: P3 });
+const silinmisOturum = await formHatasi(B, 'oturum');
+if (silinmisOturum !== T('hesap.oturum_yanlis')) throw new Error('hesap silinince B\'nin oturum formu: ' + silinmisOturum);
+if (!(await B.kart.locator(`button:has-text("${T('hesap.baska_hesap')}")`).count())) throw new Error('oturum formunda başka hesapla girme yok');
 for (const b of acikBaglamlar) await b.close();
-ok(`hesap silindi: sunucuda o hesaba ait tek anahtar yok, A'nın kayıtları yerinde, aynı adla giriş «${silinmisGiris}»`);
+ok(`hesap silindi: sunucuda o hesaba ait tek anahtar yok, A'nın kayıtları yerinde, aynı adla giriş «${silinmisGiris}»; girişli B «${T('hata.oturum').slice(0, 30)}…» gördü ve doğru parolaya «${silinmisOturum}» dendi (hesabın silinmiş olabileceği söyleniyor)`);
 
 await tarayici.close();
 kapat();

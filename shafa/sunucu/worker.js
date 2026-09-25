@@ -109,10 +109,10 @@ async function ipDene(env, istek, tur) {
 const kilitKutusu = async (env, u) => sinirKutusu(env, 'u:' + hex(await ozet(utf8(u))));
 
 /**
- * Hesap kilidiyle korunan işlem (giriş, parola, silme, kurtarma kodu yenileme).
- * Kilit kullanıcı adının özetine bağlı ve hesabın var olup olmadığına hiç
- * bakmıyor: bilinmeyen ad da aynı sayacı, aynı kilidi, aynı yanıtları alır.
- * Her deneme sonucu beklenmeden sayılır (kilitDene), başarı sıfırlar.
+ * Hesap kilidiyle korunan giriş. Kilit kullanıcı adının özetine bağlı ve
+ * hesabın var olup olmadığına hiç bakmıyor: bilinmeyen ad da aynı sayacı, aynı
+ * kilidi, aynı yanıtları alır. Her deneme sonucu beklenmeden sayılır
+ * (kilitDene), başarı sıfırlar.
  */
 async function kilitle(env, u, calistir) {
   const kutu = await kilitKutusu(env, u);
@@ -121,15 +121,6 @@ async function kilitle(env, u, calistir) {
   const r = await calistir();
   if (r.durum < 300) await sinirIste(kutu, 'kilit/sifirla');
   return json(r.veri, r.durum);
-}
-
-/* Jetonlu kilitli işlemlerde oturum, kilit sayacına dokunmadan ÖNCE denetlenir:
-   yoksa geçersiz jetonlarla parola denemesi yağdıran biri, parolayı hiç
-   bilmeden hekimin hesabını yeni girişlere kilitleyebilirdi. */
-async function oturumDenetle(env, u, jeton) {
-  const r = await hesapKutusu(env, u).fetch('https://hesap/v1/veri/surum', { headers: { Authorization: 'Bearer ' + jeton } });
-  await r.body?.cancel();
-  if (r.status === 401) throw new ApiHatasi(401, 'oturum');
 }
 
 // --- yollar -----------------------------------------------------------------
@@ -172,12 +163,20 @@ async function kurtarBitir(istek, env) {
   return json(r.veri, r.durum);
 }
 
-const jetonluKilitli = (islem) => async (istek, env) => {
+/* Jetonlu ve parolalı işlemler (parola değiştirme, silme, kod yenileme)
+   hesap kilidine GİRMEZ: o kilidi yalnız kullanıcı adını bilen herkes
+   doldurabiliyor ve bu işlemler ona bağlıyken bir yabancı, hekimin parolayı
+   değiştirip çalınan bir cihazı düşürmesini sonsuza dek engelleyebiliyordu.
+   Yanlış parola Hesap DO'sunda OTURUM başına sayılır (HesapCekirdek.girisGerekli). */
+const jetonluParolali = (islem) => async (istek, env) => {
   await ipDene(env, istek, 'giris');
   const { jeton, u } = jetonluKullanici(istek);
   const g = govdeDogrula(islem, await jsonOku(istek));
-  await oturumDenetle(env, u, jeton);
-  return kilitle(env, u, () => hesapIste(env, u, islem, g, jeton));
+  const r = await hesapIste(env, u, islem, g, jeton);
+  // Parolayı bilen hekim kendini kanıtladı: yabancıların doldurduğu kilit
+  // sıfırlanır, öbür cihazları (ör. parola değişince) hemen girebilsin.
+  if (r.durum < 300) await sinirIste(await kilitKutusu(env, u), 'kilit/sifirla');
+  return json(r.veri, r.durum);
 };
 
 async function cikis(istek, env) {
@@ -203,9 +202,9 @@ const YOLLAR = {
   'POST giris': giris,
   'POST kurtar/ac': kurtarAc,
   'POST kurtar/bitir': kurtarBitir,
-  'POST kurtarma/yenile': jetonluKilitli('kurtarma/yenile'),
-  'POST parola': jetonluKilitli('parola'),
-  'POST hesap/sil': jetonluKilitli('hesap/sil'),
+  'POST kurtarma/yenile': jetonluParolali('kurtarma/yenile'),
+  'POST parola': jetonluParolali('parola'),
+  'POST hesap/sil': jetonluParolali('hesap/sil'),
   'POST cikis': cikis,
   'GET veri/surum': veriAktar,
   'GET veri': veriAktar,

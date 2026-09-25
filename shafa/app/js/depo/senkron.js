@@ -42,9 +42,19 @@ const GECEN_KASA_HATALARI = ['parola', 'surum', 'gzip_yok'];
  * antet ve reçete doğrulama anahtarı bütün cihazlara yayılır, sonra her cihaz
  * onu kendi K'siyle şifreleyip "meşru" hale getirirdi. Seçenek yalnız bilerek
  * açık belge okuyan çağıranlar için (testler).
+ *
+ * `devam` (isteğe bağlı, async): turun sürmesi hâlâ isteniyor mu? YERELE
+ * yazan (içe aktarma) ve SUNUCUYA yazan (yükleme) adımlardan hemen önce
+ * sorulur; false ise tur 'iptal' ile biter. Hekim tur sürerken çıkıp bu
+ * cihazın kayıtlarını sildiyse, geç gelen indirme hesabın kayıtlarını boş
+ * cihaza geri yazmasın, yarı silinmiş cihazın derlemesi de sunucudaki kasanın
+ * üstüne yüklenmesin.
  */
-export async function senkronEt(depo, tasima, { parola, sifresizKabul = false } = {}) {
+export async function senkronEt(depo, tasima, { parola, sifresizKabul = false, devam } = {}) {
   if (!parola) throw new SenkronHatasi('parola_yok', 'Kasa parolası gerekli.');
+  const surmeli = async () => {
+    if (devam && !(await devam())) throw new SenkronHatasi('iptal', 'Eşitleme yarıda kesildi.');
+  };
 
   for (let deneme = 1; deneme <= DENEME; deneme++) {
     const { paket, surum } = await tasima.oku();
@@ -72,6 +82,7 @@ export async function senkronEt(depo, tasima, { parola, sifresizKabul = false } 
     if (uzakBelge) {
       const dogrulama = yedekDogrula(uzakBelge);
       if (!dogrulama.gecerli) throw new SenkronHatasi('uzak_bozuk', dogrulama.hatalar.join(' '));
+      await surmeli();
       const sonuc = await iceAktar(depo, uzakBelge, { strateji: 'birlestir' });
       if (!sonuc.ok) throw new SenkronHatasi('uzak_bozuk', sonuc.hatalar.join(' '));
       rapor = sonuc.rapor;
@@ -93,6 +104,7 @@ export async function senkronEt(depo, tasima, { parola, sifresizKabul = false } 
     if (degismedi) return { indirildi, yuklendi: false, rapor, cakisan, surum };
 
     const yeniPaket = await kasayaKoy(yerel, parola, { tuz: kasaTuzu(paket) });
+    await surmeli();
     try {
       const sonuc = await tasima.yaz(yeniPaket, { surum });
       return { indirildi, yuklendi: true, rapor, cakisan, surum: sonuc?.surum || '' };

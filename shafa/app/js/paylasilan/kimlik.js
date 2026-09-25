@@ -1,5 +1,6 @@
 // Kimlik ve zaman: her kaydın id'si ve zaman damgası buradan çıkar.
 // Saf modül — tarayıcıda da testte de aynı çalışır.
+import { KOD_ALFABE } from './dogrulama.js';
 
 const ALFABE = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
@@ -25,8 +26,11 @@ export function yeniId(onek = 'kyt') {
 
    crypto yoksa BİLEREK düşülmüyor: `yeniId` Math.random'a düşebilir çünkü orada
    çakışmama yetiyor. Burada üretilen şey bir ŞİFRELEME ANAHTARI — tahmin
-   edilebilir olması sessiz bir güvenlik kaybı olurdu, hata vermek yeğ. */
-const KOD_ALFABE = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+   edilebilir olması sessiz bir güvenlik kaybı olurdu, hata vermek yeğ.
+
+   Alfabe TEK kaynaktan (dogrulama.js): kurtarma kodunu okuyan kurtarmaNormal
+   (hesap-kurallari.js) alfabe dışındaki her harfi atıyor. İki kopya ayrışsaydı
+   üretilen koddan harf silinir, kod 24 harf olmaz ve kurtarma kalıcı bozulurdu. */
 
 export function kasaKoduUret(uzunluk = 20) {
   const c = globalThis.crypto;

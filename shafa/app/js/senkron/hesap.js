@@ -122,6 +122,15 @@ export async function ac(anahtar, sarili, amac, kullanici) {
   } catch { throw new HesapHatasi('anahtar_bozuk', 'Hesabın anahtarı açılamadı.'); }
 }
 
+/**
+ * Parolanın cihazdaki doğrulayıcısı: hex(SHA-256(giris)). Hesap kaydında
+ * (meta, cihaza özel) durur; yeni kurtarma kodu gösterilmeden ÖNCE parolanın
+ * doğru yazıldığı ağa çıkmadan anlaşılsın diye. Cihazda zaten K duruyor, bu
+ * ondan fazlasını vermez; çalınan cihazdan parolayı çevrimdışı denemek yine
+ * her tahminde 600 bin turluk PBKDF2 ister (sunucu kaydı sızsa da öyle).
+ */
+export const girisOzeti = async (giris) => Array.from(await sha256(String(giris)), (b) => b.toString(16).padStart(2, '0')).join('');
+
 /** Yeni kurtarma kodu: dörtlü gruplar, karışan harfler (0/O, 1/I) yok. */
 export const kurtarmaKoduUret = () => kasaKoduUret(KURTARMA_UZUNLUGU);
 

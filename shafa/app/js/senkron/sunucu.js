@@ -16,6 +16,10 @@
 // geçer; yalnız 'kota' yerelde "cihazda yer kalmadı" demek olduğu için
 // 'sunucu_dolu' olur.
 //
+// KESME: `sinyal` (AbortSignal) verilirse süren istek dışarıdan da kesilir.
+// Hesap servisi çıkışta süren eşitleme turunu böyle durduruyor; kesilen istek
+// 'iptal' olur, ağ hatası sayılmaz.
+//
 // DOM yok: fetch ve çevrimiçi bilgisi dışarıdan verilebiliyor (testler).
 import { VERI_SINIRI } from '../paylasilan/hesap-kurallari.js';
 
@@ -48,9 +52,9 @@ async function yanitHatasi(yanit) {
 
 /**
  * İstemci. `adres` sunucunun kökü (…/v1/ eklenir).
- * ortam: { fetch, cevrimici() } — verilmezse tarayıcınınkiler.
+ * ortam: { fetch, cevrimici(), sinyal } — verilmezse tarayıcınınkiler; sinyal yok.
  */
-export function sunucuIstemcisi(adres, { fetch: getir = (...a) => globalThis.fetch(...a), cevrimici = () => globalThis.navigator?.onLine !== false } = {}) {
+export function sunucuIstemcisi(adres, { fetch: getir = (...a) => globalThis.fetch(...a), cevrimici = () => globalThis.navigator?.onLine !== false, sinyal } = {}) {
   if (!adres) throw new SunucuHatasi('sunucu_adresi_yok', 'Hesap sunucusu tanımlı değil.');
   const kok = String(adres).replace(/\/+$/, '') + '/v1/';
 
@@ -59,6 +63,8 @@ export function sunucuIstemcisi(adres, { fetch: getir = (...a) => globalThis.fet
   const sayac = (sure) => {
     const denetim = new AbortController();
     let zaman = null;
+    // Dışarıdan kesme aynı denetimi keser (AbortSignal.any eski tarayıcılarda yok).
+    const disaridan = () => denetim.abort();
     const s = {
       sinyal: denetim.signal,
       asildi: false,
@@ -66,9 +72,11 @@ export function sunucuIstemcisi(adres, { fetch: getir = (...a) => globalThis.fet
         clearTimeout(zaman);
         zaman = setTimeout(() => { s.asildi = true; denetim.abort(); }, sure);
       },
-      bitir() { clearTimeout(zaman); },
+      bitir() { clearTimeout(zaman); sinyal?.removeEventListener('abort', disaridan); },
       kes() { clearTimeout(zaman); denetim.abort(); },
     };
+    sinyal?.addEventListener('abort', disaridan);
+    if (sinyal?.aborted) denetim.abort();
     s.kur();
     return s;
   };
@@ -78,6 +86,7 @@ export function sunucuIstemcisi(adres, { fetch: getir = (...a) => globalThis.fet
     // fetch ağ sorununda TypeError, kesilince AbortError atar. Başka bir
     // istisna ağ hatası değildir, "sunucu yok" diye örtülmeden yukarı çıkar.
     if (!(e instanceof TypeError) && e?.name !== 'AbortError') return e;
+    if (sinyal?.aborted) return new SunucuHatasi('iptal', 'İstek kesildi.');
     if (s.asildi) return new SunucuHatasi('zaman_asimi', 'Sunucu zamanında yanıt vermedi.');
     return cevrimici()
       ? new SunucuHatasi('sunucu_yok', 'Sunucuya ulaşılamadı.')

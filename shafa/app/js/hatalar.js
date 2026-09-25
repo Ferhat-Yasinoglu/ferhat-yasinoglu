@@ -59,8 +59,8 @@ const DEPO = {
   alinmis: 'Bu kullanıcı adı alınmış; başka bir ad seç.',
   cok_istek: 'Çok fazla deneme. {dakika} dakika sonra yeniden dene.',
   yanlis: 'Kullanıcı adı ya da parola yanlış.',
-  kilitli: 'Çok fazla yanlış deneme; bu hesap {dakika} dakika kilitli. Bu arada öbür cihazlar eşitlenmeye devam eder.',
-  oturum: 'Oturum artık geçerli değil (parola başka yerde değişmiş olabilir). Parolayı yeniden yaz.',
+  kilitli: 'Çok fazla yanlış deneme; bu hesap {dakika} dakika kilitli. Bu arada öbür cihazlar eşitlenmeye devam eder. Parolayı unuttuysan hesabı kurtarma koduyla aç («Parolayı mı unuttun?»).',
+  oturum: 'Oturum artık geçerli değil (parola başka yerde değişmiş ya da hesap silinmiş olabilir). Parolayı yeniden yaz.',
   buyuk: 'Sunucudaki kopya 20 MB sınırına ulaştı, eşitleme durdu. Dosya yedeği al.',
   // İstemcinin kendi denetimleri (senkron/hesap-servisi.js, hesap.js).
   anahtar_bozuk: 'Hesabın anahtarı açılamadı. Sunucudaki hesap kaydı bozulmuş olabilir; bu cihazdaki kayıtlar sağlam.',

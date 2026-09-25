@@ -12,6 +12,9 @@
 //                geliştirme sayfası için; aynı kökende gerekmez)
 //   DAVET_KODU   ortam değişkeni; yoksa kayıt kapalıdır (403 kayit_kapali),
 //                yayındaki sunucuyla aynı kural.
+//   HOST         dinlenen adres (varsayılan 127.0.0.1: yalnız bu bilgisayar;
+//                aynı ağdaki biri API'ye ulaşıp onu düşüremesin). Telefonda
+//                denemek için bilerek HOST=0.0.0.0 verilir.
 //
 // İstemci IP'si SOKETTEN alınır: istekle gelen CF-Connecting-IP silinir.
 // Cloudflare'de o başlığı Cloudflare yazar; burada istemci yazabilirdi ve
@@ -140,8 +143,10 @@ export function yerelSunucu({ gelistirme = false, davet = '' } = {}) {
   const env = bellekOrtami({ DAVET_KODU: davet, GELISTIRME: gelistirme ? '1' : '' });
   const kok = fileURLToPath(new URL('../app/', import.meta.url));
   const sunucu = createServer((istek, yanit) => {
-    if (!new URL(istek.url, 'http://x').pathname.startsWith('/v1/')) return statikSun(kok, istek, yanit);
-    apiSun(env, istek, yanit).catch(() => {
+    const api = new URL(istek.url, 'http://x').pathname.startsWith('/v1/');
+    // Yakalanmayan bir red Node'da süreci kapatır; tek bir bozuk istek sunucuyu
+    // (tarayıcı denemesinde denemenin kendisini) düşürmesin.
+    (api ? apiSun(env, istek, yanit) : statikSun(kok, istek, yanit)).catch(() => {
       // worker.fetch hatayı kendisi yanıta çeviriyor; buraya ancak soket koparsa düşülür.
       if (!yanit.headersSent) yanit.writeHead(500);
       yanit.end();
@@ -154,6 +159,7 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const argumanlar = process.argv.slice(2);
   const port = Number(argumanlar.find((a) => /^\d+$/.test(a)) || process.env.PORT || 8788);
   const gelistirme = argumanlar.includes('--gelistirme');
+  const host = process.env.HOST || '127.0.0.1';
   yerelSunucu({ gelistirme, davet: process.env.DAVET_KODU || '' })
-    .listen(port, () => console.log(`sunuluyor: http://localhost:${port}/  (uygulama + /v1/ API${gelistirme ? ', geliştirme CORS' : ''})`));
+    .listen(port, host, () => console.log(`sunuluyor: http://localhost:${port}/  (uygulama + /v1/ API${gelistirme ? ', geliştirme CORS' : ''}, ${host})`));
 }

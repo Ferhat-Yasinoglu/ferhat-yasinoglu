@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   esitMi, jetonUret, jetonKullanicisi, ipAnahtari, ipParcasi, akisiParcala, govdeDogrula,
-  b64urlYaz, b64urlOku, utf8, ApiHatasi,
+  b64urlYaz, b64urlOku, utf8, ApiHatasi, HesapCekirdek,
 } from '../../sunucu/cekirdek.js';
 import { anahtar, sarili } from './yardim.js';
 
@@ -100,5 +100,68 @@ describe('govdeDogrula', () => {
       expect(() => govdeDogrula('giris', g)).toThrow(ApiHatasi);
     }
     expect(() => govdeDogrula('parola', { giris: anahtar(), yeniGiris: anahtar(), yeniSarili: { iv: 'AAAA', veri: 'AAAA' } })).toThrow(ApiHatasi);
+  });
+});
+
+/** DO depolamasının en yalın taklidi: değerler kopyalanarak yazılır ve okunur. */
+class MapDepo {
+  m = new Map();
+  async get(a) {
+    if (!Array.isArray(a)) return structuredClone(this.m.get(a));
+    return new Map(a.filter((k) => this.m.has(k)).map((k) => [k, structuredClone(this.m.get(k))]));
+  }
+  async put(a, d) { for (const [k, v] of Object.entries(typeof a === 'string' ? { [a]: d } : a)) this.m.set(k, structuredClone(v)); }
+  async delete(a) { for (const k of [].concat(a)) this.m.delete(k); }
+  async list({ prefix = '' } = {}) { return new Map([...this.m].filter(([k]) => k.startsWith(prefix))); }
+  async deleteAll() { this.m.clear(); }
+}
+
+describe('eşzamanlı sır değişimi (HesapCekirdek)', () => {
+  /* İkinci istek birincinin await'leri arasına farklı derinliklerde sokulur.
+     Tek kullanımlık kod ve eski parola, hangi anda gelirse gelsin yalnız BİR
+     kez geçmeli; öbür istek 401 ya da 409 almalı. */
+  const aradan = async (n) => {
+    for (let i = 0; i < n; i++) await new Promise((c) => (n % 2 ? setImmediate(c) : process.nextTick(c)));
+  };
+  const sonuc = (p) => p.then(() => 'ok', (e) => e.kod);
+
+  it('aynı kurtarma kodu, aynı eski parola ve silme+parola: her gecikmede yalnız biri geçer', async () => {
+    for (let gecikme = 0; gecikme < 48; gecikme++) {
+      const c = new HesapCekirdek(new MapDepo());
+      const h = { kullanici: 'dr.yaris', giris: anahtar(), kurtarma: anahtar(), sarili: sarili(), kurtarmaSarili: sarili() };
+      await c.kayit(h);
+      const bitir = () => sonuc(c.kurtarBitir({ kullanici: h.kullanici, kurtarma: h.kurtarma, giris: anahtar(), sarili: sarili(), yeniKurtarma: anahtar(), yeniKurtarmaSarili: sarili() }));
+      const p1 = bitir();
+      await aradan(gecikme);
+      expect([await p1, await bitir()].filter((x) => x === 'ok')).toHaveLength(1);
+
+      const c2 = new HesapCekirdek(new MapDepo());
+      const { jeton: j2 } = await c2.kayit(h);
+      const degistir = () => sonuc(c2.parola(j2, { giris: h.giris, yeniGiris: anahtar(), yeniSarili: sarili() }));
+      const d1 = degistir();
+      await aradan(gecikme);
+      expect([await d1, await degistir()].filter((x) => x === 'ok')).toHaveLength(1);
+
+      // Silme, arada değişen parolayı eski parolayla doğrulanmış halde silmesin.
+      const c3 = new HesapCekirdek(new MapDepo());
+      const { jeton: j3 } = await c3.kayit(h);
+      const s1 = sonuc(c3.parola(j3, { giris: h.giris, yeniGiris: anahtar(), yeniSarili: sarili() }));
+      await aradan(gecikme);
+      const s2 = sonuc(c3.sil(j3, { giris: h.giris }));
+      const ikisi = [await s1, await s2];
+      expect(ikisi.filter((x) => x === 'ok')).toHaveLength(1);
+      if (ikisi[0] === 'ok') expect(c3.hesap).not.toBe(null);
+
+      // Eski parolayla giriş, parola değişimiyle yarışırsa açılan oturum
+      // değişimin düşürmesinden kurtulmamalı.
+      const c4 = new HesapCekirdek(new MapDepo());
+      const { jeton: j4 } = await c4.kayit(h);
+      const g1 = sonuc(c4.parola(j4, { giris: h.giris, yeniGiris: anahtar(), yeniSarili: sarili() }));
+      await aradan(gecikme);
+      const eskiGiris = c4.giris({ kullanici: h.kullanici, giris: h.giris }).catch(() => null);
+      expect(await g1).toBe('ok');
+      const acilan = await eskiGiris;
+      if (acilan) await expect(c4.oturumDogrula(acilan.jeton)).rejects.toMatchObject({ kod: 'oturum' });
+    }
   });
 });

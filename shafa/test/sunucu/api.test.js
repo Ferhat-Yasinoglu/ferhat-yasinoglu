@@ -254,33 +254,75 @@ describe('hesap kilidi (Sinir, kullanıcı adının özetine bağlı)', () => {
     expect(await k.depoAnahtarlari('dr.yok')).toEqual([]);
   });
 
-  it('kilit yalnız yeni girişi durdurur: açık oturum eşitlemeye devam eder', async () => {
+  it('kilit yalnız yeni girişi durdurur: açık oturum eşitler, parolayı değiştirir, kodu yeniler, hesabı siler', async () => {
     const k = kur();
     const h = await k.hesapAc();
-    for (let i = 0; i < 12; i++) { await yanlisGiris(k, 'dr.nemuna'); ilerle(1000); }
-    expect((await yanlisGiris(k, 'dr.nemuna')).veri.hata).toBe('kilitli');
+    // Yabancı yalnız adı biliyor: farklı IP'lerden yanlış girişlerle hesabı kilitler.
+    const yabanci = async () => {
+      for (let i = 0; i < 10; i++) await k.jsonIste('giris', { method: 'POST', ip: '198.51.100.' + i, govde: { kullanici: 'dr.nemuna', giris: anahtar() } });
+      expect((await yanlisGiris(k, 'dr.nemuna')).veri.hata).toBe('kilitli');
+    };
+    await yabanci();
     expect((await k.jsonIste('veri/surum', { jeton: h.jeton })).veri).toEqual({ surum: '' });
     expect((await PUT(k, h.jeton, kasaGovdesi(100), '')).veri).toEqual({ surum: '1' });
     expect((await k.iste('veri', { jeton: h.jeton })).status).toBe(200);
+    const kod = { yeniKurtarma: anahtar(), yeniKurtarmaSarili: sarili() };
+    expect((await k.jsonIste('kurtarma/yenile', { method: 'POST', jeton: h.jeton, govde: { giris: h.giris, ...kod } })).veri).toEqual({ ok: true });
+    // Parolayı bilen hekim kendini kanıtladı: yabancının kilidi sıfırlandı.
+    expect((await yanlisGiris(k, 'dr.nemuna')).veri.hata).toBe('yanlis');
+    // Çalınan cihazı düşürmek için parola değişimi kilitliyken de yapılır.
+    await yabanci();
+    const yeni = { yeniGiris: anahtar(), yeniSarili: sarili() };
+    const p = await k.jsonIste('parola', { method: 'POST', jeton: h.jeton, govde: { giris: h.giris, ...yeni } });
+    expect(p.durum).toBe(200);
+    await yabanci();
+    expect((await k.jsonIste('hesap/sil', { method: 'POST', jeton: p.veri.jeton, govde: { giris: yeni.yeniGiris } })).veri).toEqual({ ok: true });
   });
 
-  it('parola değiştirme, silme ve kurtarma kodu yenileme de kilide tabi; geçersiz oturum sayılmaz', async () => {
+  it('jetonlu işlemde yanlış parola oturum başına sayılır: 5. yanlışta oturum düşer, hesap kilidine dokunulmaz', async () => {
     const k = kur();
     const h = await k.hesapAc();
-    for (let i = 0; i < 10; i++) {
-      const r = await k.jsonIste('parola', { method: 'POST', jeton: h.jeton, govde: { giris: anahtar(), yeniGiris: anahtar(), yeniSarili: sarili() } });
-      expect(r.veri).toEqual({ hata: 'yanlis' });
-    }
-    expect((await k.jsonIste('hesap/sil', { method: 'POST', jeton: h.jeton, govde: { giris: h.giris } })).veri.hata).toBe('kilitli');
-    expect((await k.jsonIste('kurtarma/yenile', { method: 'POST', jeton: h.jeton, govde: { giris: h.giris, yeniKurtarma: anahtar(), yeniKurtarmaSarili: sarili() } })).veri.hata).toBe('kilitli');
-    // Oturumu geçersiz bir istek sayacı büyütmez.
-    const k2 = kur();
-    const h2 = await k2.hesapAc();
-    await k2.jsonIste('cikis', { method: 'POST', jeton: h2.jeton });
+    const ikinci = (await k.jsonIste('giris', { method: 'POST', govde: { kullanici: 'dr.nemuna', giris: h.giris } })).veri.jeton;
+    const yanlisParola = (jeton) => k.jsonIste('parola', { method: 'POST', jeton, govde: { giris: anahtar(), yeniGiris: anahtar(), yeniSarili: sarili() } });
+    for (let i = 1; i < AYAR.oturumHataSiniri; i++) expect((await yanlisParola(h.jeton)).veri).toEqual({ hata: 'yanlis' });
+    // Başarı sayacı sıfırlar: doğru parolayla kod yenilenir, sonra yine 4 hak var.
+    expect((await k.jsonIste('kurtarma/yenile', { method: 'POST', jeton: h.jeton, govde: { giris: h.giris, yeniKurtarma: anahtar(), yeniKurtarmaSarili: sarili() } })).veri).toEqual({ ok: true });
+    expect(await k.depoAnahtarlari('dr.nemuna')).not.toContainEqual(expect.stringMatching(/^hata:/));
+    for (let i = 1; i < AYAR.oturumHataSiniri; i++) expect((await yanlisParola(h.jeton)).veri).toEqual({ hata: 'yanlis' });
+    expect((await k.jsonIste('hesap/sil', { method: 'POST', jeton: h.jeton, govde: { giris: anahtar() } })).veri).toEqual({ hata: 'oturum' });
+    // Oturum ve sayacı gitti; doğru parola da artık bu jetonla geçmez.
+    expect((await k.jsonIste('hesap/sil', { method: 'POST', jeton: h.jeton, govde: { giris: h.giris } })).veri).toEqual({ hata: 'oturum' });
+    expect((await k.jsonIste('veri/surum', { jeton: h.jeton })).veri).toEqual({ hata: 'oturum' });
+    expect((await k.depoAnahtarlari('dr.nemuna')).filter((a) => /^(oturum|hata):/.test(a))).toHaveLength(1);
+    // Öbür oturum etkilenmez; yeni giriş için hesap kilidi temiz.
+    expect((await k.jsonIste('veri/surum', { jeton: ikinci })).durum).toBe(200);
+    const kilitAdi = 'u:' + hex(await ozet(utf8('dr.nemuna')));
+    expect(await k.depoAnahtarlari(kilitAdi, 'SINIR')).toEqual([]);
+    expect((await k.jsonIste('giris', { method: 'POST', govde: { kullanici: 'dr.nemuna', giris: h.giris } })).durum).toBe(200);
+  });
+
+  it('aynı oturumla aynı anda gönderilen 30 yanlış parola: en çok 5\'i parolaya ulaşır', async () => {
+    const k = kur();
+    const h = await k.hesapAc();
+    const deneme = vi.spyOn(k.env.HESAP.nesneler.get('dr.nemuna').cekirdek, 'anahtarTutar');
+    const sonuclar = await Promise.all(Array.from({ length: 30 }, (_, i) =>
+      k.jsonIste('parola', { method: 'POST', ip: '198.51.100.' + i, jeton: h.jeton, govde: { giris: anahtar(), yeniGiris: anahtar(), yeniSarili: sarili() } })));
+    const hatalar = sonuclar.map((r) => r.veri.hata);
+    expect(deneme).toHaveBeenCalledTimes(AYAR.oturumHataSiniri);
+    expect(hatalar.filter((x) => x === 'yanlis')).toHaveLength(AYAR.oturumHataSiniri - 1);
+    expect(hatalar.filter((x) => x === 'oturum')).toHaveLength(30 - AYAR.oturumHataSiniri + 1);
+    expect((await k.jsonIste('parola', { method: 'POST', jeton: h.jeton, govde: { giris: h.giris, yeniGiris: anahtar(), yeniSarili: sarili() } })).veri).toEqual({ hata: 'oturum' });
+  });
+
+  it('geçersiz oturumla gelen parolalı istek hiçbir sayaca dokunmaz', async () => {
+    const k = kur();
+    const h = await k.hesapAc();
+    await k.jsonIste('cikis', { method: 'POST', jeton: h.jeton });
     for (let i = 0; i < 15; i++) {
-      expect((await k2.jsonIste('parola', { method: 'POST', jeton: h2.jeton, govde: { giris: anahtar(), yeniGiris: anahtar(), yeniSarili: sarili() } })).veri).toEqual({ hata: 'oturum' });
+      expect((await k.jsonIste('parola', { method: 'POST', jeton: h.jeton, govde: { giris: anahtar(), yeniGiris: anahtar(), yeniSarili: sarili() } })).veri).toEqual({ hata: 'oturum' });
     }
-    expect((await k2.jsonIste('giris', { method: 'POST', govde: { kullanici: 'dr.nemuna', giris: h2.giris } })).durum).toBe(200);
+    expect((await k.depoAnahtarlari('dr.nemuna')).filter((a) => /^hata:/.test(a))).toEqual([]);
+    expect((await k.jsonIste('giris', { method: 'POST', govde: { kullanici: 'dr.nemuna', giris: h.giris } })).durum).toBe(200);
   });
 
   it('boşta 24 saat kalan kilit alarmla tamamen silinir', async () => {
@@ -636,7 +678,10 @@ describe('şifreli kasa (veri)', () => {
     const rb = PUT(k, h.jeton, b.akis, '');
     a.c.enqueue(kasaGovdesi(3000, 5));
     b.c.enqueue(kasaGovdesi(3000, 6));
-    await new Promise((c) => setTimeout(c, 10));
+    // İkisi de gövdeyi okumaya başlayana (oturum ve tempo denetimini geçene)
+    // kadar beklenir. Sabit 10 ms yük altında yetmiyordu: ilk yazma bitmeden
+    // ikincisi tempo denetimine bile varamıyor, 409 yerine 429 alıyordu.
+    while (!(a.c.desiredSize > 0 && b.c.desiredSize > 0)) await new Promise((c) => setTimeout(c, 1));
     // İki gövde de AYNI anda biter: sürüm denetimi ile yazma arasında await
     // olsaydı ikisi de denetimi geçip yazardı.
     a.c.close();

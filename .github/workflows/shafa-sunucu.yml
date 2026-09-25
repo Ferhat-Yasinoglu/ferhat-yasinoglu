@@ -92,6 +92,16 @@ jobs:
           [ -n "$url" ] || { echo "::error::Worker adresi bulunamadi (workers.dev alt alani acik mi?)"; exit 1; }
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Worker adresi: $url"
+          # Adres özete HEMEN yazılır: duman testi ilk dağıtımda (yeni workers.dev
+          # adresi bir dakikayı bulabiliyor) düşse bile sahip adresi özetten okur.
+          {
+            echo "## Shafa sunucusu"
+            echo
+            echo "**Adres:** \`$url\`"
+            echo
+            echo "Uygulamanın bu adresi kullanması için \`shafa/app/js/senkron/sunucu-adresi.js\` içindeki \`VARSAYILAN_SUNUCU\` ve \`app/index.html\` CSP'sindeki \`connect-src\` bu adresle güncellenmeli."
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
 
       # Davet kodu stdin'den verilir: komut satırına ve loga düşmez.
       - name: Davet kodunu yaz
@@ -101,9 +111,11 @@ jobs:
         env:
           URL: ${{ steps.dagit.outputs.url }}
         run: |
-          # Yeni dağıtımın yayılması birkaç saniye sürebilir.
-          for i in 1 2 3 4 5 6; do
-            kod="$(curl -sS -o durum.json -w '%{http_code}' "$URL/v1/durum" || echo 000)"
+          # Yeni dağıtımın yayılması sürebilir; İLK dağıtımda yeni workers.dev
+          # adresinin yanıt vermesi bir dakikayı bulabiliyor: ~2 dk denenir.
+          # `|| true`: curl bağlanamazsa -w zaten 000 yazar, ek 000 eklenmesin.
+          for i in $(seq 1 24); do
+            kod="$(curl -sS --max-time 10 -o durum.json -w '%{http_code}' "$URL/v1/durum" || true)"
             [ "$kod" = 200 ] && break
             sleep 5
           done
@@ -111,19 +123,13 @@ jobs:
           echo "GET /v1/durum → HTTP $kod $durum"
           [ "$kod" = 200 ] && [ "$durum" = '{"ok":true}' ] || { echo "::error::/v1/durum beklenen yanıtı vermedi: $kod $durum"; exit 1; }
 
-          basliklar="$(curl -sS -o /dev/null -D - -X OPTIONS "$URL/v1/veri" \
+          basliklar="$(curl -sS --max-time 10 -o /dev/null -D - -X OPTIONS "$URL/v1/veri" \
             -H "Origin: $KOKEN" -H 'Access-Control-Request-Method: PUT' \
             -H 'Access-Control-Request-Headers: authorization,if-match' | tr -d '\r')"
           echo "$basliklar"
           echo "$basliklar" | grep -qi "^access-control-allow-origin: $KOKEN\$" || { echo "::error::CORS ön-uçuşu $KOKEN kökenine izin vermedi"; exit 1; }
           echo "$basliklar" | grep -qi '^access-control-allow-headers:.*if-match' || { echo "::error::CORS ön-uçuşu If-Match başlığına izin vermedi"; exit 1; }
           {
-            echo "## Shafa sunucusu"
-            echo
-            echo "**Adres:** \`$URL\`"
-            echo
             echo "- \`GET /v1/durum\` → \`$durum\`"
             echo "- CORS ön-uçuşu \`$KOKEN\` için geçti."
-            echo
-            echo "Uygulamanın bu adresi kullanması için \`shafa/app/js/senkron/sunucu-adresi.js\` içindeki \`VARSAYILAN_SUNUCU\` ve \`app/index.html\` CSP'sindeki \`connect-src\` bu adresle güncellenmeli."
           } >> "$GITHUB_STEP_SUMMARY"

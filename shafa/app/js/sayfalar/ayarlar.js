@@ -15,6 +15,7 @@ import { hesapKarti, hesapKipi } from '../hesap-arayuz.js';
 import { kurulumKarti } from '../kurulum-arayuz.js';
 import { kagidiYazdir, QR_VARSAYILAN } from '../kagit.js';
 import { hataMetni } from '../hatalar.js';
+import { ANTET_ALANLARI } from '../paylasilan/antet.js';
 import { metniDogrula } from '../depo/dogrulama.js';
 
 /* Koleksiyon → ekranda görünecek etiket. HER yedeklenen koleksiyon burada
@@ -31,33 +32,6 @@ const KOL_ADI = {
   ilaclar: 'İlaç', hastalar: 'Hasta', receteler: 'Reçete',
   sablonlar: 'Şablon', ayarlar: 'Ayar',
 };
-
-/** Antet alanları: [anahtar, Türkçe etiket, ipucu, çokSatır?]
- *  Sıra kâğıttaki sırayla aynı: ad, ünvan, slogan, hizmetler, sabıka, iletişim. */
-const ANTET_ALANLARI = [
-  ['doktorUnvan', 'Ünvan', 'الحاج داکتر · Dr.'],
-  ['doktorAd', 'Doktor adı', 'Antetin en üstünde, büyük punto'],
-  ['doktorAdAlt', 'İkinci satır', 'Örneğin aynı adın Latin harfleriyle yazılışı'],
-  ['uzmanlik', 'Ünvan şeridi', 'Adın altındaki koyu şerit — uzmanlık alanı'],
-  ['slogan', 'Slogan', 'Antetin köşesinde; her satır ayrı yazılır', 'cok'],
-  ['sloganAlt', 'Slogan (Latin)', 'Sloganın altındaki Latin harfli satır — Your Health, Our Priority'],
-  ['klinikAdi', 'Klinik / eczane adı', 'Sloganın altında küçük satır; boş bırakılabilir'],
-  ['cagriUst', 'Amblem üst yazısı', 'Antetin sağındaki aile ambleminin üstünde — با ما'],
-  ['cagriAlt', 'Amblem alt yazısı', 'Aile ambleminin altında — به سوی زندگی سالمتر'],
-  ['hizmetler', 'Hizmetler', 'Her satır ayrı bir hizmet; sırayla EKG ve ultrason simgesi alır', 'cok'],
-  ['hizmetAlanlari', 'İlgi alanları', 'Hizmetlerin altındaki parantezli satır'],
-  ['deneyim', 'Sabıka / çalışma geçmişi', 'Hizmetlerin altındaki açık mavi şerit'],
-  ['adres', 'Adres', 'Kâğıdın altında'],
-  ['telefon', 'Telefon', 'Kâğıdın altında'],
-  ['telefon2', 'İkinci telefon', 'Varsa klinik/eczane numarası; boşsa basılmaz'],
-  ['telefonEtiket', 'Telefon etiketleri', 'İki numara varsa etiketleri, virgülle: داکتر, دواخانه'],
-  ['whatsapp', 'WhatsApp numarası', 'Boşsa telefon kullanılır'],
-  ['ulkeKodu', 'Ülke kodu', 'Afganistan 93 · Türkiye 90'],
-  ['eposta', 'E-posta', ''],
-  ['ayakEtiketleri', 'Alt rozetler', 'Virgülle ayrılmış en çok sekiz etiket; simgeler sırayla kalp, akciğer, mide, böbrek, şeker, eklem, beyin, çocuk'],
-  ['diplomaNo', 'Diploma no', 'Yalnız kayıtlarda tutulur'],
-  ['kurum', 'Kurum / hastane', 'Yalnız kayıtlarda tutulur'],
-];
 
 const QR_SECENEKLERI = [
   ['whatsapp', 'WhatsApp bağlantısı (hasta karekodu okutup yazabilir)'],
@@ -236,7 +210,7 @@ export default {
       const sonuc = el('div', { style: { marginBlockStart: 'var(--b-3)' } });
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' }, el('h2', {}, t('dogrula.baslik', 'Reçete doğrula'))),
-        el('p', { class: 'kart__alt' }, t('dogrula.alt', 'Kâğıttaki QR okutulup metni buraya yapıştırılır. Kod tutuyorsa reçete bu cihazdan çıkmıştır ve üzerinde oynanmamıştır. Kâğıtta ilaç, adet ya da doz değiştirilmişse kod tutmaz.')),
+        el('p', { class: 'kart__alt' }, t('dogrula.alt', 'Kâğıttaki QR okutulup metni buraya yapıştırılır. Kod tutuyorsa reçete senin cihazlarından birinden (bu cihaz ya da aynı hesabın cihazları) çıkmıştır ve üzerinde oynanmamıştır. Kâğıtta ilaç, adet ya da doz değiştirilmişse kod tutmaz.')),
         alan('', kutu),
         btnS('onay', t('dogrula.dugme', 'Denetle'), { class: 'btn btn--birincil', onclick: async () => {
           temizle(sonuc);
@@ -245,8 +219,8 @@ export default {
           try {
             const r = await metniDogrula(depo, metin);
             const bicim = {
-              gecerli: ['uyari--bilgi', 'basari', t('dogrula.gecerli', 'Geçerli — bu reçete bu cihazdan çıkmış ve değiştirilmemiş.')],
-              gecersiz: ['uyari--hata', 'hata', t('dogrula.gecersiz', 'TUTMUYOR — metin değiştirilmiş ya da kod başka bir cihazdan. Beklenen kod: {k}', { k: r.beklenen })],
+              gecerli: ['uyari--bilgi', 'basari', t('dogrula.gecerli', 'Geçerli — bu reçete senin cihazlarından birinden (bu cihaz ya da aynı hesabın cihazları) çıkmış ve değiştirilmemiş.')],
+              gecersiz: ['uyari--hata', 'hata', t('dogrula.gecersiz', 'TUTMUYOR — metin değiştirilmiş ya da kod başka bir cihazdan veya hesaptan. Beklenen kod: {k}', { k: r.beklenen })],
               kodsuz: ['uyari', 'uyari', t('dogrula.kodsuz', 'Metinde doğrulama kodu yok. Bu metnin kodu şu olmalıydı: {k}', { k: r.beklenen || '—' })],
             }[r.durum];
             sonuc.appendChild(el('div', { class: `uyari ${bicim[0]}` }, simge(bicim[1], { boy: 16 }), el('span', {}, bicim[2])));
@@ -397,10 +371,12 @@ export default {
           });
           if (!onay) return;
           try {
-            // Önce hesaptan çıkılır (jeton ve K silinir): yoksa bir sonraki
-            // eşitleme sunucudaki kopyayı bu boş cihaza geri indirirdi.
-            await ctx.hesap?.cikisYap();
-            await depo.hepsiniSil();
+            // Silme hesaptan çıkışın İÇİNDE: jeton ve K önce silinir, süren
+            // bir eşitleme turu durdurulup beklenir, kayıtlar ancak ondan sonra
+            // gider. Ayrı ayrı yapılınca geç biten bir tur (ya da bir sonraki
+            // tur) sunucudaki kopyayı bu boş cihaza geri indiriyordu.
+            if (ctx.hesap) await ctx.hesap.cikisYap({ sil: true });
+            else await depo.hepsiniSil();
             basari(t('ayar.hepsi_silindi', 'Bütün veriler silindi'));
             ctx.yenileMenu?.();
             ciz();

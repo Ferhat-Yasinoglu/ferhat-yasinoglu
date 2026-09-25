@@ -31,8 +31,12 @@ async function dosyaOku(yol) {
 
 /** Tek bir statik isteği yanıtlar. sunucu/yerel.mjs de uygulamayı bununla sunar. */
 export async function statikSun(kok, istek, yanit) {
-  // Yol köke hapsedilir; ".." ile dışarı çıkılamaz.
-  const ham = decodeURIComponent(new URL(istek.url, 'http://x').pathname);
+  // Yol köke hapsedilir; ".." ile dışarı çıkılamaz. Bozuk yüzde kodu
+  // (`/%E0`) URIError atar: yakalanmazsa yanıtsız kalan istek sunucuyu da
+  // (yerel.mjs'de API'yle, tarayıcı denemesinde denemenin kendi sürecini) düşürürdü.
+  let ham;
+  try { ham = decodeURIComponent(new URL(istek.url, 'http://x').pathname); }
+  catch { yanit.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' }); return yanit.end('bozuk adres'); }
   const yol = normalize(join(kok, ham));
   if (!yol.startsWith(kok)) { yanit.writeHead(403); return yanit.end(); }
   try {
@@ -48,6 +52,9 @@ export async function statikSun(kok, istek, yanit) {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const kok = resolve(process.argv[2] || 'app');
   const port = Number(process.argv[3] || 8788);
+  // Yalnız bu bilgisayardan: aynı Wi-Fi'daki biri geliştirme sunucusuna
+  // ulaşamasın. Telefonda denemek için HOST=0.0.0.0 bilerek verilir.
+  const host = process.env.HOST || '127.0.0.1';
   createServer((istek, yanit) => statikSun(kok, istek, yanit))
-    .listen(port, () => console.log(`sunuluyor: http://localhost:${port}/  (${kok})`));
+    .listen(port, host, () => console.log(`sunuluyor: http://localhost:${port}/  (${kok}, ${host})`));
 }

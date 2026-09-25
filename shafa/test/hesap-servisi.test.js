@@ -20,11 +20,20 @@ const yeniDepo = (on) => new IdbDepo(rastgeleAd(on)).ac();
 /** IndexedDB taklidi gerçek setImmediate ile ilerliyor (sahte saatten bağımsız). */
 const dinlen = async (n = 60) => { for (let i = 0; i < n; i++) await new Promise((c) => setImmediate(c)); };
 const jsonYanit = (veri, durum = 200) => new Response(JSON.stringify(veri), { status: durum, headers: { 'Content-Type': 'application/json' } });
+/** Gerçek süre isteyen bir iş (PBKDF2) bitene kadar olay döngüsünü döndürür;
+ *  sahte saat ilerlemez (performance.now taklit edilmiyor). */
+const olanaKadar = async (kosul, sure = 20000) => {
+  const son = performance.now() + sure;
+  while (!(await kosul())) {
+    if (performance.now() > son) throw new Error('beklenen durum gelmedi');
+    await new Promise((c) => setImmediate(c));
+  }
+};
 
 describe('zamanlayıcı', () => {
   afterEach(() => vi.useRealTimers());
 
-  async function kur({ girisli = true, surum = '3', cevrimici = true, sonEsitleme } = {}) {
+  async function kur({ girisli = true, surum = '3', cevrimici = true, sonEsitleme, gercekTur = false } = {}) {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
     const depo = await yeniDepo('zaman');
     const durum = { surum, cevrimici, yanit: null };
@@ -34,7 +43,7 @@ describe('zamanlayıcı', () => {
     const belge = new EventTarget();
     belge.visibilityState = 'visible';
     const servis = new HesapServisi(depo, { adres: ADRES, ortam: { fetch, cevrimici: () => durum.cevrimici }, pencere, belge, kilitler: null });
-    const tur = vi.spyOn(servis, '_tur').mockResolvedValue({});
+    const tur = gercekTur ? vi.spyOn(servis, '_tur') : vi.spyOn(servis, '_tur').mockResolvedValue({});
     if (girisli) {
       await depo.hesapKaydet({
         kullanici: 'dr.nemuna', jeton: JETON, kasa: 'K', bilinenSurum: '3', esitlenenSayac: 0,
@@ -165,6 +174,58 @@ describe('zamanlayıcı', () => {
     expect(servis._tekrar).toBe(true);
   });
 
+  /* Yazım temposu (sunucuda iki PUT arası 5 sn) ya da çakışma: iki cihaz
+     aynı anda yazınca kaybedenin değişikliği kendiliğinden yeniden gitmeli.
+     Önceden hiçbir şey yeniden denemiyordu; değişiklik hekim başka bir şey
+     yazana kadar cihazda kalıyordu. */
+  it('geçici hatadan (429 bekle) sonra tur kendiliğinden yeniden deneniyor', async () => {
+    const { depo, servis, istekler } = await kur({ gercekTur: true });
+    let put = 0;
+    servis.ortam.fetch = async (url, init = {}) => {
+      const istek = `${init.method || 'GET'} ${new URL(url).pathname}`;
+      istekler.push(istek);
+      if (istek === 'GET /v1/veri') return new Response(null, { status: 204, headers: { 'X-Surum': '' } });
+      if (istek === 'PUT /v1/veri') return ++put === 1 ? jsonYanit({ hata: 'cok_istek', bekle: 5 }, 429) : jsonYanit({ surum: '4' });
+      return jsonYanit({ surum: '3' });
+    };
+    servis.baslat();
+    await ilerle(ZAMAN.acilis);
+    await depo.kaydet('hastalar', { ad: 'Basir', soyad: 'Nuri' });
+    await ilerle(ZAMAN.degisiklik);
+    await olanaKadar(async () => put === 1 && (await depo.hesap()).hataKodu === 'cok_istek');
+    expect((await servis.hesapDurumu()).bekleyen).toBe(1);
+    await ilerle(5000 - 1);                          // sunucunun söylediği süre dolmadan yok
+    expect(put).toBe(1);
+    await ilerle(ZAMAN.tekrarSapma + 1);
+    await olanaKadar(async () => put === 2 && !servis.suruyor);
+    expect(await servis.hesapDurumu()).toMatchObject({ bekleyen: 0, hataKodu: '' });
+    servis.durdur();
+  }, 30000);
+
+  it('sunucuya ulaşılamıyorsa artan aralıkla yeniden deneniyor (30 sn, 1 dk, 2 dk… en çok 10 dk)', async () => {
+    const { servis, durum } = await kur({ surum: '4' });
+    const zamanlar = [];
+    durum.yanit = null;
+    servis.ortam.fetch = async () => { zamanlar.push(Date.now()); throw new TypeError('Failed to fetch'); };
+    servis.baslat();
+    await ilerle(ZAMAN.acilis);
+    expect(zamanlar).toHaveLength(1);
+    // Her deneme bir öncekinin hatasından `aralik` + [0, sapma) sonra.
+    let aralik = ZAMAN.tekrar;
+    for (let n = 2; n <= 8; n++) {
+      await ilerle(zamanlar.at(-1) + aralik - 1 - Date.now());
+      expect(zamanlar).toHaveLength(n - 1);
+      await ilerle(ZAMAN.tekrarSapma);
+      expect(zamanlar).toHaveLength(n);
+      aralik = Math.min(ZAMAN.tekrarTavan, aralik * 2);
+    }
+    expect(aralik).toBe(ZAMAN.tekrarTavan);
+    expect(await servis.hesapDurumu()).toMatchObject({ hataKodu: 'sunucu_yok', kaliciHata: false });
+    servis.durdur();
+    await ilerle(ZAMAN.tekrarTavan * 2);
+    expect(zamanlar).toHaveLength(8);
+  });
+
   it('durdur olayları ve sayaçları bırakıyor', async () => {
     const { servis, istekler, pencere } = await kur();
     servis.baslat();
@@ -234,7 +295,7 @@ describe('akışlar gerçek sunucu koduna karşı', () => {
     await A.depo.kaydet('hastalar', { ad: 'Zarghuna', soyad: 'Karimzada', telefon: '0700 111 222' });
     await ornekYukle(A.depo);
     const d = await A.servis.hesapDegisimi('dr.nemuna');
-    expect(d).toEqual({ soru: true, sayi: 1, onceki: '' });     // örnekler sayılmıyor
+    expect(d).toEqual({ soru: true, sayi: 1, onceki: '', antet: false });     // örnekler (örnek antet de) sayılmıyor
     await expect(A.servis.kayitOl({ kullanici: 'Dr.Nemuna', parola: P, davet: DAVET, kod }))
       .rejects.toMatchObject({ kod: 'hesap_degisimi', veri: { sayi: 1 } });
     expect(A.istek.n).toBe(0);
@@ -246,7 +307,7 @@ describe('akışlar gerçek sunucu koduna karşı', () => {
     await expect(A.servis.kayitOl({ ...k, parola: '0700123456' })).rejects.toMatchObject({ kod: 'parola_telefon' });
     await expect(A.servis.kayitOl({ ...k, parola: 'dr.nemuna-1404' })).rejects.toMatchObject({ kod: 'parola_kullanici' });
     await expect(A.servis.kayitOl({ ...k, kod: '2345' })).rejects.toMatchObject({ kod: 'kurtarma_gecersiz' });
-    await expect(A.servis.kayitOl({ ...k, davet: ' ' })).rejects.toMatchObject({ kod: 'davet' });
+    await expect(A.servis.kayitOl({ ...k, davet: ' ' })).rejects.toMatchObject({ kod: 'davet_bos' });
     expect(A.istek.n).toBe(0);
   });
 
@@ -329,38 +390,75 @@ describe('akışlar gerçek sunucu koduna karşı', () => {
     await expect(A.servis.girisYap({ kullanici: 'dr.nemuna', parola: P })).rejects.toMatchObject({ kod: 'girisli' });
   }, 30000);
 
-  it('tur sürerken çıkış yapılırsa tur sonucu da hatası da yazılmıyor', async () => {
+  /* Ortak klinik bilgisayarı, yavaş mobil hat: tur kasayı indirirken hekim
+     "bu cihazdakileri de sil" diyerek çıkıyor. Önceden tur silmeden SONRA
+     bitip hesabın bütün hastalarını boş cihaza geri yazıyordu. */
+  it('tur sürerken "sil"le çıkış: tur kesiliyor, silinen kayıtlar geri gelmiyor, sonuç da hata da yazılmıyor', async () => {
     const X = await cihaz('x', '203.0.113.10');
-    let bekle = null;
+    let kapi = null;
     let geldi;
     const asilFetch = X.servis.ortam.fetch;
-    X.servis.ortam.fetch = async (url, init) => {
-      const once = bekle?.once;
-      if (once && new URL(url).pathname === '/v1/veri') { geldi(); await once; }
+    const kesilince = (sinyal) => new Promise((_, red) => sinyal.addEventListener('abort', () => red(new DOMException('kesildi', 'AbortError'))));
+    X.servis.ortam.fetch = async (url, init = {}) => {
+      const indirme = new URL(url).pathname === '/v1/veri' && (init.method || 'GET') === 'GET';
+      // Sunucuya gitmeden takılan istek: gerçek fetch gibi kesilince düşer.
+      if (indirme && kapi?.once) { geldi(); await Promise.race([kapi.once, kesilince(init.signal)]); }
       const r = await asilFetch(url, init);
-      if (bekle?.sonra && new URL(url).pathname === '/v1/veri') { geldi(); await bekle.sonra; }
+      // Yanıt sunucuda üretildi, baytlar yavaş geliyor ve bu taklit kesmeyi
+      // DİNLEMİYOR: koruma ağ katmanına değil, turun kendisine dayanmalı.
+      if (indirme && kapi?.sonra) { geldi(); await kapi.sonra; }
       return r;
     };
     const dene = async (asama) => {
+      ilerle();
       await X.servis.girisYap({ kullanici: 'dr.nemuna', parola: P, yerel: 'ekle' });
+      expect((await soyadlar(X.depo)).length).toBeGreaterThan(0);
       let birak;
-      const kapi = new Promise((c) => { birak = c; });
+      const bekleyen = new Promise((c) => { birak = c; });
       const ulasti = new Promise((c) => { geldi = c; });
-      bekle = { [asama]: kapi };
+      kapi = { [asama]: bekleyen };
       const tur = X.servis.simdiEsitle().then(() => null, (e) => e);
       await ulasti;
-      await X.servis.cikisYap();
+      const cikis = X.servis.cikisYap({ sil: true });
+      await dinlen();
       birak();
+      await cikis;
       const sonuc = await tur;
-      bekle = null;
-      expect(await X.depo.hesap()).toMatchObject({ jeton: '', kasa: '', hataKodu: '', sonEsitleme: '' });
+      kapi = null;
+      await dinlen();
+      expect(await soyadlar(X.depo)).toEqual([]);
+      const h = await X.depo.hesap();
+      expect({ jeton: h.jeton, kasa: h.kasa, hataKodu: h.hataKodu, sonEsitleme: h.sonEsitleme, sonKullanici: h.sonKullanici })
+        .toEqual({ jeton: '', kasa: '', hataKodu: '', sonEsitleme: '', sonKullanici: '' });
       return sonuc;
     };
-    // Sunucu isteği çıkıştan SONRA işliyor: oturum düşmüş, 401 gelir.
-    expect(await dene('once')).toMatchObject({ kod: 'oturum' });
-    // Sunucu isteği çıkıştan ÖNCE işlemiş: tur başarıyla biter ama yazılmaz.
-    expect(await dene('sonra')).toBe(null);
-  }, 30000);
+    expect(await dene('once')).toMatchObject({ kod: 'iptal' });
+    expect(await dene('sonra')).toMatchObject({ kod: 'iptal' });
+
+    // Tur kayıtları YAZARKEN çıkış: silme turun bitmesini bekler; beklemeseydi
+    // içe aktarmanın silmeden sonra yazdığı kayıtlar cihazda kalırdı.
+    ilerle();
+    let yazildi;
+    let birakYaz;
+    const yazmaBasladi = new Promise((c) => { yazildi = c; });
+    const yazmaKapisi = new Promise((c) => { birakYaz = c; });
+    const asilYaz = X.depo._yaz.bind(X.depo);
+    let ilk = true;
+    X.depo._yaz = async (kol, k) => {
+      if (kol === 'hastalar' && ilk) { ilk = false; yazildi(); await yazmaKapisi; }
+      return asilYaz(kol, k);
+    };
+    const giris = X.servis.girisYap({ kullanici: 'dr.nemuna', parola: P, yerel: 'ekle' });
+    await yazmaBasladi;
+    const cikis = X.servis.cikisYap({ sil: true });
+    await dinlen();
+    birakYaz();
+    await cikis;
+    X.depo._yaz = asilYaz;
+    await giris;
+    expect(await soyadlar(X.depo)).toEqual([]);
+    expect((await X.depo.hesap()).sonKullanici).toBe('');
+  }, 60000);
 
   it('giriş bilinen sürümü sıfırlıyor: ilk tur olmasa da sonraki ön denetim turu atlamıyor', async () => {
     const Y = await cihaz('y', '203.0.113.11');
@@ -436,6 +534,15 @@ describe('akışlar gerçek sunucu koduna karşı', () => {
 
   it('kurtarma kodu yenilenince eskisi çalışmıyor', async () => {
     const kod3 = kurtarmaKoduUret();
+    // Arayüzün yolu: yeni kod ancak parola bu cihazda TUTUNCA gösterilir;
+    // yanlış parolada kutu açılmaz, sunucuya da gidilmez.
+    const sorulan = [];
+    const once = B.istek.n;
+    await expect(B.servis.kurtarmaYenile({ parola: P2, kod: async () => { sorulan.push(1); return kod3; } })).rejects.toMatchObject({ kod: 'yanlis' });
+    expect(sorulan).toEqual([]);
+    expect(B.istek.n).toBe(once);
+    await expect(B.servis.kurtarmaYenile({ parola: P3, kod: async () => null })).rejects.toMatchObject({ kod: 'iptal' });
+    expect(B.istek.n).toBe(once);
     await expect(B.servis.kurtarmaYenile({ parola: P2, kod: kod3 })).rejects.toMatchObject({ kod: 'yanlis' });
     await B.servis.kurtarmaYenile({ parola: P3, kod: kod3 });
     expect((await B.servis.hesapDurumu()).girisli).toBe(true);        // oturum sürüyor
@@ -488,4 +595,43 @@ describe('akışlar gerçek sunucu koduna karşı', () => {
     expect([...(await c.depo.list({ prefix: 'oturum:' })).keys()].length).toBe(once);
     expect((await H.depo.hesap()).jeton).toBeFalsy();
   }, 30000);
+});
+
+describe('hesap değişimi sorusu: antet ve doğrulama anahtarı da sayılıyor', () => {
+  /* Yalnız antedi doldurulmuş ortak bir cihaza başka bir hekim girince soru
+     sorulmuyordu: ilk tur o antedi (ad, telefon) ve reçete doğrulama
+     anahtarını alan alan onun hesabına, oradan bütün cihazlarına taşıyordu. */
+  const servisKur = async (on) => {
+    const depo = await yeniDepo(on);
+    const ag = [];
+    const servis = new HesapServisi(depo, {
+      adres: ADRES, ortam: { fetch: async (url) => { ag.push(url); throw new TypeError('ağ yok'); }, cevrimici: () => true },
+      pencere: null, belge: null, kilitler: null,
+    });
+    return { depo, servis, ag };
+  };
+
+  it('yalnız örnek antet sorulmuyor; hekimin yazdığı antet soruluyor ve karar verilmeden girilmiyor', async () => {
+    const { depo, servis, ag } = await servisKur('antet');
+    expect(await servis.hesapDegisimi('dr.bbb')).toEqual({ soru: false, sayi: 0, onceki: '', antet: false });
+    await ornekYukle(depo);
+    expect(await servis.hesapDegisimi('dr.bbb')).toMatchObject({ soru: false, antet: false });
+    await depo.ayarKaydet({ doktorAd: 'Dr A', klinikAdi: 'Klinik A', telefon: '0700000001' });
+    expect(await servis.hesapDegisimi('dr.bbb')).toEqual({ soru: true, sayi: 1, onceki: '', antet: true });
+    await expect(servis.girisYap({ kullanici: 'dr.bbb', parola: 'bahar gul sabah 42' }))
+      .rejects.toMatchObject({ kod: 'hesap_degisimi', veri: { sayi: 1 } });
+    expect(ag).toEqual([]);
+    // Cihaz en son bu hesapla eşitlendiyse antet onundur: soru yok.
+    await depo.hesapKaydet({ sonKullanici: 'dr.bbb' });
+    expect(await servis.hesapDegisimi('dr.bbb')).toMatchObject({ soru: false, antet: true });
+    expect((await servis.hesapDegisimi('dr.ccc')).soru).toBe(true);
+  });
+
+  it('yalnız doğrulama anahtarı ya da Clinical görseli olan cihaz da soruluyor', async () => {
+    for (const ayar of [{ dogrulamaAnahtari: 'QS1LRVk=' }, { eskiAnahtarlar: ['QS1LRVk='] }, { saglikGorseli: 'data:image/png;base64,AAAA' }]) {
+      const { depo, servis } = await servisKur('anahtar');
+      await depo.ayarKaydet(ayar);
+      expect(await servis.hesapDegisimi('dr.bbb')).toMatchObject({ soru: true, sayi: 1, antet: true });
+    }
+  });
 });

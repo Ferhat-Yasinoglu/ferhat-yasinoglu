@@ -153,6 +153,9 @@ npm run site         # yayın düzenini kurup gerçek tarayıcıda dener
 ```
 
 Tarayıcıda `?nosw=1` ile service worker atlanır (yerel geliştirmede önbellek karışmasın).
+`npm run sun` ve `npm run yerel` yalnız bu bilgisayardan erişilir (127.0.0.1): aynı
+Wi-Fi'daki biri geliştirme sunucusuna ulaşamaz. Telefonda denemek için bilerek
+`HOST=0.0.0.0 npm run yerel`.
 
 `npm run deneme` playwright ister; proje bağımlılığı değildir (tarayıcı indirmesi ağır),
 kurulu değilse betik kendini atlar:
@@ -406,10 +409,10 @@ Kimlik gövdeleri küçük JSON (≤ 4 KB), anahtarlar b64url (32 bayt), sarıl�
 | `POST giris` | – | `kullanici, giris` | `{ jeton, sarili }` | 401 `yanlis` (bilinmeyen adda da aynısı), 429 `kilitli`/`cok_istek` |
 | `POST kurtar/ac` | – | `kullanici, kurtarma` | `{ kurtarmaSarili }` | 401 `yanlis`, 429 |
 | `POST kurtar/bitir` | – | `kullanici, kurtarma, giris, sarili, yeniKurtarma, yeniKurtarmaSarili` | `{ jeton }` — bütün oturumlar düşer, eski kod geçmez | 400, 401, 429 |
-| `POST kurtarma/yenile` | Bearer | `giris, yeniKurtarma, yeniKurtarmaSarili` | `{ ok: true }` | 401 `yanlis`/`oturum`, 429 |
-| `POST parola` | Bearer | `giris, yeniGiris, yeniSarili` | `{ jeton }` — öbür oturumlar düşer | 401, 429 |
+| `POST kurtarma/yenile` | Bearer | `giris, yeniKurtarma, yeniKurtarmaSarili` | `{ ok: true }` | 401 `yanlis`/`oturum` (5. yanlışta oturum düşer), 409 `cakisma`, 429 `cok_istek` (IP) |
+| `POST parola` | Bearer | `giris, yeniGiris, yeniSarili` | `{ jeton }` — öbür oturumlar düşer | 401 `yanlis`/`oturum`, 409 `cakisma`, 429 `cok_istek` (IP) |
 | `POST cikis` | Bearer | – | `{ ok: true }` | – |
-| `POST hesap/sil` | Bearer | `giris` | `{ ok: true }` | 401, 429 |
+| `POST hesap/sil` | Bearer | `giris` | `{ ok: true }` | 401 `yanlis`/`oturum`, 409 `cakisma`, 429 `cok_istek` (IP) |
 | `GET veri/surum` | Bearer | – | `{ surum }` (`""` = kasa yok) | 401 |
 | `GET veri` | Bearer | – | ham kasa baytları, `X-Surum` başlığı; kasa yoksa 204 | 401 |
 | `PUT veri` | Bearer | ham kasa baytları + `If-Match: "<surum>"` (`""` = ilk yazma) | `{ surum }` | 400 (If-Match yok / `{"bicim":"shafa-kasa"` ile başlamıyor), 409 `cakisma`, 413 `buyuk`, 429 `cok_istek` |
@@ -436,14 +439,27 @@ istek başına 10 ms CPU).
 ### Sınırlar
 
 - **Hesap kilidi** (`Sinir`, `u:<SHA-256(ad)>`): ilk 10 deneme serbest, sonra
-  60 sn × 2^(n−10), en çok 1 saat; doğru giriş sıfırlar; 24 saat boşta kalan
+  60 sn × 2^(n−10), en çok 1 saat; doğru parola sıfırlar; 24 saat boşta kalan
   sayaç alarmla silinir. Her deneme sonucu beklenmeden sayılır: aynı anda
   gönderilen 30 denemeden yalnız 10'u parolaya ulaşır (önce denetleyip sonra
-  saymak paralel saldırıda sınırı boşa çıkarırdı). Jetonlu işlemlerde oturum
-  sayaçtan önce denetlenir; geçersiz jetonla kimse bir hesabı kilitleyemez. `giris`, `parola`, `hesap/sil`, `kurtarma/yenile`'ye
-  uygulanır, kurtarmaya uygulanmaz (120 bitlik kod tahminle bulunmaz). Var olan
-  ve olmayan ad aynı yoldan geçer. **Açık oturumları durdurmaz**: adı bilen biri
-  hekimin çalışan cihazlarını kilitleyemez.
+  saymak paralel saldırıda sınırı boşa çıkarırdı). Yalnız `giris`'e uygulanır,
+  kurtarmaya uygulanmaz (120 bitlik kod tahminle bulunmaz). Var olan ve olmayan
+  ad aynı yoldan geçer. **Açık oturumları durdurmaz**: adı bilen biri hekimin
+  çalışan cihazlarının ne eşitlemesini ne parola değiştirmesini engelleyebilir.
+- **Oturum başına parola denemesi** (`parola`, `hesap/sil`, `kurtarma/yenile`):
+  yanlış parola hesap kilidine değil o OTURUMA sayılır (`hata:<özet>`, oturum
+  kaydından ayrı anahtar); 5. yanlışta oturum silinir ve jeton `oturum` alır.
+  Önceden bu işlemler hesap kilidindeydi: yalnız adı bilen bir yabancı saatte
+  bir yanlış girişle kilidi sonsuza dek açık tutup hekimin parolayı
+  değiştirmesini — çalınan bir cihazı düşürmesini — engelleyebiliyordu. Jetonu
+  çalan biri ise en çok 5 kez dener, sonra yeniden girmek zorundadır ve hesap
+  kilidine takılır. Sayım paralel denemelerde de tek tek (30 paralel denemeden
+  5'i parolaya ulaşır). Başarılı işlem hesap kilidini de sıfırlar.
+- **Eşzamanlı sır değişimi**: anahtar hangi hesap kaydıyla doğrulandıysa yazma
+  o kayda göre yapılır; arada hesap değiştiyse (başka bir kurtarma, parola
+  değişimi) 409 `cakisma`. Tek kullanımlık kurtarma kodu aynı anda gelen iki
+  istekle iki kez kullanılamaz; eski parolayla yarışan bir giriş parola
+  değişiminin düşürmesinden kurtulamaz.
 - **IP** (16 bellek parçası, depoya yazmaz; IPv6 /64'e indirgenir): kimlik
   denemeleri 10 dakikada 60, kayıt saatte 20.
 - **Kayıt**: `DAVET_KODU` secret'ı olmadan kapalı (403 `kayit_kapali`); günde en
@@ -529,8 +545,14 @@ yalnız cihazda şifrelenmiş kasa gider. Kodun yerleri:
 - **Hesap değişimi sorusu**: girişte ya da hesap açarken bu cihazda örnek
   olmayan kayıt varsa ve cihaz en son başka bir hesapla (ya da hiç) eşitlenmişse:
   «این دستگاه N ثبت دارد. به حساب X اضافه شود؟» — «اضافه کن», «اول این دستگاه
-  را پاک کن» (önce yedek indirtir; silme ancak giriş başarılı olunca), «لغو».
-  Varsayılan eklemek değil: odak kapat düğmesinde, Enter vazgeçer.
+  را پاک کن» (önce yedek indirtir; silme ancak giriş başarılı olunca), «انصراف».
+  Varsayılan eklemek değil: odak kapat düğmesinde, Enter vazgeçer. Ayarlar da
+  sayılır (tek kayıt), ama yalnız kişisel bir şey taşıyorsa: hekimin yazdığı
+  antet (örnek antetten farklı), Clinical görseli ya da reçete doğrulama
+  anahtarı (`paylasilan/antet.js`, `kisiselAyarMi`). Yalnız antedi doldurulmuş
+  ortak bir cihazda soru sorulmasaydı o hekimin adı, telefonu ve doğrulama
+  anahtarı başka bir hekimin hesabına ve bütün cihazlarına giderdi; kutu bunu
+  ayrı bir satırla söylüyor.
 - **Kurtarma**: kullanıcı adı + kurtarma kodu + yeni parola. Yeni kurtarma kodu
   ancak eski kod sunucuda **tuttuktan sonra** gösteriliyor (kodu yanlış yazan
   hekim her denemede boşuna yeni kod yazmasın); eski kod bir daha geçmez, öbür
@@ -538,28 +560,51 @@ yalnız cihazda şifrelenmiş kasa gider. Kodun yerleri:
 - **Girişli**: «وارد شده: <ad>», son eşitleme, gönderilmemiş değişiklik sayısı,
   «همگام‌سازی اکنون», «خروج از این دستگاه» (isteğe bağlı «ثبت‌های این دستگاه را
   هم پاک کن»). «پیشرفته»: parola değiştir (öbür cihazlar yeniden sorar), yeni
-  kurtarma kodu (parola ister, kutu yine önce), hesabı sil (şifreli kopyanın
-  Cloudflare yedeklerinde 30 güne kadar durabileceğini söyler).
-- **Oturum düştü** (parola ya da kurtarma başka cihazda): kart kullanıcı adını
-  hazır tutup yalnız parolayı sorar; o zamana kadar kendiliğinden eşitleme durur.
+  kurtarma kodu (parola ister, kutu yine önce — ama parola cihazdaki
+  doğrulayıcıyla, `girisOzeti`, TUTTUKTAN sonra: yanlış parolada kutu hiç
+  açılmaz; onaydan sonra bir şey ters giderse «کد نو ثبت نشد؛ کد بازیابی قبلی
+  هنوز معتبر است»), hesabı sil (şifreli kopyanın Cloudflare yedeklerinde 30
+  güne kadar durabileceğini söyler).
+- **Çıkış tur sürerken**: çıkış önce süren turu keser (kuşak sayacı + ağ
+  isteğinin kesilmesi) ve anahtarları siler, bu sekmedeki turun bitmesini
+  bekler, «bu cihazdakileri de sil» silmesini sekmeler arası eşitleme kilidinin
+  içinde yapar. Tur, yerele (içe aktarma) ve sunucuya (yükleme) yazmadan hemen
+  önce hâlâ sürmesi gerekip gerekmediğini soruyor (`senkronEt(…, { devam })`).
+  Önceden yavaş bir hatta süren indirme silmeden sonra bitip hesabın bütün
+  hastalarını az önce silinen cihaza geri yazıyordu.
+- **Oturum düştü** (parola ya da kurtarma başka cihazda, hesap silindi): kart
+  kullanıcı adını hazır tutup yalnız parolayı sorar; o zamana kadar kendiliğinden
+  eşitleme durur. Sunucu silinmiş hesapla yanlış parolayı bilerek ayırmıyor (ad
+  sızmasın), bu yüzden bu formun "yanlış" metni hesabın başka bir cihazda
+  silinmiş olabileceğini de söyler.
 - **Kalıcı hatalar** (`buyuk`, `kasa_bozuk`, `parola`, `oturum`, `sunucu_dolu`…)
   kartta ve bantta (zil kutusu; telefonda sayfanın tepesi). İnternet yok, sunucu o
-  an yok, yazım temposu ve çakışma sessiz: kendiliğinden geçerler.
+  an yok, yazım temposu ve çakışma sessiz: kendiliğinden geçerler. Formlarda
+  (giriş, hesap açma, kurtarma) ağ hatası eşitlemeyi değil formu anlatır
+  («وقتی وصل شدید دوباره کوشش کنید»): form kendiliğinden yeniden gönderilmez.
 - **Meşgul**: anahtar türetme (600 bin tur PBKDF2) telefonda saniyeler sürüyor;
   kartın bütün düğme ve kutuları kilitlenir ve «لطفاً صبر کنید…» yazar.
 - **Boş cihaz**: reçete sayfasının karşılamasında «حساب دارید؟ وارد شوید» —
   Ayarlar'ı hesap kartında, kullanıcı adı kutusunda açar. iOS Safari sekmesi
   verisini 7 günde siler, ana ekran uygulamasının deposu ayrıdır: yeniden
   kuran hekim girişi aramadan bulmalı.
-- **«پاک کردن همه اطلاعات»** önce hesaptan çıkar (jeton ve K silinir; yoksa
-  bir sonraki tur sunucudaki kopyayı boş cihaza geri indirirdi) ve sunucudaki
+- **«حذف همه داده‌ها»** silmeyi hesaptan çıkışın içinde yapar
+  (`cikisYap({ sil: true })`: jeton ve K silinir, süren tur durdurulup beklenir;
+  yoksa bir tur sunucudaki kopyayı boş cihaza geri indirirdi) ve sunucudaki
   kopyanın durduğunu, silmek için hesabın silinmesi gerektiğini söyler.
 
 **Kendiliğinden eşitleme** yalnız girişliyken: açılıştan 1,5 sn sonra, son
 değişiklikten 2 dk sonra, internet gelince (30 sn) ve uygulamaya dönülünce
 (son tur 10 dk'dan eskiyse). Önce ucuz ön denetim (`GET veri/surum`): sunucudaki
 sürüm bilinenle aynı ve gönderilmemiş değişiklik yoksa tur hiç başlamaz.
-Sekmeler arası tek tur (`navigator.locks`). Dosya yedeğinin hatırlatması
+Sekmeler arası tek tur (`navigator.locks`). Tur geçici bir hatayla biterse
+(`cok_istek`, `cakisma`, `sunucu_yok`, `zaman_asimi`, `sunucu_hata`,
+`sunucu_dolu`) servis yeniden denemeyi kendi kurar: sunucu ne kadar
+bekleneceğini söylediyse (429 `bekle`) o kadar, yoksa 30 sn, 1, 2, 4… dk (en
+çok 10 dk), üstüne birkaç saniyelik rastgele pay. İki cihaz aynı anda
+yazınca kaybeden (sunucunun 5 sn'lik yazım temposu: 429) böylece birkaç
+saniye sonra kendiliğinden yükler; önceden değişiklik hekim başka bir şey
+yazana kadar cihazda kalıyordu. İnternet yokken (`ag`) `online` olayı bekler. Dosya yedeğinin hatırlatması
 susmuyor: hesapla eşitlenen cihazda da asıl yedek dosyadır.
 
 **Dürüst metinler** (kart, tanıtım SSS'i, `app/index.html` açıklaması): kayıtlar
@@ -658,10 +703,14 @@ açılışta Google döneminin ayarlarını (kasa kodu dahil) bir kez siliyor.
   «önce temizle» ile girişi; B'deki değişikliğin 2 dk sonra kendiliğinden
   gidip A'ya ön denetimle (`veri/surum`) geldiği; yanlış parola, meşgul hâli ve
   10 denemeden sonra Dari kilit metni — A bu arada eşitlemeye devam ediyor;
-  kurtarma (yeni kod, eski kod geçmiyor), A'nın parolayı yeniden sorması ve
-  bandı; parola değişince B'nin yeniden sorması; silerek/silmeden çıkış; «tüm
-  verileri sil»in önce çıkması; sunucuya konan şifresiz paketin reddi; hesap
-  silme. Zamanlayıcılar Playwright saatiyle ileri alınıyor.
+  iki cihazın AYNI ANDA yazması (kaybeden 429 alıp kendiliğinden yeniden
+  yüklüyor, kazanan bir sonraki tetikte alıyor); çevrimdışı giriş formunun
+  metni; kurtarma (yeni kod, eski kod geçmiyor), A'nın parolayı yeniden sorması
+  ve bandı; parola değişince B'nin yeniden sorması; yanlış parolayla yeni
+  kurtarma kodu kutusunun hiç açılmaması; silerek/silmeden çıkış; «tüm verileri
+  sil»in önce çıkması; sunucuya konan şifresiz paketin reddi; hesap silme ve
+  girişli öbür cihazın oturum formunun hesabın silinmiş olabileceğini
+  söylemesi. Zamanlayıcılar Playwright saatiyle ileri alınıyor.
 
 ## Yapılacaklar
 

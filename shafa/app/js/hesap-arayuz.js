@@ -26,6 +26,9 @@ import { t } from './i18n.js';
  *  Bir sonraki tetik yeniden dener; hekimin yapacağı bir şey yok. */
 const GECICI_HATALAR = ['ag', 'sunucu_yok', 'zaman_asimi', 'cok_istek', 'cakisma'];
 
+/** Formlarda ağa ulaşılamadı demek olan kodlar (bkz. form → goster). */
+const AG_HATALARI = ['ag', 'sunucu_yok', 'zaman_asimi'];
+
 /* Uygulama içi tarayıcılar (Facebook, Instagram, WhatsApp, Android WebView):
    depoları ayrı ve geçici, indirme ve pano da çoğu zaman sessizce çalışmıyor.
    Hekim hesabı orada açarsa kurtarma kodunu kaydedemeyebilir, kayıtlar da
@@ -133,11 +136,13 @@ export async function kurtarmaKoduGoster(ctx, { kullanici, kod }) {
  * çıkarılmıyor (birincil değil): odak kapat düğmesinde, Enter vazgeçer.
  * Döner: 'ekle' | 'temizle' | null
  */
-async function degisimSor(ctx, { sayi, kullanici }) {
+async function degisimSor(ctx, { sayi, kullanici, antet }) {
   const secim = await ctx.modal({
     baslik: t('hesap.degisim_baslik', 'Bu cihazdaki kayıtlar'),
     govde: el('div', {},
       el('p', {}, t('hesap.degisim_soru', 'Bu cihazda {n} kayıt var. {u} hesabına eklensin mi?', { n: sayi, u: yalit(kullanici) })),
+      // Antet kayıt sayısında tek satır; neyin gideceği ayrıca söylenmeli.
+      antet ? el('p', {}, t('hesap.degisim_antet', 'Bu cihazdaki antet (doktor adı, telefon…) ve reçete doğrulama anahtarı da bunlara dahil.')) : null,
       el('div', { class: 'uyari' }, simge('uyari', { boy: 16 }),
         el('span', {}, t('hesap.degisim_alt', 'Bu kayıtlar başka bir hekiminse bu hesaba ekleme: o hesabın bütün cihazlarına gider.')))),
     dugmeler: [
@@ -251,8 +256,13 @@ export function hesapKarti(ctx, durum, { yenileSayfa = () => {} } = {}) {
       temizle(hataKutusu);
       if (!e || e.kod === 'iptal') return;
       // Giriş yapmışken sunucunun 'yanlis'ı yalnız parola demek: kullanıcı adı zaten doğru.
-      const m = e.kod === 'yanlis' && yanlis ? yanlis : hataMetni(e, t('genel.islem_olmadi', 'İşlem yapılamadı'));
-      hataKutusu.appendChild(el('div', { class: 'uyari uyari--hata' }, simge('hata', { boy: 16 }), el('span', {}, m)));
+      // Ağ hatasında hataMetni eşitlemeyi anlatıyor ("internet gelince eşitlenir");
+      // bir form ise kendiliğinden yeniden gönderilmez, hesap sonra açılmaz.
+      const m = e.kod === 'yanlis' && yanlis ? yanlis
+        : AG_HATALARI.includes(e.kod) ? t('hesap.ag_form', 'İnternet ya da sunucu yok. Bağlanınca yeniden dene.')
+          : hataMetni(e, t('genel.islem_olmadi', 'İşlem yapılamadı'));
+      hataKutusu.appendChild(el('div', { class: 'uyari uyari--hata' }, simge('hata', { boy: 16 }),
+        el('span', {}, m, e.kodKaydedilmedi ? el('br') : null, e.kodKaydedilmedi ? t('hesap.kod_kaydedilmedi', 'Yeni kod kaydedilmedi; eski kurtarma kodu hâlâ geçerli.') : null)));
     };
     f.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -282,7 +292,7 @@ export function hesapKarti(ctx, durum, { yenileSayfa = () => {} } = {}) {
   /** Hesap değişimi sorusu gerekiyorsa sorar. undefined: soru yok; null: vazgeçildi. */
   async function yerelKarari(u) {
     const d = await hesap.hesapDegisimi(u);
-    return d.soru ? degisimSor(ctx, { sayi: d.sayi, kullanici: u }) : undefined;
+    return d.soru ? degisimSor(ctx, { sayi: d.sayi, kullanici: u, antet: d.antet }) : undefined;
   }
 
   const hataVer = (kod) => { const e = new Error(kod); e.kod = kod; throw e; };
@@ -387,7 +397,10 @@ export function hesapKarti(ctx, durum, { yenileSayfa = () => {} } = {}) {
       el('input', { type: 'text', name: 'kullanici', autocomplete: 'username', value: d.kullanici, hidden: true, readonly: true }),
       alan(t('hesap.parola', 'Parola'), parolaKutusu('parola', 'current-password')),
     ], {
-      metin: t('hesap.giris', 'Giriş'), simgesi: 'kilit', yanlis: t('hesap.parola_yanlis', 'Parola yanlış.'),
+      // Sunucu silinmiş hesapla yanlış parolayı bilerek ayırmıyor (ad
+      // sızmasın); hesap başka cihazda silinmişse doğru parola da bunu alır.
+      metin: t('hesap.giris', 'Giriş'), simgesi: 'kilit',
+      yanlis: t('hesap.oturum_yanlis', 'Parola yanlış ya da bu hesap başka bir cihazda silinmiş. Bu cihazdaki kayıtlar sağlam.'),
       ek: [el('button', { type: 'button', class: 'btn btn--sade', onclick: async () => { await hesap.cikisYap(); } }, t('hesap.baska_hesap', 'Başka hesapla gir'))],
     }, async (v, calis) => {
       if (!parolaNormal(v.parola)) hataVer('parola_bos');
@@ -447,9 +460,24 @@ export function hesapKarti(ctx, durum, { yenileSayfa = () => {} } = {}) {
       alan(t('hesap.parola', 'Parola'), parolaKutusu('kodParola', 'current-password')),
     ], { metin: t('hesap.yeni_kod', 'Yeni kurtarma kodu'), simgesi: 'yenile', sinif: '', yanlis }, async (v, calis, f) => {
       if (!parolaNormal(v.kodParola)) hataVer('parola_bos');
-      const kod = kurtarmaKoduUret();
-      if (!await kurtarmaKoduGoster(ctx, { kullanici: d.kullanici, kod })) return;
-      await calis(() => hesap.kurtarmaYenile({ parola: v.kodParola, kod }));
+      // Kod ancak parola tutunca gösterilir (servis çağırır). Gösterilip
+      // onaylandıktan SONRA bir şey ters giderse (ağ, oturum) hekim bunu
+      // açıkça okumalı: az önce yazdığı kod geçersiz, eski kâğıdı atmamalı.
+      let gosterildi = false;
+      try {
+        await calis(() => hesap.kurtarmaYenile({
+          parola: v.kodParola,
+          kod: async () => {
+            const kod = kurtarmaKoduUret();
+            if (!await kurtarmaKoduGoster(ctx, { kullanici: d.kullanici, kod })) return null;
+            gosterildi = true;
+            return kod;
+          },
+        }));
+      } catch (e) {
+        if (gosterildi && e && typeof e === 'object') e.kodKaydedilmedi = true;
+        throw e;
+      }
       f.reset();
       basari(t('hesap.yeni_kod_hazir', 'Yeni kurtarma kodu kaydedildi; eskisi artık çalışmaz.'));
     });
@@ -482,7 +510,10 @@ export function hesapKarti(ctx, durum, { yenileSayfa = () => {} } = {}) {
               const s = await hesap.simdiEsitle();
               const { eklendi, guncellendi } = raporToplami(s?.rapor);
               basari(eklendi + guncellendi ? senkronOzeti(s) : t('hesap.esitlendi', 'Eşitlendi.'));
-            } catch (e) { hata(hataMetni(e, t('hata.senkron_olmadi', 'Eşitleme olmadı.'))); }
+            } catch (e) {
+              // Tur sürerken çıkış yapıldı (ör. «tüm verileri sil»): söylenecek bir hata yok.
+              if (e?.kod !== 'iptal') hata(hataMetni(e, t('hata.senkron_olmadi', 'Eşitleme olmadı.')));
+            }
           }, t('hesap.esitleniyor', 'Eşitleniyor…'));
         } }),
         btnS('kapat', t('hesap.cikis', 'Bu cihazdan çık'), { class: 'btn btn--sade', onclick: cikisSor })),
