@@ -40,6 +40,14 @@ describe('receteyiSablonaCevir', () => {
     expect(sablonuUygula({ satirlar: [] }, s).satirlar[0]).toMatchObject({ zaman: 'بعد از غذا', doz: '500 mg' });
   });
 
+  it('etken maddeyi de taşır (tablodaki ad onunla kuruluyor)', () => {
+    const r = recete();
+    r.satirlar[0] = { ...r.satirlar[0], etkenMadde: 'Paracetamol' };
+    const s = receteyiSablonaCevir(r, 'T');
+    expect(s.satirlar[0].etkenMadde).toBe('Paracetamol');
+    expect(sablonuUygula({ satirlar: [] }, s).satirlar[0].etkenMadde).toBe('Paracetamol');
+  });
+
   it('bozuk adedi 1 yapar', () => {
     const s = receteyiSablonaCevir(recete({ satirlar: [{ ilacId: 'a', ilacAdi: 'X', adet: 0 }] }), 'T');
     expect(s.satirlar[0].adet).toBe(1);

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ilacEtiketi, ilacAra, muadiller, ilacDogrula, formKisa, ilacAdiFormsuz, satirAdi } from '../app/js/paylasilan/ilac.js';
+import { ilacEtiketi, ilacAra, muadiller, ilacDogrula, formKisa, ilacAdiFormsuz, satirAdi, satirGorunumu } from '../app/js/paylasilan/ilac.js';
 
 const ilac = (o) => ({ id: 'ila_1', ad: 'Parol', doz: '500 mg', form: 'tablet', ...o });
 
@@ -69,4 +69,23 @@ describe('formKisa / ilacAdiFormsuz — kâğıttaki ilaç satırı', () => {
     expect(ilacAdiFormsuz('Nurofen 400 mg', 'tablet')).toBe('Nurofen 400 mg');
   });
   it('boş adda patlamaz', () => expect(ilacAdiFormsuz(undefined, 'tablet')).toBe(''));
+});
+
+describe('satirGorunumu — formdaki tablonun ad ve güç sütunları', () => {
+  it('güç ayrı sütuna, etken madde adın yanına (tasarımdaki «Feldene (Piroxicam)»)', () => {
+    expect(satirGorunumu({ ilacAdi: 'Feldene 20 mg Kapsül', form: 'kapsul', doz: '20 mg', etkenMadde: 'Piroxicam' }))
+      .toEqual({ ad: 'Feldene (Piroxicam)', doz: '20 mg', kisa: 'Cap' });
+  });
+  it('etken madde addaysa tekrar etmiyor', () => {
+    expect(satirGorunumu({ ilacAdi: 'Paracetamol 500 mg Tablet', form: 'tablet', doz: '500 mg', etkenMadde: 'Paracetamol' }).ad).toBe('Paracetamol');
+  });
+  // Eski satırda güç yok: ad kayıttaki gibi (gücüyle) kalıyor, hiçbir şey düşmüyor.
+  it('gücü olmayan eski satırın adı olduğu gibi', () => {
+    expect(satirGorunumu({ ilacAdi: 'Brufen 400 mg Tablet', form: 'tablet', etkenMadde: 'Ibuprofen' }))
+      .toEqual({ ad: 'Brufen 400 mg (Ibuprofen)', doz: '', kisa: 'Tab' });
+  });
+  it('şekli ve etkeni bilinmeyen satır', () => {
+    expect(satirGorunumu({ ilacAdi: 'X' })).toEqual({ ad: 'X', doz: '', kisa: '' });
+    expect(satirGorunumu(null)).toEqual({ ad: '', doz: '', kisa: '' });
+  });
 });

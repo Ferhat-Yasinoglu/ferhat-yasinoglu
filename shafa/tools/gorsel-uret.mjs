@@ -151,18 +151,21 @@ async function receteDoldur(sayfa) {
   await sayfa.click('.recete-form .secim-alani');
   await sayfa.click('.ortu .liste__satir--tiklanir:has-text("محمد نعیم رحیمی")');
   await sayfa.waitForSelector('.ortu', { state: 'detached' });
-  for (const [ad, deger] of [['bp', '130/85'], ['pr', '78'], ['rr', '18'], ['bw', '74'], ['temp', '38.2'], ['spo2', '97']]) {
+  // Kan basıncı formda iki kutu (sistolik / diyastolik).
+  for (const [ad, deger] of [['bp_sis', '130'], ['bp_dia', '85'], ['pr', '78'], ['rr', '18'], ['bw', '74'], ['temp', '38.2'], ['spo2', '97']]) {
     await sayfa.fill(`input[name=olcum_${ad}]`, deger);
   }
-  await sayfa.click('.kagit-tuval [data-alan="tani"]');
-  await sayfa.click(`.modal .klinik-liste .cip-kume:not(.klinik-gecmis):not(.klinik-yaygin) .cip--secilir:has(span:text-is("${TANI.en}"))`);
-  await sayfa.click(`.modal button:has-text("${T('genel.sec')}")`);
-  await sayfa.waitForSelector('.ortu', { state: 'detached' });
-  // İki ilaç: üçüncüsünde tablo kayıyor ve ilk satır yarım görünüyordu.
-  for (const ad of ['Panadol 500', 'Glucophage']) {
-    await sayfa.click('.recete-form .ilac-bas__ekle');
-    await sayfa.fill('.modal input[name=ilacArama]', ad.split(' ')[0]);
-    await sayfa.click(`.modal .liste__satir--tiklanir:has-text("${ad}") >> nth=0`);
+  // Tanı formdaki satır içi aramadan (çip olarak görünsün); belirti ve
+  // tetkik kartları boş kalmasın diye ikişer işaret.
+  await sayfa.fill('input[name=taniArama]', TANI.en);
+  await sayfa.click(`.tani-sonuc__satir:has(.liste__baslik:text-is("${TANI.en}"))`);
+  for (const kart of ['.kart--belirti', '.kart--lab']) {
+    for (const n of [0, 1]) await sayfa.check(`${kart} input[type=checkbox] >> nth=${n}`);
+  }
+  // İki ilaç, formdaki aramadan: sonuç satırı satır kutusunu ilaç seçili açıyor.
+  for (const ad of ['Panadol', 'Glucophage']) {
+    await sayfa.fill('.recete-form input[name=ilacArama]', ad);
+    await sayfa.click(`.ilac-sonuc__satir:has(.liste__baslik:text-is("${ad}")) >> nth=0`);
     await sayfa.click(`.modal button:has-text("${T('genel.ekle')}")`);
     await sayfa.waitForSelector('.ortu', { state: 'detached' });
   }

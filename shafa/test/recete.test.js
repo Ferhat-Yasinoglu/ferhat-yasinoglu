@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   receteOzet, receteNoUret, receteDogrula, bosRecete,
   receteUyarilari, receteMetni, doluOlcumler, OLCUMLER, sikIlaclar, SURE_ONERILERI,
-  bosSatir, sonKullanimlar, sonKullanim,
+  bosSatir, sonKullanimlar, sonKullanim, bpBol, bpBirlestir,
 } from '../app/js/paylasilan/recete.js';
 import { ilacEtiketi } from '../app/js/paylasilan/ilac.js';
 
@@ -225,5 +225,30 @@ describe('sonKullanimlar — hekimin kendi son kullanımı', () => {
     const h = sonKullanimlar([recete('2026-09-10', [satir({ kullanim: 'روزانه 2 بار' })])]);
     expect(sonKullanim(h, { ...ilac, id: 'ila_yeni' }).kullanim).toBe('روزانه 2 بار');
     expect(sonKullanim(h, { ...ilac, id: 'ila_yeni', form: 'surup' })).toBeNull();
+  });
+});
+
+describe('bpBol / bpBirlestir — iki kutu, tek metin', () => {
+  it('bölüyor ve birleştiriyor', () => {
+    expect(bpBol('130/85')).toEqual(['130', '85']);
+    expect(bpBirlestir('130', '85')).toBe('130/85');
+  });
+  it('boş iki kutu boş metin; yalnız sistolik «130/»', () => {
+    expect(bpBirlestir('', '')).toBe('');
+    expect(bpBirlestir('  ', '')).toBe('');
+    expect(bpBirlestir('130', '')).toBe('130/');
+    expect(bpBol('')).toEqual(['', '']);
+    expect(bpBol(undefined)).toEqual(['', '']);
+  });
+  // «/»suz eski değer bütünüyle ilk kutuda: kesilmiyor, bir şey atılmıyor.
+  it('eski serbest metin ilk kutuya bütün olarak düşüyor', () => {
+    expect(bpBol('بالا (نشسته)')).toEqual(['بالا (نشسته)', '']);
+  });
+  it('«/» içeren her değerde gidiş-dönüş aynı metni veriyor', () => {
+    for (const v of ['118/76', '130 / 85', ' 120/80 ', '120/80 (نشسته)', '130/', '/85', '1/2/3']) {
+      expect(bpBirlestir(...bpBol(v))).toBe(v);
+    }
+    // Tek başına eğik çizgi değer değil: iki kutu boş, metin boş.
+    expect(bpBirlestir(...bpBol('/'))).toBe('');
   });
 });

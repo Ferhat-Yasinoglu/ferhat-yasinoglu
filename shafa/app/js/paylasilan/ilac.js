@@ -56,6 +56,25 @@ export function satirAdi(s) {
   return kisa && ad ? `${kisa}: ${ad}` : ad;
 }
 
+/**
+ * Formdaki ilaç tablosunun iki sütunu: ad (etken maddesiyle) ve güç.
+ * «Feldene 20 mg Kapsül» + doz «20 mg» + etken «Piroxicam» →
+ * { ad: 'Feldene (Piroxicam)', doz: '20 mg', kisa: 'Cap' }. Güç ayrı
+ * sütunda durduğu için addan düşüyor; satırda güç yoksa (eski satır) ad
+ * kayıttaki gibi kalıyor, güç sütunu yalnız «(Tab)» gösteriyor. Etken madde
+ * ad zaten onu taşıyorsa eklenmiyor («Paracetamol (Paracetamol)» olmasın).
+ * Kâğıt da adı etken maddeyle basacaksa bu işlevi kullanmalı: form ile
+ * kâğıt aynı adı göstersin.
+ */
+export function satirGorunumu(s) {
+  let ad = ilacAdiFormsuz(s?.ilacAdi, s?.form);
+  const doz = String(s?.doz ?? '').trim();
+  if (doz && ad.endsWith(' ' + doz)) ad = ad.slice(0, -doz.length).trim();
+  const etken = String(s?.etkenMadde ?? '').trim();
+  if (ad && etken && !normalize(ad).includes(normalize(etken))) ad = `${ad} (${etken})`;
+  return { ad, doz, kisa: formKisa(s?.form) };
+}
+
 /** Ad, barkod, etken madde ve üretici üzerinden arama. */
 export function ilacAra(liste, q) {
   const s = String(q ?? '').trim();

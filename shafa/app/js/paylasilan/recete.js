@@ -115,6 +115,28 @@ export const OLCUMLER = [
   ['ht', 'Boy', 'Ht', 'cm'],
 ];
 
+/* Kan basıncı formda iki kutu (sistolik / diyastolik), reçetede ise TEK
+   metin («130/85»): kâğıt, doğrulama özeti ve eski reçeteler o biçimi okuyor.
+   Bölme kırpmıyor ve bir şey atmıyor: «/» içeren her değer bölünüp
+   birleştirilince aynen geri geliyor; «/» içermeyen eski bir değer
+   («بالا (نشسته)») bütünüyle ilk kutuya düşüyor. Sayfa değeri yalnız hekim
+   bir kutuya YAZINCA yeniden birleştiriyor, yani dokunulmadan kaydedilen
+   eski reçetenin metni değişmiyor. Kutularda azami uzunluk da yok: o, eski
+   değeri açılışta sessizce keserdi. */
+export function bpBol(bp) {
+  const s = String(bp ?? '');
+  const i = s.indexOf('/');
+  return i < 0 ? [s, ''] : [s.slice(0, i), s.slice(i + 1)];
+}
+
+/** İki kutudan tek metin. İkisi boşsa ''; yalnız sistolik yazıldıysa
+ *  «130/» (kâğıt onu olduğu gibi basıyor, eksik olduğu görünsün). */
+export function bpBirlestir(sis, dia) {
+  const a = String(sis ?? '');
+  const b = String(dia ?? '');
+  return a.trim() || b.trim() ? `${a}/${b}` : '';
+}
+
 /** Dolu olan ölçümler: çıktıda ve kartta yalnız bunlar gösterilir. */
 export const doluOlcumler = (recete) =>
   OLCUMLER.filter(([k]) => String(recete?.olcumler?.[k] ?? '').trim() !== '');

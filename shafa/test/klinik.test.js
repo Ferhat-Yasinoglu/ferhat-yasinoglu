@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import {
   AYRAC, parcala, birlestir, secili, degistir, taniDegistir,
   ara, siklar, gruplaraBol, gecmisler, klinikGecerliMi,
-  kagitAdi, adlari, adIndeksi, normalizeFa, secenekListesi,
+  kagitAdi, adlari, adIndeksi, normalizeFa, secenekListesi, gosterilecekler,
 } from '../app/js/paylasilan/klinik.js';
 
 const belge = JSON.parse(await readFile(new URL('../app/veri/klinik.json', import.meta.url), 'utf8'));
@@ -368,5 +368,28 @@ describe('İngilizce ad ve eski Dari yazımı', () => {
     expect(normalizeFa('سردردي')).toBe(normalizeFa('سردردی'));
     expect(ara(belge.belirtiler, 'دندان دردی').map((x) => x.en)).toContain('Toothache');
     expect(secili('كم‌آبی بدن', { ad: 'کم‌آبی بدن' })).toBe(true);
+  });
+});
+
+describe('gosterilecekler — formdaki kontrol listesi', () => {
+  it('önce seçilenler (sırasıyla), sonra öneriler, dört satıra kadar', () => {
+    expect(gosterilecekler({ secilenler: ['Chills'], oneriler: ['Fever', 'Chills', 'Cough', 'Headache', 'Dizziness'] }))
+      .toEqual(['Chills', 'Fever', 'Cough', 'Headache']);
+  });
+  // Seçili olan kâğıda basılıyor: hekim hepsini görmeli, sınır onları kesmez.
+  it('seçili olanların hepsi, sınırı aşsa da', () => {
+    const secilenler = ['A', 'B', 'C', 'D', 'E', 'F'];
+    expect(gosterilecekler({ secilenler, oneriler: ['G'] })).toEqual(secilenler);
+  });
+  // İşareti kaldırılan satır yerinde kalıyor: satırlar parmağın altında kaymasın.
+  it('önceki çizimde gösterilenler yerinde kalıyor', () => {
+    const ilk = gosterilecekler({ secilenler: ['Fever'], oneriler: ['Cough', 'Headache', 'Chills'] });
+    const sonra = gosterilecekler({ secilenler: [], oneriler: ['Cough', 'Headache', 'Chills', 'Dizziness'], onceki: ilk });
+    expect(sonra).toEqual(ilk);
+  });
+  it('anahtar eski Dari yazımı ile İngilizceyi tek sayıyor', () => {
+    const indeks = adIndeksi(belge.belirtiler);
+    const anahtar = (ad) => { const k = indeks.get(normalizeFa(ad)); return k ? 'k:' + kagitAdi(k) : normalizeFa(ad); };
+    expect(gosterilecekler({ secilenler: ['تب'], oneriler: ['Fever', 'Cough'], anahtar })).toEqual(['تب', 'Cough']);
   });
 });

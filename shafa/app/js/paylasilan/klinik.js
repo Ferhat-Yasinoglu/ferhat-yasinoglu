@@ -168,6 +168,34 @@ export function secenekListesi(belge, tur, form = '') {
   return [...liste.filter(uyar), ...liste.filter((x) => !uyar(x))].map((x) => x.ad);
 }
 
+/**
+ * Formdaki belirti / tetkik kontrol listesinin satırları, sırasıyla:
+ * önceki çizimde gösterilenler (yerleri oynamasın: işareti kaldırılan satır
+ * sayfadan çıkılana dek yerinde kalıyor), sonra yeni seçilenler (seçili olan
+ * HİÇ gizlenmiyor, hepsi kâğıda basılıyor), sonra öneriler (hekimin geçmişi,
+ * listenin yaygınları) toplam `sinir`e kadar. Aynı kayıt iki kez çıkmıyor:
+ * `anahtar` eski Dari «تب» ile «Fever»ı tek sayabilsin diye dışarıdan veriliyor.
+ * @param {{secilenler?: string[], oneriler?: string[], onceki?: string[], sinir?: number, anahtar?: (ad: string) => string}} sec
+ * @returns {string[]} gösterilecek adlar
+ */
+export function gosterilecekler({ secilenler = [], oneriler = [], onceki = [], sinir = 4, anahtar = normalizeFa } = {}) {
+  const out = [];
+  const gorulen = new Set();
+  const ekle = (ad) => {
+    const a = anahtar(ad);
+    if (!a || gorulen.has(a)) return;
+    gorulen.add(a);
+    out.push(ad);
+  };
+  onceki.forEach(ekle);
+  secilenler.forEach(ekle);
+  for (const o of oneriler) {
+    if (out.length >= sinir) break;
+    ekle(o);
+  }
+  return out;
+}
+
 /** Belgenin beklenen biçimde olup olmadığı. */
 export function klinikGecerliMi(belge) {
   if (!belge || !Array.isArray(belge.gruplar) || !Array.isArray(belge.labGruplari)) return false;

@@ -29,8 +29,10 @@ export function receteyiSablonaCevir(recete, ad) {
     taniKodu: recete?.taniKodu ?? '',
     laboratuvar: recete?.laboratuvar ?? '',
     notlar: recete?.notlar ?? '',
+    // Etken madde de: formdaki ilaç tablosu adı «Feldene (Piroxicam)» diye
+    // gösteriyor; şablondan gelen satır elle eklenenden farklı görünmesin.
     satirlar: (recete?.satirlar || []).map((s) => ({
-      ilacId: s.ilacId ?? '', ilacAdi: s.ilacAdi ?? '',
+      ilacId: s.ilacId ?? '', ilacAdi: s.ilacAdi ?? '', etkenMadde: s.etkenMadde ?? '',
       adet: Number(s.adet) > 0 ? Number(s.adet) : 1,
       form: s.form ?? '', doz: s.doz ?? '',
       kullanim: s.kullanim ?? '', zaman: s.zaman ?? '', sure: s.sure ?? '', yol: s.yol ?? '', not: s.not ?? '',
