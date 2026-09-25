@@ -1,0 +1,129 @@
+# Shafa hesap sunucusu dağıtımı (Cloudflare Worker + Durable Objects).
+#
+# sosyal-studyo-worker.yml ile aynı Cloudflare hesabını ve deseni kullanır:
+# sabit wrangler sürümü, metrik kapalı, adres Cloudflare'in alt alan API'sinden.
+# Kapı: repo değişkeni SHAFA_SUNUCU_ACIK = 1 olmadıkça iş hiç çalışmaz.
+#
+# GitHub → Settings → Secrets and variables → Actions:
+#   Secrets:   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID (sosyal-studyo'dan zaten var)
+#              SHAFA_DAVET_KODU (hekimlere verilen davet kodu; Worker'a DAVET_KODU olarak yazılır)
+#   Variables: SHAFA_SUNUCU_ACIK = 1
+name: Shafa Sunucu
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "shafa/sunucu/**"
+      - "shafa/app/js/paylasilan/hesap-kurallari.js"
+      - ".github/workflows/shafa-sunucu.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: shafa
+
+concurrency:
+  group: shafa-sunucu
+  cancel-in-progress: false
+
+jobs:
+  dagit:
+    name: Cloudflare
+    runs-on: ubuntu-latest
+    if: ${{ vars.SHAFA_SUNUCU_ACIK == '1' }}
+    env:
+      WRANGLER_SEND_METRICS: "false"
+      TOML: sunucu/wrangler.toml
+      # Wrangler bu sürüme sabit: jetonla çalışan bir aracın kayan sürümü
+      # tedarik zinciri riski olurdu.
+      WRANGLER: wrangler@4.131.1
+      KOKEN: https://ferhat-yasinoglu.github.io
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: shafa/package-lock.json
+      - run: npm ci
+      # Sunucu testleri ve paylaşılan hesap kuralları geçmeden dağıtım yok.
+      - run: npx vitest run test/sunucu test/hesap-kurallari
+
+      # Değerler loga yazılmaz; baştaki/sondaki boşluk ve görünmez karakterler
+      # (kopyala-yapıştırda gelen) temizlenip maskeli olarak sonraki adımlara geçer.
+      - name: Secret'lari denetle
+        env:
+          HAM_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          HAM_HESAP: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          HAM_DAVET: ${{ secrets.SHAFA_DAVET_KODU }}
+        run: |
+          node -e '
+            const temiz = (s) => String(s || "").replace(/[​-‍﻿ ⁠]/g, "").trim();
+            const eksik = [];
+            const yaz = [];
+            for (const [ham, ad] of [["HAM_TOKEN", "CLOUDFLARE_API_TOKEN"], ["HAM_HESAP", "CLOUDFLARE_ACCOUNT_ID"], ["HAM_DAVET", "DAVET_KODU"]]) {
+              const d = temiz(process.env[ham]);
+              if (!d) { eksik.push(ad === "DAVET_KODU" ? "SHAFA_DAVET_KODU" : ad); continue; }
+              console.log("::add-mask::" + d);
+              yaz.push(ad + "=" + d);
+            }
+            if (eksik.length) {
+              console.log("::error::Eksik secret: " + eksik.join(", ") + ". Settings → Secrets and variables → Actions altına ekleyin. SHAFA_DAVET_KODU hekimlere verilecek davet kodudur; yoksa kayıt kapalı kalacağı için dağıtım yapılmıyor.");
+              process.exit(1);
+            }
+            require("fs").appendFileSync(process.env.GITHUB_ENV, yaz.join("\n") + "\n");
+          '
+
+      - name: Dagit
+        id: dagit
+        run: |
+          set -o pipefail
+          npx --yes "$WRANGLER" deploy --config "$TOML" 2>&1 | tee dagit.log
+          url="$(grep -o 'https://shafa-sunucu\.[a-z0-9.-]*\.workers\.dev' dagit.log | head -1 || true)"
+          if [ -z "$url" ]; then
+            alt="$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).result?.subdomain||''))" || true)"
+            [ -n "$alt" ] && url="https://shafa-sunucu.$alt.workers.dev"
+          fi
+          rm -f dagit.log
+          [ -n "$url" ] || { echo "::error::Worker adresi bulunamadi (workers.dev alt alani acik mi?)"; exit 1; }
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Worker adresi: $url"
+
+      # Davet kodu stdin'den verilir: komut satırına ve loga düşmez.
+      - name: Davet kodunu yaz
+        run: printf '%s' "$DAVET_KODU" | npx --yes "$WRANGLER" secret put DAVET_KODU --config "$TOML"
+
+      - name: Duman testi ve ozet
+        env:
+          URL: ${{ steps.dagit.outputs.url }}
+        run: |
+          # Yeni dağıtımın yayılması birkaç saniye sürebilir.
+          for i in 1 2 3 4 5 6; do
+            kod="$(curl -sS -o durum.json -w '%{http_code}' "$URL/v1/durum" || echo 000)"
+            [ "$kod" = 200 ] && break
+            sleep 5
+          done
+          durum="$(head -c 500 durum.json 2>/dev/null)"; rm -f durum.json
+          echo "GET /v1/durum → HTTP $kod $durum"
+          [ "$kod" = 200 ] && [ "$durum" = '{"ok":true}' ] || { echo "::error::/v1/durum beklenen yanıtı vermedi: $kod $durum"; exit 1; }
+
+          basliklar="$(curl -sS -o /dev/null -D - -X OPTIONS "$URL/v1/veri" \
+            -H "Origin: $KOKEN" -H 'Access-Control-Request-Method: PUT' \
+            -H 'Access-Control-Request-Headers: authorization,if-match' | tr -d '\r')"
+          echo "$basliklar"
+          echo "$basliklar" | grep -qi "^access-control-allow-origin: $KOKEN\$" || { echo "::error::CORS ön-uçuşu $KOKEN kökenine izin vermedi"; exit 1; }
+          echo "$basliklar" | grep -qi '^access-control-allow-headers:.*if-match' || { echo "::error::CORS ön-uçuşu If-Match başlığına izin vermedi"; exit 1; }
+          {
+            echo "## Shafa sunucusu"
+            echo
+            echo "**Adres:** \`$URL\`"
+            echo
+            echo "- \`GET /v1/durum\` → \`$durum\`"
+            echo "- CORS ön-uçuşu \`$KOKEN\` için geçti."
+            echo
+            echo "Uygulamanın bu adresi kullanması için \`shafa/app/js/senkron/sunucu-adresi.js\` içindeki \`VARSAYILAN_SUNUCU\` ve \`app/index.html\` CSP'sindeki \`connect-src\` bu adresle güncellenmeli."
+          } >> "$GITHUB_STEP_SUMMARY"

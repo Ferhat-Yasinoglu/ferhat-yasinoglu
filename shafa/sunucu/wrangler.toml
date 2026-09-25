@@ -1,0 +1,27 @@
+# Shafa hesap sunucusu — Worker + iki SQLite tabanlı Durable Object (ücretsiz planda yalnız bu tür var).
+# nodejs_compat AÇILMAZ: yalnız Web API (fetch, crypto.subtle, streams) — Node'da (yerel.mjs) test edilebilir kalsın.
+# Dağıtım: .github/workflows/shafa-sunucu.yml (npx wrangler@4.131.1 deploy --config shafa/sunucu/wrangler.toml).
+name = "shafa-sunucu"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+[[durable_objects.bindings]]
+name = "HESAP"
+class_name = "Hesap"
+
+[[durable_objects.bindings]]
+name = "SINIR"
+class_name = "Sinir"
+
+# Depolama türü sonradan değiştirilemez; yeni sınıflar SQLite tabanlı açılır.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Hesap", "Sinir"]
+
+[vars]
+# CORS: yalnız bu kökenler (virgülle ayır). Uygulama GitHub Pages'te, API workers.dev'de.
+IZINLI_KOKENLER = "https://ferhat-yasinoglu.github.io"
+
+# Gizli değer toml'a YAZILMAZ: DAVET_KODU, workflow'da GitHub secret'ı SHAFA_DAVET_KODU'ndan
+# `wrangler secret put` ile yazılır. Yoksa kayıt kapalıdır (403 kayit_kapali).
+# Yerelde `wrangler dev` için sunucu/.dev.vars dosyasına DAVET_KODU=... yazılır (depoya girmez).

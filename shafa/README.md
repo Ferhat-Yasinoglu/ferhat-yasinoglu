@@ -142,6 +142,7 @@ ya da sayfa yüklenirken zıplardı.
 cd shafa
 npm install          # yalnız geliştirme bağımlılıkları (vitest, fake-indexeddb, jsqr)
 npm run sun          # http://localhost:8788/  — uygulama app/ klasöründen sunulur
+npm run yerel        # aynısı + hesap API'si /v1/ altında (sunucu/yerel.mjs, bellekte)
 npm test             # alan mantığı, depo, reçete ve yedek testleri
 npm run kontrol      # statik denetimler (mantıksal CSS, innerHTML yok, saf modüller)
 npm run deneme       # gerçek tarayıcıda uçtan uca deneme (playwright kuruluysa; CI koşmuyor, elle)
@@ -367,6 +368,122 @@ bütün reçeteler "TUTMUYOR" derdi.
 Kod reçetenin kanonik özetinden üretilir; aynı reçete yeniden basıldığında
 kod değişmez.
 
+## Hesap sunucusu (`sunucu/`)
+
+Kullanıcı adı + parolalı hesap için küçük bir Cloudflare Worker. Google yedeğinin
+yerini alacak; istemci tarafı sonraki adımlarda bağlanıyor, o zamana kadar
+uygulama sunucuya hiç istek atmıyor. Düz ES modülleri, bağımlılık yok, derleme yok.
+
+| Dosya | Ne yapar |
+|---|---|
+| `worker.js` | yönlendirici + tek yanıt sarmalayıcısı; Durable Object sınıfları `Hesap` ve `Sinir` |
+| `cekirdek.js` | saf mantık: yalnız DO'nun KV depolama arayüzü ve WebCrypto |
+| `yerel.mjs` | Node'da aynı kod: `app/`'i ve `/v1/`'i aynı kökenden sunar, DO'lar bellekte |
+| `wrangler.toml` | ad, DO bağları, `v1` göçü (SQLite), `IZINLI_KOKENLER` |
+| `../app/js/paylasilan/hesap-kurallari.js` | kullanıcı adı/parola/kurtarma kodu normalleştirme ve kuralları — istemciyle ORTAK |
+
+**Sunucu neyi hiç görmez:** parolayı, kasa anahtarını (K), kurtarma kodunu, açık
+kaydı. Cihaz parolalardan `giris`/`kurtarma` anahtarlarını türetir (PBKDF2 +
+HKDF); sunucu bunların bile yalnız tuzlu SHA-256 özetini saklar. K sunucuda
+yalnız sarılmış (AES-GCM ile şifreli) durur, kasa da şifreli baytlardır.
+**Neyi görür:** kullanıcı adı, IP adresleri, istek zamanları, kasa boyu. Bir
+sızıntıda saldırganın tek yolu parola başına 600 bin turluk PBKDF2 denemesidir:
+zayıf parola düşer (parola kuralları bunun için sıkı). Silinen hesabın
+şifreli kopyası Cloudflare'in yedeklerinde 30 güne kadar kalabilir.
+
+### API (`/v1/`)
+
+Kimlik gövdeleri küçük JSON (≤ 4 KB), anahtarlar b64url (32 bayt), sarılı K
+`{ iv, veri }` (base64). Hata gövdesi her zaman `{ hata: '<kod>' }`, 429'da `bekle` (sn).
+
+| Uç | Yetki | Gövde | Başarı | Hatalar |
+|---|---|---|---|---|
+| `GET durum` | – | – | `{ ok: true }` | – |
+| `POST kayit` | – | `kullanici, davet, giris, kurtarma, sarili, kurtarmaSarili` | 201 `{ jeton }` | 400 `gecersiz`, 403 `davet`/`kayit_kapali`, 409 `alinmis`, 429 `cok_istek` |
+| `POST giris` | – | `kullanici, giris` | `{ jeton, sarili }` | 401 `yanlis` (bilinmeyen adda da aynısı), 429 `kilitli`/`cok_istek` |
+| `POST kurtar/ac` | – | `kullanici, kurtarma` | `{ kurtarmaSarili }` | 401 `yanlis`, 429 |
+| `POST kurtar/bitir` | – | `kullanici, kurtarma, giris, sarili, yeniKurtarma, yeniKurtarmaSarili` | `{ jeton }` — bütün oturumlar düşer, eski kod geçmez | 400, 401, 429 |
+| `POST kurtarma/yenile` | Bearer | `giris, yeniKurtarma, yeniKurtarmaSarili` | `{ ok: true }` | 401 `yanlis`/`oturum`, 429 |
+| `POST parola` | Bearer | `giris, yeniGiris, yeniSarili` | `{ jeton }` — öbür oturumlar düşer | 401, 429 |
+| `POST cikis` | Bearer | – | `{ ok: true }` | – |
+| `POST hesap/sil` | Bearer | `giris` | `{ ok: true }` | 401, 429 |
+| `GET veri/surum` | Bearer | – | `{ surum }` (`""` = kasa yok) | 401 |
+| `GET veri` | Bearer | – | ham kasa baytları, `X-Surum` başlığı; kasa yoksa 204 | 401 |
+| `PUT veri` | Bearer | ham kasa baytları + `If-Match: "<surum>"` (`""` = ilk yazma) | `{ surum }` | 400 (If-Match yok / `{"bicim":"shafa-kasa"` ile başlamıyor), 409 `cakisma`, 413 `buyuk`, 429 `cok_istek` |
+
+Her yanıtta — hata, 500 ve 503 dahil — CORS (yalnız `IZINLI_KOKENLER`; localhost
+yalnız `yerel.mjs --gelistirme` ile), `Cache-Control: no-store` ve `nosniff` var:
+başlıksız bir hata tarayıcıda "internet yok" gibi görünürdü. Depolama/kota
+istisnası `503 { hata: 'kota' }`, beklenmeyen hata `500 { hata: 'sunucu' }` olur.
+Gövde ve `Authorization` hiçbir yerde loglanmaz.
+
+**Jeton** `<b64url(kullanıcı adı)>.<b64url(32 rastgele bayt)>`: ilk parça yalnız
+Worker'ın hangi hesabın DO'suna gideceğini seçmesi için; DO jetonun tamamının
+özetini arar, oynanmış önek hiçbir oturumla eşleşmez.
+
+**Depolama** (Hesap DO, `idFromName(kullanıcı adı)`, yalnız kayıtla oluşur):
+`hesap`, `oturum:<özet>` (365 gün boşta kalınca düşer, en çok 20), `veri:bas`
+(`{ surum, parca, boy }`) + `veri:p:<i>` (≤ 1,9 MB parçalar; SQLite DO'da anahtar +
+değer sınırı 2 MB), `yazim` (tempo). Kasa yazımında sürüm denetimi, bütün
+parçalar, başlık ve artık parçaların silinmesi **aralarında await olmayan tek
+blokta**: okuyan yarım kasa görmez, aynı sürüme iki yazmadan biri 409 alır.
+Worker kasa gövdesine dokunmaz, DO'ya akış olarak aktarır (ücretsiz planda
+istek başına 10 ms CPU).
+
+### Sınırlar
+
+- **Hesap kilidi** (`Sinir`, `u:<SHA-256(ad)>`): ilk 10 deneme serbest, sonra
+  60 sn × 2^(n−10), en çok 1 saat; doğru giriş sıfırlar; 24 saat boşta kalan
+  sayaç alarmla silinir. Her deneme sonucu beklenmeden sayılır: aynı anda
+  gönderilen 30 denemeden yalnız 10'u parolaya ulaşır (önce denetleyip sonra
+  saymak paralel saldırıda sınırı boşa çıkarırdı). Jetonlu işlemlerde oturum
+  sayaçtan önce denetlenir; geçersiz jetonla kimse bir hesabı kilitleyemez. `giris`, `parola`, `hesap/sil`, `kurtarma/yenile`'ye
+  uygulanır, kurtarmaya uygulanmaz (120 bitlik kod tahminle bulunmaz). Var olan
+  ve olmayan ad aynı yoldan geçer. **Açık oturumları durdurmaz**: adı bilen biri
+  hekimin çalışan cihazlarını kilitleyemez.
+- **IP** (16 bellek parçası, depoya yazmaz; IPv6 /64'e indirgenir): kimlik
+  denemeleri 10 dakikada 60, kayıt saatte 20.
+- **Kayıt**: `DAVET_KODU` secret'ı olmadan kapalı (403 `kayit_kapali`); günde en
+  çok 300 kayıt (tek sayaç).
+- **Kasa**: en çok 20 MB (Content-Length'ten de okurken sayarak da); hesap başına
+  iki yazma arası 5 sn, günde en çok 1000 yazma.
+
+**Ücretsiz plan hesabı** (sosyal-studyo ile aynı Cloudflare hesabı, Worker
+istekleri ortak): günde 100 bin Worker isteği, 100 bin DO isteği, 100 bin satır
+yazma, toplam 5 GB. Bir yükleme ≈ (parça + 2) satır. gzip'li tipik bir kasa
+1–2 MB, yani 3–4 satır; 100 hekim × günde 30 yükleme ≈ 12 bin satır. Ön
+kontrol (`veri/surum`) bir Worker + bir DO isteği; 100 hekim × günde 50 ≈ 5 bin.
+Depolama en kötü durumda 100 × 20 MB = 2 GB.
+
+### Çalıştırma ve deneme
+
+```bash
+DAVET_KODU=deneme npm run yerel           # http://localhost:8788/ — uygulama + /v1/
+DAVET_KODU=deneme node sunucu/yerel.mjs 9000 --gelistirme   # başka porttaki sayfaya CORS izni
+npx vitest run test/sunucu test/hesap-kurallari           # yalnız sunucu testleri (npm test de koşar)
+```
+
+`yerel.mjs` Worker kodunu değiştirmeden çalıştırır; DO'ların yerine bellekte
+bir taklit geçer (SQLite DO'nun 2 MB ve 128 anahtar sınırlarını o da uygular).
+İstemci IP'sini soketten alır, istekle gelen `CF-Connecting-IP`'yi siler.
+Birim testleri aynı taklidi kullanır. Veri süreç kapanınca gider.
+
+Gerçek çalışma zamanı (workerd) CI'da koşmuyor, elle denenir:
+`sunucu/.dev.vars` dosyasına `DAVET_KODU=...` yazıp (depoya girmez)
+`cd sunucu && npx --yes wrangler@4.131.1 dev`. Son denemede (25 Eylül 2026) 14 adımlık
+bir API betiği (kayıt, giriş, 4,5 MB parçalı kasa, If-Match çakışması, kurtarma,
+kilit, paralel denemeler, parola, silme) ve gerçek Chromium'dan çapraz köken
+istekleri (ön-uçuş, `Authorization`, `If-Match`, okunabilen `X-Surum` ve hata
+gövdeleri) geçti. İlk denemede Node taklidinin göstermediği bir şey çıktı: DO kasa gövdesini okumadan yanıt verince (401,
+429) Worker'daki aktarma borusu yanıttan sonra okumaya devam ediyor ve workerd
+bağlantıyı koparıyordu — istemci 401 yerine ağ hatası görürdü. Artık DO erken
+hatada gövdeyi sonuna kadar tüketiyor, sınırı aştığını baştan söyleyen gövdeyi
+Worker hiç DO'ya göndermiyor; birim testi bunu tutuyor.
+
+Dağıtım `.github/workflows/shafa-sunucu.yml` ile (repo değişkeni
+`SHAFA_SUNUCU_ACIK = 1`, secret `SHAFA_DAVET_KODU`; Cloudflare secret'ları
+sosyal-studyo'dan zaten var). Sahibin adımları ayrıca yazılacak.
+
 ## Kendi Google hesabına yedek
 
 Varsayılan kapalı. Açılırsa hekimin **kendi** Google hesabına şifreli bir kopya
@@ -582,11 +699,13 @@ app/                      PWA (statik olarak olduğu gibi sunulur)
     senkron/              google.js — Drive appDataFolder taşıyıcısı (tek ağ ucu)
     paylasilan/           saf alan mantığı: ilac · hasta · recete · qr · dogrulama ·
                           tarih · metin · kimlik · senkron (birleşme kararları) ·
-                          kasa (şifreleme)
+                          kasa (şifreleme) · hesap-kurallari (sunucuyla ortak)
     sayfalar/             kagit-yaz (reçete sayfası) · panel · ilaclar · ilac ·
                           hastalar · hasta · receteler · recete · bos-kagit ·
                           tanilar · laboratuvar · raporlar · ayarlar · bulunamadi
-test/                     vitest
+sunucu/                   hesap sunucusu (Cloudflare Worker): worker · cekirdek ·
+                          yerel (Node'da aynı kod + app/) · wrangler.toml
+test/                     vitest (test/sunucu: Worker + DO'lar bellek taklidiyle)
 tanitim/index.html        tanıtım ve indirme sayfası (tek dosya)
 tools/                    sun (statik sunucu) · kontrol (statik denetim) ·
                           tarayici (uçtan uca) · site-denemesi (yayın düzeni) ·

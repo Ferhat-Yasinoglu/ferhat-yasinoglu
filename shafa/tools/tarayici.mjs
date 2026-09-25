@@ -65,8 +65,9 @@ const resim = async (sayfa, ad, sec) => {
   await sayfa.screenshot({ path: `${EKRAN}/${ad}`, ...sec });
 };
 
-// Kendi sunucusunu açar, sonunda kapatır.
-const sunucu = spawn(process.execPath, [new URL('sun.mjs', import.meta.url).pathname, 'app', String(PORT)], {
+// Kendi sunucusunu açar, sonunda kapatır. Yerel sunucu uygulamayı VE hesap
+// API'sini (/v1/) aynı kökenden verir; hesap denemeleri bunu kullanır.
+const sunucu = spawn(process.execPath, [new URL('../sunucu/yerel.mjs', import.meta.url).pathname, String(PORT)], {
   cwd: new URL('..', import.meta.url).pathname, stdio: 'ignore',
 });
 const kapat = () => { try { sunucu.kill(); } catch { /* zaten kapalı */ } };
@@ -3022,6 +3023,9 @@ const googleIstekleri = istekler.filter((u) => /accounts\.google\.com|googleapis
 if (googleIstekleri.length) {
   throw new Error('açılışta Google isteği yapıldı: ' + [...new Set(googleIstekleri)].join(', '));
 }
+// Hesap sunucusu da öyle: hesap yokken açılış /v1/'e tek istek atmaz.
+const apiIstekleri = istekler.filter((u) => new URL(u).pathname.startsWith('/v1/'));
+if (apiIstekleri.length) throw new Error('hesap yokken açılışta sunucu isteği yapıldı: ' + [...new Set(apiIstekleri)].join(', '));
 const engel = await temizSayfa.evaluate(() => ({
   modal: document.querySelectorAll('[role="dialog"], .modal').length,
   eposta: document.querySelectorAll('input[type=email]').length,
@@ -3044,8 +3048,20 @@ await temizSayfa.waitForFunction(
   (eski) => location.hash === '#/hastalar' && document.querySelector('#sayfa')?.textContent !== eski,
   girisMetni, { timeout: 15000 });
 if (temizHatalar.length) throw new Error('temiz açılışta konsol hatası: ' + temizHatalar.join(' | '));
+ok(`hesapsız açılış: ${istekler.length} istekte tek bir Google ya da /v1/ isteği yok, modal/giriş kutusu yok, giriş sayfası reçete kâğıdı, gezinme çalışıyor`);
+
+// --- Yerel sunucu API'yi uygulamayla AYNI kökenden veriyor: uygulamanın
+// CSP'si (connect-src 'self') altında sayfanın kendisinden erişilebilmeli.
+// Yayında adres ayrı (workers.dev); bu, testlerin ve geliştirmenin yolu.
+const api = await temizSayfa.evaluate(async () => {
+  const r = await fetch('/v1/durum');
+  return { durum: r.status, govde: await r.json(), onbellek: r.headers.get('Cache-Control'), nosniff: r.headers.get('X-Content-Type-Options') };
+});
+if (api.durum !== 200 || !api.govde.ok || api.onbellek !== 'no-store' || api.nosniff !== 'nosniff') {
+  throw new Error('yerel sunucu /v1/durum beklenen yanıtı vermedi: ' + JSON.stringify(api));
+}
 await temizBaglam.close();
-ok(`hesapsız açılış: ${istekler.length} istekte tek bir Google isteği yok, modal/giriş kutusu yok, giriş sayfası reçete kâğıdı, gezinme çalışıyor`);
+ok('yerel sunucu: /v1/durum uygulamayla aynı kökenden, CSP altında yanıt veriyor (no-store, nosniff)');
 
 await tarayici.close();
 kapat();

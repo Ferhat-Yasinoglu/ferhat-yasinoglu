@@ -30,4 +30,6 @@ jobs:
           cache-dependency-path: shafa/package-lock.json
       - run: npm ci
       - run: npm run kontrol
+      # vitest test/** altını koşar: hesap sunucusunun testleri (test/sunucu,
+      # Worker + DO'lar bellek taklidiyle) ve hesap kuralları da buna dahil.
       - run: npm test

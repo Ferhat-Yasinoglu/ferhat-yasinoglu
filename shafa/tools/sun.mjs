@@ -5,9 +5,6 @@ import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 
-const kok = resolve(process.argv[2] || 'app');
-const port = Number(process.argv[3] || 8788);
-
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -32,19 +29,25 @@ async function dosyaOku(yol) {
   return { govde: await readFile(yol), tur: mimeBul(yol) };
 }
 
+/** Tek bir statik isteği yanıtlar. sunucu/yerel.mjs de uygulamayı bununla sunar. */
+export async function statikSun(kok, istek, yanit) {
+  // Yol köke hapsedilir; ".." ile dışarı çıkılamaz.
+  const ham = decodeURIComponent(new URL(istek.url, 'http://x').pathname);
+  const yol = normalize(join(kok, ham));
+  if (!yol.startsWith(kok)) { yanit.writeHead(403); return yanit.end(); }
+  try {
+    const { govde, tur } = await dosyaOku(yol);
+    yanit.writeHead(200, { 'Content-Type': tur, 'Cache-Control': 'no-store' });
+    yanit.end(govde);
+  } catch {
+    yanit.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    yanit.end('bulunamadi: ' + ham);
+  }
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
-  createServer(async (istek, yanit) => {
-    // Yol köke hapsedilir; ".." ile dışarı çıkılamaz.
-    const ham = decodeURIComponent(new URL(istek.url, 'http://x').pathname);
-    const yol = normalize(join(kok, ham));
-    if (!yol.startsWith(kok)) { yanit.writeHead(403); return yanit.end(); }
-    try {
-      const { govde, tur } = await dosyaOku(yol);
-      yanit.writeHead(200, { 'Content-Type': tur, 'Cache-Control': 'no-store' });
-      yanit.end(govde);
-    } catch {
-      yanit.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-      yanit.end('bulunamadi: ' + ham);
-    }
-  }).listen(port, () => console.log(`sunuluyor: http://localhost:${port}/  (${kok})`));
+  const kok = resolve(process.argv[2] || 'app');
+  const port = Number(process.argv[3] || 8788);
+  createServer((istek, yanit) => statikSun(kok, istek, yanit))
+    .listen(port, () => console.log(`sunuluyor: http://localhost:${port}/  (${kok})`));
 }

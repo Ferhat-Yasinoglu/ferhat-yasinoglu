@@ -214,5 +214,21 @@ for (const m of tanitim.matchAll(/<img[^>]*src="(gorsel\/[^"]+\.(?:png|jpg))"[^>
   }
 }
 
+// (10) Sunucu (sunucu/*.js) workerd'da nodejs_compat OLMADAN ve derlemesiz
+// koşuyor: `node:` modülü ya da npm paketi içe aktarılırsa Node'daki testler
+// geçer ama wrangler paketleyemez ya da Worker açılışta çöker. Yalnız göreli
+// yollar (kendi dosyaları ve app/js/paylasilan). Sırlar yalnız WebCrypto'dan
+// (Math.random tahmin edilebilir). İstek gövdesi ve Authorization asla
+// loglanmaz: sunucuda tek log hata mesajıdır (console.error), başka console yok.
+for (const f of await dosyalar(new URL('../sunucu/', import.meta.url).pathname, '.js')) {
+  const s = await readFile(f, 'utf8');
+  for (const m of s.matchAll(/\b(?:from|import)\s*\(?\s*['"]([^'"]+)['"]/g)) {
+    if (!m[1].startsWith('.')) hataVer(`${f}: göreli olmayan içe aktarma (${m[1]}); sunucu bağımlılıksız ve nodejs_compat'sız`);
+  }
+  if (/Math\.random/.test(s)) hataVer(`${f}: Math.random; rastgelelik yalnız crypto.getRandomValues'tan`);
+  const m = s.match(/console\.(log|info|debug|warn|trace|dir)\b/);
+  if (m) hataVer(`${f}: console.${m[1]}; sunucu istek verisini loglamaz (yalnız console.error ile hata mesajı)`);
+}
+
 console.log(hata ? `${hata} sorun` : `✓ statik denetimler geçti (${kullanilan.size} çeviri anahtarı yerinde)`);
 process.exit(hata ? 1 : 0);
