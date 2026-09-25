@@ -37,18 +37,23 @@ describe('rxIsareti', () => {
 });
 
 describe('hatCizimi', () => {
-  it('metni <title> olarak taşıyan iki satırlık bir SVG kurar', () => {
+  // Tasarımdaki yükselen taban çizgisi: iki satır −12° döndürülmüş bir
+  // grupta, altlarında dönmeyen bir kuyruk.
+  it('metni <title> olarak taşıyan, iki satırı yükselen ve kuyruklu bir SVG kurar', () => {
     const svg = hatCizimi();
     expect(svg.namespaceURI).toBe(SVG);
     expect(svg.className).toBe('hat-cizim');
     expect(svg.getAttribute('role')).toBe('img');
-    const [baslik, ...yollar] = svg.children;
+    const [baslik, satirlar, kuyruk, ...fazla] = svg.children;
     expect(baslik.tagName).toBe('title');
     expect(baslik.namespaceURI).toBe(SVG);
     expect(baslik.textContent).toBe('سلامت سرمایهٔ زندگی است');
     expect(HAT_METNI).toBe(baslik.textContent);
-    expect(yollar).toHaveLength(2);
-    for (const y of yollar) {
+    expect(fazla).toHaveLength(0);
+    expect(satirlar.tagName).toBe('g');
+    expect(satirlar.getAttribute('transform')).toMatch(/^rotate\(-\d+(\.\d+)? \d+ \d+\)$/);
+    expect(satirlar.children).toHaveLength(2);
+    for (const y of [...satirlar.children, kuyruk]) {
       expect(y.tagName).toBe('path');
       expect(y.getAttribute('fill')).toBe('currentColor');
       expect(y.getAttribute('d')).toMatch(YOL_DESENI);

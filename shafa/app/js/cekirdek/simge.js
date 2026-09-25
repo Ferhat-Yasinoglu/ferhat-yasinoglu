@@ -332,10 +332,13 @@ const SIMGELER_DOLU = {
   'arti-kalin': { vb: 24, yollar: [['path', { ...KALIN(1.5), 'stroke-linejoin': 'round', d: 'M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z' }]] },
   // Ayak rozetleri (koyu bant üstünde beyaz). Tasarımdaki böbrek (üç top) ve
   // baş ağrısı (erimiş kase) okunmuyordu; organlar yeniden çizildi.
+  // Mide: yukarıda yemek borusu, sağa şişen gövde, altta sola dönüp
+  // yukarı kıvrılan onikiparmak bağırsağı (J biçimi); gövdede tek kırışık.
+  // Eskiden kutunun üçte biri kadardı ve «ط» harfi gibi okunuyordu.
   mide: { vb: 24,
-    yollar: [['path', { d: 'M9.4 2.2h2.8v4.3c3.9-.3 7.6 2.2 7.6 6.6 0 4.6-3.6 7.4-8 7.4-2.4 0-4.2-.6-5.6-1.6-1 .7-2.4.4-3-.6-.6-1 0-2.2 1-2.6 1.3-.5 2.7.3 3.8.9 1.2.6 2.6.4 3.3-.6.8-1.2.5-2.6-.3-3.8-1.1-1.5-1.6-2.8-1.6-4.5z' }]],
-    // Büyük kıvrımın içindeki kırışık: tasarımdaki tek koyu çizgi.
-    oyuk: [['path', { ...OYUK(1.2), 'stroke-linecap': 'round', d: 'M14.2 9.8c1.6.7 2.6 2.1 2.6 3.9' }]],
+    yollar: [['path', { d: 'M9.2 1.4h3.2v3.9C15.3 3.6 19.7 4.3 21.5 7.9c1.6 3.2 1.1 7.5-1.6 10.7-2.8 3.2-7.3 4.3-11 3.1-1.6-.5-2.9-1.4-3.9-2.4-1.2.8-2.9.7-3.6-.5-.6-1.2 0-2.7 1.4-2.9 1.3-.2 2.4.6 3.4 1.2 2.9 1.6 6.3.4 7.4-2.4.9-2.3.1-4.6-1.8-6.1C10 8.5 9.2 7.5 9.2 6z' }]],
+    // Gövdenin içindeki kırışık: tasarımdaki tek koyu çizgi.
+    oyuk: [['path', { ...OYUK(1.2), 'stroke-linecap': 'round', d: 'M16.4 8.6c1.9 1.1 2.9 3 2.7 5.2' }]],
   },
   bobrek: { vb: 24, yollar: [
     ['path', { d: 'M7.4 3.4c-2.7 0-4.6 2.9-4.6 6.4 0 3.9 1.9 6.9 4.7 6.9 1.9 0 3.1-1.3 3.1-2.9 0-1.2-.9-1.9-.9-3.9s.9-2.5.9-3.7c0-1.6-1.2-2.8-3.2-2.8z' }],
@@ -346,10 +349,11 @@ const SIMGELER_DOLU = {
   sise: { vb: 24, yollar: [['path', { 'fill-rule': 'evenodd', 'stroke-linejoin': 'round', d:
     'M9 2.6h6v2.6h-1v1.9l4.1 3.1v10.6a1 1 0 0 1-1 1H6.9a1 1 0 0 1-1-1V10.2L10 7.1V5.2H9z'
     + 'M12 11.6s2.4 2.6 2.4 4.2a2.4 2.4 0 0 1-4.8 0c0-1.6 2.4-4.2 2.4-4.2z' }]] },
-  // Romatizma: ayakta insan ve iki yanında ağrı yayları.
+  // Romatizma: ayakta insan ve iki yanında ağrı yayları. İnsan kutunun
+  // boyunca (eskiden yarısıydı), yaylar ona yakın.
   romatizma: { vb: 24, yollar: [
-    ['path', { d: AYAKTA_INSAN, transform: 'translate(3.2 3) scale(1.1)' }],
-    ['path', { ...CIZGI(1.4), 'stroke-linecap': 'round', d: 'M5.4 8.6q-1.8 3.6 0 7.2M18.6 8.6q1.8 3.6 0 7.2M2.8 7.2q-2.6 5 0 10M21.2 7.2q2.6 5 0 10' }],
+    ['path', { d: AYAKTA_INSAN, transform: 'translate(1.6 1.4) scale(1.3)' }],
+    ['path', { ...CIZGI(1.4), 'stroke-linecap': 'round', d: 'M5.2 9q-1.6 3.4 0 6.8M18.8 9q1.6 3.4 0 6.8M2.6 7.6q-2.2 4.8 0 9.6M21.4 7.6q2.2 4.8 0 9.6' }],
   ] },
   // Baş ağrısı: yandan baş silueti ve şakaktan çıkan üç kısa çizgi.
   'bas-agrisi': { vb: 24, yollar: [

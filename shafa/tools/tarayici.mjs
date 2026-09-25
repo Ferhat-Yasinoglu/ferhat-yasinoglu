@@ -2281,12 +2281,17 @@ for (const [stil, ilac] of [['modern', 0], ['modern', 8], ['klasik', 0], ['sade'
   await kagitKur(stil, ilac);
   await sayfa.waitForTimeout(350);
   const n = await sayfaSayisi();
+  // Boy basılan genişlikte ölçülüyor: A4 eksi iki 8 mm pay = 194 mm (733 px).
+  // Pencere genişliğinde (1280) satırlar daha geç kırılıyor ve kâğıt
+  // olduğundan kısa ölçülüyordu.
+  await sayfa.setViewportSize({ width: 733, height: 900 });
   await sayfa.emulateMedia({ media: 'print' });
   const boyMm = await sayfa.evaluate(() => {
     const k = document.querySelector('#sayfa > .yazdir-alan');
     return k ? Math.round(k.offsetHeight / 96 * 25.4) : 0;
   });
   await sayfa.emulateMedia({ media: null });
+  await sayfa.setViewportSize({ width: 1280, height: 900 });
   boylar.push(`${stil}/${ilac ? ilac + ' ilaç' : 'boş'} ${boyMm}mm`);
   // Yalnız "tek sayfa" yetmez: sınıra 1mm kala da tek sayfa çıkar ve hekimin
   // anteti birkaç satır uzayınca kâğıt sessizce ikiye bölünür. Sınır ölçülerek
@@ -2296,6 +2301,99 @@ for (const [stil, ilac] of [['modern', 0], ['modern', 8], ['klasik', 0], ['sade'
 await sayfa.evaluate(() => { document.querySelectorAll('#sayfa > .yazdir-alan').forEach((e) => e.remove()); });
 if (tasanlar.length) throw new Error('kâğıt A4\'e sığmıyor: ' + tasanlar.join(', '));
 ok(`kâğıt A4'e sığıyor, hepsi tek sayfa ve payı var: ${boylar.join(' · ')} (sınır ≈275mm)`);
+
+// --- Kâğıdın alt yarısı, basılan hâliyle (194 mm = 733 px genişlikte).
+// Hat yazısı ve imza ℞ alanının dibinde AKIŞIN İÇİNDE: içeriğin altında
+// kalıyorlar, dolu reçetede laboratuvar ve notun üstüne basılmıyorlar. Boş
+// yer azsa hat küçülüyor ya da hiç basılmıyor, imza her zaman bitiş (sol)
+// köşesinde. Değeri yazılmış «Temperature :» satırı tek satır. Sade stil
+// sağlık çizimini renksiz, ince siyah çizgiyle basıyor.
+const altYari = [];
+const altOzet = [];
+for (const [stil, ilac] of [['modern', 0], ['modern', 3], ['modern', 8], ['klasik', 8], ['sade', 8]]) {
+  await kagitKur(stil, ilac);
+  await sayfa.setViewportSize({ width: 733, height: 900 });
+  await sayfa.emulateMedia({ media: 'print' });
+  const o = await sayfa.evaluate(() => {
+    const k = document.querySelector('#sayfa > .yazdir-alan');
+    const r = (e) => e.getBoundingClientRect();
+    const mm = (px) => Math.round(px / 96 * 25.4 * 10) / 10;
+    const gorunur = (e) => !!e && e.getClientRects().length > 0;
+    const icerikAlt = Math.max(0, ...[...k.querySelectorAll('.kagit__rx-govde > *')].filter(gorunur).map((e) => r(e).bottom));
+    const rx = r(k.querySelector('.kagit__rx'));
+    const hat = k.querySelector('.kagit__hat-cizim'), imza = k.querySelector('.kagit__imza');
+    const temp = k.querySelector('.kagit__olcum:has(.kagit__olcum-cizim--temp)');
+    return {
+      boy: mm(k.offsetHeight),
+      hat: gorunur(hat) ? { ust: mm(r(hat).top - icerikAlt), boy: mm(r(hat).height), sag: mm(rx.right - r(hat).right), alt: mm(rx.bottom - r(hat).bottom), sol: r(hat).left } : null,
+      imza: { ust: mm(r(imza).top - icerikAlt), sol: mm(r(imza).left - rx.left), alt: mm(rx.bottom - r(imza).bottom), sag: r(imza).right },
+      tempTek: !temp || Math.abs(r(temp.querySelector('b')).top - r(temp.lastElementChild).top) < 2,
+    };
+  });
+  await sayfa.emulateMedia({ media: null });
+  await sayfa.setViewportSize({ width: 1280, height: 900 });
+  const ad = `${stil}/${ilac}`;
+  altOzet.push(`${ad} ${o.boy}mm hat ${o.hat ? o.hat.boy + 'mm' : 'yok'}`);
+  if (o.imza.ust < -0.3 || o.imza.sol > 6 || o.imza.alt < 0) altYari.push(`${ad} imza ${JSON.stringify(o.imza)}`);
+  if (o.hat && (o.hat.ust < -0.3 || o.hat.sag > 6 || o.hat.alt < 0 || o.hat.boy < 12 || o.hat.sol < o.imza.sag)) altYari.push(`${ad} hat ${JSON.stringify(o.hat)}`);
+  // Boş kâğıtta ve kısa reçetede hat tam boyunda (21,6 mm) basılıyor.
+  if (ilac <= 3 && (!o.hat || Math.abs(o.hat.boy - 21.6) > 0.3)) altYari.push(`${ad} hat tam boyda değil ${JSON.stringify(o.hat)}`);
+  if (!o.tempTek) altYari.push(`${ad} Temperature iki satır`);
+  if (o.boy > 272) altYari.push(`${ad} ${o.boy}mm`);
+}
+await sayfa.evaluate(() => { document.querySelectorAll('#sayfa > .yazdir-alan').forEach((e) => e.remove()); });
+// Clinical altındaki el yazısı çizime binmiyor: yazı ve çizim ayrı ayrı
+// gizlenip çekilen görüntülerde ikisinin mürekkebi aynı pikselde buluşmuyor.
+// Kâğıt ayarsız (hekimin fotoğrafı yok, çizim var), ölçeksiz ve ekranın
+// en üstünde kuruluyor; pencere onu tamamen gösterecek boyda.
+await sayfa.setViewportSize({ width: 1280, height: 1100 });
+const sutunAyak = await sayfa.evaluate(async () => {
+  const { kagitCiz } = await import('./js/kagit.js');
+  const tuval = document.createElement('div');
+  tuval.className = 'kagit-tuval deneme-tuval';
+  tuval.style.cssText = 'position:fixed;inset:0 auto auto 0;z-index:999;background:#fff';
+  tuval.append(kagitCiz({ bos: true }));
+  // Sade kâğıt da ayarsız: hekimin fotoğrafı yokken basılan çizim.
+  const sade = document.createElement('div');
+  sade.className = 'kagit-tuval deneme-tuval';
+  sade.style.cssText = 'position:fixed;inset:0 auto auto 0;z-index:998';
+  sade.append(kagitCiz({ ayar: { kagitStili: 'sade' }, bos: true }));
+  document.body.append(sade, tuval);
+  const sekiller = [...sade.querySelectorAll('.kagit--sade .kagit__saglik-cizim :is(path, circle, rect, ellipse)')].filter((e) => e.getClientRects().length);
+  const renkli = sekiller.filter((e) => { const c = getComputedStyle(e); return c.fill !== 'none' || !['none', 'rgb(0, 0, 0)'].includes(c.stroke); }).length;
+  sade.remove();
+  const b = tuval.querySelector('.kagit--modern .kagit__sutun-ayak').getBoundingClientRect();
+  return { kutu: [Math.floor(b.left), Math.floor(b.top), Math.ceil(b.width), Math.ceil(b.height)], sadeSekil: sekiller.length, renkli };
+});
+if (sutunAyak.sadeSekil < 8 || sutunAyak.renkli) altYari.push(`sade çizimde ${sutunAyak.renkli}/${sutunAyak.sadeSekil} renkli parça`);
+const ayakGoruntu = async (yaziGizli, cizimGizli) => {
+  await sayfa.evaluate(([y, c]) => {
+    document.querySelector('.deneme-tuval .kagit__sutun-yazi').style.visibility = y ? 'hidden' : '';
+    document.querySelector('.deneme-tuval .kagit__saglik-cizim').style.visibility = c ? 'hidden' : '';
+  }, [yaziGizli, cizimGizli]);
+  return goruntu(...sutunAyak.kutu);
+};
+await sayfa.evaluate(() => document.fonts.ready);
+const zeminG = await ayakGoruntu(true, true), cizimG = await ayakGoruntu(true, false), yaziG = await ayakGoruntu(false, true);
+await sayfa.evaluate(() => document.querySelector('.deneme-tuval').remove());
+await sayfa.setViewportSize({ width: 1280, height: 900 });
+let yaziCizimde = 0, yaziMurekkebi = 0;
+for (let y = 0; y < zeminG.h; y++) {
+  for (let x = 0; x < zeminG.w; x++) {
+    const z = zeminG.rgb(x, y);
+    const yazi = renkFarki(yaziG.rgb(x, y), z) > 90;
+    if (yazi) yaziMurekkebi++;
+    if (yazi && renkFarki(cizimG.rgb(x, y), z) > 90) yaziCizimde++;
+  }
+}
+if (yaziMurekkebi < 200 || yaziCizimde > 0) altYari.push(`el yazısı çizimin üstünde: ${yaziCizimde}/${yaziMurekkebi} piksel`);
+// Ayaktaki telefon satırında etiket ve numara tek metin: iki noktanın iki
+// yanında birer boşluk (numara ayrı öğeyken araya satırın boşluğu da giriyordu).
+const telefonSatiri = await sayfa.evaluate(() => [...document.querySelectorAll('.kagit-tuval .kagit__iletisim-satir')]
+  .filter((s) => s.querySelector('bdi')).map((s) => [s.children.length, /\S : $/.test(s.lastElementChild.firstChild.textContent)]));
+if (!telefonSatiri.length || telefonSatiri.some(([n, bosluk]) => n !== 2 || !bosluk)) altYari.push('telefon satırı ' + JSON.stringify(telefonSatiri));
+if (altYari.length) throw new Error('kâğıdın alt yarısı bozuk: ' + altYari.join('; '));
+ok(`kâğıdın alt yarısı: hat ve imza içeriğin altında (${altOzet.join(' · ')}), Temperature tek satır, sade çizim renksiz (${sutunAyak.sadeSekil} parça), el yazısı çizime binmiyor (${yaziMurekkebi} px), telefon satırı tek metin`);
 
 // --- Eşitleme: gerçek tarayıcıda, gerçek IndexedDB ve gerçek WebCrypto ile.
 // Google'ın kendi uç noktaları burada denenemiyor (istemci kimliği hekimde),
