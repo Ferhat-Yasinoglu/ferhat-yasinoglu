@@ -63,8 +63,11 @@ const TEST_SORULARI = [
   'Guten Tag, ich brauche einen Bot',
 ];
 
+// Bu araç GENEL brifingi (kanal listesi boş) yönetir. Kanala özel brifingler (ör.
+// Telegram'daki Shafa desteği, tools/ajan-yukle.mjs) hariç tutulur: yoksa "ajan_kur"
+// ilk aktif brifing diye onların üstüne FY Ajans metnini yazabilirdi.
 async function brifingBul() {
-  const liste = await api('/api/k/ai_brifingler?limit=50').then(canlilar);
+  const liste = (await api('/api/k/ai_brifingler?limit=50').then(canlilar)).filter((b) => !(Array.isArray(b.kanallar) && b.kanallar.length));
   return liste.find((b) => b.aktif) || liste[0] || null;
 }
 

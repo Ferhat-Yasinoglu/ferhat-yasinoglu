@@ -121,6 +121,28 @@ describe('AI ajan ve gecikme', () => {
     expect((await db.listele('cevapsiz_sorular'))[0].soru).toBe('fil ne yer?');
   });
 
+  it('kanala özel brifing: Telegram kendi brifingiyle, Instagram genel brifingle konuşur; cevap dili metinden gelir', async () => {
+    const env = ortam({ PROVA: '0', ANTHROPIC_API_KEY: 'k' }); const db = new Veritabani(env.DB);
+    await db.kaydet('hesaplar', { kanal: 'telegram', ad: 'tg', dis_id: 'tg', durum: 'canli' }, { onek: 'hes' });
+    await db.kaydet('hesaplar', { kanal: 'instagram', ad: 'ig', dis_id: 'ig', durum: 'canli' }, { onek: 'hes' });
+    await db.kaydet('ai_brifingler', { id: 'brif_genel', ad: 'genel', kimlik: 'GENEL-KIMLIK', bilgi_tabani: [], aktif: 1 });
+    await db.kaydet('ai_brifingler', { id: 'brif_shafa', ad: 'shafa', kimlik: 'SHAFA-KIMLIK', kanallar: ['telegram'], bilgi_tabani: [{ baslik: 'b', metin: 'm', aktif: 1 }], aktif: 1 });
+    const f = sahteFetch({ anthropicMetin: 'جواب' });
+    const zaman = new Date().toISOString();
+    const t = await olayIsle(env, db, { kaynak: 'telegram', kanal: 'telegram', dis_id: '11', ad: 'Dr', olay_id: 'tg:k1', tip: 'dm', text: 'نسخه را چطور چاپ کنم؟', dil: 'en', zaman }, { fetchFn: f });
+    expect(t).toMatchObject({ karar: 'ai', cevapVar: true, brifing: 'brif_shafa' });
+    const sistemler = () => f.cagrilar.filter((c) => c.url.includes('anthropic')).map((c) => c.govde.system);
+    expect(sistemler()[0]).toContain('SHAFA-KIMLIK');
+    expect(sistemler()[0]).toMatch(/^CEVAP DİLİ: Farsça/);          // arayüz İngilizce, metin Dari → Dari
+    const i = await olayIsle(env, db, { kaynak: 'instagram', kanal: 'instagram', dis_id: 'i1', ad: 'M', olay_id: 'ig:k1', tip: 'dm', text: 'hello, do you build websites?', zaman }, { fetchFn: f });
+    expect(i).toMatchObject({ karar: 'ai', brifing: 'brif_genel' });
+    expect(sistemler()[1]).toContain('GENEL-KIMLIK');
+    // Çıplak /start'ta metin yok: karşılama Telegram arayüz dilinde yazılır.
+    await olayIsle(env, db, { kaynak: 'telegram', kanal: 'telegram', dis_id: '12', ad: 'Dr', olay_id: 'tg:k2', tip: 'start', text: '/start', dil: 'fa', zaman }, { fetchFn: f });
+    expect(sistemler()[2]).toMatch(/^CEVAP DİLİ: Farsça/);
+    expect((await db.listele('gunluk')).filter((g) => g.karar?.tur === 'ai').map((g) => g.karar.brifing)).toEqual(['brif_shafa', 'brif_genel', 'brif_shafa']);
+  });
+
   it('delay adımı cron ile devam eder', async () => {
     const env = ortam({ PROVA: '0' }); const f = sahteFetch(); const db = new Veritabani(env.DB);
     await db.kaydet('hesaplar', { kanal: 'telegram', ad: 'b', dis_id: 'b', durum: 'canli' }, { onek: 'hes' });
