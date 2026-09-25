@@ -1,0 +1,1407 @@
+<!doctype html>
+<html lang="fa-AF" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>سامانه نسخه‌نویسی</title>
+<meta name="description" content="سامانه نسخه‌نویسی کمپیوتری برای داکتر صاحبان. بدون انترنت کار می‌کند و معلومات فقط در همین کمپیوتر می‌ماند.">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231b8754'/%3E%3Ctext x='32' y='46' font-size='38' text-anchor='middle' fill='white' font-family='serif'%3E℞%3C/text%3E%3C/svg%3E">
+<style>
+  @page { size: A4 portrait; margin: 10mm; }
+  :root {
+    --bg: #f1f5f3;
+    --card: #ffffff;
+    --ink: #17231d;
+    --muted: #5f6f67;
+    --line: #d6e1db;
+    --brand: #1b8754;
+    --brand-dark: #146b42;
+    --brand-soft: #e5f3ec;
+    --blue: #1f6fd1;
+    --danger: #c0352b;
+    --radius: 10px;
+    --font: "Segoe UI", Tahoma, "Noto Naskh Arabic", "Vazirmatn", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--font); min-height: 100vh; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+
+  /* ---------- نوار بالا ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 30;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px; background: var(--brand); color: #fff;
+  }
+  .topbar .title { font-weight: 700; font-size: 1.15rem; color: #fff; text-decoration: none; display: flex; gap: 8px; align-items: center; }
+  .topbar .title .rx { font-family: serif; font-size: 1.35rem; line-height: 1; }
+  .topbar .sp { flex: 1; }
+  .topbar button { border: 1px solid rgba(255,255,255,.55); background: transparent; color: #fff; border-radius: 8px; padding: 5px 14px; cursor: pointer; }
+  .topbar button:hover { background: rgba(255,255,255,.14); }
+  .topbar .logout { background: #fff; color: var(--brand); border-color: #fff; font-weight: 600; }
+  .topbar .logout:hover { background: #eafaf1; }
+
+  main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 18px 16px 30px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+  .card h2 { margin: 0 0 12px; font-size: 1.05rem; color: var(--brand-dark); }
+  .page-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .page-head h1 { margin: 0; font-size: 1.25rem; }
+  .page-head .sp { flex: 1; }
+  .notice { padding: 10px 14px; margin-bottom: 14px; border-radius: var(--radius); background: #fff7e0; border: 1px solid #efd28a; }
+  .notice.err { background: #fdecea; border-color: #f3b4ad; }
+  .sub { color: var(--muted); font-size: .88rem; }
+
+  /* ---------- دکمه و فورم ---------- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 16px; border-radius: 8px; border: 1px solid var(--line); background: #fff; cursor: pointer; text-decoration: none; color: var(--ink);
+  }
+  .btn:hover { border-color: var(--brand); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+  .btn.primary:hover { background: var(--brand-dark); }
+  .btn.soft { background: var(--brand-soft); border-color: #bfe0cf; color: var(--brand-dark); font-weight: 600; }
+  .btn.sm { padding: 4px 10px; font-size: .85rem; }
+  .icon-btn { width: 32px; height: 32px; padding: 0; border-radius: 8px; border: 1px solid var(--line); background: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+  .icon-btn svg { width: 17px; height: 17px; }
+  .icon-btn.green { color: var(--brand); } .icon-btn.green:hover { background: var(--brand-soft); border-color: var(--brand); }
+  .icon-btn.blue { color: var(--blue); } .icon-btn.blue:hover { background: #e8f1fd; border-color: var(--blue); }
+  .icon-btn.red { color: var(--danger); } .icon-btn.red:hover { background: #fdecea; border-color: var(--danger); }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+  .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 12px; }
+  .span2 { grid-column: span 2; }
+  .span3 { grid-column: span 3; }
+  .span4 { grid-column: 1 / -1; }
+  label.f { display: flex; flex-direction: column; gap: 3px; font-size: .85rem; color: var(--muted); }
+  label.chk { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--ink); }
+  label.chk input { width: auto; }
+  input, select, textarea { width: 100%; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+  textarea { resize: vertical; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--brand); outline-offset: -1px; border-color: var(--brand); }
+  .req::after { content: " *"; color: var(--danger); }
+
+  /* ---------- ورود ---------- */
+  .login { max-width: 380px; margin: 8vh auto 0; }
+  .login .card { padding: 24px; }
+  .login h1 { margin: 0 0 4px; font-size: 1.3rem; color: var(--brand-dark); text-align: center; }
+  .login p { text-align: center; margin: 0 0 16px; }
+  .login form { display: grid; gap: 12px; }
+
+  /* ---------- صفحه اصلی ---------- */
+  .status { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .who { display: flex; align-items: center; gap: 12px; }
+  .who .av { width: 46px; height: 46px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); display: flex; align-items: center; justify-content: center; }
+  .who .av svg { width: 26px; height: 26px; }
+  .who b { display: block; font-size: 1.05rem; }
+  .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .tile {
+    display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px;
+    padding: 28px 16px; background: #fff; border: 1px solid var(--line); border-radius: 14px;
+    color: var(--ink); text-decoration: none; transition: border-color .15s, transform .15s, box-shadow .15s;
+  }
+  .tile:hover, .tile:focus-visible { border-color: var(--brand); transform: translateY(-2px); box-shadow: 0 8px 22px rgba(27,135,84,.12); }
+  .tile .ic { width: 64px; height: 64px; border-radius: 16px; background: var(--brand-soft); color: var(--brand); display: flex; align-items: center; justify-content: center; }
+  .tile .ic svg { width: 34px; height: 34px; }
+  .tile b { font-size: 1.15rem; }
+  .tile span { color: var(--muted); font-size: .9rem; }
+
+  /* ---------- ورق نسخه ---------- */
+  .sheet-wrap { overflow-x: auto; padding-bottom: 4px; }
+  .sheet {
+    background: #fff; color: #000; width: 210mm; min-height: 277mm; margin: 0 auto; padding: 9mm 10mm;
+    box-shadow: 0 2px 14px rgba(0,0,0,.12); display: flex; flex-direction: column; font-size: 10.5pt; line-height: 1.45;
+  }
+  .sh-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; padding-bottom: 6px; border-bottom: 2.5px solid var(--brand); }
+  .sh-head .fa { text-align: right; }
+  .sh-head .en { text-align: left; direction: ltr; }
+  .sh-head .l0 { font-weight: 700; font-size: 1.3em; color: var(--brand-dark); }
+  .sh-head .ln { font-size: .88em; }
+  .sh-head .logo { width: 25mm; height: 25mm; display: flex; align-items: center; justify-content: center; }
+  .sh-head .logo img, .sh-head .logo svg { max-width: 100%; max-height: 100%; }
+  .sh-meta {
+    direction: ltr; display: grid; grid-template-columns: auto 2.6fr .8fr .8fr 1.3fr; gap: 6px 14px; align-items: center;
+    padding: 6px 0; border-bottom: 1px solid #999;
+  }
+  .sh-meta .m { display: flex; align-items: baseline; gap: 4px; white-space: nowrap; }
+  .sh-meta .m b { font-weight: 600; }
+  /* مثل نسخه‌های چاپی: ستون معاینه چپ، ℞ راست */
+  .sh-body { flex: 1; display: grid; grid-template-columns: 34% 1fr; min-height: 190mm; direction: ltr; }
+  .sh-left { direction: ltr; text-align: left; border-right: 1.5px solid var(--brand); padding: 8px 10px 8px 0; display: flex; flex-direction: column; gap: 8px; font-size: .93em; }
+  .sh-left h4 { margin: 0 0 2px; font-size: 1em; color: var(--brand-dark); display: flex; align-items: center; gap: 6px; }
+  .sh-left ul { margin: 0; padding-left: 16px; }
+  .sh-left li { padding: 1px 0; }
+  .vit { display: grid; grid-template-columns: auto 1fr auto; gap: 1px 6px; align-items: baseline; }
+  .vit .u { color: #444; font-size: .9em; }
+  .vit .v { border-bottom: 1px dotted #888; min-height: 1.35em; }
+  .notes-p { white-space: pre-wrap; }
+  .sh-rx { padding: 8px 0 8px 12px; direction: ltr; text-align: left; display: flex; flex-direction: column; }
+  .rx-sym { font-family: serif; font-size: 2.6em; line-height: 1; color: var(--brand-dark); margin-bottom: 6px; }
+  ol.items { list-style: none; margin: 0; padding: 0; }
+  ol.items li { padding: 5px 0; border-bottom: 1px dotted #bbb; break-inside: avoid; }
+  ol.items li:last-child { border-bottom: 0; }
+  .it1 { display: flex; gap: 8px; align-items: baseline; font-weight: 600; }
+  .it1 .nm { flex: 1; }
+  .it1 .n { white-space: nowrap; }
+  .it2 { direction: rtl; text-align: right; font-size: .95em; color: #222; }
+  .sh-foot { border-top: 2px solid var(--brand); padding-top: 5px; margin-top: 6px; font-size: .9em; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 16px; }
+  .sh-foot .note { flex-basis: 100%; font-weight: 600; }
+
+  /* ورق روی صفحه: با خانه‌های نوشتن */
+  .sheet .inp { width: auto; border: 0; border-bottom: 1px dotted #888; border-radius: 0; padding: 1px 3px; background: #fafdfb; min-width: 0; }
+  .sheet .inp:focus { outline: 0; background: var(--brand-soft); border-bottom-color: var(--brand); }
+  .sheet select.inp { padding: 0 2px; }
+  .sheet textarea.inp { width: 100%; border: 1px dotted #aaa; border-radius: 4px; min-height: 60px; }
+  .sheet .vit .inp { width: 100%; }
+  .add-link { border: 1px dashed #9cc9b1; background: #f6fbf8; color: var(--brand-dark); border-radius: 6px; padding: 0 8px; cursor: pointer; font-size: .85em; line-height: 1.7; }
+  .add-link:hover { background: var(--brand-soft); }
+  .rm { border: 0; background: none; color: var(--danger); cursor: pointer; padding: 0 4px; font-size: 1em; line-height: 1; }
+  .sel li { display: flex; gap: 4px; align-items: baseline; }
+  .sel li span { flex: 1; }
+  .drug-search { position: relative; margin-bottom: 8px; }
+  .drug-search input { border: 1.5px solid var(--brand); border-radius: 8px; padding: 7px 10px; direction: ltr; text-align: left; }
+  .it-acts { display: inline-flex; gap: 2px; }
+  .it-acts button { border: 0; background: none; cursor: pointer; padding: 0 4px; color: var(--blue); }
+  .it-acts button.rm { color: var(--danger); }
+  .composer-bar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 16px 0 4px; }
+  .composer-bar .btn { min-width: 150px; padding: 10px 20px; }
+  .saved-tag { font-size: .85rem; color: var(--brand-dark); }
+
+  /* پیشنهاد دوا و انتخاب‌گر (علائم، لابراتوار، تشخیص) */
+  .dropdown {
+    position: absolute; z-index: 40; inset-inline: 0; top: 100%; margin: 3px 0 0; list-style: none; padding: 4px;
+    background: #fff; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 10px 28px rgba(0,0,0,.16);
+    max-height: 330px; overflow: auto; direction: ltr; text-align: left;
+  }
+  .dropdown li { padding: 6px 8px; border-radius: 6px; cursor: pointer; display: flex; gap: 8px; align-items: baseline; }
+  .dropdown li small { color: var(--muted); margin-left: auto; direction: rtl; }
+  .dropdown li[aria-selected="true"], .dropdown li:hover { background: var(--brand-soft); }
+  .dropdown li.new { color: var(--brand-dark); font-weight: 600; }
+  .picker {
+    position: fixed; z-index: 45; width: 330px; max-width: calc(100vw - 24px);
+    background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 14px 34px rgba(0,0,0,.2);
+    direction: ltr; text-align: left; display: flex; flex-direction: column; max-height: min(460px, calc(100vh - 24px));
+  }
+  .picker .ph { padding: 8px; border-bottom: 1px solid var(--line); }
+  .picker .pl { overflow: auto; padding: 4px 8px 8px; flex: 1; }
+  .picker .grp { font-weight: 700; font-size: .78rem; color: var(--brand-dark); margin: 8px 0 2px; }
+  .picker label { display: flex; gap: 8px; align-items: center; padding: 3px 4px; border-radius: 5px; cursor: pointer; }
+  .picker label:hover { background: var(--brand-soft); }
+  .picker label input { width: auto; }
+  .picker .pf { padding: 8px; border-top: 1px solid var(--line); display: flex; gap: 8px; justify-content: space-between; align-items: center; direction: rtl; }
+  .picker .empty { color: var(--muted); padding: 10px 4px; font-size: .9rem; }
+
+  /* ---------- جدول‌ها ---------- */
+  .filters { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: end; }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+  table { width: 100%; border-collapse: collapse; background: #fff; }
+  th, td { text-align: start; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: .9rem; }
+  th { background: var(--brand-soft); color: var(--brand-dark); font-weight: 600; white-space: nowrap; }
+  tr:hover td { background: #fafdfb; }
+  td.ltr { direction: ltr; text-align: left; }
+  .nowrap { white-space: nowrap; }
+  td.clip { min-width: 120px; max-width: 220px; }
+  td .ops { display: inline-flex; gap: 4px; }
+  .empty-row { text-align: center; color: var(--muted); padding: 28px 10px !important; }
+  .pager { display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 10px; }
+  .yes { color: var(--brand); font-weight: 700; }
+  .star { color: #d19b00; }
+
+  /* ---------- پنجره‌ها ---------- */
+  dialog { border: 0; border-radius: 12px; padding: 0; width: min(560px, calc(100vw - 24px)); max-height: calc(100vh - 24px); }
+  dialog.wide { width: min(900px, calc(100vw - 24px)); }
+  dialog::backdrop { background: rgba(10, 25, 18, .45); }
+  .dlg-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: #fff; z-index: 2; }
+  .dlg-head b { font-size: 1.05rem; }
+  .dlg-body { padding: 16px; }
+  .dlg-foot { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--line); }
+  .kv { display: grid; grid-template-columns: 150px 1fr; gap: 6px 12px; margin: 0; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; }
+  .x-btn { border: 0; background: none; font-size: 1.3rem; cursor: pointer; color: var(--muted); line-height: 1; }
+
+  #toast {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+    background: #17231d; color: #fff; padding: 10px 18px; border-radius: 8px; z-index: 100; max-width: calc(100vw - 32px);
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  #toast.show { opacity: 1; }
+  #toast.err { background: var(--danger); }
+
+  #print-area { display: none; }
+
+  @media (max-width: 860px) {
+    .tiles { grid-template-columns: 1fr; }
+    .filters { grid-template-columns: 1fr 1fr; }
+    .filters .grow { grid-column: 1 / -1; }
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .span3, .span2 { grid-column: 1 / -1; }
+  }
+  /* روی تلفن ورق یک‌ستونه می‌شود؛ چاپ همیشه A4 است. */
+  @media (max-width: 820px) {
+    .sheet-wrap .sheet { width: 100%; min-height: 0; padding: 12px; }
+    .sheet-wrap .sh-meta { grid-template-columns: 1fr 1fr; }
+    .sheet-wrap .sh-meta .name { grid-column: 1 / -1; }
+    .sheet-wrap .sh-meta .name .inp { flex: 1; }
+    .sheet-wrap .sh-body { grid-template-columns: 1fr; min-height: 0; }
+    .sheet-wrap .sh-left { border-right: 0; border-bottom: 1.5px solid var(--brand); padding: 8px 0; }
+    .sheet-wrap .sh-rx { padding: 8px 0; }
+    .sheet-wrap .sh-head { grid-template-columns: 1fr auto; }
+    .sheet-wrap .sh-head .en { display: none; }
+    .sheet-wrap .sh-head .logo { width: 48px; height: 48px; }
+    .kv { grid-template-columns: 1fr; gap: 0; }
+    .kv dd { margin-bottom: 8px; }
+  }
+
+  @media print {
+    html, body { background: #fff; min-height: 0; }
+    body > *:not(#print-area) { display: none !important; }
+    #print-area { display: block; }
+    #print-area .sheet { width: auto; min-height: 276mm; padding: 0; box-shadow: none; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar" id="topbar" hidden>
+  <a class="title" href="#/"><span class="rx" aria-hidden="true">℞</span> سامانه نسخه‌نویسی</a>
+  <span class="sp"></span>
+  <button type="button" id="settings-btn">تنظیمات</button>
+  <button type="button" class="logout" id="logout-btn">خروج</button>
+</header>
+
+<main>
+  <div id="notices"></div>
+
+  <!-- ================= ورود ================= -->
+  <section id="view-login" class="login" hidden>
+    <div class="card">
+      <h1>سامانه نسخه‌نویسی</h1>
+      <p class="sub" id="login-doctor"></p>
+      <form id="login-form" autocomplete="off">
+        <label class="f"><span>نام کاربر</span><input name="user" dir="auto" autocomplete="username"></label>
+        <label class="f"><span>رمز</span><input name="pass" type="password" dir="ltr" autocomplete="current-password"></label>
+        <button type="submit" class="btn primary">ورود</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ================= صفحه اصلی ================= -->
+  <section id="view-home" hidden>
+    <div class="card status">
+      <div class="who">
+        <div class="av" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+        <div><b>مدیر سیستم</b><span class="sub" id="home-user" dir="auto"></span></div>
+      </div>
+      <div>امروز: <b id="home-date" dir="ltr"></b></div>
+    </div>
+    <div class="tiles">
+      <a class="tile" href="#/composer">
+        <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg></span>
+        <b>نوشتن نسخه</b><span>ایجاد، چاپ و ذخیره نسخه</span>
+      </a>
+      <a class="tile" href="#/medicines">
+        <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="7" rx="3.5" transform="rotate(-45 12 12.5)"/><path d="M9.5 10l5 5"/></svg></span>
+        <b>داروها</b><span>افزودن، ویرایش، لست داروها</span>
+      </a>
+      <a class="tile" href="#/patients">
+        <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.5c2.6.2 4.5 1.9 4.5 4.5"/></svg></span>
+        <b>اطلاعات مریضان</b><span>مشاهده و جستجوی سوابق مریضان</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ================= نوشتن نسخه ================= -->
+  <section id="view-composer" hidden>
+    <div class="page-head">
+      <h1>نوشتن نسخه</h1>
+      <span class="saved-tag" id="saved-tag"></span>
+      <span class="sp"></span>
+      <a class="btn sm" href="#/">بازگشت به صفحه اصلی</a>
+    </div>
+    <div class="sheet-wrap">
+      <form class="sheet" id="sheet" autocomplete="off" onsubmit="return false">
+        <div class="sh-head" id="c-head"></div>
+        <div class="sh-meta">
+          <label class="m no"><b>شماره/دوم:</b><input class="inp" name="seq" size="3" dir="ltr" inputmode="numeric"></label>
+          <label class="m name"><b>Name:</b><input class="inp" name="name" dir="auto" style="flex:1"></label>
+          <label class="m"><b>Age:</b><input class="inp" name="age" size="4" dir="auto"></label>
+          <label class="m"><b>Sex:</b><select class="inp" name="sex"><option value=""></option><option value="M">M</option><option value="F">F</option></select></label>
+          <span class="m"><b>Date:</b><span id="c-date"></span></span>
+        </div>
+        <div class="sh-body">
+          <aside class="sh-left">
+            <section>
+              <h4>Symptoms and Signs: <button type="button" class="add-link" data-pick="symptoms">+ add</button></h4>
+              <ul class="sel" id="sel-symptoms"></ul>
+            </section>
+            <section>
+              <h4>Laboratory Findings: <button type="button" class="add-link" data-pick="labs">+ add</button></h4>
+              <ul class="sel" id="sel-labs"></ul>
+            </section>
+            <section>
+              <h4>Vital Signs:</h4>
+              <div class="vit" id="c-vitals"></div>
+            </section>
+            <section>
+              <h4>Diagnosis / Impression: <button type="button" class="add-link" data-pick="diagnosis">+ add</button></h4>
+              <ul class="sel" id="sel-diagnosis"></ul>
+            </section>
+            <section>
+              <h4>Additional notes...</h4>
+              <textarea class="inp" name="notes" rows="3" dir="auto"></textarea>
+            </section>
+          </aside>
+          <div class="sh-rx">
+            <div class="rx-sym">℞</div>
+            <div class="drug-search">
+              <input id="drug-q" placeholder="Type to add medication..." aria-label="جستجوی دوا" role="combobox" aria-expanded="false" aria-controls="drug-dd" aria-autocomplete="list">
+              <ul class="dropdown" id="drug-dd" role="listbox" hidden></ul>
+            </div>
+            <ol class="items" id="c-items"></ol>
+          </div>
+        </div>
+        <div class="sh-foot" id="c-foot"></div>
+      </form>
+    </div>
+    <div class="composer-bar">
+      <button type="button" class="btn primary" id="print-btn">چاپ نسخه</button>
+      <button type="button" class="btn soft" id="new-btn">نسخه جدید</button>
+    </div>
+  </section>
+
+  <!-- ================= اطلاعات مریضان ================= -->
+  <section id="view-patients" hidden>
+    <div class="page-head">
+      <h1>اطلاعات مریضان</h1><span class="sp"></span>
+      <a class="btn sm" href="#/">بازگشت به صفحه اصلی</a>
+    </div>
+    <div class="card">
+      <div class="filters">
+        <label class="f grow"><span>جستجو بر اساس نام مریض:</span><input type="search" id="p-q" dir="auto"></label>
+        <label class="f"><span>جنسیت:</span>
+          <select id="p-sex"><option value="">همه</option><option value="M">ذکور</option><option value="F">اناث</option></select>
+        </label>
+        <label class="f"><span>از تاریخ (شمسی):</span><input id="p-from" dir="ltr" placeholder="1405/01/01" inputmode="numeric"></label>
+        <label class="f"><span>تا تاریخ (شمسی):</span><input id="p-to" dir="ltr" placeholder="1405/12/29" inputmode="numeric"></label>
+        <button type="button" class="btn" id="p-clear">پاک کردن</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>شماره مریضان</th><th>نام مریض</th><th>سن</th><th>جنسیت</th><th>تاریخ</th>
+          <th>علائم و نشانه‌ها</th><th>یافته‌های لابراتواری</th><th>علائم حیاتی</th><th>تشخیص</th><th>یادداشت</th><th>نسخه تجویزشده</th><th>عملیات</th>
+        </tr></thead>
+        <tbody id="p-body"></tbody>
+      </table>
+    </div>
+    <div class="pager"><span class="sub" id="p-count"></span><button type="button" class="btn sm" id="p-more" hidden>نشان دادن بیشتر</button></div>
+  </section>
+
+  <!-- ================= داروها ================= -->
+  <section id="view-medicines" hidden>
+    <div class="page-head">
+      <h1>داروها</h1><span class="sp"></span>
+      <a class="btn sm" href="#/">بازگشت به صفحه اصلی</a>
+    </div>
+    <form class="card" id="med-form" autocomplete="off">
+      <h2 id="med-form-title">ثبت دارو جدید</h2>
+      <div class="grid">
+        <label class="f span2"><span class="req">نام دارو</span><input name="name" dir="ltr" placeholder="Tab: Paracetamol 500 mg"></label>
+        <label class="f"><span>دوز پیش‌فرضی</span><input name="dose" list="dl-dose" dir="rtl"></label>
+        <label class="f"><span>زمان مصرف پیش‌فرضی</span><input name="timing" list="dl-timing" dir="rtl"></label>
+        <label class="f span2"><span>دستور مصرف پیش‌فرضی</span><input name="tariqa" list="dl-tariqa" dir="rtl"></label>
+        <label class="f"><span>قدرت</span><input name="strength" dir="ltr" placeholder="500"></label>
+        <label class="f"><span>واحد</span><input name="unit" list="dl-unit" dir="ltr" placeholder="mg"></label>
+        <label class="f"><span>فرم</span><input name="form" list="dl-form" dir="ltr" placeholder="Tab"></label>
+        <label class="f"><span>برند</span><input name="brand" dir="ltr"></label>
+        <label class="f span2"><span>ملاحظات/دوا</span><input name="notes" dir="auto"></label>
+        <label class="f"><span>تعداد (N)</span><input name="n" dir="ltr" inputmode="numeric"></label>
+        <div class="f" style="justify-content:flex-end;gap:6px">
+          <label class="chk"><input type="checkbox" name="frequent"> پرکاربرد</label>
+          <label class="chk"><input type="checkbox" name="fav"> علاقه‌مندی‌ها</label>
+        </div>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <button type="submit" class="btn primary" id="med-submit">ثبت دارو</button>
+        <button type="button" class="btn" id="med-cancel" hidden>لغو</button>
+      </div>
+    </form>
+    <div class="card">
+      <div class="actions" style="margin-bottom:10px">
+        <input type="search" id="m-q" placeholder="نام، برند یا مترادف را وارد کنید..." dir="auto" style="flex:1 1 260px">
+        <select id="m-per" style="width:auto" aria-label="تعداد در هر صفحه"><option>25</option><option>50</option><option selected>100</option><option>200</option></select>
+        <span class="sub" id="m-count"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>نام دارو</th><th>برند</th><th>دوز</th><th>زمان مصرف</th><th>واحد</th><th>فرم</th><th>N</th><th>پرکاربرد</th><th>عملیات</th>
+          </tr></thead>
+          <tbody id="m-body"></tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <button type="button" class="btn sm" id="m-prev">صفحه قبلی</button>
+        <button type="button" class="btn sm" id="m-next">صفحه بعدی</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= تنظیمات (سرخط نسخه و ورود) ================= -->
+  <section id="view-settings" hidden>
+    <div class="page-head">
+      <h1>تنظیمات</h1><span class="sp"></span>
+      <a class="btn sm" href="#/" id="settings-back">بازگشت به صفحه اصلی</a>
+    </div>
+    <div class="notice" id="first-run" hidden>خوش آمدید! اول معلومات داکتر را برای سرخط نسخه و یک نام کاربر و رمز بنویسید.</div>
+    <form class="card" id="settings-form" autocomplete="off">
+      <h2>سرخط نسخه</h2>
+      <div class="grid">
+        <label class="f span2"><span class="req">سرخط دری (سطر اول: نام داکتر)</span>
+          <textarea name="headFa" rows="5" dir="rtl" placeholder="دوکتور ...&#10;متخصص امراض داخله و اطفال"></textarea></label>
+        <label class="f span2"><span>سرخط انگلیسی (سطر اول: نام داکتر)</span>
+          <textarea name="headEn" rows="5" dir="ltr" placeholder="Dr. ...&#10;MD&#10;Internist and Pediatrician"></textarea></label>
+        <label class="f span2"><span>شماره تماس</span><input name="phone" dir="ltr"></label>
+        <label class="f span2"><span>آدرس</span><input name="address" dir="auto"></label>
+        <label class="f span4"><span>نوت پایین نسخه</span><input name="note" dir="auto"></label>
+        <div class="f span4">
+          <span>لوگو (وسط سرخط)</span>
+          <div class="actions">
+            <span id="logo-preview" style="width:56px;height:56px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:8px;padding:4px"></span>
+            <button type="button" class="btn sm" id="logo-pick">انتخاب عکس</button>
+            <button type="button" class="btn sm" id="logo-reset">لوگوی عادی</button>
+            <input type="file" id="logo-file" accept="image/*" hidden>
+          </div>
+        </div>
+      </div>
+      <h2 style="margin-top:18px">ورود</h2>
+      <div class="grid">
+        <label class="f"><span class="req">نام کاربر</span><input name="user" dir="auto"></label>
+        <label class="f"><span id="pass1-label">رمز</span><input name="pass1" type="password" dir="ltr" autocomplete="new-password"></label>
+        <label class="f"><span>تکرار رمز</span><input name="pass2" type="password" dir="ltr" autocomplete="new-password"></label>
+      </div>
+      <div class="actions" style="margin-top:14px"><button type="submit" class="btn primary">ذخیره</button></div>
+    </form>
+  </section>
+</main>
+
+<!-- افزودن دوا به نسخه -->
+<dialog id="item-dlg" aria-labelledby="item-title">
+  <form id="item-form" autocomplete="off">
+    <div class="dlg-head"><b id="item-title">افزودن دوا</b><button type="button" class="x-btn" data-close aria-label="بستن">×</button></div>
+    <div class="dlg-body">
+      <div class="grid">
+        <label class="f span4"><span class="req">نام دوا</span><input name="name" dir="ltr"></label>
+        <label class="f span2"><span>دوز/هدایت</span><input name="dose" list="dl-dose" dir="rtl"></label>
+        <label class="f span2"><span>زمان مصرف</span><input name="timing" list="dl-timing" dir="rtl"></label>
+        <label class="f span3"><span>طریقه</span><input name="tariqa" list="dl-tariqa" dir="rtl"></label>
+        <label class="f"><span>تعداد (N)</span><input name="n" dir="ltr" inputmode="numeric"></label>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary" id="item-ok">افزودن</button>
+      <button type="button" class="btn" data-close>لغو</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- مشاهده جزئیات -->
+<dialog id="detail-dlg" class="wide" aria-labelledby="detail-title">
+  <div class="dlg-head"><b id="detail-title">مشاهده جزئیات</b><button type="button" class="x-btn" data-close aria-label="بستن">×</button></div>
+  <div class="dlg-body" id="detail-body"></div>
+</dialog>
+
+<datalist id="dl-dose"></datalist>
+<datalist id="dl-timing"></datalist>
+<datalist id="dl-tariqa"></datalist>
+<datalist id="dl-unit"><option value="mg"><option value="g"><option value="mcg"><option value="IU"><option value="ml"><option value="mg/5ml"><option value="mg/ml"><option value="%"></datalist>
+<datalist id="dl-form"><option value="Tab"><option value="Cap"><option value="Syp"><option value="Susp"><option value="Drops"><option value="Inj"><option value="Amp"><option value="Vial"><option value="Inf"><option value="Cream"><option value="Oint"><option value="Gel"><option value="Eye Drops"><option value="Ear Drops"><option value="Nasal Spray"><option value="Inhaler"><option value="Supp"><option value="Sachet"><option value="Lotion"></datalist>
+
+<div id="print-area"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+
+/* ================= داده‌های آماده ================= */
+// لیست داروها، علائم، معاینات و تشخیص‌ها از nuskha/data/*.json ساخته و
+// با `node nuskha/tools/build.mjs` اینجا گذاشته می‌شود؛ برنامه یک فایل است و بدون انترنت باز می‌شود.
+const DATA = /*__DATA__*/null;
+
+const LISTS = {
+  symptoms: DATA?.symptoms || ['Fever', 'Cough', 'Shortness of breath', 'Fast breathing', 'Runny nose', 'Chest indrawing', 'Vomiting', 'Diarrhea'],
+  labGroups: DATA?.labGroups || [
+    { group: 'HEMATOLOGY', tests: ['CBC', 'ESR', 'Hb'] },
+    { group: 'RENAL FUNCTION TEST', tests: ['Blood Urea', 'Serum Creatinine', 'Uric Acid'] },
+  ],
+  diagnoses: DATA?.diagnoses || ['Acute upper respiratory tract infection', 'Acute lower respiratory tract infection', 'Pneumonia', 'Asthma'],
+  dose: DATA?.doseOptions || ['۱ دانه', '۲ دانه', 'نیم دانه', '۱ قاشق چای‌خوری', '۲ قاشق چای‌خوری', 'طبق هدایت'],
+  timing: DATA?.timingOptions || ['قبل از غذا', 'بعد از غذا', 'همراه غذا', 'ناشتا', 'هنگام خواب'],
+  tariqa: DATA?.tariqaOptions || ['روزانه ۱ بار', 'روزانه ۲ بار', 'روزانه ۳ بار', 'هر ۸ ساعت', 'هر ۱۲ ساعت', 'در صورت ضرورت'],
+};
+const SEED_DRUGS = DATA?.drugs || [];
+const DATA_VERSION = DATA?.version || 0;
+
+const VITALS = [
+  ['bp', 'BP', 'mmHg'], ['rr', 'RR', '/min'], ['pr', 'PR', '/min'], ['hr', 'HR', '/min'],
+  ['bt', 'BT', '°C'], ['spo2', 'SpO2', '%'], ['weight', 'Weight', 'kg'], ['height', 'Height', 'cm'],
+];
+const DEFAULT_NOTE = 'نوت: در مراجعه بعدی نسخه خود را با خود داشته باشید';
+const DEFAULT_LOGO = `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#e5f3ec" stroke="#1b8754" stroke-width="2.5"/><path d="M32 12v40" stroke="#146b42" stroke-width="3" stroke-linecap="round"/><path d="M26 16h12" stroke="#146b42" stroke-width="3" stroke-linecap="round"/><path d="M38 22c0 4-12 4-12 8s12 4 12 8-12 4-12 8" fill="none" stroke="#1b8754" stroke-width="3" stroke-linecap="round"/><circle cx="32" cy="14" r="3" fill="#1b8754"/></svg>`;
+
+/* ================= کمک‌ها ================= */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const FA_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
+const fa = v => String(v).replace(/\d/g, d => FA_DIGITS[d]);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+/** ارقام دری و عربی را لاتین می‌کند. */
+const latinDigits = v => String(v ?? '')
+  .replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 0x06F0))
+  .replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660));
+/** برای جستجو: ی/ک عربی، نیم‌فاصله و حروف کلان و خورد فرقی نکند. */
+const norm = v => latinDigits(v).replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/‌/g, ' ')
+  .toLowerCase().replace(/\s+/g, ' ').trim();
+
+const SH_NUM = new Intl.DateTimeFormat('fa-AF-u-ca-persian-nu-latn', { year: 'numeric', month: '2-digit', day: '2-digit' });
+/** تاریخ هجری شمسی به شکل 1405/07/03 (برای فلتر هم به کار می‌رود، چون به ترتیب الفبا درست مرتب می‌شود). */
+function shamsi(d = new Date()) {
+  const p = Object.fromEntries(SH_NUM.formatToParts(new Date(d)).map(x => [x.type, x.value]));
+  return `${p.year}/${p.month}/${p.day}`;
+}
+/** ورودی مثل ۱۴۰۵/۷/۳ یا 1405-07-03 را 1405/07/03 می‌کند؛ اگر نشود null. */
+function parseShamsi(v) {
+  const s = latinDigits(v).trim();
+  const m = s.match(/^(\d{4})(?:\D+(\d{1,2})(?:\D+(\d{1,2}))?)?$/);
+  if (!m) return null;
+  const pad = x => String(x).padStart(2, '0');
+  return `${m[1]}/${pad(m[2] || 1)}/${pad(m[3] || 1)}`;
+}
+/** «تا تاریخ» اگر فقط سال یا ماه نوشته شده باشد، آخر همان سال/ماه حساب شود. */
+function parseShamsiEnd(v) {
+  const s = latinDigits(v).trim();
+  const m = s.match(/^(\d{4})(?:\D+(\d{1,2})(?:\D+(\d{1,2}))?)?$/);
+  if (!m) return null;
+  const pad = x => String(x).padStart(2, '0');
+  return `${m[1]}/${m[2] ? pad(m[2]) : '12'}/${m[3] ? pad(m[3]) : '31'}`;
+}
+
+function toast(msg, isErr = false) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.toggle('err', isErr);
+  t.classList.add('show');
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => t.classList.remove('show'), isErr ? 5000 : 2600);
+}
+const errText = e => e?.message || String(e);
+const firstLine = t => String(t || '').split('\n').map(x => x.trim()).find(Boolean) || '';
+
+/* ================= ذخیره (IndexedDB) ================= */
+const DB = {
+  db: null,
+  open() {
+    return new Promise((resolve, reject) => {
+      const r = indexedDB.open('samana-nuskha', 1);
+      r.onupgradeneeded = () => {
+        const d = r.result;
+        d.createObjectStore('rx', { keyPath: 'id', autoIncrement: true });
+        d.createObjectStore('drugs', { keyPath: 'id', autoIncrement: true });
+        d.createObjectStore('kv');
+      };
+      r.onsuccess = () => { this.db = r.result; resolve(); };
+      r.onerror = () => reject(r.error);
+      r.onblocked = () => reject(new Error('blocked'));
+    });
+  },
+  run(stores, mode, fn) {
+    return new Promise((resolve, reject) => {
+      const t = this.db.transaction(stores, mode);
+      let out;
+      const q = fn(t);
+      if (q) q.onsuccess = () => { out = q.result; };
+      t.oncomplete = () => resolve(out);
+      t.onerror = t.onabort = () => reject(t.error);
+    });
+  },
+  all(store) { return this.run(store, 'readonly', t => t.objectStore(store).getAll()); },
+  put(store, v) { return this.run(store, 'readwrite', t => t.objectStore(store).put(v)); },
+  del(store, id) { return this.run(store, 'readwrite', t => t.objectStore(store).delete(id)); },
+  get(k) { return this.run('kv', 'readonly', t => t.objectStore('kv').get(k)); },
+  set(k, v) { return this.run('kv', 'readwrite', t => t.objectStore('kv').put(v, k)); },
+  addMany(store, list) { return this.run(store, 'readwrite', t => { const s = t.objectStore(store); for (const v of list) s.put(v); }); },
+};
+
+/* ================= حالت برنامه ================= */
+const DEFAULT_SETTINGS = { headFa: '', headEn: '', phone: '', address: '', note: DEFAULT_NOTE, logo: '', user: '', passHash: '', passSalt: '' };
+const S = {
+  settings: { ...DEFAULT_SETTINGS },
+  rx: [],          // همه نسخه‌ها، تازه‌ترین اول
+  drugs: [],
+  custom: { symptoms: [], labs: [], diagnosis: [] },
+  ready: false,
+};
+const sortRx = () => S.rx.sort((a, b) => b.id - a.id);
+const sortDrugs = () => S.drugs.sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+const configured = () => !!(S.settings.headFa.trim() && S.settings.passHash);
+
+/* ================= ورود ================= */
+async function hashPass(pass, salt) {
+  const text = salt + '|' + pass;
+  if (window.crypto?.subtle) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, '0')).join('');
+  }
+  let h = 5381; // اگر مرورگر SHA-256 نداشت
+  for (const ch of text) h = ((h * 33) ^ ch.codePointAt(0)) >>> 0;
+  return 'djb2-' + h.toString(16);
+}
+function loggedIn() {
+  if (!S.settings.passHash) return true;
+  try { return sessionStorage.getItem('nuskha-auth') === S.settings.passHash; } catch { return false; }
+}
+function setLoggedIn(on) {
+  try { on ? sessionStorage.setItem('nuskha-auth', S.settings.passHash) : sessionStorage.removeItem('nuskha-auth'); } catch {}
+}
+
+$('#login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target.elements;
+  const ok = norm(f.user.value) === norm(S.settings.user)
+    && await hashPass(f.pass.value, S.settings.passSalt) === S.settings.passHash;
+  if (!ok) { toast('نام کاربر یا رمز درست نیست', true); f.pass.select(); return; }
+  f.pass.value = '';
+  setLoggedIn(true);
+  route();
+});
+$('#logout-btn').addEventListener('click', () => {
+  setLoggedIn(false);
+  location.hash = '#/';
+  route();
+});
+// اگر رمز فراموش شد: در Console مرورگر nuskhaResetPassword() نوشته شود (README).
+window.nuskhaResetPassword = async () => {
+  S.settings = { ...S.settings, passHash: '', passSalt: '' };
+  await DB.set('settings', S.settings);
+  location.hash = '#/settings';
+  route();
+  return 'رمز پاک شد؛ در تنظیمات رمز تازه بگذارید.';
+};
+
+/* ================= رفتن بین صفحه‌ها ================= */
+const VIEWS = ['login', 'home', 'composer', 'patients', 'medicines', 'settings'];
+function route() {
+  if (!S.ready) return;
+  let view = location.hash.replace(/^#\/?/, '') || 'home';
+  if (!VIEWS.includes(view) || view === 'login') view = 'home';
+  if (!configured()) view = 'settings';                 // بار اول
+  else if (!loggedIn()) view = 'login';
+  for (const v of VIEWS) $('#view-' + v).hidden = v !== view;
+  $('#topbar').hidden = view === 'login';
+  $('#logout-btn').hidden = !configured();
+  $('#settings-btn').hidden = !configured();
+  $('#first-run').hidden = configured();
+  $('#settings-back').hidden = !configured();
+  closePicker();
+  hideDropdown();
+  for (const d of $$('dialog[open]')) d.close();
+  if (view === 'login') { $('#login-doctor').textContent = firstLine(S.settings.headFa); $('#login-form').elements.user.focus(); }
+  if (view === 'home') renderHome();
+  if (view === 'composer') enterComposer();
+  if (view === 'patients') renderPatients();
+  if (view === 'medicines') renderMedicines();
+  if (view === 'settings') fillSettingsForm();
+  window.scrollTo(0, 0);
+}
+window.addEventListener('hashchange', route);
+$('#settings-btn').addEventListener('click', () => { location.hash = '#/settings'; });
+
+/* ================= صفحه اصلی ================= */
+function renderHome() {
+  $('#home-user').textContent = S.settings.user;
+  $('#home-date').textContent = shamsi();
+}
+
+/* ================= سرخط و پایین نسخه ================= */
+function headHtml(s = S.settings) {
+  const lines = t => String(t || '').split('\n').map(x => x.trim()).filter(Boolean);
+  const block = ls => ls.map((l, i) => `<div class="${i ? 'ln' : 'l0'}">${esc(l)}</div>`).join('');
+  const logo = s.logo ? `<img src="${esc(s.logo)}" alt="">` : DEFAULT_LOGO;
+  return `<div class="fa">${block(lines(s.headFa))}</div><div class="logo">${logo}</div><div class="en">${block(lines(s.headEn))}</div>`;
+}
+function footHtml(s = S.settings) {
+  return `${s.phone ? `<span>شماره تماس: <span dir="ltr">${esc(s.phone)}</span></span>` : ''}
+    ${s.address ? `<span>آدرس: ${esc(s.address)}</span>` : ''}
+    ${s.note ? `<span class="note">${esc(s.note)}</span>` : ''}`;
+}
+
+/* ================= نوشتن نسخه ================= */
+// نسخه‌ای که روی صفحه است. id وقتی پر است که یک بار چاپ و ذخیره شده باشد.
+const C = { id: null, sana: null, symptoms: [], labs: [], diagnosis: [], items: [], dirty: false };
+
+function buildVitalsInputs() {
+  $('#c-vitals').innerHTML = VITALS.map(([k, label, unit]) =>
+    `<b>${label}:</b><input class="inp" name="v_${k}" dir="ltr" aria-label="${label}"><span class="u">${unit}</span>`).join('');
+}
+
+/** شماره‌ی مریض امروز: هر روز از ۱ شروع می‌شود. */
+function nextSeq() {
+  const today = shamsi();
+  const nums = S.rx.filter(r => r.shamsi === today).map(r => parseInt(latinDigits(r.seq), 10)).filter(Number.isFinite);
+  return (nums.length ? Math.max(...nums) : 0) + 1;
+}
+
+function renderSelected(kind) {
+  $('#sel-' + kind).innerHTML = C[kind].map((v, i) =>
+    `<li><span>${esc(v)}</span><button type="button" class="rm" data-rm="${kind}" data-i="${i}" title="حذف" aria-label="حذف ${esc(v)}">×</button></li>`).join('');
+}
+$('#sheet').addEventListener('click', e => {
+  const b = e.target.closest('[data-rm]');
+  if (!b) return;
+  C[b.dataset.rm].splice(Number(b.dataset.i), 1);
+  renderSelected(b.dataset.rm);
+  markDirty();
+});
+
+const itemLine2 = it => [it.timing, it.dose, it.tariqa].filter(Boolean).map(esc).join(' | ');
+function itemHtml(it, i, withActions) {
+  return `<li>
+    <div class="it1"><span class="nm">${i + 1}- ${esc(it.name)}</span>${it.n ? `<span class="n">N=${esc(it.n)}</span>` : ''}
+      ${withActions ? `<span class="it-acts"><button type="button" data-edit="${i}" title="تغییر" aria-label="تغییر">✎</button><button type="button" class="rm" data-del="${i}" title="حذف" aria-label="حذف">×</button></span>` : ''}</div>
+    ${itemLine2(it) ? `<div class="it2">${itemLine2(it)}</div>` : ''}
+  </li>`;
+}
+function renderItems() { $('#c-items').innerHTML = C.items.map((it, i) => itemHtml(it, i, true)).join(''); }
+$('#c-items').addEventListener('click', e => {
+  const ed = e.target.closest('[data-edit]');
+  const dl = e.target.closest('[data-del]');
+  if (ed) openItemDialog(C.items[Number(ed.dataset.edit)], Number(ed.dataset.edit));
+  if (dl) { C.items.splice(Number(dl.dataset.del), 1); renderItems(); markDirty(); }
+});
+
+function setMeta(rec) {
+  const f = $('#sheet').elements;
+  f.seq.value = rec.seq ?? '';
+  f.name.value = rec.name || '';
+  f.age.value = rec.age || '';
+  f.sex.value = rec.sex || '';
+  f.notes.value = rec.notes || '';
+  for (const [k] of VITALS) f['v_' + k].value = rec.vitals?.[k] || '';
+}
+function renderComposerAll() {
+  for (const k of ['symptoms', 'labs', 'diagnosis']) renderSelected(k);
+  renderItems();
+  $('#c-date').textContent = shamsi(C.sana || new Date());
+  $('#saved-tag').textContent = C.id != null ? (C.dirty ? 'تغییر ذخیره نشده' : 'چاپ و ذخیره شده') : '';
+}
+
+function clearComposer() {
+  Object.assign(C, { id: null, sana: null, symptoms: [], labs: [], diagnosis: [], items: [], dirty: false });
+  setMeta({ seq: nextSeq() });
+  renderComposerAll();
+  saveDraft();
+}
+
+/** «باز کردن در نسخه»: سابقه‌ی مریض در یک نسخه‌ی تازه (تاریخ و شماره امروز) باز می‌شود. */
+function loadIntoComposer(rec) {
+  Object.assign(C, {
+    id: null, sana: null, dirty: true,
+    symptoms: [...(rec.symptoms || [])], labs: [...(rec.labs || [])], diagnosis: [...(rec.diagnosis || [])],
+    items: (rec.items || []).map(x => ({ ...x })),
+  });
+  setMeta({ ...rec, seq: nextSeq() });
+  renderComposerAll();
+  saveDraft();
+}
+
+function enterComposer() {
+  $('#c-head').innerHTML = headHtml();
+  $('#c-foot').innerHTML = footHtml();
+  // نسخه‌ی خالی که از دیروز مانده، تاریخ و شماره‌ی امروز را بگیرد.
+  if (!C.dirty && C.id == null) { $('#sheet').elements.seq.value = nextSeq(); $('#c-date').textContent = shamsi(); }
+  setTimeout(() => (!$('#sheet').elements.name.value ? $('#sheet').elements.name : $('#drug-q')).focus(), 0);
+}
+
+function readComposer() {
+  const f = $('#sheet').elements;
+  const vitals = {};
+  for (const [k] of VITALS) { const v = f['v_' + k].value.trim(); if (v) vitals[k] = v; }
+  return {
+    seq: f.seq.value.trim(), name: f.name.value.trim(), age: f.age.value.trim(), sex: f.sex.value,
+    notes: f.notes.value.trim(), vitals,
+    symptoms: [...C.symptoms], labs: [...C.labs], diagnosis: [...C.diagnosis], items: C.items.map(x => ({ ...x })),
+  };
+}
+const isEmpty = r => !r.name && !r.age && !r.notes && !r.items.length && !r.symptoms.length && !r.labs.length && !r.diagnosis.length && !Object.keys(r.vitals).length;
+
+function markDirty() {
+  C.dirty = true;
+  if (C.id != null) $('#saved-tag').textContent = 'تغییر ذخیره نشده';
+  saveDraft();
+}
+$('#sheet').addEventListener('input', e => { if (e.target.id !== 'drug-q') markDirty(); });
+$('#sheet').addEventListener('change', e => { if (e.target.name === 'sex') markDirty(); });
+
+// نسخه‌ی نیمه‌کاره اگر برنامه بسته شد یا برق رفت گم نشود.
+let draftTimer;
+function saveDraft() {
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(() => {
+    DB.set('draft', { ...readComposer(), C: { id: C.id, sana: C.sana, dirty: C.dirty } }).catch(() => {});
+  }, 400);
+}
+function restoreDraft(d) {
+  if (!d) return false;
+  Object.assign(C, {
+    id: d.C?.id ?? null, sana: d.C?.sana ?? null, dirty: !!d.C?.dirty,
+    symptoms: d.symptoms || [], labs: d.labs || [], diagnosis: d.diagnosis || [], items: d.items || [],
+  });
+  if (C.id != null && !S.rx.some(r => r.id === C.id)) { C.id = null; C.sana = null; }
+  setMeta(d);
+  renderComposerAll();
+  return true;
+}
+
+async function saveComposer() {
+  const r = readComposer();
+  if (!r.name) { toast('نام مریض را بنویسید', true); $('#sheet').elements.name.focus(); return null; }
+  if (!r.items.length && !confirm('هیچ دوایی نوشته نشده. باز هم چاپ و ذخیره شود؟')) return null;
+  const now = new Date().toISOString();
+  const sana = C.sana || now;
+  const rec = { ...r, sana, shamsi: shamsi(sana) };
+  if (C.id != null) rec.id = C.id;
+  rec.id = await DB.put('rx', rec);
+  const i = S.rx.findIndex(x => x.id === rec.id);
+  if (i >= 0) S.rx[i] = rec; else S.rx.push(rec);
+  sortRx();
+  Object.assign(C, { id: rec.id, sana: rec.sana, dirty: false });
+  $('#saved-tag').textContent = 'چاپ و ذخیره شده';
+  saveDraft();
+  await learnCustom(rec);
+  return rec;
+}
+
+async function printComposer() {
+  try {
+    const rec = await saveComposer();
+    if (rec) printRecord(rec);
+  } catch (err) { console.error(err); toast('ذخیره نشد: ' + errText(err), true); }
+}
+$('#print-btn').addEventListener('click', printComposer);
+$('#new-btn').addEventListener('click', () => {
+  if (C.dirty && !isEmpty(readComposer()) && !confirm(C.id != null ? 'تغییرات این نسخه ذخیره نشده. نسخه جدید شروع شود؟' : 'این نسخه هنوز چاپ و ذخیره نشده. پاک شود؟')) return;
+  clearComposer();
+  $('#sheet').elements.name.focus();
+});
+// Ctrl+P در صفحه نسخه همان «چاپ نسخه» است (ذخیره هم می‌کند).
+window.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p' && !$('#view-composer').hidden) { e.preventDefault(); printComposer(); }
+});
+
+/* ================= چاپ ================= */
+function sheetHtml(rec) {
+  const list = arr => arr?.length ? `<ul>${arr.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
+  const vit = VITALS.map(([k, label, unit]) => `<b>${label}:</b><span class="v">${esc(rec.vitals?.[k] || '')}</span><span class="u">${unit}</span>`).join('');
+  return `<div class="sheet">
+    <div class="sh-head">${headHtml()}</div>
+    <div class="sh-meta">
+      <span class="m no"><b>شماره/دوم:</b> ${esc(rec.seq)}</span>
+      <span class="m name"><b>Name:</b> <span dir="auto">${esc(rec.name)}</span></span>
+      <span class="m"><b>Age:</b> ${esc(rec.age)}</span>
+      <span class="m"><b>Sex:</b> ${esc(rec.sex)}</span>
+      <span class="m"><b>Date:</b> ${esc(rec.shamsi)}</span>
+    </div>
+    <div class="sh-body">
+      <aside class="sh-left">
+        <section><h4>Symptoms and Signs:</h4>${list(rec.symptoms)}</section>
+        <section><h4>Laboratory Findings:</h4>${list(rec.labs)}</section>
+        <section><h4>Vital Signs:</h4><div class="vit">${vit}</div></section>
+        <section><h4>Diagnosis / Impression:</h4>${list(rec.diagnosis)}</section>
+        ${rec.notes ? `<section><h4>Additional notes:</h4><div class="notes-p" dir="auto">${esc(rec.notes)}</div></section>` : ''}
+      </aside>
+      <div class="sh-rx"><div class="rx-sym">℞</div><ol class="items">${(rec.items || []).map((it, i) => itemHtml(it, i, false)).join('')}</ol></div>
+    </div>
+    <div class="sh-foot">${footHtml()}</div>
+  </div>`;
+}
+function printRecord(rec) {
+  $('#print-area').innerHTML = sheetHtml(rec);
+  window.print();
+}
+
+/* ================= جستجوی دوا در نسخه ================= */
+let ddList = [];
+const hay = d => d._hay || (d._hay = norm([d.name, d.brand, d.generic, d.notes].join(' ')));
+function searchDrugs(q, limit = 15) {
+  const words = norm(q).split(' ').filter(Boolean);
+  if (!words.length) return [];
+  const scored = [];
+  for (const d of S.drugs) {
+    if (!words.every(w => hay(d).includes(w))) continue;
+    let score = 0;
+    const nm = norm(d.name);
+    if (nm.includes(': ' + words[0]) || nm.startsWith(words[0])) score += 4;
+    if (norm(d.brand).startsWith(words[0]) || norm(d.generic).startsWith(words[0])) score += 3;
+    if (d.fav) score += 2;
+    if (d.frequent) score += 1;
+    scored.push([score, d]);
+  }
+  scored.sort((a, b) => b[0] - a[0] || a[1].name.localeCompare(b[1].name));
+  return scored.slice(0, limit).map(x => x[1]);
+}
+function renderDropdown() {
+  const q = $('#drug-q').value.trim();
+  if (!q) { hideDropdown(); return; }
+  ddList = searchDrugs(q);
+  const rows = ddList.map((d, i) => `<li role="option" id="dd-${i}" data-i="${i}" aria-selected="${i === 0}">
+      ${d.fav ? '<span class="star">★</span>' : ''}<span>${esc(d.name)}</span></li>`);
+  rows.push(`<li role="option" id="dd-new" data-i="new" class="new" aria-selected="${!ddList.length}">+ ${esc(q)}</li>`);
+  $('#drug-dd').innerHTML = rows.join('');
+  $('#drug-dd').hidden = false;
+  $('#drug-q').setAttribute('aria-expanded', 'true');
+}
+function hideDropdown() { $('#drug-dd').hidden = true; $('#drug-q').setAttribute('aria-expanded', 'false'); }
+function moveDropdown(step) {
+  const items = $$('#drug-dd li');
+  if (!items.length) return;
+  let cur = items.findIndex(li => li.getAttribute('aria-selected') === 'true');
+  cur = (cur + step + items.length) % items.length;
+  items.forEach((li, i) => li.setAttribute('aria-selected', String(i === cur)));
+  items[cur].scrollIntoView({ block: 'nearest' });
+}
+function chooseDropdown(li) {
+  if (!li) return;
+  const q = $('#drug-q').value.trim();
+  hideDropdown();
+  $('#drug-q').value = '';
+  if (li.dataset.i === 'new') { openItemDialog({ name: q }, null); return; }
+  const d = ddList[Number(li.dataset.i)];
+  openItemDialog({ name: d.name, dose: d.dose, timing: d.timing, tariqa: d.tariqa, n: d.n }, null);
+}
+$('#drug-q').addEventListener('input', renderDropdown);
+$('#drug-q').addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') { e.preventDefault(); if ($('#drug-dd').hidden) renderDropdown(); else moveDropdown(1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); moveDropdown(-1); }
+  else if (e.key === 'Enter') { e.preventDefault(); if (!$('#drug-dd').hidden) chooseDropdown($('#drug-dd li[aria-selected="true"]')); }
+  else if (e.key === 'Escape') hideDropdown();
+});
+$('#drug-q').addEventListener('blur', () => setTimeout(hideDropdown, 150));
+$('#drug-dd').addEventListener('mousedown', e => { const li = e.target.closest('li'); if (li) { e.preventDefault(); chooseDropdown(li); } });
+
+/* پنجره‌ی افزودن دوا */
+let itemEditIndex = null;
+function openItemDialog(it, index) {
+  itemEditIndex = index;
+  const f = $('#item-form').elements;
+  for (const k of ['name', 'dose', 'timing', 'tariqa', 'n']) f[k].value = it[k] || '';
+  $('#item-title').textContent = index == null ? 'افزودن دوا' : 'تغییر دوا';
+  $('#item-ok').textContent = index == null ? 'افزودن' : 'ذخیره';
+  $('#item-dlg').showModal();
+  (f.name.value ? f.dose : f.name).focus();
+}
+$('#item-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target.elements;
+  const it = {};
+  for (const k of ['name', 'dose', 'timing', 'tariqa', 'n']) it[k] = f[k].value.trim();
+  if (!it.name) { toast('نام دوا را بنویسید', true); f.name.focus(); return; }
+  if (itemEditIndex == null) C.items.push(it); else C.items[itemEditIndex] = it;
+  renderItems();
+  markDirty();
+  $('#item-dlg').close();
+});
+$$('dialog [data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
+$$('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
+$('#item-dlg').addEventListener('close', () => { if (!$('#view-composer').hidden) $('#drug-q').focus(); });
+
+/* ================= انتخاب علائم، لابراتوار و تشخیص ================= */
+const PICK_TITLES = { symptoms: 'Symptoms and Signs', labs: 'Laboratory Findings', diagnosis: 'Diagnosis / Impression' };
+function pickGroups(kind) {
+  const custom = S.custom[kind] || [];
+  if (kind === 'labs') {
+    const known = new Set(LISTS.labGroups.flatMap(g => g.tests).map(norm));
+    const extra = custom.filter(x => !known.has(norm(x)));
+    return [...LISTS.labGroups.map(g => ({ group: g.group, items: g.tests })), ...(extra.length ? [{ group: 'OTHER', items: extra }] : [])];
+  }
+  const base = kind === 'symptoms' ? LISTS.symptoms : LISTS.diagnoses;
+  const known = new Set(base.map(norm));
+  return [{ group: '', items: [...custom.filter(x => !known.has(norm(x))), ...base] }];
+}
+let picker = null;
+function openPicker(kind, anchor) {
+  closePicker();
+  const el = document.createElement('div');
+  el.className = 'picker';
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-label', PICK_TITLES[kind]);
+  el.innerHTML = `<div class="ph"><input type="search" placeholder="Search..." aria-label="جستجو"></div>
+    <div class="pl"></div>
+    <div class="pf"><span class="sub">اگر نبود، بنویسید و Enter بزنید</span><button type="button" class="btn sm primary">تمام</button></div>`;
+  document.body.appendChild(el);
+  const r = anchor.getBoundingClientRect();
+  const w = el.offsetWidth;
+  el.style.left = Math.max(12, Math.min(r.left, window.innerWidth - w - 12)) + 'px';
+  el.style.top = Math.max(12, Math.min(r.bottom + 4, window.innerHeight - el.offsetHeight - 12)) + 'px';
+  const input = $('input', el);
+  const listEl = $('.pl', el);
+  const render = () => {
+    const q = norm(input.value);
+    const sel = new Set(C[kind].map(norm));
+    let html = '', count = 0;
+    for (const g of pickGroups(kind)) {
+      const items = g.items.filter(x => !q || norm(x).includes(q) || norm(g.group).includes(q));
+      if (!items.length) continue;
+      if (g.group) html += `<div class="grp">${esc(g.group)}</div>`;
+      html += items.map(x => `<label><input type="checkbox" value="${esc(x)}" ${sel.has(norm(x)) ? 'checked' : ''}> ${esc(x)}</label>`).join('');
+      count += items.length;
+    }
+    listEl.innerHTML = count ? html : `<div class="empty">Enter = «${esc(input.value)}»</div>`;
+  };
+  listEl.addEventListener('change', e => {
+    const v = e.target.value;
+    if (e.target.checked) { if (!C[kind].some(x => norm(x) === norm(v))) C[kind].push(v); }
+    else C[kind] = C[kind].filter(x => norm(x) !== norm(v));
+    renderSelected(kind);
+    markDirty();
+  });
+  input.addEventListener('input', render);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closePicker(); anchor.focus(); return; }
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const v = input.value.trim();
+    if (!v) return;
+    const val = pickGroups(kind).flatMap(g => g.items).find(x => norm(x) === norm(v)) || v;
+    if (!C[kind].some(x => norm(x) === norm(val))) { C[kind].push(val); renderSelected(kind); markDirty(); }
+    input.value = '';
+    render();
+  });
+  $('.pf .btn', el).addEventListener('click', () => { closePicker(); anchor.focus(); });
+  render();
+  el.style.top = Math.max(12, Math.min(r.bottom + 4, window.innerHeight - el.offsetHeight - 12)) + 'px';
+  input.focus();
+  picker = { el, anchor };
+}
+function closePicker() { if (picker) { picker.el.remove(); picker = null; } }
+$$('[data-pick]').forEach(b => b.addEventListener('click', e => {
+  e.stopPropagation();
+  if (picker?.anchor === b) closePicker(); else openPicker(b.dataset.pick, b);
+}));
+document.addEventListener('mousedown', e => { if (picker && !picker.el.contains(e.target) && !picker.anchor.contains(e.target)) closePicker(); });
+window.addEventListener('resize', closePicker);
+
+/** علائم، معاینات و تشخیص‌هایی که داکتر خودش نوشته، دفعه‌ی بعد در لیست باشند. */
+async function learnCustom(rec) {
+  const base = {
+    symptoms: new Set(LISTS.symptoms.map(norm)),
+    labs: new Set(LISTS.labGroups.flatMap(g => g.tests).map(norm)),
+    diagnosis: new Set(LISTS.diagnoses.map(norm)),
+  };
+  let changed = false;
+  for (const k of ['symptoms', 'labs', 'diagnosis']) {
+    const have = new Set(S.custom[k].map(norm));
+    for (const v of rec[k]) if (!base[k].has(norm(v)) && !have.has(norm(v))) { S.custom[k].push(v); have.add(norm(v)); changed = true; }
+  }
+  if (changed) await DB.set('custom', S.custom);
+}
+
+/* ================= اطلاعات مریضان ================= */
+let pLimit = 50;
+const sexFa = s => (s === 'M' ? 'ذکور' : s === 'F' ? 'اناث' : '');
+function vitalsText(v) {
+  return VITALS.filter(([k]) => v?.[k]).map(([k, label, unit]) => `${label}: ${v[k]}${/^[/%°]/.test(unit) ? unit : ' ' + unit}`).join(', ');
+}
+function patientFilter() {
+  const q = norm($('#p-q').value);
+  const sex = $('#p-sex').value;
+  const from = parseShamsi($('#p-from').value);
+  const to = parseShamsiEnd($('#p-to').value);
+  $('#p-from').style.borderColor = $('#p-from').value.trim() && !from ? 'var(--danger)' : '';
+  $('#p-to').style.borderColor = $('#p-to').value.trim() && !to ? 'var(--danger)' : '';
+  return S.rx.filter(r =>
+    (!q || norm(r.name).includes(q)) &&
+    (!sex || r.sex === sex) &&
+    (!from || r.shamsi >= from) &&
+    (!to || r.shamsi <= to));
+}
+function renderPatients() {
+  const found = patientFilter();
+  const shown = found.slice(0, pLimit);
+  const join = a => (a || []).map(esc).join(', ');
+  $('#p-body').innerHTML = shown.length ? shown.map((r, i) => `<tr data-id="${r.id}">
+      <td>${fa(i + 1)}</td>
+      <td class="ltr">${esc(r.seq)}</td>
+      <td class="nowrap"><b dir="auto">${esc(r.name)}</b></td>
+      <td>${esc(r.age)}</td>
+      <td>${sexFa(r.sex)}</td>
+      <td class="ltr nowrap">${esc(r.shamsi)}</td>
+      <td class="ltr clip">${join(r.symptoms)}</td>
+      <td class="ltr clip">${join(r.labs)}</td>
+      <td class="ltr clip">${esc(vitalsText(r.vitals))}</td>
+      <td class="ltr clip">${join(r.diagnosis)}</td>
+      <td class="clip" dir="auto">${esc(r.notes)}</td>
+      <td class="ltr clip">${(r.items || []).map(it => esc(it.name)).join('<br>')}</td>
+      <td class="nowrap"><span class="ops">
+        <button type="button" class="icon-btn green" data-a="view" title="مشاهده جزئیات" aria-label="مشاهده جزئیات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button type="button" class="icon-btn blue" data-a="open" title="باز کردن در نسخه" aria-label="باز کردن در نسخه"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg></button>
+      </span></td></tr>`).join('')
+    : `<tr><td colspan="13" class="empty-row">${S.rx.length ? 'چیزی پیدا نشد' : 'هنوز هیچ نسخه‌ای ثبت نشده'}</td></tr>`;
+  $('#p-count').textContent = `${fa(found.length)} مورد`;
+  $('#p-more').hidden = found.length <= shown.length;
+}
+for (const id of ['#p-q', '#p-from', '#p-to']) $(id).addEventListener('input', () => { pLimit = 50; renderPatients(); });
+$('#p-sex').addEventListener('change', () => { pLimit = 50; renderPatients(); });
+$('#p-clear').addEventListener('click', () => {
+  for (const id of ['#p-q', '#p-from', '#p-to']) $(id).value = '';
+  $('#p-sex').value = '';
+  pLimit = 50;
+  renderPatients();
+});
+$('#p-more').addEventListener('click', () => { pLimit += 50; renderPatients(); });
+$('#p-body').addEventListener('click', e => {
+  const b = e.target.closest('[data-a]');
+  if (!b) return;
+  const rec = S.rx.find(r => r.id === Number(b.closest('tr').dataset.id));
+  if (!rec) return;
+  if (b.dataset.a === 'view') openDetails(rec); else openInComposer(rec);
+});
+function openDetails(rec) {
+  const row = (k, v, ltr) => v ? `<dt>${k}</dt><dd${ltr ? ' dir="ltr" style="text-align:left"' : ''}>${v}</dd>` : '';
+  const items = (rec.items || []).map((it, i) => `<div>${i + 1}- ${esc(it.name)}${it.n ? ` &nbsp; N=${esc(it.n)}` : ''}${itemLine2(it) ? `<div dir="rtl" style="text-align:right" class="sub">${itemLine2(it)}</div>` : ''}</div>`).join('');
+  $('#detail-title').textContent = 'مشاهده جزئیات — ' + rec.name;
+  $('#detail-body').innerHTML = `<dl class="kv">
+    ${row('شماره مریضان', esc(rec.seq))}
+    ${row('نام مریض', esc(rec.name))}
+    ${row('سن', esc(rec.age))}
+    ${row('جنسیت', sexFa(rec.sex))}
+    ${row('تاریخ', `<span dir="ltr">${esc(rec.shamsi)}</span>`)}
+    ${row('علائم و نشانه‌ها', (rec.symptoms || []).map(esc).join(', '), true)}
+    ${row('یافته‌های لابراتواری', (rec.labs || []).map(esc).join(', '), true)}
+    ${row('علائم حیاتی', esc(vitalsText(rec.vitals)), true)}
+    ${row('تشخیص', (rec.diagnosis || []).map(esc).join(', '), true)}
+    ${row('یادداشت', rec.notes ? `<span style="white-space:pre-wrap">${esc(rec.notes)}</span>` : '')}
+    ${row('نسخه تجویزشده', items, true)}
+  </dl>`;
+  $('#detail-dlg').showModal();
+}
+function openInComposer(rec) {
+  if (C.dirty && !isEmpty(readComposer()) && !confirm('نسخه‌ای که در «نوشتن نسخه» است ذخیره نشده. به جای آن این مریض باز شود؟')) return;
+  loadIntoComposer(rec);
+  location.hash = '#/composer';
+}
+
+/* ================= داروها ================= */
+let mPage = 0;
+let medEditId = null;
+function medFound() {
+  const words = norm($('#m-q').value).split(' ').filter(Boolean);
+  return words.length ? S.drugs.filter(d => words.every(w => hay(d).includes(w))) : S.drugs;
+}
+function renderMedicines() {
+  const per = Number($('#m-per').value);
+  const found = medFound();
+  const pages = Math.max(1, Math.ceil(found.length / per));
+  mPage = Math.max(0, Math.min(mPage, pages - 1));
+  const shown = found.slice(mPage * per, mPage * per + per);
+  $('#m-body').innerHTML = shown.length ? shown.map((d, i) => `<tr data-id="${d.id}">
+      <td>${fa(mPage * per + i + 1)}</td>
+      <td class="ltr"><b>${esc(d.name)}</b>${d.notes ? `<div class="sub" dir="auto">${esc(d.notes)}</div>` : ''}</td>
+      <td class="ltr">${esc(d.brand)}</td>
+      <td>${esc(d.dose)}</td>
+      <td>${esc(d.timing)}</td>
+      <td class="ltr">${esc(d.unit)}</td>
+      <td class="ltr">${esc(d.form)}</td>
+      <td class="ltr">${esc(d.n)}</td>
+      <td class="nowrap">${d.frequent ? '<span class="yes" title="پرکاربرد">✓</span>' : ''} ${d.fav ? '<span class="star" title="علاقه‌مندی‌ها">★</span>' : ''}</td>
+      <td class="nowrap"><span class="ops">
+        <button type="button" class="icon-btn blue" data-a="edit" title="ویرایش" aria-label="ویرایش"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
+        <button type="button" class="icon-btn red" data-a="del" title="حذف" aria-label="حذف"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+      </span></td></tr>`).join('')
+    : `<tr><td colspan="10" class="empty-row">${S.drugs.length ? 'دوایی پیدا نشد' : 'لیست داروها خالی است'}</td></tr>`;
+  $('#m-count').textContent = `${fa(found.length.toLocaleString('en'))} مجموع | صفحه ${fa(mPage + 1)} از ${fa(pages)}`;
+  $('#m-prev').disabled = mPage === 0;
+  $('#m-next').disabled = mPage >= pages - 1;
+}
+$('#m-q').addEventListener('input', () => { mPage = 0; renderMedicines(); });
+$('#m-per').addEventListener('change', () => { mPage = 0; renderMedicines(); });
+$('#m-prev').addEventListener('click', () => { mPage--; renderMedicines(); });
+$('#m-next').addEventListener('click', () => { mPage++; renderMedicines(); });
+
+const MED_FIELDS = ['name', 'dose', 'timing', 'tariqa', 'strength', 'unit', 'form', 'brand', 'notes', 'n'];
+function medEdit(d) {
+  medEditId = d ? d.id : null;
+  const f = $('#med-form').elements;
+  for (const k of MED_FIELDS) f[k].value = d?.[k] || '';
+  f.frequent.checked = !!d?.frequent;
+  f.fav.checked = !!d?.fav;
+  $('#med-form-title').textContent = d ? 'ویرایش دارو' : 'ثبت دارو جدید';
+  $('#med-submit').textContent = d ? 'ذخیره' : 'ثبت دارو';
+  $('#med-cancel').hidden = !d;
+}
+$('#m-body').addEventListener('click', async e => {
+  const b = e.target.closest('[data-a]');
+  if (!b) return;
+  const d = S.drugs.find(x => x.id === Number(b.closest('tr').dataset.id));
+  if (!d) return;
+  if (b.dataset.a === 'edit') {
+    medEdit(d);
+    $('#med-form').scrollIntoView({ behavior: 'smooth' });
+    $('#med-form').elements.name.focus({ preventScroll: true });
+    return;
+  }
+  if (!confirm(`«${d.name}» حذف شود؟`)) return;
+  try {
+    await DB.del('drugs', d.id);
+    S.drugs = S.drugs.filter(x => x.id !== d.id);
+    if (medEditId === d.id) medEdit(null);
+    renderMedicines();
+    toast('دوا حذف شد');
+  } catch (err) { toast('حذف نشد: ' + errText(err), true); }
+});
+$('#med-cancel').addEventListener('click', () => medEdit(null));
+$('#med-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target.elements;
+  const d = {};
+  for (const k of MED_FIELDS) d[k] = f[k].value.trim();
+  d.frequent = f.frequent.checked;
+  d.fav = f.fav.checked;
+  if (!d.name) { toast('نام دارو را بنویسید', true); f.name.focus(); return; }
+  if (S.drugs.some(x => norm(x.name) === norm(d.name) && x.id !== medEditId) && !confirm('دوایی با همین نام در لیست هست. باز هم ثبت شود؟')) return;
+  const old = medEditId != null ? S.drugs.find(x => x.id === medEditId) : null;
+  if (old) { d.id = old.id; d.generic = old.generic || ''; }
+  try {
+    d.id = await DB.put('drugs', d);
+    S.drugs = S.drugs.filter(x => x.id !== d.id);
+    S.drugs.push(d);
+    sortDrugs();
+    toast(old ? 'دوا تغییر کرد' : 'دوا ثبت شد');
+    medEdit(null);
+    $('#m-q').value = d.name;
+    mPage = 0;
+    renderMedicines();
+  } catch (err) { toast('ثبت نشد: ' + errText(err), true); }
+});
+
+/* ================= تنظیمات ================= */
+let pendingLogo = '';
+function fillSettingsForm() {
+  const f = $('#settings-form').elements;
+  for (const k of ['headFa', 'headEn', 'phone', 'address', 'note', 'user']) f[k].value = S.settings[k] ?? '';
+  f.pass1.value = f.pass2.value = '';
+  $('#pass1-label').textContent = S.settings.passHash ? 'رمز تازه (اگر نمی‌خواهید عوض شود، خالی بگذارید)' : 'رمز';
+  $('#pass1-label').classList.toggle('req', !S.settings.passHash);
+  pendingLogo = S.settings.logo;
+  showLogo();
+}
+function showLogo() {
+  $('#logo-preview').innerHTML = pendingLogo ? `<img src="${esc(pendingLogo)}" alt="" style="max-width:100%;max-height:100%">` : DEFAULT_LOGO;
+}
+$('#logo-pick').addEventListener('click', () => $('#logo-file').click());
+$('#logo-reset').addEventListener('click', () => { pendingLogo = ''; showLogo(); });
+$('#logo-file').addEventListener('change', e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  // عکس کوچک ذخیره شود؛ برای سرخط ۳۰۰ پیکسل کافی است.
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = () => {
+    const k = Math.min(1, 300 / Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(img.width * k));
+    c.height = Math.max(1, Math.round(img.height * k));
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    pendingLogo = c.toDataURL('image/png');
+    URL.revokeObjectURL(url);
+    showLogo();
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); toast('این فایل عکس نیست', true); };
+  img.src = url;
+});
+$('#settings-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target.elements;
+  const s = { ...S.settings };
+  for (const k of ['headFa', 'headEn', 'phone', 'address', 'note', 'user']) s[k] = f[k].value.trim();
+  s.logo = pendingLogo || '';
+  if (!s.headFa) { toast('سرخط دری (نام داکتر) را بنویسید', true); f.headFa.focus(); return; }
+  if (!s.user) { toast('نام کاربر را بنویسید', true); f.user.focus(); return; }
+  if (f.pass1.value || f.pass2.value || !s.passHash) {
+    if (!f.pass1.value) { toast('رمز را بنویسید', true); f.pass1.focus(); return; }
+    if (f.pass1.value !== f.pass2.value) { toast('رمز و تکرار آن یکی نیست', true); f.pass2.focus(); return; }
+    s.passSalt = Array.from(crypto.getRandomValues(new Uint8Array(8)), b => b.toString(16).padStart(2, '0')).join('');
+    s.passHash = await hashPass(f.pass1.value, s.passSalt);
+  }
+  try {
+    await DB.set('settings', s);
+    S.settings = s;
+    setLoggedIn(true);
+    toast('ذخیره شد');
+    location.hash = '#/';
+    route();
+  } catch (err) { toast('ذخیره نشد: ' + errText(err), true); }
+});
+
+/* ================= شروع ================= */
+function fillDatalists() {
+  const opts = arr => arr.map(v => `<option value="${esc(v)}">`).join('');
+  $('#dl-dose').innerHTML = opts(LISTS.dose);
+  $('#dl-timing').innerHTML = opts(LISTS.timing);
+  $('#dl-tariqa').innerHTML = opts(LISTS.tariqa);
+}
+async function loadAll() {
+  const [rx, drugs, settings, custom] = await Promise.all([DB.all('rx'), DB.all('drugs'), DB.get('settings'), DB.get('custom')]);
+  S.rx = rx || []; sortRx();
+  S.drugs = drugs || []; sortDrugs();
+  S.settings = { ...DEFAULT_SETTINGS, ...(settings || {}) };
+  S.custom = { symptoms: [], labs: [], diagnosis: [], ...(custom || {}) };
+}
+/**
+ * بار اول لیست داروها را می‌گذارد. اگر لیست برنامه تازه شده باشد فقط داروهای نو اضافه می‌شود:
+ * دوایی که یک بار داده شده و داکتر حذف یا تغییرش داده، دوباره نمی‌آید.
+ */
+async function seedDrugs() {
+  const have = (await DB.get('drugsVersion')) || 0;
+  if (have >= DATA_VERSION || !SEED_DRUGS.length) return;
+  const given = new Set((await DB.get('seededNames')) || []);
+  const known = new Set(S.drugs.map(d => norm(d.name)));
+  const add = SEED_DRUGS.filter(d => !given.has(norm(d.name)) && !known.has(norm(d.name))).map(d => ({ ...d }));
+  if (add.length) await DB.addMany('drugs', add);
+  for (const d of SEED_DRUGS) given.add(norm(d.name));
+  await DB.set('seededNames', [...given]);
+  await DB.set('drugsVersion', DATA_VERSION);
+  S.drugs = await DB.all('drugs');
+  sortDrugs();
+}
+
+(async function start() {
+  buildVitalsInputs();
+  fillDatalists();
+  try {
+    await DB.open();
+    await loadAll();
+    await seedDrugs();
+    if (!restoreDraft(await DB.get('draft'))) clearComposer();
+  } catch (err) {
+    console.error(err);
+    $('#notices').innerHTML = '<div class="notice err">این مرورگر اجازه ذخیره معلومات را نمی‌دهد. لطفاً برنامه را در Google Chrome یا Microsoft Edge باز کنید (نه در حالت Incognito).</div>';
+    return;
+  }
+  navigator.storage?.persist?.().catch(() => {});
+  S.ready = true;
+  route();
+})();
+
+// روی سایت (نه فایلی که روی کمپیوتر است) بدون انترنت هم باز شود.
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
