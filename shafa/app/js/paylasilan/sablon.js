@@ -32,8 +32,8 @@ export function receteyiSablonaCevir(recete, ad) {
     satirlar: (recete?.satirlar || []).map((s) => ({
       ilacId: s.ilacId ?? '', ilacAdi: s.ilacAdi ?? '',
       adet: Number(s.adet) > 0 ? Number(s.adet) : 1,
-      form: s.form ?? '',
-      kullanim: s.kullanim ?? '', sure: s.sure ?? '', yol: s.yol ?? '', not: s.not ?? '',
+      form: s.form ?? '', doz: s.doz ?? '',
+      kullanim: s.kullanim ?? '', zaman: s.zaman ?? '', sure: s.sure ?? '', yol: s.yol ?? '', not: s.not ?? '',
     })),
   };
 }

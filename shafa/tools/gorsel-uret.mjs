@@ -46,7 +46,8 @@ const CIKTI = fileURLToPath(new URL('../tanitim/gorsel/', import.meta.url));
 // betik sessizce zaman aşımına düşerdi.
 const SOZLUK = JSON.parse(await readFile(new URL('../app/i18n/fa.json', import.meta.url), 'utf8'));
 const T = (a) => { if (!SOZLUK[a]) throw new Error('sözlükte yok: ' + a); return SOZLUK[a]; };
-// Tanı adı klinik listeden, Türkçe karşılığıyla bulunur (Farsça ad değişse de).
+// Tanı klinik listeden, Türkçe karşılığıyla bulunur (adı değişse de); çipte ve
+// kâğıtta İngilizce adı (`en`) duruyor.
 const KLINIK = JSON.parse(await readFile(new URL('../app/veri/klinik.json', import.meta.url), 'utf8'));
 const TANI = KLINIK.tanilar.find((x) => x.tr === 'Üst solunum yolu enfeksiyonu');
 if (!TANI) throw new Error('klinik listede tanı yok');
@@ -154,7 +155,7 @@ async function receteDoldur(sayfa) {
     await sayfa.fill(`input[name=olcum_${ad}]`, deger);
   }
   await sayfa.click('.kagit-tuval [data-alan="tani"]');
-  await sayfa.click(`.modal .klinik-liste .cip-kume:not(.klinik-gecmis):not(.klinik-yaygin) .cip--secilir:has(span:text-is("${TANI.ad}"))`);
+  await sayfa.click(`.modal .klinik-liste .cip-kume:not(.klinik-gecmis):not(.klinik-yaygin) .cip--secilir:has(span:text-is("${TANI.en}"))`);
   await sayfa.click(`.modal button:has-text("${T('genel.sec')}")`);
   await sayfa.waitForSelector('.ortu', { state: 'detached' });
   // İki ilaç: üçüncüsünde tablo kayıyor ve ilk satır yarım görünüyordu.
@@ -185,7 +186,7 @@ const KAGIT_KUR = async (tani) => {
   const gun = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const recete = await receteKaydet(depo, {
     ...bosRecete(ayar, gun), hastaId: hasta.id, kanGrubu: hasta.kanGrubu,
-    belirtiler: 'تب، سرفه', tani: tani.ad, taniKodu: tani.kod, laboratuvar: 'CBC',
+    belirtiler: 'Fever، Cough', tani: tani.en, taniKodu: tani.kod, laboratuvar: 'CBC',
     olcumler: { bp: '130/85', pr: '78', rr: '18', bw: '74', temp: '38.2', spo2: '97' },
     satirlar: ['Panadol', 'Glucophage', 'Ventolin'].map((ad) => ({
       ilacId: ilac(ad).id, ilacAdi: ilacEtiketi(ilac(ad)), form: ilac(ad).form, adet: 1, kullanim: '', sure: '', yol: '', not: '',

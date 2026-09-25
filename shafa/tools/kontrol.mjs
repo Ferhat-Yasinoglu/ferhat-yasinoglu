@@ -3,6 +3,7 @@
 // (3) paylasilan/ saf kalıyor (DOM ya da node: yok), (4) sayfa modülleri sözleşmeye uyuyor.
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
+import { listeyiDenetle, YASAK_KAYNAK } from './ilac-uret.mjs';
 
 const KOK = new URL('../app/', import.meta.url).pathname;
 let hata = 0;
@@ -229,6 +230,21 @@ for (const f of await dosyalar(new URL('../sunucu/', import.meta.url).pathname, 
   if (/Math\.random/.test(s)) hataVer(`${f}: Math.random; rastgelelik yalnız crypto.getRandomValues'tan`);
   const m = s.match(/console\.(log|info|debug|warn|trace|dir)\b/);
   if (m) hataVer(`${f}: console.${m[1]}; sunucu istek verisini loglamaz (yalnız console.error ile hata mesajı)`);
+}
+
+// (11) Hazır ilaç listesi ilaç başına kullanım TAŞIMAZ. nuskha'nın listesinde
+// her ilacın yanında hazır doz/zaman/tarika/adet vardı («Amoxil → ۱ دانه ·
+// روزانه ۳ بار · 15»); Shafa reçete önermiyor, kullanım kararı hekimin.
+// Birim testi de bakıyor ama bu denetim vitest'siz de koşsun: liste elle
+// düzenlenip ya da başka bir araçla üretilip bu alanlar geri sızarsa burada
+// durur. Liste alanları beyaz listeyle (listeyiDenetle), depodaki nuskha
+// kopyası yasak alanlarla denetleniyor.
+const ilacListesi = JSON.parse(await oku('veri/ilaclar.json'));
+for (const m of listeyiDenetle(ilacListesi)) hataVer(`veri/ilaclar.json: ${m}`);
+const nuskhaKopyasi = JSON.parse(await readFile(new URL('./kaynak/nuskha-ilaclar.json', import.meta.url), 'utf8'));
+for (const d of nuskhaKopyasi.drugs || []) {
+  const sizan = YASAK_KAYNAK.filter((k) => k in d);
+  if (sizan.length) hataVer(`tools/kaynak/nuskha-ilaclar.json: ${d.brand || d.generic} ilaç başına kullanım taşıyor (${sizan.join(', ')})`);
 }
 
 console.log(hata ? `${hata} sorun` : `✓ statik denetimler geçti (${kullanilan.size} çeviri anahtarı yerinde)`);

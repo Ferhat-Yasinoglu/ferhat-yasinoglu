@@ -35,8 +35,10 @@ const T = (anahtar) => {
   return metin;
 };
 
-// Klinik çipler Farsça yazıyor; denemede Türkçe karşılığından buluyoruz ki
-// bir kayıt yeniden adlandırılınca burası da kendiliğinden güncellensin.
+// Klinik çipler kâğıda basılan İngilizce adı (`en`) gösteriyor ve reçeteye o
+// yazılıyor; Dari ad aramada. Denemede kayıtları Türkçe karşılığından
+// buluyoruz ki bir kayıt yeniden adlandırılınca burası da kendiliğinden
+// güncellensin.
 const klinik = JSON.parse(await readFile(new URL('../app/veri/klinik.json', import.meta.url), 'utf8'));
 const klinikAdi = (liste, tr) => {
   const x = klinik[liste].find((y) => y.tr === tr);
@@ -395,44 +397,45 @@ await kutuyuAc('belirtiler');
 if (await sayfa.locator('.modal .klinik-gecmis').count()) throw new Error('geçmiş yokken geçmiş şeridi çizilmiş');
 const yayginSayisi = await sayfa.locator('.modal .klinik-yaygin .cip--secilir').count();
 if (!yayginSayisi) throw new Error('geçmiş yokken yaygın kısayolları da yok, kutu boş listeyle açılıyor');
-await listeCipi(sarfa.ad);
-await listeCipi(tabB.ad);
-await ozetCipi(tabB.ad);                       // ikincisini geri al
+await listeCipi(sarfa.en);
+await listeCipi(tabB.en);
+await ozetCipi(tabB.en);                       // ikincisini geri al
 const kalanOzet = await sayfa.$$eval(`${OZET} .cip--secilir span`, (e) => e.map((x) => x.textContent));
-if (kalanOzet.length !== 1 || kalanOzet[0] !== sarfa.ad) throw new Error('belirti geri alınmadı: ' + kalanOzet.join(', '));
+if (kalanOzet.length !== 1 || kalanOzet[0] !== sarfa.en) throw new Error('belirti geri alınmadı: ' + kalanOzet.join(', '));
 await kutuyuBitir();
-await sayfa.waitForSelector(`.kagit__belirti:has-text("${sarfa.ad}")`);
-ok(`belirti çiple seçildi (${yayginSayisi} yaygın kısayolu), ikincisi geri alındı, kâğıda düştü: ${sarfa.ad}`);
+await sayfa.waitForSelector(`.kagit__belirti:has-text("${sarfa.en}")`);
+ok(`belirti çiple seçildi (${yayginSayisi} yaygın kısayolu), ikincisi geri alındı, kâğıda düştü: ${sarfa.en}`);
 
 // Tanı: ad ve ICD kodu birlikte geliyor, ikisi de kâğıda basılıyor.
 const usye = taniAdi('Üst solunum yolu enfeksiyonu');
 await kutuyuAc('tani');
-await listeCipi(usye.ad);
+await listeCipi(usye.en);
 await kutuyuBitir();
 const taniMetni = (await sayfa.textContent('.kagit__tani')).replace(/\s+/g, ' ');
-if (!taniMetni.includes(usye.ad)) throw new Error(`tanı kâğıda yazılmadı: "${taniMetni}"`);
+if (!taniMetni.includes(usye.en)) throw new Error(`tanı kâğıda yazılmadı: "${taniMetni}"`);
 if (!taniMetni.includes(usye.kod)) throw new Error(`ICD kodu kâğıda yazılmadı: "${taniMetni}"`);
-ok(`tanı tek dokunuşla kâğıda yazıldı, kodu da geldi: ${usye.ad} (${usye.kod})`);
+ok(`tanı tek dokunuşla kâğıda yazıldı, kodu da geldi: ${usye.en} (${usye.kod})`);
 
 // Tam liste: arayıp ikinci bir tanı ekle, sonra çıkar. Kod ADA göre değil
 // DEĞERE göre eşleşiyor; çıkarma kalanın kodunu bozmamalı.
 const dis = taniAdi('Diş ağrısı');
 await kutuyuAc('tani');
-await sayfa.fill('.modal input[name=klinikArama]', 'diş');
-await listeCipi(dis.ad);
+// Dari adıyla arıyor: çip İngilizce ama hekim Dari yazıyor.
+await sayfa.fill('.modal input[name=klinikArama]', dis.ad);
+await listeCipi(dis.en);
 await kutuyuBitir();
 const ikiTani = (await sayfa.textContent('.kagit__tani')).replace(/\s+/g, ' ');
-for (const beklenen of [usye.ad, dis.ad, usye.kod, dis.kod]) {
+for (const beklenen of [usye.en, dis.en, usye.kod, dis.kod]) {
   if (!ikiTani.includes(beklenen)) throw new Error(`iki tanı birleşmedi, "${beklenen}" yok: ${ikiTani}`);
 }
 ok(`aramayla ikinci tanı eklendi, ikisi kodlarıyla birleşti: ${ikiTani}`);
 
 await kutuyuAc('tani');
-await ozetCipi(dis.ad);
+await ozetCipi(dis.en);
 await kutuyuBitir();
 const tekTani = (await sayfa.textContent('.kagit__tani')).replace(/\s+/g, ' ');
-if (tekTani.includes(dis.ad) || tekTani.includes(dis.kod)) throw new Error('ikinci tanı çıkmadı: ' + tekTani);
-if (!tekTani.includes(usye.ad) || !tekTani.includes(usye.kod)) throw new Error(`tanı çıkarılınca kalan bozuldu: ${tekTani}`);
+if (tekTani.includes(dis.en) || tekTani.includes(dis.kod)) throw new Error('ikinci tanı çıkmadı: ' + tekTani);
+if (!tekTani.includes(usye.en) || !tekTani.includes(usye.kod)) throw new Error(`tanı çıkarılınca kalan bozuldu: ${tekTani}`);
 ok('ikinci tanı çıkarıldı, kalanın kodu bozulmadı');
 
 // Laboratuvar: kutuda bölüm başlıkları (هماتولوژی…) altında gruplanıyor.
@@ -441,12 +444,12 @@ const xray = labAdi('Akciğer röntgeni');
 await kutuyuAc('laboratuvar');
 const labGruplari = await sayfa.locator(`${LISTE} .cip-kume__etiket`).count();
 if (labGruplari < 4) throw new Error(`laboratuvar bölüm başlıkları gelmedi, ${labGruplari} başlık`);
-await listeCipi(cbc.ad);
+await listeCipi(cbc.en);
 await sayfa.fill('.modal input[name=klinikArama]', 'röntgen');
-await listeCipi(xray.ad);
+await listeCipi(xray.en);
 await kutuyuBitir();
 const labMetni = (await sayfa.textContent('.kagit__lab')).replace(/\s+/g, ' ');
-if (!labMetni.includes(cbc.ad) || !labMetni.includes(xray.ad)) throw new Error('laboratuvar kâğıda düşmedi: ' + labMetni);
+if (!labMetni.includes(cbc.en) || !labMetni.includes(xray.en)) throw new Error('laboratuvar kâğıda düşmedi: ' + labMetni);
 ok(`laboratuvar seçildi (${labGruplari} bölüm başlığı), kâğıda düştü: ${labMetni}`);
 
 // --- Reçete notu: kâğıdın altındaki alana dokunarak
@@ -538,7 +541,7 @@ if (!duzenlenenKagit.includes('Brufen') || !duzenlenenKagit.includes('زهرا �
 await sayfa.click(`button:has-text("${T('sablon.kaydet')}")`);
 await sayfa.waitForSelector('.modal input[name=ad]');
 const onerilen = await sayfa.inputValue('.modal input[name=ad]');
-if (!onerilen.includes(usye.ad)) throw new Error('şablon adı tanıdan önerilmedi: ' + onerilen);
+if (!onerilen.includes(usye.en)) throw new Error('şablon adı tanıdan önerilmedi: ' + onerilen);
 await sayfa.fill('.modal input[name=ad]', 'ÜSYE denemesi');
 await sayfa.click(`.modal button:has-text("${T('genel.kaydet')}")`);
 await sayfa.waitForSelector('.bildirim--basari');
@@ -601,7 +604,7 @@ await yeniSekme.waitForSelector('.kagit__ilaclar li:has-text("Brufen")');
 const sablonSatir = await yeniSekme.locator('.kagit__ilaclar li').count();
 const sablonTani = await yeniSekme.textContent('.kagit__tani');
 if (sablonSatir !== 2) throw new Error(`şablondan 2 satır beklenirdi, ${sablonSatir} geldi`);
-if (!sablonTani.includes(usye.ad)) throw new Error('şablon tanıyı getirmedi: ' + sablonTani);
+if (!sablonTani.includes(usye.en)) throw new Error('şablon tanıyı getirmedi: ' + sablonTani);
 // Hasta seçilmemiş olmalı: şablon hastaya ait değil.
 const sablonSerit = await yeniSekme.textContent('.kagit__serit');
 if (/زهرا|فاطمه|نعیم/.test(sablonSerit)) {
@@ -614,8 +617,8 @@ ok('şablon boş kâğıda uygulandı: 2 ilaç ve tanı geldi, hasta gelmedi');
 await yeniSekme.click('.kagit-tuval [data-alan="tani"]');
 await yeniSekme.waitForSelector('.modal .klinik-gecmis');
 const gecmisCipleri = await yeniSekme.$$eval('.modal .klinik-gecmis .cip--secilir span', (e) => e.map((x) => x.textContent));
-if (!gecmisCipleri.includes(usye.ad)) {
-  throw new Error(`kendi sık yazdıkları arasında "${usye.ad}" yok: ${gecmisCipleri.join(', ')}`);
+if (!gecmisCipleri.includes(usye.en)) {
+  throw new Error(`kendi sık yazdıkları arasında "${usye.en}" yok: ${gecmisCipleri.join(', ')}`);
 }
 // Arama yapılınca geçmiş şeridi çekilmeli: aynı kayıt iki kez çıkmasın.
 await yeniSekme.fill('.modal input[name=klinikArama]', 'diş');
@@ -705,8 +708,8 @@ ok(`kâğıtta QR (${qrYolu.length} karakterlik yol), ${olcumBekleneni} ölçüm
 
 // --- Kâğıtta belirti, laboratuvar ve yeni ilaç satırı biçimi
 const rxMetni = (await sayfa.textContent('.kagit__rx-govde')).replace(/\s+/g, ' ');
-if (!rxMetni.includes(sarfa.ad)) throw new Error('belirtiler kâğıda basılmamış: ' + rxMetni);
-if (!rxMetni.includes(cbc.ad) || !rxMetni.includes(xray.ad)) throw new Error('laboratuvar kâğıda basılmamış: ' + rxMetni);
+if (!rxMetni.includes(sarfa.en)) throw new Error('belirtiler kâğıda basılmamış: ' + rxMetni);
+if (!rxMetni.includes(cbc.en) || !rxMetni.includes(xray.en)) throw new Error('laboratuvar kâğıda basılmamış: ' + rxMetni);
 const ilkIlacSatiri = (await sayfa.textContent('.kagit__ilaclar li:first-child')).replace(/\s+/g, ' ').trim();
 // Referanstaki biçim: "Cap: Amoxicillin 500 mg … N=12"
 if (!/\b(Tab|Cap|Syr|Amp|Oint|Drop|Spray|Supp|Sach):/.test(ilkIlacSatiri)) {
@@ -1760,9 +1763,13 @@ ok(`Clinical birimleri İngilizce (${bpYer}, ${prYer}), 5 ℞ satırı kutulu ("
   }
   // Etken maddeleri ayrı, hastanın alerjisine (penisilin) değmeyen ilaçlar:
   // uyarı şeridi paneli uzatmasın.
+  // Hazır liste (adım 62) yüklü: aynı markanın başka ürünleri de var
+  // (Ventolin şurubu, Flagyl 400 mg…). Üretici yalnız örnek kayıtlarda
+  // yazılı; aramaya eklenince ölçülen satır hep aynı örnek ilaç oluyor.
+  const URETICI = { Glucophage: 'Merck', Flagyl: 'Sanofi', Ventolin: 'GSK', Brufen: 'Abbott', Panadol: 'GSK' };
   const ilacEkle = async (ad) => {
     await sayfa.click('.recete-form .ilac-bas__ekle');
-    await sayfa.fill('.modal input[name=ilacArama]', ad.split(' ')[0]);
+    await sayfa.fill('.modal input[name=ilacArama]', `${ad.split(' ')[0]} ${URETICI[ad.split(' ')[0]]}`);
     await sayfa.click(`.modal .liste__satir--tiklanir:has-text("${ad}") >> nth=0`);
     await sayfa.fill('.modal input[name=adet]', '1');
     await sayfa.fill('.modal input[name=kullanim]', 'روزانه ۳ بار بعد از غذا');
@@ -2026,7 +2033,10 @@ ok(`Clinical birimleri İngilizce (${bpYer}, ${prYer}), 5 ℞ satırı kutulu ("
   await sayfa.waitForTimeout(150);
   const aramaBos = { ortu: await ortuSayisi(), secili: await sayfa.locator('.modal .avatar').count() };
   if (aramaBos.ortu !== 1 || aramaBos.secili) throw new Error('ilaç kutusunda boş aramada Enter: ' + JSON.stringify(aramaBos));
-  await sayfa.keyboard.type('Brufen');
+  // Tek eşleşme: hazır liste (adım 62) yüklü, onda üç Brufen ürünü var
+  // (200 mg, 400 mg, şurup). Üretici adı örnek kaydı teke indiriyor; birden
+  // çok eşleşmede Enter'ın seçmediği yukarıda boş aramayla da denendi.
+  await sayfa.keyboard.type('Brufen Abbott');
   await sayfa.keyboard.press('Enter');
   const aramaTek = await sayfa.evaluate(() => ({ odak: document.activeElement?.name, secili: document.querySelector('.modal .avatar + .liste__govde .liste__baslik')?.textContent }));
   await sayfa.keyboard.type('3');

@@ -754,6 +754,8 @@ app/                      PWA (statik olarak olduğu gibi sunulur)
   index.html sw.js manifest.webmanifest
   css/                    tokenlar · bilesenler · uygulama · yazdirma
   i18n/                   fa.json (arayüzün bütün metni burada)
+  veri/                   ilaclar.json (678 ilaçlık ad sözlüğü, 18 grup) ·
+                          klinik.json (belirti/tanı/tetkik, Dari + İngilizce, yazım kısayolları)
   js/
     uygulama.js           giriş: depo, dil, menü, arama, yönlendirici
     i18n.js               t() ve sözlük yükleme
@@ -778,8 +780,20 @@ test/                     vitest (test/sunucu: Worker + DO'lar bellek taklidiyle
 tanitim/index.html        tanıtım ve indirme sayfası (tek dosya)
 tools/                    sun (statik sunucu) · kontrol (statik denetim) ·
                           tarayici (uçtan uca) · site-denemesi (yayın düzeni) ·
-                          gorsel-uret (tanıtım ekran görüntüleri)
+                          gorsel-uret (tanıtım ekran görüntüleri) ·
+                          ilac-uret / klinik-uret.py (veri/ listelerini üretir)
+  kaynak/                 nuskha'nın ad listelerinin kopyası (ilaç başına kullanım ayıklanmış)
 ```
+
+**Hazır listeler elle düzenlenmez, üretilir.** `node tools/ilac-uret.mjs --yaz`
+ilaç listesini, `python3 tools/klinik-uret.py` klinik listeleri yeniden yazar;
+ikisi de öbür depo olmadan `tools/kaynak/`taki kopyadan çalışır (`--nuskha
+<dosya> --kaynak-yaz` kopyayı yeniler). İlaç listesinde her satırın kalıcı
+kimliği (`hid`) var ve asla değişmez; yeni ürün sıradaki kimliği alır. Listeler
+AD sözlüğüdür: nuskha'daki ilaç başına hazır doz/zaman/tarika/adet bilerek
+alınmadı, `npm run kontrol` ve birim testleri geri sızmasını durdurur. Hekime
+önerilebilecek tek kullanım, kendi kaydettiği reçetelerden türetilen «son
+kullanım»dır (`paylasilan/recete.js` `sonKullanimlar`).
 
 ### Kurallar
 

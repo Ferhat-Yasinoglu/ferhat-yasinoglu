@@ -149,3 +149,46 @@ describe('receteKaydet', () => {
     expect(b.dogrulamaKodu).not.toBe(a.dogrulamaKodu);
   });
 });
+
+// Sahadaki basılmış her kod bu metne bağlı: satıra yeni alan (zaman, doz)
+// eklendi diye eski reçetenin özeti tek bayt değişirse o kodların hepsi
+// «geçersiz» çıkar. Metin donduruldu.
+describe('ozetMetni — eski reçeteler bayt bayt aynı', () => {
+  const ALTIN = [
+    'نسخه: 2026-09-21-01',
+    'تاریخ: 2026-09-21',
+    'مریض: Zeynep Kaya',
+    'تشخیص: Üst solunum yolu enfeksiyonu · J06.9',
+    '1) Nurofen 400 mg × 2 — Günde 2×1 — 5 gün',
+    '2) Parol 500 mg × 1',
+  ].join('\n');
+
+  it('zaman ve doz alanı olmayan eski satırlar', () => {
+    expect(ozetMetni(recete(), 'Zeynep Kaya')).toBe(ALTIN);
+  });
+
+  it('boş zaman ve doz özeti değiştirmiyor', () => {
+    const r = recete();
+    r.satirlar = r.satirlar.map((s) => ({ ...s, zaman: '', doz: '400 mg' }));
+    expect(ozetMetni(r, 'Zeynep Kaya')).toBe(ALTIN);
+  });
+
+  it('dolu zaman kullanım ile süre arasına giriyor', () => {
+    const r = recete();
+    r.satirlar[0].zaman = 'بعد از غذا';
+    expect(ozetMetni(r, 'Zeynep Kaya')).toContain('1) Nurofen 400 mg × 2 — Günde 2×1 — بعد از غذا — 5 gün');
+  });
+});
+
+describe('metniDogrula — yemek zamanı', () => {
+  let depo;
+  beforeEach(() => { depo = new BellekDepo(); });
+
+  it('kâğıttaki zaman değiştirilirse kod tutmuyor', async () => {
+    const r = recete();
+    r.satirlar[0].zaman = 'بعد از غذا';
+    const metin = `${ozetMetni(r, 'A')}\n${kodSatiri(await receteKodu(depo, r, 'A'))}`;
+    expect((await metniDogrula(depo, metin)).durum).toBe('gecerli');
+    expect((await metniDogrula(depo, metin.replace('بعد از غذا', 'قبل از غذا'))).durum).toBe('gecersiz');
+  });
+});

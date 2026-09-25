@@ -157,6 +157,8 @@ export async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = []) 
           // Şekli de saklıyoruz: kâğıt "Cap:" önekini bundan basıyor ve
           // ilaç sonradan silinse bile eski reçete doğru basılsın.
           form: ilac.form || '',
+          // Güç de o anki hâliyle: kâğıt ve tablo «20 mg (Cap)» basıyor.
+          doz: ilac.doz || '',
           adet: n, kullanim: kullanim.value.trim(), sure: sure.value.trim(),
           yol: yol.value.trim(), not: not.value.trim(),
         };

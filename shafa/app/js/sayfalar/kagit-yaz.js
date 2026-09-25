@@ -22,7 +22,7 @@ import {
   OLCUMLER, KAN_GRUPLARI, bosRecete, receteDogrula, receteUyarilari, sikIlaclar,
 } from '../paylasilan/recete.js';
 import { klinigiOku } from '../depo/klinik.js';
-import { gecmisler } from '../paylasilan/klinik.js';
+import { gecmisler, adIndeksi } from '../paylasilan/klinik.js';
 import { secimKutusu } from '../klinik-arayuz.js';
 import { satirKutusu } from '../ilac-satir-arayuz.js';
 import { sablonuUygula } from '../paylasilan/sablon.js';
@@ -292,7 +292,8 @@ export default {
       if (!liste) { hata(t('hata.tani_okunamadi', 'Klinik listeler okunamadı.')); return; }
       const y = await secimKutusu(ctx, {
         liste, gruplar, baslik, kodAlani, recete, alan: alanAdi,
-        gecmis: gecmisler(gecmisReceteler, alanAdi, kodAlani),
+        // Dizinle: eski reçetedeki Dari «تب» ile yenisindeki «Fever» tek sayılsın.
+        gecmis: gecmisler(gecmisReceteler, alanAdi, kodAlani, 8, adIndeksi(liste)),
       });
       if (!y) return;
       recete[alanAdi] = y.metin;
