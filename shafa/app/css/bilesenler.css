@@ -241,6 +241,15 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 .tablo tbody tr { transition: background var(--hiz-1) var(--egri); }
 .tablo tbody tr:hover { background: rgb(var(--vurgu) / .05); }
 .tablo .sayi { text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* İlaç listesi telefonda: şekil ve rozet sütunları gizli, rozetler adın
+   altında (ilaclar.js onları iki yerde çiziyor, biri görünüyor). Beş sütunda
+   ad 80 px'e sıkışıyor, «Augmentin 1000 mg تابلیت» altı satıra bölünüyordu;
+   ekrana iki buçuk ilaç sığıyordu. Şekil zaten adın içinde yazılı. */
+.tablo--ilac-listesi .ilac-hucre__rozet { display: none; }
+@media (max-width: 560px) {
+  .tablo--ilac-listesi :is(th, td):is(:nth-child(2), :nth-child(3), :nth-child(4)) { display: none; }
+  .tablo--ilac-listesi .ilac-hucre__rozet:not(:empty) { display: flex; flex-wrap: wrap; gap: var(--b-1); margin-block-start: var(--b-1); }
+}
 
 /* ---------- Rozet ---------- */
 .rozet {
@@ -290,7 +299,7 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 
 /* ---------- Modal ---------- */
 .ortu {
-  position: fixed; inset: 0; z-index: 60; background: rgb(var(--cizgi) / .45);
+  position: fixed; inset: 0; z-index: 60; background: rgb(var(--ortu));
   backdrop-filter: blur(3px);
   display: grid; place-items: center; padding: var(--b-4); overflow-y: auto;
   animation: ortu-gir var(--hiz-2) var(--egri);

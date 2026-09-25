@@ -17,7 +17,7 @@ import { el, svgEl, temizle, btn, btnS, girdi, alan, kart, bosDurum, uyariSeridi
 import { tarihSecici } from '../cekirdek/tarih-secici.js';
 import { simge } from '../cekirdek/simge.js';
 import { rxIsareti } from '../cekirdek/cizimler.js';
-import { kagitCiz, kagidiYazdir, kagidiOlcekle, OLCUM_SIMGELERI } from '../kagit.js';
+import { kagitCiz, kagidiYazdir, kagidiOlcekle, tarayiciBaskisi, OLCUM_SIMGELERI } from '../kagit.js';
 import {
   OLCUMLER, KAN_GRUPLARI, bosRecete, receteDogrula, receteUyarilari, sikIlaclar,
 } from '../paylasilan/recete.js';
@@ -33,21 +33,7 @@ import { receteKaydet } from '../depo/recete.js';
 import { bugun, tarihMetni } from '../paylasilan/tarih.js';
 import { t } from '../i18n.js';
 import { dogrulaMetni, hataMetni, uyariMetni } from '../hatalar.js';
-
-/* Kutunun asıl düğmesine basar (Seç, Kaydet): liste satırı ve Enter aynı
-   yoldan onaylıyor, cb'deki denetim ikisinde de çalışıyor. */
-const kutuyuOnayla = (ic) => ic.closest('.modal')?.querySelector('.modal__ayak .btn--birincil')?.click();
-
-/** Tek satırlık kutuda Enter onaylıyor. Önce hiçbir şey olmuyordu; hekim
- *  Tab'la düğmeye gidip bir daha basıyordu. `hazir` false dönerse Enter
- *  yalnız yutuluyor. Çok satırlı alanlara verilmiyor: orada Enter yeni satır. */
-function enterleOnayla(kutu, hazir = () => true) {
-  kutu.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' || e.isComposing) return;
-    e.preventDefault();
-    if (hazir()) kutuyuOnayla(kutu);
-  });
-}
+import { enterleOnayla, kutuyuOnayla } from '../cekirdek/modal.js';
 
 /** Basit liste kutusu: ara, seç. Hasta ve kan grubu için. */
 async function listeKutusu(ctx, { baslik, kayitlar, ara, etiket, alt }) {
@@ -75,10 +61,18 @@ async function listeKutusu(ctx, { baslik, kayitlar, ara, etiket, alt }) {
     }
   }
   kutu.oninput = ciz;
-  // Enter ilk eşleşmeyi seçiyor: tek hasta kalana kadar yazıp Enter.
+  // Enter yalnız TEK eşleşme kalınca seçiyor: tek hasta kalana kadar yazıp
+  // Enter. Önce ilk eşleşmeyi alıyordu; boş kutuda Enter listenin ilk
+  // hastasını ya da ilk kan grubunu (A Rh+) kâğıda yazıyordu. Adı tam
+  // yazılan kayıt da sayılıyor: «B Rh+» «AB Rh+»ya da uyuyor.
   enterleOnayla(kutu, () => {
-    [secilen = null] = ara(kayitlar, kutu.value);
-    return Boolean(secilen);
+    const q = kutu.value.trim().toLowerCase();
+    const bulunan = q ? ara(kayitlar, kutu.value) : [];
+    const tam = bulunan.filter((k) => String(etiket(k)).trim().toLowerCase() === q);
+    const tek = bulunan.length === 1 ? bulunan : tam;
+    if (tek.length !== 1) return false;
+    [secilen] = tek;
+    return true;
   });
   ciz();
 
@@ -230,7 +224,8 @@ export default {
     // Kan grubu hekimin elle yazdığı mı, yoksa hastanın kaydından mı geldi?
     // Kayıttan geldiyse hasta değişince yenisininkiyle değişiyor; önce ilk
     // hastanınki kalıyor ve başka birinin kan grubu kâğıda basılıyordu.
-    let kanElle = false;
+    // Düzenlemede kayıttaki değer hastanınkinden farklıysa elle yazılmış.
+    let kanElle = Boolean(duzenleme) && (recete.kanGrubu || '') !== (hasta?.kanGrubu || '');
     // Sayfadan çıkılınca false: kapanan kutudan geç dönen iş (seçim,
     // yeniden çizim) artık başka bir sayfanın yerine yazmasın.
     let aktif = true;
@@ -247,9 +242,11 @@ export default {
           etiket: tamAd, alt: (x) => [x.telefon, x.kanGrubu].filter(Boolean).join(' · '),
         });
         if (h) {
-          hasta = h; recete.hastaId = h.id;
           // Kan grubu hastanın kaydından mühürleniyor; kâğıtta değiştirilebilir.
-          if (!kanElle) recete.kanGrubu = h.kanGrubu || '';
+          // Yalnız hasta GERÇEKTEN değişince: aynı hasta yeniden seçilince
+          // reçetedeki değer (düzenlemede elle yazılmış olabilir) silinmesin.
+          if (h.id !== hasta?.id && !kanElle) recete.kanGrubu = h.kanGrubu || '';
+          hasta = h; recete.hastaId = h.id;
         }
       },
       tarih: async () => {
@@ -401,8 +398,23 @@ export default {
       tazeleZamani = setTimeout(kagidiTazele, 180);
     }
 
-    // Pay yok: kâğıt önizleme sütununun (609 px) tam genişliğinde, tasarımdaki gibi.
-    const olcekle = (tuval, kagit) => kagidiOlcekle(tuval, kagit, kok, { pay: 0 });
+    /* Pay yok: kâğıt önizleme sütununun (609 px) tam genişliğinde, tasarımdaki
+       gibi. Yan yana düzende boyu da ekrana sığıyor: önizleme yapışkan ama
+       ızgara satırı formla bitiyor; kâğıt ekrandan uzunsa hekim düğmelere
+       inince antet üst çubuğun altına kayıyordu (1536×864'te 145 px). Üstte
+       CSS'teki yapışma ofseti (üst çubuk + 12); altta ızgaranın altında kalan
+       yer (alt şerit ve pay): sayfanın dibinde yapışkan kutu ancak ızgaranın
+       dibine kadar inebiliyor. 1536×1024'te boy yetiyor (886 ≥ 882 px),
+       orada ölçek değişmiyor. */
+    const ikiSutun = matchMedia('(min-width: 1280px)');
+    const sigacakBoy = () => {
+      const duzen = kok.querySelector('.recete-duzen');
+      if (!ikiSutun.matches || !duzen) return Infinity;
+      const ust = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ust-cubuk'));
+      const alti = document.documentElement.scrollHeight - scrollY - duzen.getBoundingClientRect().bottom;
+      return innerHeight - ust - 12 - Math.max(12, alti);
+    };
+    const olcekle = (tuval, kagit) => kagidiOlcekle(tuval, kagit, kok, { pay: 0, yukseklik: sigacakBoy });
 
     /** Soldaki formun bir satırı: etiket, değer ve "+" kutusu. */
     function rxSatiri(odakAdi, etiket, deger, ipucu, eylem) {
@@ -512,8 +524,11 @@ export default {
       // kaplıyorlar.
       const uyarilar = receteUyarilari(recete.satirlar, hasta, ilaclar, { alerjiBul: alerjiCakismasi });
       const serit = uyariSeridi(uyarilar.map((u) => ({ tur: u.tur, metin: uyariMetni(u) })));
-      const ilkHata = hatalar.hastaId || hatalar.satirlar || hatalar.tarih;
-      const hataSeridi = ilkHata ? el('div', { class: 'uyari uyari--hata' }, el('span', {}, dogrulaMetni(ilkHata))) : null;
+      const ilkHataMetni = () => {
+        const h = hatalar.hastaId || hatalar.satirlar || hatalar.tarih;
+        return h ? dogrulaMetni(h) : '';
+      };
+      const hataSeridi = ilkHataMetni() ? el('div', { class: 'uyari uyari--hata' }, el('span', {}, ilkHataMetni())) : null;
 
       /* ---- Hasta kartı ---- */
       const yas = hasta ? hastaYasi(hasta) : null;
@@ -533,10 +548,20 @@ export default {
       // altında yazıyordu; hekim her seferinde kafadan çeviriyordu.
       const tarihGirdisi = tarihSecici({
         name: 'tarih', id: 'recete-tarih', value: recete.tarih,
-        // Tarih hatası gösteriliyorsa form yeniden çiziliyor: geçerli tarih
-        // yazılınca şerit hemen gitsin. Yalnız kâğıt tazelendiğinde şerit
-        // bir sonraki tam çizime kadar «tarih geçersiz» demeye devam ediyordu.
-        degisti: (iso) => { recete.tarih = iso; if (hatalar.tarih) ciz(); else tazeleGecikmeli(); },
+        // Tarih hatası gösteriliyorsa şerit YERİNDE tazeleniyor: geçerli tarih
+        // yazılınca hemen gitsin. Form yeniden kurulmuyor: kurulunca kutu
+        // «1405/07/1»i «1405/07/01»e çeviriyor, imleç sona gidiyordu ve
+        // yazılan 15 sessizce 1 olarak kaydediliyordu.
+        degisti: (iso) => {
+          recete.tarih = iso;
+          if (hatalar.tarih) {
+            hatalar = receteDogrula(recete);
+            const metin = ilkHataMetni();
+            if (!metin) hataSeridi?.remove();
+            else if (hataSeridi) hataSeridi.firstChild.textContent = metin;
+          }
+          tazeleGecikmeli();
+        },
       });
       // Numara ipucu görünür satır olarak kartı 36 px uzatıyordu; artık
       // üzerine gelince (title) ve ekran okuyucuya (aria-describedby) söyleniyor.
@@ -737,9 +762,12 @@ export default {
       kutular[kutular.length - 1].querySelector('.modal--onizleme .recete-btn--ikincil')?.click();
     };
     document.addEventListener('keydown', kisayol);
+    // Ctrl+P ya da tarayıcının menüsü: formdaki reçete o anki hâliyle basılsın.
+    const baskiBirak = tarayiciBaskisi(() => kagitCiz({ ayar, recete, hasta }));
     return () => {
       aktif = false;
       document.removeEventListener('keydown', kisayol);
+      baskiBirak();
       clearTimeout(tazeleZamani);
       olcekBirak?.();
     };

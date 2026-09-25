@@ -30,6 +30,36 @@ export function eksikleriBul(mevcutlar, hazirlar) {
   return eklenecek;
 }
 
+/**
+ * Listenin eski sürümünden yüklenmiş ve o günden beri adı/dozu değişmiş
+ * kayıtları yeni adlarıyla döndürür (yerinde güncellemek için). Listedeki
+ * `eski` alanı kaydın önceki sürümdeki ad/doz/etken maddesini taşıyor.
+ * Önce eski ad ile yenisi farklı anahtar sayılıyordu: liste yeniden
+ * yüklenince 18 kopya ekleniyor, Türkçe eski adlar da yanlarında kalıyordu.
+ * Yalnız listeden gelmiş (`hazir`) ve anahtarı hâlâ eski olan kayıt
+ * güncelleniyor; hekimin adını ya da dozunu değiştirdiği kayda, yeni adıyla
+ * zaten bir kayıt varsa da eskisine dokunulmuyor.
+ */
+export function eskiKayitlariBul(mevcutlar, hazirlar) {
+  const guncellenecek = [];
+  for (const h of hazirlar || []) {
+    if (!h?.eski) continue;
+    const eskiAnahtar = ilacAnahtari({ ...h, ...h.eski });
+    const yeniAnahtar = ilacAnahtari(h);
+    for (const m of mevcutlar || []) {
+      if (!m.hazir || ilacAnahtari(m) !== eskiAnahtar) continue;
+      if ((mevcutlar || []).some((x) => x !== m && ilacAnahtari(x) === yeniAnahtar)) continue;
+      const yeni = { ...m };
+      // Etken madde de yalnız eskisiyle aynıysa: hekim düzelttiyse kalsın.
+      for (const alan of Object.keys(h.eski)) {
+        if (normalize(m[alan]) === normalize(h.eski[alan])) yeni[alan] = h[alan];
+      }
+      guncellenecek.push(yeni);
+    }
+  }
+  return guncellenecek;
+}
+
 /** Listeden gelen kaydı depo kaydına çevirir. `hazir: 1` işareti, sonradan
  *  "listeden geleni temizle" diyebilmek için duruyor. */
 export const listeKaydi = (h) => ({

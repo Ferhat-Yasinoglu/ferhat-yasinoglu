@@ -80,10 +80,10 @@ Sürüm yükseltmek tek satır — `js/uygulama.js`; rozet peşinden gelir.
 ### Ekran görüntüleri
 
 ```bash
-node tools/gorsel-uret.mjs      # panel.png, mobil.png ve recete.png'yi yeniden üretir
+node tools/gorsel-uret.mjs      # panel.jpg, mobil.png ve recete.jpg'yi yeniden üretir
 ```
 
-Elle alınan görüntüler sessizce eskiyor: tanıtımdaki `panel.png` örnek hastalar
+Elle alınan görüntüler sessizce eskiyor: tanıtımdaki panel görüntüsü örnek hastalar
 Dari'ye çevrilmeden önce alınmıştı ve Afgan hekime aylarca **«Ayşe Yılmaz,
 Mehmet Demir, Zeynep Kaya»** gösterdi. Hiçbir test bunu yakalamadı, çünkü
 görüntü bir ikili dosya.
@@ -93,9 +93,12 @@ yüklüyor ve 14 güne yayılmış sabit dağılımla 28 örnek reçete yazıyor
 
 | Dosya | Ne gösteriyor |
 |---|---|
-| `panel.png` | **1600×1000 — 16:10**, bilgisayarda giriş sayfası, yani reçete sayfası: örnek hasta, ölçümler, tanı ve iki ilaç formdan tıklanarak girilmiş, sağdaki kâğıt onlarla dolu. Tanıtımın açılış görüntüsü; yanındaki metin de «مریض را انتخاب کنید، دواها را اضافه کنید…» diyor. Adı eski (panel), ölçüsü ve yeri aynı kalsın diye değişmedi |
+| `panel.jpg` | **1536×1024 — tasarımın çizildiği ölçü**, bilgisayarda giriş sayfası, yani reçete sayfası: örnek hasta, ölçümler, tanı ve iki ilaç formdan tıklanarak girilmiş, sağdaki kâğıt onlarla dolu ve dibine kadar görünüyor (1600×1000'de kâğıdın dibi ve alt şerit kesiliyordu). Tanıtımın açılış görüntüsü; yanındaki metin de «مریض را انتخاب کنید، دواها را اضافه کنید…» diyor. Adı eski (panel) |
 | `mobil.png` | Telefonda panel (`#/panel`): sayaçlar ve 14 günlük grafik |
-| `recete.png` | Basılan kâğıdın kendisi, **açık temada, yalnız kâğıt**. Kayıtlı bir örnek reçeteden basıldığı gibi kuruluyor: numarası ve doğrulama kodu var, ekrandaki düzenleme işaretleri (kesik çerçeveli «+» satırları) yok |
+| `recete.jpg` | Basılan kâğıdın kendisi, **açık temada, yalnız kâğıt**. Kayıtlı bir örnek reçeteden basıldığı gibi kuruluyor: numarası ve doğrulama kodu var, ekrandaki düzenleme işaretleri (kesik çerçeveli «+» satırları) yok |
+
+Panel ve kâğıt JPEG: PNG olarak panel 1 MB, kâğıt 720 KB'tı ve panel sayfanın
+ilk ekranında hemen yükleniyor. Tanıtım yavaş bağlantıdaki hekim için.
 
 Reçete satırlarında doz/kullanım alanı boş bırakılıyor: bu depo ilaç
 **adlarının** sözlüğü, tedavi tarifi değil.
@@ -104,8 +107,8 @@ Yedek hatırlatma bandı (`.bant`) görüntüye girmesin diye örnek veri yazıl
 sonra "yedek alındı" işaretleniyor — ve araç bandın gerçekten yok olduğunu
 denetliyor, sessizce fotoğrafa girmesin diye.
 
-`recete.png` eskiden elle alınıyordu ve kâğıt yeniden tasarlanınca eski
-kâğıdı göstermeye devam etti — `panel.png`'nin başına gelenin aynısı. Artık o
+Kâğıt görüntüsü eskiden elle alınıyordu ve kâğıt yeniden tasarlanınca eski
+kâğıdı göstermeye devam etti — panelin başına gelenin aynısı. Artık o
 da araçta. Araç bir kutu, takvim ya da bildirim görüntüye girecekse durur.
 
 `npm run kontrol` HTML'deki `width`/`height` ile dosyanın gerçek ölçüsünü

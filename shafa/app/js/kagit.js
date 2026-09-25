@@ -424,8 +424,9 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
   // A4'te 140 mm: tasarımdaki 155 mm'lik gövde A4'e sığmıyor (tasarımın
   // kâğıdı basılabilir alandan 10 mm uzun); kısalan yalnız bu esnek bölüm,
   // antet ve ayak tasarımdaki oranlarını koruyor.
+  // --baski-boy: basılan modern kâğıdın en az boyu (yazdirma.css); A5'te yok.
   stil.textContent = `@page { size: ${boyut}; margin: ${boyut === 'A5' ? '6mm' : '8mm'}; }`
-    + ` .kagit { --rx-boy: ${boyut === 'A5' ? '62mm' : '140mm'}; }`;
+    + ` .kagit { --rx-boy: ${boyut === 'A5' ? '62mm' : '140mm'}; --baski-boy: ${boyut === 'A5' ? 'auto' : '270mm'}; }`;
 
   // "Healthy Life Brighter Tomorrow" el yazısı yüzüyle (Kalam) basılıyor.
   // window.print() eşzamanlı: yüz o an inmemişse satır yedek yazıyla
@@ -588,7 +589,7 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
     !bos && doluMu(recete.dogrulamaKodu)
       ? el('div', { class: 'kagit__kod' },
         el('span', { class: 'kagit__olcum-simge' }, simge('kilit', { boy: 15 })),
-        el('b', {}, t('kagit.kod', 'کد تأیید') + ': '), el('span', { dir: 'ltr' }, recete.dogrulamaKodu))
+        el('b', {}, t('kagit.kod', 'کد تأیید') + ': '), el('span', { class: 'kagit__kod-deger', dir: 'ltr' }, recete.dogrulamaKodu))
       : null,
     // Resim sütunun tam genişliğinde; altında solda QR, sağında eğik el
     // yazısı. Yazı resmin içinde değil yanında bir kardeş: ızgarada QR'ın
@@ -712,7 +713,11 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
      sade stiller aynı ağacı giymeye devam ediyor. */
   const tepe = el('div', { class: 'kagit__tepe' }, dalga('ust'), antet, unvan, hizmet);
 
-  return el('div', { class: `yazdir-alan kagit${stilSinifi}` }, stil,
+  // Dokuz ve daha çok ilaçta sık düzen (yazdirma.css .kagit--sik): her ilaç
+  // bir satır daha az tutuyor. Yoksa on ilaçlı kâğıt A4'e sığmıyor, ayak
+  // ikinci sayfaya bölünüyordu.
+  const sik = !bos && (recete.satirlar?.length || 0) >= 9 ? ' kagit--sik' : '';
+  return el('div', { class: `yazdir-alan kagit${stilSinifi}${sik}` }, stil,
     tepe, deneyim, vecize, serit,
     el('div', { class: 'kagit__govde' }, rx, sutun),
     ayak);
@@ -734,7 +739,9 @@ const oncekiGozcu = new WeakMap();
  * Reçete yazma sayfasında 0: kâğıt kendi sütununu tam dolduruyor.
  * `yukseklik`: verilirse kâğıdın sığması gereken boyu (px) döndüren
  * fonksiyon; kâğıt o zaman boyuna da sığacak kadar küçülüyor (önizleme
- * kutusunda sayfanın tamamı kaydırmadan görünsün diye).
+ * kutusunda ve reçete sayfasının yapışkan sütununda sayfanın tamamı
+ * kaydırmadan görünsün diye). Pencerenin yalnız boyu değişince gözlenen
+ * kutuların hiçbiri büyümeyebiliyor: ölçüm pencerenin `resize`ında da yenileniyor.
  */
 export function kagidiOlcekle(tuval, kagit, gozlenen = null, { pay = 8, yukseklik = null } = {}) {
   // Aynı tuvale yeni kâğıt konunca eski gözcü bırakılıyor: bırakılmazsa
@@ -759,9 +766,43 @@ export function kagidiOlcekle(tuval, kagit, gozlenen = null, { pay = 8, yuksekli
   const gozcu = new ResizeObserver(uygula);
   if (gozlenen) gozcu.observe(gozlenen);
   gozcu.observe(kagit);
-  const birak = () => { gozcu.disconnect(); if (oncekiGozcu.get(tuval) === birak) oncekiGozcu.delete(tuval); };
+  if (yukseklik) addEventListener('resize', uygula);
+  const birak = () => {
+    gozcu.disconnect();
+    removeEventListener('resize', uygula);
+    if (oncekiGozcu.get(tuval) === birak) oncekiGozcu.delete(tuval);
+  };
   oncekiGozcu.set(tuval, birak);
   return birak;
+}
+
+/**
+ * Tarayıcının KENDİ yazdırması (Ctrl+P, menüden «Yazdır») için. Reçete
+ * yazma ve boş kâğıt sayfalarında kâğıt #sayfa'nın doğrudan çocuğu değil,
+ * önizleme tuvalinin içinde; yazdırma kuralı onu saran bölümle birlikte
+ * gizliyordu ve Ctrl+P bembeyaz bir sayfa basıyordu. Yazdırma başlarken
+ * sayfada doğrudan bir kâğıt yoksa `uret()`in çizdiği kâğıt ekleniyor,
+ * bitince kaldırılıyor. Uygulamanın kendi düğmeleri (kagidiYazdir) kâğıdı
+ * zaten ekliyor; o zaman burası bir şey yapmıyor.
+ * @param {() => HTMLElement} uret  Basılacak kâğıdı o anki hâliyle çizer.
+ * @returns {() => void} Dinleyicileri bırakır (sayfadan çıkarken).
+ */
+export function tarayiciBaskisi(uret) {
+  let eklenen = null;
+  const once = () => {
+    const sayfa = document.getElementById('sayfa');
+    if (!sayfa || sayfa.querySelector(':scope > .yazdir-alan')) return;
+    eklenen = uret();
+    sayfa.appendChild(eklenen);
+  };
+  const sonra = () => { eklenen?.remove(); eklenen = null; };
+  addEventListener('beforeprint', once);
+  addEventListener('afterprint', sonra);
+  return () => {
+    sonra();
+    removeEventListener('beforeprint', once);
+    removeEventListener('afterprint', sonra);
+  };
 }
 
 /**

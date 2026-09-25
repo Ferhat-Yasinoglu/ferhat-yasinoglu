@@ -1,10 +1,10 @@
 // Hazır ilaç listesi: birleştirme mantığı ve gönderilen verinin sağlığı.
 import { describe, it, expect, beforeEach } from 'vitest';
 import { readFile } from 'node:fs/promises';
-import { eksikleriBul, ilacAnahtari, listeKaydi, listeGecerliMi } from '../app/js/paylasilan/ilac-listesi.js';
+import { eksikleriBul, eskiKayitlariBul, ilacAnahtari, listeKaydi, listeGecerliMi } from '../app/js/paylasilan/ilac-listesi.js';
 import { FORMLAR } from '../app/js/paylasilan/ilac.js';
 import { BellekDepo } from '../app/js/depo/depo.js';
-import { hazirListeyiYukle } from '../app/js/depo/hazir-ilaclar.js';
+import { hazirListeyiYukle, hazirListeyiTazele, HAZIR_LISTE_SURUMU } from '../app/js/depo/hazir-ilaclar.js';
 
 const liste = JSON.parse(await readFile(new URL('../app/veri/ilaclar.json', import.meta.url), 'utf8'));
 
@@ -38,6 +38,80 @@ describe('gönderilen liste', () => {
   });
 
   it('gözle görülür bir hacimde', () => expect(liste.ilaclar.length).toBeGreaterThan(80));
+
+  // Kâğıdı Dari/İngilizce okuyan hekim ve eczacı için nokta ondalık ayraçtır:
+  // «100.000 IU/ml» 100 IU/ml okunuyordu (bin kat). Yüzde de sayıdan sonra.
+  it('dozlarda Türk yazımı yok: binlik nokta ve önde yüzde', () => {
+    for (const i of liste.ilaclar) {
+      expect(i.doz, i.ad).not.toMatch(/\d\.\d{3}\b/);
+      expect(i.doz, i.ad).not.toMatch(/%\d/);
+    }
+  });
+
+  it('koddaki sürüm listeninkiyle aynı', () => expect(HAZIR_LISTE_SURUMU).toBe(liste.surum));
+});
+
+/* Listenin 1. sürümü: `eski` alanları yerine konunca elde edilen belge. */
+const eskiListe = {
+  surum: 1,
+  ilaclar: liste.ilaclar.map(({ eski, ...h }) => ({ ...h, ...eski })),
+};
+const degisen = liste.ilaclar.filter((h) => h.eski);
+
+describe('eski sürümden yükseltme', () => {
+  let depo;
+  const getir = (belge) => async () => ({ ok: true, json: async () => belge });
+  beforeEach(() => { depo = new BellekDepo(); });
+
+  it('yeniden yüklemek kopya eklemiyor, eski adları yerinde yeniliyor', async () => {
+    await hazirListeyiYukle(depo, getir(eskiListe));
+    const r = await hazirListeyiYukle(depo, getir(liste));
+    expect(r).toMatchObject({ eklendi: 0, guncellendi: degisen.length });
+    const kayitlar = await depo.listele('ilaclar');
+    expect(kayitlar).toHaveLength(liste.ilaclar.length);
+    expect(new Set(kayitlar.map(ilacAnahtari))).toEqual(new Set(liste.ilaclar.map(ilacAnahtari)));
+    // Anahtarı aynı kalanlarda da (İnsülin → Insulin) yeni yazım.
+    expect(kayitlar.map((k) => k.ad)).toContain('Insulin (NPH)');
+    expect(kayitlar.find((k) => k.ad === 'Nystatin').doz).toBe('100,000 IU/ml');
+    expect(kayitlar.find((k) => k.ad.startsWith('Vitamin B')).etkenMadde).toBe('Vitamin B complex');
+    expect(await depo.meta()).toMatchObject({ hazirListeSurumu: 2 });
+  });
+
+  it('açılışta bir kez: adları yeniliyor, yeni ilaç eklemiyor, hekimin kaydına dokunmuyor', async () => {
+    const ilk60 = eskiListe.ilaclar.slice(0, 60);
+    await hazirListeyiYukle(depo, getir({ ...eskiListe, ilaclar: ilk60 }));
+    const eskiNystatin = (await depo.listele('ilaclar')).find((k) => k.ad === 'Nystatin');
+    // Hekim bir kaydın dozunu kendisi değiştirmiş, birini de elle eklemiş.
+    const suni = (await depo.listele('ilaclar')).find((k) => k.ad === 'Oral rehidratasyon tuzları (ORS)');
+    await depo.kaydet('ilaclar', { ...suni, doz: '1 L için (kendi)' });
+    await depo.kaydet('ilaclar', { ad: 'Clotrimazole', doz: '%1', form: 'krem', notlar: 'kendi' });
+    const n = await hazirListeyiTazele(depo, getir(liste));
+    const kayitlar = await depo.listele('ilaclar');
+    expect(kayitlar).toHaveLength(61);
+    expect(kayitlar.find((k) => k.id === eskiNystatin.id).doz).toBe('100,000 IU/ml');
+    expect(kayitlar.find((k) => k.id === suni.id).ad).toBe('Oral rehidratasyon tuzları (ORS)');
+    expect(kayitlar.find((k) => k.notlar === 'kendi').doz).toBe('%1');
+    // İlk 60'taki değişenlerin hepsi, hekimin dozunu değiştirdiği ORS hariç.
+    const ilk60Degisen = degisen.filter((h) => ilk60.some((e) => ilacAnahtari(e) === ilacAnahtari({ ...h, ...h.eski })));
+    expect(n).toBe(ilk60Degisen.length - 1);
+    // İkinci açılışta bir şey yapmıyor.
+    expect(await hazirListeyiTazele(depo, async () => { throw new Error('okunmamalı'); })).toBe(0);
+  });
+
+  it('listeyi hiç yüklememiş kurulumda listeyi okumuyor bile', async () => {
+    expect(await hazirListeyiTazele(depo, async () => { throw new Error('okunmamalı'); })).toBe(0);
+    expect(await depo.say('ilaclar')).toBe(0);
+  });
+
+  it('yeni adıyla bir kayıt zaten varsa eskisi güncellenmiyor (kopya anahtar olmasın)', () => {
+    const h = { ad: 'Artificial tears', doz: '0.3%', form: 'damla', eski: { ad: 'Suni gözyaşı', doz: '%0.3' } };
+    const eski = { id: 'a', ad: 'Suni gözyaşı', doz: '%0.3', form: 'damla', hazir: 1 };
+    const yeni = { id: 'b', ad: 'Artificial tears', doz: '0.3%', form: 'damla', hazir: 1 };
+    expect(eskiKayitlariBul([eski, yeni], [h])).toEqual([]);
+    expect(eskiKayitlariBul([eski], [h])).toEqual([{ ...eski, ad: 'Artificial tears', doz: '0.3%' }]);
+    // Listeden gelmemiş kayda dokunulmuyor.
+    expect(eskiKayitlariBul([{ ...eski, hazir: undefined }], [h])).toEqual([]);
+  });
 });
 
 describe('eksikleriBul', () => {

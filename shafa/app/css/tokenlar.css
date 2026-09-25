@@ -85,6 +85,10 @@
   --kenarlik: 1px solid rgb(var(--cizgi) / .10);
   --kenarlik-2: 1px solid rgb(var(--cizgi) / .20);
   --halka: 0 0 0 3px rgb(var(--vurgu) / .18);
+  /* Kutuların arkasındaki örtü, saydamlığıyla birlikte: sayfayı karartsın.
+     Çizgi rengiydi; karanlık temada o açık camgöbeği ve örtü koyu sayfayı
+     karartacağına parlak bir mavi-griye çeviriyordu. */
+  --ortu: 45 95 145 / .45;
 
   --yazi: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Arabic', Tahoma, Roboto, 'Helvetica Neue', Arial, sans-serif;
   /* El yazısı: yalnız kâğıttaki "Healthy Life Brighter Tomorrow" satırı.
@@ -226,6 +230,7 @@
   --kenarlik: 1px solid rgb(var(--cizgi) / .14);
   --kenarlik-2: 1px solid rgb(var(--cizgi) / .24);
   --halka: 0 0 0 3px rgb(var(--vurgu) / .22);
+  --ortu: 0 0 0 / .6;
   color-scheme: dark;
 }
 

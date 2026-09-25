@@ -32,11 +32,16 @@ a { color: rgb(var(--vurgu)); }
    çubuğu gizlendiğinde (dar ekran) görünür — iki yerde birden durunca
    sayfanın üstünde aynı ad iki kez yazıyordu. */
 .ust__logo { display: none; align-items: center; gap: var(--b-2); text-decoration: none; color: inherit; flex-shrink: 0; }
-.ust__logo img { inline-size: 32px; block-size: 32px; border-radius: 8px; transition: transform var(--hiz-2) var(--egri-yay); }
-.ust__logo:hover img { transform: rotate(-6deg) scale(1.06); }
+/* Kenar çubuğundaki kalp+EKG çizimi. Renk kenar çubuğunun camgöbeği
+   değil vurgu: o renk koyu kolon için, açık üst çubukta soluk kalıyordu.
+   SVG'nin kendi boşluğu negatif payla yutuluyor (bkz. .kenar__marka-simge). */
+.ust__logo-simge {
+  display: flex; flex-shrink: 0; margin: -5px; color: rgb(var(--vurgu));
+  transition: transform var(--hiz-2) var(--egri-yay);
+}
+.ust__logo:hover .ust__logo-simge { transform: scale(1.06); }
 .ust__ad { display: flex; flex-direction: column; line-height: 1.15; }
 .ust__ad b { font-size: var(--f-l); letter-spacing: -.02em; }
-.ust__ad span { font-size: var(--f-xs); color: rgb(var(--metin-3)); }
 /* Arama kutusu ortada yüzmesin: sınırlı genişlikte, başlıktan sonra. */
 .ust__ara { flex: 1; max-inline-size: 420px; }
 .ust__sag { margin-inline-start: auto; display: flex; align-items: center; gap: var(--b-2); }
@@ -279,7 +284,7 @@ a { color: rgb(var(--vurgu)); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
-  .ust__logo:hover img, .menu a:hover .simge, a.sayac:hover { transform: none; }
+  .ust__logo:hover .ust__logo-simge, .menu a:hover .simge, a.sayac:hover { transform: none; }
 }
 
 /* ---------- Dar ekran ---------- */
@@ -320,7 +325,6 @@ a { color: rgb(var(--vurgu)); }
   .ust__tarih, .ust__hesap-ad { display: none; }
   .icerik { padding: var(--b-4); padding-block-end: calc(var(--alt-cubuk) + var(--b-5)); }
   .ust { padding-inline: var(--b-3); gap: var(--b-2); }
-  .ust__ad span { display: none; }
   /* Telefonda başlık yerine arama önemli: ad kısalır, kutu genişler. */
   .ust__ara { max-inline-size: none; }
   .alt {

@@ -2,21 +2,24 @@
 // Tanıtım sayfasının ekran görüntülerini üretir: `node tools/gorsel-uret.mjs`.
 //
 // Neden bir araç: görüntüler elle alınınca sessizce eskiyor. Tanıtımdaki
-// panel.png örnek hastalar Dari'ye çevrilmeden önce alınmıştı; Afgan hekime
+// panel görüntüsü örnek hastalar Dari'ye çevrilmeden önce alınmıştı; Afgan hekime
 // aylarca «Ayşe Yılmaz, Mehmet Demir, Zeynep Kaya» gösterdi ve bunu hiçbir
 // test yakalamadı. Artık tek komutla yeniden üretiliyor.
 //
 // Üç görüntü:
-//   panel.png   bilgisayarda giriş sayfası, yani reçete sayfası: solda form,
+//   panel.jpg   bilgisayarda giriş sayfası, yani reçete sayfası: solda form,
 //               sağda canlı kâğıt. Örnek hasta, iki ilaç, ölçümler ve tanı
 //               formdan (hekimin tıkladığı yerlerden) doldurulur.
 //   mobil.png   telefonda panel (#/panel): 14 günlük grafik ve son reçeteler.
-//   recete.png  basılan kâğıdın kendisi, açık temada ve yalnız kâğıt.
+//   recete.jpg  basılan kâğıdın kendisi, açık temada ve yalnız kâğıt.
 //               Ekrandaki düzenleme işaretleri (kesik çerçeveli «+» satırları)
 //               yok: kâğıt kaydedilmiş örnek reçeteden, basıldığı gibi kurulur.
 //               Önce elle alınıyordu ve kâğıt yeniden tasarlanınca eski
 //               kâğıdı göstermeye devam etti.
 // Tanıtım sayfası koyu; ilk ikisi koyu temada alınır. Kâğıt her temada beyaz.
+// Büyük ikisi JPEG: PNG olarak panel 1 MB, kâğıt 720 KB'tı ve panel sayfanın
+// ilk ekranında hemen yükleniyor; tanıtım yavaş bağlantıdaki hekim için.
+// Telefon görüntüsü PNG'de de küçük.
 //
 // Playwright bu projenin bağımlılığı değil; kurulu değilse betik atlanır.
 import { spawn } from 'node:child_process';
@@ -198,13 +201,14 @@ const KAGIT_KUR = async (tani) => {
 
 const raporlar = [];
 
-// --- Bilgisayar ekranı: 16:10, gerçek bir monitör oranı. Giriş sayfası.
+// --- Bilgisayar ekranı: tasarımın çizildiği 1536×1024. Giriş sayfası.
+// 1600×1000'de kâğıdın dibi ve alt şerit görüntünün dışında kalıyordu.
 {
-  const { baglam, sayfa, kac, hatalar } = await hazirla({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 2 });
+  const { baglam, sayfa, kac, hatalar } = await hazirla({ viewport: { width: 1536, height: 1024 }, deviceScaleFactor: 2 });
   await receteDoldur(sayfa);
   await bitir(sayfa);
-  await sayfa.screenshot({ path: CIKTI + 'panel.png' });
-  raporlar.push({ ad: 'panel.png', olcu: '1600×1000 (16:10), reçete sayfası', recete: kac, hata: hatalar });
+  await sayfa.screenshot({ path: CIKTI + 'panel.jpg', type: 'jpeg', quality: 85 });
+  raporlar.push({ ad: 'panel.jpg', olcu: '1536×1024 (tasarımın ölçüsü), reçete sayfası', recete: kac, hata: hatalar });
   await baglam.close();
 }
 
@@ -224,8 +228,16 @@ const raporlar = [];
   const { baglam, sayfa, kac, hatalar } = await hazirla({ viewport: { width: 1280, height: 1100 }, deviceScaleFactor: 2 }, { tema: 'aydinlik' });
   await sayfa.evaluate(KAGIT_KUR, TANI);
   await bitir(sayfa);
-  await sayfa.locator('.gorsel-tuval .kagit').screenshot({ path: CIKTI + 'recete.png' });
-  raporlar.push({ ad: 'recete.png', olcu: 'kâğıt, 2×', recete: kac + 1, hata: hatalar });
+  // Kesim içeriye yuvarlanıyor: öğenin kutusu küsuratlı ve öğe görüntüsü
+  // dışarı yuvarlıyordu; sağda ve altta 2 piksellik sayfa zemini ile
+  // kenarlıktan taşan renk izleri kalıyordu.
+  const k = await sayfa.locator('.gorsel-tuval .kagit').boundingBox();
+  const x = Math.ceil(k.x), y = Math.ceil(k.y);
+  await sayfa.screenshot({
+    path: CIKTI + 'recete.jpg', type: 'jpeg', quality: 88,
+    clip: { x, y, width: Math.floor(k.x + k.width) - x, height: Math.floor(k.y + k.height) - y },
+  });
+  raporlar.push({ ad: 'recete.jpg', olcu: 'kâğıt, 2×', recete: kac + 1, hata: hatalar });
   await baglam.close();
 }
 

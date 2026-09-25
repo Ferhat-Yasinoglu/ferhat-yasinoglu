@@ -10,6 +10,7 @@ import { KULLANIM_ONERILERI, SURE_ONERILERI, YOLLAR, bosSatir } from './paylasil
 import { FORMLAR, formAdi, ilacAra, ilacEtiketi } from './paylasilan/ilac.js';
 import { alerjiCakismasi } from './paylasilan/hasta.js';
 import { cip } from './klinik-arayuz.js';
+import { enterleOnayla } from './cekirdek/modal.js';
 import { t, secenekAdi } from './i18n.js';
 import { uyariMetni } from './hatalar.js';
 
@@ -100,6 +101,27 @@ export async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = []) 
     return kap;
   }
   kutu.oninput = aramaCiz;
+  /* Enter: arama kutusunda TEK eşleşme kalınca (ya da adı tam yazılınca)
+     onu seçip adete geçiyor; boş kutuda ya da birden çok eşleşmede bir şey
+     seçmiyor, yanlış dava kâğıda girmesin (hasta seçicideki gibi). Öbür
+     tek satırlık alanlarda kutuyu onaylıyor: önce en çok kullanılan bu
+     kutuda Enter hiçbir şey yapmıyordu. Kullanım alanı hariç: öneri
+     listesinden (datalist) Enter'la seçilen öneri yazılmadan kutu
+     kapanabilirdi. Adet geçersizse cb kutuyu açık tutuyor. */
+  kutu.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.isComposing) return;
+    e.preventDefault();
+    const q = kutu.value.trim();
+    if (!q) return;
+    const bulunan = ilacAra(ilaclar, q);
+    const tam = bulunan.filter((i) => ilacGorunenAd(i).toLowerCase() === q.toLowerCase());
+    const tek = bulunan.length === 1 ? bulunan : tam;
+    if (tek.length !== 1) return;
+    [ilac] = tek;
+    kutu.value = ilacGorunenAd(ilac); aramaCiz(); secileniCiz();
+    adet.focus(); adet.select();
+  });
+  for (const g of [adet, sure, yol, not]) enterleOnayla(g);
   // Açılışta da çiziyoruz: liste yalnız yazınca doluyordu, yani hekim
   // gezinmek için önce klavyeye gitmek zorundaydı.
   aramaCiz();

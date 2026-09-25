@@ -2,6 +2,11 @@
    Reçete çıktısı bu kurallarla A4/A5 kâğıda sığar. */
 @media print {
   .ust, .kenar, .alt, .alt-serit, .bantlar, .sayfa-bas__eylem, .bildirimler, .sekmeler, .tarih-kutu, .yazdirma-disi { display: none !important; }
+  /* Kök de beyaz ve açık şemada: karanlık tema kökü `color-scheme: dark`
+     ile boyuyor, «arka plan grafikleri» açık basılınca kâğıdın çevresinde
+     ve sayfa paylarında #121212 bir çerçeve çıkıyordu. Seçici temanınki
+     (:root[data-tema="karanlik"]) kadar özgül olmalı. */
+  :root, :root[data-tema] { color-scheme: light; background: #fff; }
   body { background: #fff; color: #000; font-size: 11pt; }
   .govde, .icerik { display: block; padding: 0; margin: 0; max-inline-size: none; }
   .kart { box-shadow: none; border: 1px solid #999; break-inside: avoid; margin-block-end: 8mm; }
@@ -82,7 +87,11 @@
    tuvalinde görünüyor. */
 @media print, screen {
   @media print {
-    #sayfa:has(.yazdir-alan) > *:not(.yazdir-alan) { display: none !important; }
+    /* Yalnız DOĞRUDAN çocuk kâğıt varken: `:has(.yazdir-alan)` önizleme
+       tuvalinin içindeki kâğıdı da görüyor, onu saran bölümü gizliyordu ve
+       Ctrl+P bembeyaz basıyordu. Kâğıdı ekleyen yol kaçarsa artık sayfanın
+       kendisi basılıyor, boş bir yaprak değil (bkz. kagit.js tarayiciBaskisi). */
+    #sayfa:has(> .yazdir-alan) > *:not(.yazdir-alan) { display: none !important; }
     .yazdir-alan { display: flex; }
     /* Tomar halinde basarken her kopya kendi sayfasına. Sonuncuda bu sınıf
        yok: olsaydı sona boş bir sayfa daha eklenirdi. */
@@ -314,6 +323,9 @@
   .kagit__olcum--sikisik > span:not(.kagit__olcum-simge) { font-size: 8.5pt; }
   .kagit__kod { margin-block-start: 1.5mm; font-size: 8.5pt; line-height: 1.3; }
   .kagit__kod span { letter-spacing: .06em; font-weight: 700; }
+  /* Kod tirede bölünmüyor: dar sütunda «MWMW-» bir satırda, «WMWM» altta
+     kalıyordu. Sığmazsa bütün olarak etiketin altına iniyor. */
+  .kagit__kod-deger { white-space: nowrap; }
   /* Resim üstte tam genişlikte; altında solda QR, sağında el yazısı
      (sütun dir=ltr: ilk sütun sol). Yazı resmin değil ayağın çocuğu. */
   .kagit__sutun-ayak {
@@ -760,13 +772,17 @@
   .kagit--modern .kagit__olcum--sikisik b { font-size: 8.5pt; letter-spacing: -.02em; padding-inline-end: 0.6mm; }
   .kagit--modern .kagit__olcum--sikisik > span:not(.kagit__olcum-simge) { font-size: 8.5pt; }
   /* Doğrulama kodu satırı ölçüm satırlarının düzeninde ama alçak: elle
-     yazılmıyor, 9,5 mm'lik yazı payı gerekmiyor. */
+     yazılmıyor, 9,5 mm'lik yazı payı gerekmiyor. TEK satır: ölçüm
+     satırlarından kalan flex-wrap kodların %41'inde kodu etiketin altına
+     indiriyor, satır stetoskop çizimine biniyordu. En geniş kod
+     (MWMW-WMWM) ancak 7,5 pt, harf arası açılmadan ve simgeden sonra 1 mm
+     payla sığıyor (satırda ≈ 2 mm kalıyor). */
   .kagit--modern .kagit__kod {
-    flex: none; min-block-size: 5mm; align-items: baseline; align-content: center;
-    color: var(--m-ink); font-size: 8.5pt;
+    flex: none; flex-wrap: nowrap; white-space: nowrap; min-block-size: 5mm; align-items: baseline; align-content: center;
+    padding-inline-start: 8mm; color: var(--m-ink); font-size: 7.5pt;
   }
-  .kagit--modern .kagit__kod b { padding-inline-end: 1.2mm; color: var(--m-vurgu); font-size: 8pt; }
-  .kagit--modern .kagit__kod > span[dir=ltr] { font-weight: 700; }
+  .kagit--modern .kagit__kod b { padding-inline-end: 0.8mm; color: var(--m-vurgu); font-size: 7.5pt; }
+  .kagit--modern .kagit__kod-deger { font-weight: 700; letter-spacing: 0; }
   /* Ayak sütunun kenarlarına kadar taşıyor: resim tam genişlikte. El
      yazısı QR'ın sağında ve çizimin BOŞ bıraktığı sağ alt köşeye uzanıyor
      (kalbin ucu ile sağ kolun altı; bkz. kagit.js saglikCizimi). Önceden
@@ -799,10 +815,10 @@
   }
 
   /* ---------- Ayak: dalgalı petrol bant ----------
-     Basılı kâğıtta 28 mm ve gövdenin altına 3 mm giriyor (bandın soluk
-     halesi kutuların arkasından başlıyor). Ekrandaki kâğıt 281 mm'ye
-     uzatıldığında bant tasarımdaki 32,5 mm'ye kadar açılıyor; kalanı
-     gövdeye kalıyor. Baskıda boş yer yok, bant 28 mm'de kalıyor (A4 payı).
+     En az 28 mm ve gövdenin altına 3 mm giriyor (bandın soluk halesi
+     kutuların arkasından başlıyor). Ekrandaki kâğıt 281 mm'ye, basılan A4
+     kâğıt 270 mm'ye uzatıldığında (bkz. dosya sonundaki baskı kuralı) bant
+     tasarımdaki 32,5 mm'ye kadar açılıyor; kalanı gövdeye kalıyor.
      Bant zemini CSS değil SVG (kagit.js dalga('alt')): viewBox'ın y=0'ı
      kutuların alt kenarı (bandın 3 mm aşağısı), 94'ü kâğıdın dibi; üstteki
      24 birim hale için. Boyu bandın kendi boyundan hesaplanıyor. */
@@ -818,8 +834,12 @@
   }
   .kagit--modern .kagit__iletisim,
   .kagit--modern .kagit__rozetler { position: relative; z-index: 1; }
-  .kagit--modern .kagit__iletisim { gap: 2.4mm; font-size: 11.5pt; line-height: 1.25; }
-  .kagit--modern .kagit__iletisim-satir { gap: 2.4mm; color: #dbe8ec; }
+  /* Adres ve telefon tasarımdaki gibi neredeyse beyaz ve orta kalınlıkta,
+     iki satır birbirine yakın (ekranda ≈ 22 px adım). #dbe8ec ve 400
+     kalınlıkta, 2,4 mm arayla yanındaki kalın rozet yazılarının yanında
+     soluk kalıyordu. */
+  .kagit--modern .kagit__iletisim { gap: 1.6mm; font-size: 11.5pt; line-height: 1.25; }
+  .kagit--modern .kagit__iletisim-satir { gap: 2.4mm; color: #f3f8fa; font-weight: 500; }
   .kagit--modern .kagit__iletisim-satir .simge { inline-size: 5.7mm; block-size: 5.7mm; color: #fff; }
   /* Yedi halka rozet: 11,2 mm, aralarındaki adım 14,7 mm. Etiket halkadan
      geniş olabilir; rozet halka genişliğinde kalıyor ki adım bozulmasın. */
@@ -833,4 +853,29 @@
     background: rgb(0 0 0 / .15); border: 0.3mm solid rgb(255 255 255 / .65); color: #fff;
   }
   .kagit--modern .kagit__rozet-daire .simge { inline-size: 6.4mm; block-size: 6.4mm; }
+
+  /* ---------- Sık düzen: dokuz ve daha çok ilaç (kagit.js) ----------
+     Her ilaç iki satırdı (ad, altında kullanım): ilaç başına ≈ 10 mm, on
+     ilaçta kâğıt 289 mm'yi buluyor ve ikinci sayfaya taşıyordu. Kullanım
+     adın yanına geçiyor, sığmazsa kendiliğinden alta kırılıyor; on iki
+     ilaç tek sayfada kalıyor. Numarayı <ol> verdiği için li'nin kendisi
+     liste öğesi kalıyor, içindekiler satır içi. Bütün stillerde, stil
+     kurallarından sonra: aynı özgüllükte kazanan bu. */
+  .kagit--sik .kagit__ilaclar li { margin-block-end: 0.6mm; }
+  /* Aralık adın bitiş yanında: kullanım Farsça (dir=auto) ve kendi
+     başlangıç payı sağ yanına düşüyordu, «N=2» metne yapışıyordu. */
+  .kagit--sik .kagit__ilac-ad { display: inline-flex; margin-inline-end: 2.5mm; }
+  .kagit--sik .kagit__kullanim { display: inline; }
+}
+
+/* Ayak hiçbir zaman iki sayfaya bölünmüyor: kâğıt yine de taşarsa (çok
+   uzun metinler) bant bütün olarak ikinci sayfaya geçiyor. Önce ilk sayfa
+   adresle rozetlerin yarısında bitiyordu. */
+@media print {
+  .kagit__ayak { break-inside: avoid; }
+  /* Basılan modern kâğıt A4'te en az 270 mm (kagit.js --baski-boy; A5'te
+     yok): içerik boyunda bırakılınca ≈ 260 mm kalıyor, ayak sayfanın
+     dibinden 17 mm yukarıda bitiyordu. Gövde ve ayak ekrandaki gibi
+     esniyor. 272 mm'nin üstü ikinci sayfaya taşma sınırına çok yakın. */
+  .kagit--modern { min-block-size: var(--baski-boy, auto); }
 }

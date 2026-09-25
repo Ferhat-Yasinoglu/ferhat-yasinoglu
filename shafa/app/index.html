@@ -8,7 +8,7 @@
      diye. Bu üç satır dışında uygulama hâlâ yalnız kendi dosyalarına bakıyor;
      eşitleme kapalıyken hiçbiri kullanılmıyor. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://www.googleapis.com https://accounts.google.com; frame-src https://accounts.google.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
-<meta name="theme-color" content="#0f766e">
+<meta name="theme-color" content="#f6fafd">
 <meta name="description" content="شفا — نسخه‌نویسی و ثبت مریضان برای داکتر. معلومات تنها در همین دستگاه می‌ماند.">
 <title data-i18n="uygulama.tam_ad">شفا — نسخه‌نویسی</title>
 <link rel="manifest" href="./manifest.webmanifest">
@@ -24,9 +24,10 @@
 </head>
 <body>
 <header class="ust">
+  <!-- Marka kenar çubuğundakinin aynısı: kalp+EKG çizimi (uygulama.js
+       önüne ekliyor) ve Latin «Shafa». Yalnız telefonda görünüyor. -->
   <a class="ust__logo" href="#/recete/kagit">
-    <img src="./img/logo.svg" alt="" width="30" height="30">
-    <span class="ust__ad"><b data-i18n="uygulama.ad">Shafa</b><span data-i18n="uygulama.alt">Reçete</span></span>
+    <span class="ust__ad" dir="ltr"><b>Shafa</b></span>
   </a>
   <div class="ust__ara" id="ust-ara"></div>
   <div class="ust__sag" id="ust-sag"></div>

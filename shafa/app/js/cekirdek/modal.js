@@ -8,6 +8,22 @@ import { el, btn } from './dom.js';
 import { simge } from './simge.js';
 import { t } from '../i18n.js';
 
+/* Kutunun asıl düğmesine basar (Seç, Kaydet, Ekle): liste satırı ve Enter
+   aynı yoldan onaylıyor, cb'deki denetim ikisinde de çalışıyor. */
+export const kutuyuOnayla = (ic) => ic.closest('.modal')?.querySelector('.modal__ayak .btn--birincil')?.click();
+
+/** Tek satırlık kutuda Enter onaylıyor. Önce hiçbir şey olmuyordu; hekim
+ *  Tab'la düğmeye gidip bir daha basıyordu. `hazir` false dönerse Enter
+ *  yalnız yutuluyor. Çok satırlı alanlara verilmiyor: orada Enter yeni satır.
+ *  Reçete kutuları ve ilaç satırı kutusu ortak kullanıyor. */
+export function enterleOnayla(kutu, hazir = () => true) {
+  kutu.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.isComposing) return;
+    e.preventDefault();
+    if (hazir()) kutuyuOnayla(kutu);
+  });
+}
+
 // `sinif`: kutuya ek sınıf; bir sayfanın kendi kutusunu (ör. reçete
 // önizlemesi) öbür kutuları etkilemeden biçimlemek için. Düğmedeki
 // `simge`: yazının önündeki çizim (hazır bir öğe). `kapatici`: kutuyu

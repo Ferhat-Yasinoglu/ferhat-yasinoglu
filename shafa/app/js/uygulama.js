@@ -3,6 +3,7 @@
 // ctx: { depo, t, git, bildir, basari, uyar, hata, modal, onayla, sor, param, sorgu, … }
 import { yerelDepoAc } from './depo/idb.js';
 import { hatirlatmaGerekli, yedekOlustur, indir } from './depo/yedek.js';
+import { hazirListeyiTazele } from './depo/hazir-ilaclar.js';
 import { bozukKimligiAyikla } from './paylasilan/senkron.js';
 import { kur, kurulabilirMi, kuruluMu, elleKurulur, dinle as kurulumuDinle } from './cekirdek/kurulum.js';
 import { Yonlendirici } from './cekirdek/yonlendirici.js';
@@ -323,6 +324,11 @@ async function baslat() {
     Object.assign(ayar, kimlikYamasi);
   }
 
+  // Hazır ilaç listesi eski bir sürümden yüklenmişse adları bir kez yenile:
+  // ilk sayfa Türkçe kalmış eski adlarla çizilmesin. Liste okunamazsa
+  // (çevrimdışı, önbellekte yok) bir sonraki açılışta yeniden denenir.
+  await hazirListeyiTazele(depo).catch(() => 0);
+
   await dilYukle();
   bicimAyarla({ dil: suankiDil(), kur: ayar.paraBirimi || 'AFN' });
 
@@ -334,6 +340,11 @@ async function baslat() {
   };
 
   await menuCiz(depo);
+  // Telefonun üst çubuğundaki marka kenar çubuğununkiyle aynı çizim. Önce
+  // eski ℞ karosu (img/logo.svg) ve «شفا» duruyordu; çekmece açılınca iki
+  // ayrı marka yan yana görünüyordu. Çizim simge tablosunda, yani JS'te.
+  document.querySelector('.ust__logo')?.prepend(
+    el('span', { class: 'ust__logo-simge' }, simge('logo', { boy: 38, dolu: true })));
   dilUygula(document);
 
   const ustAra = document.getElementById('ust-ara');

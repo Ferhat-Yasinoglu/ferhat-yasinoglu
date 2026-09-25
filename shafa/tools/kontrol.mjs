@@ -187,18 +187,28 @@ for (const m of tanitim.matchAll(/(?:href|src)="([^"]*eczane[^"]*)"/g)) {
 // değiştirirse HTML'deki width/height geride kalır ve tarayıcı görüntüyü ya
 // eziyor ya da sayfa yüklenirken zıplıyor. Panel görüntüsü 1280×900'den
 // 1600×1000'e (16:10 bilgisayar ekranı) geçerken tam bu olacaktı.
-const pngOlcu = async (yol) => {
+// PNG'de ölçü IHDR'de; JPEG'de çerçeve başlığında (SOF0–SOF15, DHT/JPG/DAC
+// hariç), işaretler üstünden atlanarak bulunuyor.
+const gorselOlcu = async (yol) => {
   const b = await readFile(yol);
-  if (b.length < 24 || b.readUInt32BE(0) !== 0x89504e47) return null;
-  return { en: b.readUInt32BE(16), boy: b.readUInt32BE(20) };
+  if (b.length >= 24 && b.readUInt32BE(0) === 0x89504e47) return { en: b.readUInt32BE(16), boy: b.readUInt32BE(20) };
+  if (b.length < 4 || b.readUInt16BE(0) !== 0xffd8) return null;
+  for (let i = 2; i + 9 < b.length; i += 2 + b.readUInt16BE(i + 2)) {
+    if (b[i] !== 0xff) return null;
+    const isaret = b[i + 1];
+    if (isaret >= 0xc0 && isaret <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(isaret)) {
+      return { en: b.readUInt16BE(i + 7), boy: b.readUInt16BE(i + 5) };
+    }
+  }
+  return null;
 };
-for (const m of tanitim.matchAll(/<img[^>]*src="(gorsel\/[^"]+\.png)"[^>]*>/g)) {
+for (const m of tanitim.matchAll(/<img[^>]*src="(gorsel\/[^"]+\.(?:png|jpg))"[^>]*>/g)) {
   const etiket = m[0];
   const en = etiket.match(/width="(\d+)"/);
   const boy = etiket.match(/height="(\d+)"/);
   if (!en || !boy) { hataVer(`tanitim/index.html: ${m[1]} için width/height yok — sayfa yüklenirken zıplar`); continue; }
-  const olcu = await pngOlcu(new URL('../tanitim/' + m[1], import.meta.url));
-  if (!olcu) { hataVer(`tanitim/${m[1]}: PNG okunamadı`); continue; }
+  const olcu = await gorselOlcu(new URL('../tanitim/' + m[1], import.meta.url));
+  if (!olcu) { hataVer(`tanitim/${m[1]}: görüntü okunamadı`); continue; }
   if (olcu.en !== Number(en[1]) || olcu.boy !== Number(boy[1])) {
     hataVer(`tanitim/${m[1]}: HTML ${en[1]}×${boy[1]} diyor, dosya ${olcu.en}×${olcu.boy}`);
   }
