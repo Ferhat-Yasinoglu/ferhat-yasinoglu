@@ -180,6 +180,47 @@ describe('ozetMetni — eski reçeteler bayt bayt aynı', () => {
   });
 });
 
+// Sahada basılmış bir kâğıt: kod bu değişiklikten ÖNCEKİ sürümün koduyla
+// (origin/main'deki dogrulama.js) sabit bir anahtarla üretildi ve donduruldu.
+// Satır biçimi (zaman, doz), klinik adlar ya da kod yolu değişirse eski
+// kâğıtlar «geçersiz» çıkar; bu test o anda düşer.
+describe('eski kâğıdın kodu yeni sürümde de tutuyor', () => {
+  const ANAHTAR = 'CzBVep/E6Q4zWH2ix+wRNluApcrvFDleg6jN8hc8YYY=';
+  const ESKI_KOD = 'HGFH-6GD9';
+  // Yeniden tasarımdan önceki kayıt biçimi: zaman ve doz alanı yok, klinik
+  // adlar Dari, kullanım tek metin.
+  const eskiRecete = () => ({
+    receteNo: '1405-06-30-07', tarih: '2026-09-21', tani: 'عفونت مجرای تنفسی فوقانی', taniKodu: 'J06.9',
+    belirtiler: 'تب، سرفه', laboratuvar: 'CBC', notlar: 'استراحت',
+    satirlar: [
+      { ilacId: 'ila_1', ilacAdi: 'Brufen 400 mg Tablet', form: 'tablet', adet: 2, kullanim: 'روزانه ۳ بار بعد از غذا', sure: '۵ روز', yol: 'خوراکی', not: '' },
+      { ilacId: 'ila_2', ilacAdi: 'Panadol 500 mg Tablet', form: 'tablet', adet: 1, kullanim: '', sure: '', yol: '', not: 'در صورت تب' },
+    ],
+  });
+  const BASILI = [
+    'نسخه: 1405-06-30-07', 'تاریخ: 2026-09-21', 'مریض: زهرا صدیقی', 'تشخیص: عفونت مجرای تنفسی فوقانی · J06.9',
+    '1) Brufen 400 mg Tablet × 2 — روزانه ۳ بار بعد از غذا — ۵ روز', '2) Panadol 500 mg Tablet × 1', `کد تأیید: ${ESKI_KOD}`,
+  ].join('\n');
+  let depo;
+  beforeEach(async () => {
+    depo = new BellekDepo();
+    await depo.ayarKaydet('dogrulamaAnahtari', ANAHTAR);
+  });
+
+  it('kayıtlı eski reçeteden aynı kod çıkıyor', async () => {
+    expect(await receteKodu(depo, eskiRecete(), 'زهرا صدیقی')).toBe(ESKI_KOD);
+  });
+  it('kâğıttan (QR ya da elle) yapıştırılan eski metin geçerli; adedi değişmişse değil', async () => {
+    expect((await metniDogrula(depo, BASILI)).durum).toBe('gecerli');
+    expect((await metniDogrula(depo, BASILI.replace('× 2', '× 20'))).durum).toBe('gecersiz');
+  });
+  it('düzenlemede boş gelen zaman ve doz alanları kodu değiştirmiyor', async () => {
+    const r = eskiRecete();
+    r.satirlar = r.satirlar.map((s) => ({ ...s, zaman: '', doz: '' }));
+    expect(await receteKodu(depo, r, 'زهرا صدیقی')).toBe(ESKI_KOD);
+  });
+});
+
 describe('metniDogrula — yemek zamanı', () => {
   let depo;
   beforeEach(() => { depo = new BellekDepo(); });

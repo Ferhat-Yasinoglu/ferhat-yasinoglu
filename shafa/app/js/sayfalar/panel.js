@@ -41,7 +41,7 @@ export default {
         depo.listele('ilaclar'), depo.listele('hastalar'),
         depo.listele('receteler', { sirala: 'tarih', azalan: true }), depo.ayarlar(),
       ]);
-      if (benim !== sira) return;
+      if (benim !== sira || !ctx.guncel()) return;
       temizle(kok);
 
       const bugunku = receteler.filter((r) => String(r.tarih).slice(0, 10) === bugun());

@@ -19,6 +19,7 @@ export default {
   async cizim(kok, ctx) {
     const { depo } = ctx;
     const ayar = await depo.ayarlar();
+    if (!ctx.guncel()) return;
     temizle(kok);
 
     const adet = secim(

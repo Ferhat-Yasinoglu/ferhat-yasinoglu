@@ -185,15 +185,14 @@ function oklarlaGez(kutu, panel, kapat) {
   });
 }
 
-// Gezinme sırası: kâğıt veriyi beklerken başka bir sayfaya geçilirse eski
-// çizim geri dönüp yeni sayfanın üstüne yazıyordu.
-let cizimSirasi = 0;
-
 export default {
   baslik: 'Reçete kâğıdı',
   async cizim(kok, ctx) {
-    const benimSira = ++cizimSirasi;
-    const { depo, git, basari, hata, onayla } = ctx;
+    // Kâğıt veriyi beklerken başka bir sayfaya geçilirse eski çizim geri
+    // dönüp yeni sayfanın üstüne yazıyordu: her beklemeden sonra
+    // yönlendiriciye sorulur (sayfanın kendi sayacı başka sayfaya geçişi
+    // görmüyordu).
+    const { depo, git, basari, hata, onayla, guncel } = ctx;
     const [ilkIlaclar, hastalar, ayar, ilkSablonlar, gecmisReceteler, klinik, katalog] = await Promise.all([
       depo.listele('ilaclar', { sirala: 'ad' }),
       depo.listele('hastalar', { sirala: 'soyad' }),
@@ -208,10 +207,10 @@ export default {
     ]);
     // Hazır listeden seçilen ilaç kayda dönüşünce buraya ekleniyor.
     let ilaclar = ilkIlaclar;
-    if (benimSira !== cizimSirasi) return;
+    if (!guncel()) return;
 
     const duzenleme = ctx.param.id ? await depo.al('receteler', ctx.param.id) : null;
-    if (benimSira !== cizimSirasi) return;
+    if (!guncel()) return;
 
     /* Yepyeni kurulumda karşılama. Bu sayfa artık uygulamanın GİRİŞ sayfası;
        eskiden karşılama yalnız paneldeydi ve hekim buraya ancak kendi gelirdi.
@@ -223,7 +222,7 @@ export default {
          ayrı): hesabı olan hekim girişi Ayarlar'da aramadan bulsun. Sunucu
          yoksa ya da zaten girişliyse düğme yok — gideceği yer boş olurdu. */
       const hesapDurumu = ctx.hesap?.sunucuVar ? await ctx.hesap.hesapDurumu() : null;
-      if (benimSira !== cizimSirasi) return;
+      if (!guncel()) return;
       // Kökü sayfa modülü temizler, yönlendirici değil: temizlemezsek
       // index.html'deki «javascript kapalı» metni karşılamanın üstünde kalıyor.
       temizle(kok);
@@ -549,7 +548,7 @@ export default {
     }
 
     function ciz() {
-      if (!aktif || benimSira !== cizimSirasi) return;
+      if (!aktif || !guncel()) return;
       const giris = ilkCizim;
       ilkCizim = false;
       // İlk çizimde odak yönlendiricinin (başlığa veriyor).

@@ -167,7 +167,7 @@ export default {
         if (ad === 'meta' || ad === 'ayarlar') continue;
         sayilar[ad] = await depo.say(ad);
       }
-      if (benim !== sira || ayrildi) return;
+      if (benim !== sira || ayrildi || !ctx.guncel()) return;
 
       hesapBirak?.();
       hesapBirak = null;

@@ -18,14 +18,14 @@ export default {
     async function ciz() {
       const benim = ++sira;
       const ilac = await depo.al('ilaclar', ctx.param.id);
-      if (benim !== sira) return;
+      if (benim !== sira || !ctx.guncel()) return;
       if (!ilac) {
         temizle(kok);
         kok.appendChild(bosDurum({ simge: 'hata', baslik: t('ilac.bulunamadi', 'İlaç bulunamadı'), alt: t('genel.silinmis_olabilir', 'Kayıt silinmiş olabilir.'), eylem: btn(t('ilac.geri', 'İlaçlara dön'), { class: 'btn', onclick: () => git('/ilaclar') }) }));
         return;
       }
       const [hepsi, receteler] = await Promise.all([depo.listele('ilaclar'), depo.listele('receteler', { sirala: 'tarih', azalan: true })]);
-      if (benim !== sira) return;
+      if (benim !== sira || !ctx.guncel()) return;
       const esdeger = muadiller(hepsi, ilac);
       // Bu ilacın geçtiği reçeteler: "bunu kime, ne zaman yazmıştım?"
       const gectigi = receteler.filter((r) => (r.satirlar || []).some((s) => s.ilacId === ilac.id)).slice(0, 8);

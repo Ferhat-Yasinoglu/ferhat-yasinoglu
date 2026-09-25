@@ -864,6 +864,8 @@ kullanım»dır (`paylasilan/recete.js` `sonKullanimlar`).
 - `innerHTML` kullanılmaz; her metin `textContent` üzerinden yazılır.
 - CSS'te yalnız mantıksal yön özellikleri (`inset-inline-start`, `margin-inline`…).
 - Sayfa modülü sözleşmesi: `export default { baslik, cizim(kok, ctx) → temizleyici|void }`.
+  Veri bekledikten sonra kökü yazmadan önce `ctx.guncel()` sorulur: bu arada başka bir
+  sayfaya geçildiyse eski çizim yeni sayfanın üstüne yazmasın.
 - Kayıtlar zarflıdır: `id, rev, olusturuldu, guncellendi, silindi`. Silme mezar taşıdır —
   yedek geri yüklenirken silinmiş kayıt dirilmesin diye.
 - Arayüz metni `t(anahtar, 'Türkçe karşılık')` ile yazılır. Türkçe metin çeviri

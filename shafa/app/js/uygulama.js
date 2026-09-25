@@ -1,6 +1,7 @@
 // Giriş noktası: depoyu aç, dili yükle, menüyü çiz, yönlendiriciyi başlat.
 // Sayfa sözleşmesi: export default { baslik, cizim(kok, ctx) → temizleyici|void }
-// ctx: { depo, t, git, bildir, basari, uyar, hata, modal, onayla, sor, param, sorgu, … }
+// ctx: { depo, t, git, bildir, basari, uyar, hata, modal, onayla, sor, param, sorgu, guncel, … }
+// guncel(): bu çizim hâlâ gösterilen sayfa mı (veri bekledikten sonra, kökü yazmadan önce).
 import { yerelDepoAc } from './depo/idb.js';
 import { hatirlatmaGerekli, yedekOlustur, indir } from './depo/yedek.js';
 import { hazirListeyiTazele } from './depo/hazir-ilaclar.js';
