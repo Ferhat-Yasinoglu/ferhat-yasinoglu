@@ -2,8 +2,9 @@ import { describe, it, expect } from 'vitest';
 import {
   receteOzet, receteNoUret, receteDogrula, bosRecete,
   receteUyarilari, receteMetni, doluOlcumler, OLCUMLER, sikIlaclar, SURE_ONERILERI,
-  bosSatir, sonKullanimlar, sonKullanim, bpBol, bpBirlestir,
+  bosSatir, sonKullanimlar, sonKullanim, bpBol, bpBirlestir, receteAramaMetni,
 } from '../app/js/paylasilan/recete.js';
+import { adIndeksi } from '../app/js/paylasilan/klinik.js';
 import { ilacEtiketi } from '../app/js/paylasilan/ilac.js';
 
 const satir = (o) => ({ adet: 2, ...o });
@@ -113,6 +114,10 @@ describe('receteMetni', () => {
   });
   it('boş reçetede çökmez', () => {
     expect(receteMetni({ satirlar: [] }, null, {})).toBeTypeOf('string');
+  });
+  it('ilacın adını kâğıttaki gibi etken madde ve güçle yazar', () => {
+    const m = receteMetni({ satirlar: [{ ilacAdi: 'Feldene 20 mg Kapsül', form: 'kapsul', doz: '20 mg', etkenMadde: 'Piroxicam', adet: 1 }] }, null, {});
+    expect(m).toContain('1) Cap: Feldene (Piroxicam) 20 mg — 1 kutu');
   });
   it('kayıttaki Türkçe şekil adını göndermez, kâğıttaki gibi yazar', () => {
     const m = receteMetni({ satirlar: [{ ilacAdi: 'Panadol Syrup 120 mg/5 ml Şurup', form: 'surup', adet: 1 }] }, null, {});
@@ -250,5 +255,25 @@ describe('bpBol / bpBirlestir — iki kutu, tek metin', () => {
     }
     // Tek başına eğik çizgi değer değil: iki kutu boş, metin boş.
     expect(bpBirlestir(...bpBol('/'))).toBe('');
+  });
+});
+
+describe('receteAramaMetni — reçeteler listesinde arama', () => {
+  const recete = {
+    receteNo: '2026-09-25-01', tani: 'Chronic hepatitis C، Fever', taniKodu: 'B18.2',
+    satirlar: [{ ilacAdi: 'Feldene 20 mg Kapsül', form: 'kapsul', doz: '20 mg', etkenMadde: 'Piroxicam', adet: 1 }],
+  };
+  const indeks = adIndeksi([{ ad: 'هپاتیت C مزمن', en: 'Chronic hepatitis C', kod: 'B18.2' }]);
+  it('numara, hasta, tanı, kod ve ilaç adı (etken maddesiyle) metinde', () => {
+    const m = receteAramaMetni(recete, 'زهرا صدیقی', indeks);
+    for (const parca of ['2026-09-25-01', 'زهرا صدیقی', 'Chronic hepatitis C', 'B18.2', 'Feldene', 'Piroxicam']) expect(m).toContain(parca);
+  });
+  it('kâğıda İngilizce yazılan tanının Dari adı da aranıyor', () => {
+    expect(receteAramaMetni(recete, '', indeks)).toContain('هپاتیت C مزمن');
+    // Listede olmayan parça (elle yazılmış) bir şey eklemiyor; indeks yoksa yalnız kayıttaki ad.
+    expect(receteAramaMetni(recete, '', null)).not.toContain('هپاتیت');
+  });
+  it('boş reçetede çökmez', () => {
+    expect(receteAramaMetni({}, '', indeks)).toBe('');
   });
 });

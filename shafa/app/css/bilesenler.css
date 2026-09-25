@@ -422,15 +422,29 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
   font-size: 20px; font-weight: 700; line-height: 1.2; color: rgb(var(--form-baslik)); white-space: nowrap;
 }
 .recete-onizleme__baslik .simge { flex-shrink: 0; color: rgb(var(--baslik-simge)); }
+/* Yaprak rozeti («2 صفحه»): başlığın hemen yanında; görünürken başlığı
+   sola iten boşluk rozetin önünde. */
+.recete-onizleme__sayfa {
+  margin-inline-start: auto; padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+  background: rgb(var(--btn-3-zemin)); border: 1px solid rgb(var(--btn-3-cizgi));
+  color: rgb(var(--btn-3-metin)); font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.recete-onizleme__sayfa:not([hidden]) + .recete-onizleme__baslik { margin-inline-start: 0; }
 :root[data-tema="karanlik"] .recete-onizleme__baslik { color: #fff; }
-/* Dar panel (1280'de ≈ 440 px): başlık ile üç düğme tek satıra sığsın diye
-   başlık ve düğme payları küçülüyor; yoksa simge «ذخیره PDF»in altına giriyordu. */
-@container (max-width: 480px) {
+/* Dar panel (1366'da ≈ 520, 1280'de ≈ 430 px): başlık, yaprak rozeti ve üç
+   düğme tek satıra sığsın diye başlık ve düğme payları küçülüyor; yoksa simge
+   «ذخیره PDF»in altına giriyordu. En darında rozet görünürken başlığın
+   simgesi çekiliyor: rozet bölünen kâğıdın tek işareti, simge süs. */
+@container (max-width: 560px) {
   .recete-onizleme__bas { gap: 6px; padding-inline: 10px 12px; }
   .recete-onizleme__eylem { gap: 6px; }
   .recete-onizleme__dugme { padding-inline: 8px; gap: 5px; }
   .recete-onizleme__baslik { gap: 8px; font-size: 16px; }
   .recete-onizleme__baslik .simge { inline-size: 24px; block-size: 24px; }
+  .recete-onizleme__sayfa { padding-inline: 7px; font-size: 11.5px; }
+}
+@container (max-width: 480px) {
+  .recete-onizleme__bas:has(> .recete-onizleme__sayfa:not([hidden])) .recete-onizleme__baslik .simge { display: none; }
 }
 @media (max-width: 1279px) {
   .recete-duzen { grid-template-columns: 1fr; }
@@ -442,7 +456,9 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
   .recete-onizleme__dugme { block-size: 44px; min-block-size: 44px; }
   .recete-onizleme__ikon { inline-size: 44px; }
 }
-.recete-onizleme .kagit-tuval { padding-block: 0 8px; }
+/* Kâğıdın altında panelin 3 px'lik payı (tasarımda kâğıt 992'de, kart 995'te
+   bitiyor). Ölçek bu dolguyu boydan düşüyor (bkz. kagidiOlcekle). */
+.recete-panel--onizleme .kagit-tuval { padding-block: 0 3px; }
 
 /* ---- Panel: formun tamamı tek kart ----
    `overflow: clip`, hidden DEĞİL: hidden bir kaydırma kabı kuruyor ve

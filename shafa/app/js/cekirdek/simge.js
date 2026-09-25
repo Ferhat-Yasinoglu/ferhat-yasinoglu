@@ -149,10 +149,13 @@ const SIMGELER = {
     ['circle', { cx: 12, cy: 10.2, r: 2.5 }],
   ],
 
-  /* Önizleme panelinin başlık düğmeleri: kıvrık köşeli sayfa ve aşağı ok
-     («ذخیره PDF»), iki köşeye açılan oklar (büyük önizleme). */
-  pdf: [['path', { d: 'M6 3h8l4 4v14H6zM14 3v4h4M12 10v7M9 14l3 3 3-3' }]],
-  genislet: [['path', { d: 'M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7' }]],
+  /* Önizleme panelinin başlık düğmeleri (tasarımdaki gibi): kıvrık köşeli
+     sayfanın içinde PDF belgelerinin tanınan ilmeği («ذخیره PDF»); iki
+     köşeye açılan, ortada birbirinden ayrık iki ok (büyük önizleme). Oklar
+     birleşince tek bir çapraz çift ok gibi okunuyordu. */
+  pdf: [['path', { d: 'M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7zM14 3v4h4' }],
+    ['path', { d: 'M8.6 17.6c1.6-.7 3.6-4.4 3.3-6.3-.2-1-1.4-1-1.4.1 0 1.9 2.5 4.3 4.8 4.6.9.1 1-.9.1-1.1-2-.4-5.2.9-6.8 2.7z', 'stroke-width': 1.3 }]],
+  genislet: [['path', { d: 'M15 4h5v5M20 4l-5.5 5.5M9 20H4v-5M4 20l5.5-5.5' }]],
 };
 
 /* Dolgulu simgeler. Bir kısmı bootstrap-icons 1.13.1'den (MIT, © 2019-2024

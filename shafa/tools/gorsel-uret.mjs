@@ -197,7 +197,9 @@ const KAGIT_KUR = async (tani) => {
     belirtiler: 'Fever، Cough', tani: tani.en, taniKodu: tani.kod, laboratuvar: 'CBC',
     olcumler: { bp: '130/85', pr: '78', rr: '18', bw: '74', temp: '38.2', spo2: '97' },
     satirlar: ['Panadol', 'Glucophage', 'Ventolin'].map((ad) => ({
-      ilacId: ilac(ad).id, ilacAdi: ilacEtiketi(ilac(ad)), form: ilac(ad).form, adet: 1, kullanim: '', sure: '', yol: '', not: '',
+      // Etken madde ve güç formdan eklenen satırdaki gibi: kâğıtta «Glucophage (Metformin) 500 mg».
+      ilacId: ilac(ad).id, ilacAdi: ilacEtiketi(ilac(ad)), etkenMadde: ilac(ad).etkenMadde, doz: ilac(ad).doz,
+      form: ilac(ad).form, adet: 1, kullanim: '', sure: '', yol: '', not: '',
     })),
   });
   const tuval = document.createElement('div');

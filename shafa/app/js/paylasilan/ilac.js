@@ -75,6 +75,16 @@ export function satirGorunumu(s) {
   return { ad, doz, kisa: formKisa(s?.form) };
 }
 
+/** Satırın kâğıttaki adı tek metin olarak: «Cap: Feldene (Piroxicam) 20 mg».
+ *  Reçete kaydı sayfası ve gönderilen metin bunu yazıyor: hekimin ve hastanın
+ *  okuduğu ad basılan kâğıttakinden kısa kalmasın (etken madde ve güç). Eski
+ *  satırda (etken ve güç yok) satirAdi ile aynı. */
+export function satirKagitAdi(s) {
+  const { ad, doz, kisa } = satirGorunumu(s);
+  const tam = [ad, doz].filter(Boolean).join(' ');
+  return kisa && tam ? `${kisa}: ${tam}` : tam;
+}
+
 /** Ad, barkod, etken madde ve üretici üzerinden arama. */
 export function ilacAra(liste, q) {
   const s = String(q ?? '').trim();

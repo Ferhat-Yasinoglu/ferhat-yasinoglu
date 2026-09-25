@@ -263,15 +263,42 @@ bu yüzden sağdan sola akış kendiliğinden çıkıyor — ayrı bir RTL sayfa
 
 ## Reçete sayfası
 
-Reçete sayfası (`#/recete/kagit`, giriş sayfası) bir tasarım görselinden birebir
-kuruldu. Bilgisayarda **solda hekimin doldurduğu form, sağda canlı kâğıt**:
-formda yazılan her şey kâğıda anında düşüyor, kâğıttaki alana dokunmak da aynı
-kutuyu açıyor. Form tek panel: başlık bandı, hasta kartı (hasta, yaş, şemsi
-tarih, numara), Clinical kartı (sekiz ölçüm), ℞ satırları (belirti, tanı, dava,
-laboratuvar, not) ve ilaç tablosu; altta پاک کردن · پیش نمایش · ذخیره و چاپ.
-Ctrl+S yalnız kaydeder. İki sütun ancak form 620 px alabildiğinde, yani 1280 px
-ve üstünde; 861–1279 arasında form tam genişlikte, kâğıt altında. Telefonda
-(≤ 860 px) her şey sağdan sola, kenar çubuğu sağdan açılan çekmece.
+Reçete sayfası (`#/recete/kagit`, giriş sayfası) hekimlerin seçtiği tasarım
+görselinden kuruldu (2026-09 yeniden tasarımı: hekimler reçeteye ondan çok ilaç
+yazıyor, eski kâğıt on iki gerçek adda taşıyordu). Bilgisayarda **solda hekimin
+doldurduğu form, sağda önizleme paneli**: formda yazılan her şey kâğıda anında
+düşüyor, kâğıttaki alana dokunmak da aynı kutuyu açıyor.
+
+- **Form** tek panel: başlık bandı («ذخیره به عنوان قالب» / «از قالب پر کن»),
+  hasta kartı (نام و تخلص, yaş, şemsi tarih, numara), Clinical kartı (BP iki
+  kutu ama reçetede tek metin, kan grubu seçim listesi; eski serbest değerler
+  korunuyor), «افزودن دوا» (hekimin ilaçları ile hazır listenin birlikte, yerinde
+  aranması; گروپ دوایی / شکل / برند süzgeçleri), sayfanın akışında uzayan ilaç
+  tablosu (başlığı yapışık, 11 satırdan sonra sıkışık), belirti ve tetkik kontrol
+  listeleri, tanı araması (ICD kodlu çipler), ek not; altta پاک کردن · پیش نمایش
+  · ذخیره و چاپ. Ctrl+S yalnız kaydeder.
+- **Önizleme paneli** (`app/js/onizleme-arayuz.js`): başlıkta «پیش نمایش نسخه»
+  ve üç düğme — büyük önizleme, «چاپ», «ذخیره PDF». Panel yapışkan: tablo uzayıp
+  sayfa kaysa da yazdır düğmesi her kaydırmada elde (alttaki düğme ekranın
+  dışına inse de). «چاپ» ve «ذخیره PDF» alttaki düğmenin yolu: önce kaydeder
+  (numara ve doğrulama kodu kayıtta üretiliyor), geçersiz formu basmaz,
+  düzenlemede aynı reçeteyi günceller. PDF için kütüphane yok: tarayıcının
+  yazdırma penceresi açılıyor, belge başlığı yazdırma boyunca dosya adı oluyor
+  (`nuskha-<numara>-<hasta>`, boş kâğıtta `nuskha-khali`) ve oturumda bir kez
+  «Save as PDF» ipucu çıkıyor. Kâğıt panelin eni ve ekranın boyuna sığacak
+  kadar ölçekli; 25 ilacın üstünde kâğıt yapraklara bölünür, o zaman başlıkta
+  «2 صفحه» rozeti çıkar ve tuval kendi içinde (klavyeyle de) kayar, her yaprak
+  tuvale tam sığar. Büyük önizleme de yaprak sayısını başlığında söyler.
+- **Aynı panel başka sayfalarda da:** reçete kaydı (`#/recete/<id>`) basılacak
+  kâğıdı her yaprağıyla alt alta gösteriyor, ilaçları kâğıttaki adla (etken
+  madde ve güçle) listeliyor; boş kâğıt sayfası (`#/recete/bos`) tomarı yazdırıyor
+  ya da PDF olarak kaydediyor. Gönderilen metin (WhatsApp, e-posta, pano) da
+  ilacın kâğıttaki adını yazıyor; reçeteler listesi kâğıda İngilizce yazılan
+  tanıyı Dari adıyla, ilacı etken maddesiyle de buluyor.
+
+İki sütun ancak form 620 px alabildiğinde, yani 1280 px ve üstünde; 861–1279
+arasında form tam genişlikte, kâğıt altında. Telefonda (≤ 860 px) her şey sağdan
+sola, kenar çubuğu sağdan açılan çekmece.
 
 **Yön tek blokta.** `<html dir="rtl">` değişmedi. Tasarımdaki yerleşim
 (kenar çubuğu solda, Clinical ℞'nin solunda, asıl düğme kâğıdın yanında)
@@ -289,9 +316,15 @@ veriliyor, kenar payı taşıyan yazıda `unicode-bidi: plaintext` kullanılıyo
   kâğıdın yazı tipi, tek değişken dosya. Sistem yazı tipleri Arap harflerini
   genelde ikinci sınıf taşıyor (harf yükseklikleri oynuyor, noktalar birbirine
   giriyor). Service worker'ın önbelleğinde; inene kadar `font-display: swap`.
-- **Kalam 700** (`app/yazi/kalam-700.woff2`, OFL, `OFL-Kalam.txt`): kâğıttaki
-  tek el yazısı satırı ("Healthy Life Brighter Tomorrow"). Yalnız ASCII'ye
-  indirilmiş 12 KB'lık bir alt küme.
+- **Cinzel** (`app/yazi/cinzel-kagit.woff2`, OFL, `OFL-Cinzel.txt`): lacivert
+  kâğıttaki Latin ad, ihtisas satırı ve mühür halkası. Latin harflere indirilmiş
+  16 KB'lık bir alt küme; yazdırmadan önce en çok 800 ms bekleniyor.
+- **Kalam 700** (`app/yazi/kalam-700.woff2`, OFL, `OFL-Kalam.txt`): modern
+  kâğıttaki tek el yazısı satırı ("Healthy Life Brighter Tomorrow"). Yalnız
+  ASCII'ye indirilmiş 12 KB'lık bir alt küme.
+- **«طبیب حقیقی خداوند (ج) است» vecizesi** Aref Ruqaa Bold'un tamamından
+  dizilmiş satır içi SVG yolu (`cizimler.js`, `OFL-ArefRuqaa.txt`): yazı tipi
+  gönderilmiyor.
 - **℞ işareti ve «سلامت سرمایهٔ زندگی است» hattı** yazı tipi dosyası değil:
   Noto Serif ve Noto Nastaliq Urdu'dan alınmış satır içi SVG yolları
   (`app/js/cekirdek/cizimler.js`, OFL, `app/yazi/OFL-Noto.txt`). Yazı tipiyle
@@ -326,20 +359,47 @@ Portlar ortam değişkeniyle değişiyor (`DENEME_PORT`, `GORSEL_PORT`,
 
 ## Reçete kâğıdı
 
-Üç stil var, Ayarlar'dan seçilir:
+Dört stil var, Ayarlar'dan seçilir:
 
 | Stil | Ne zaman |
 |---|---|
-| **Modern** (varsayılan) | Tasarımdaki kâğıt: dalgalı turkuaz antet, kadüse ve aile amblemi, kartuşlu vecize, tek kutuda Name/Age/Date/No, açık turkuaz Clinical paneli, dalgalı ayak ve rozetler |
+| **Lacivert** (سرمه‌ای و طلایی, varsayılan) | Yeni tasarımın kâğıdı (`app/js/kagit-lacivert.js`): altın çerçeve, vecize, üç sütunlu antet (Latin ad · mühür · Dari ad), hasta şeridi, solda SYMPTOMS / LAB / VITAL SIGNS / DIAGNOSIS / NOTES, sağda ℞ ve numaralı ilaçlar, imza satırında doğrulama kodu, ayakta adres, QR ve telefon |
+| **Modern** | Önceki varsayılan: dalgalı turkuaz antet, kadüse ve aile amblemi, açık turkuaz Clinical paneli, dalgalı ayak ve rozetler |
 | **Klasik** | Hekimin hâlihazırda kullandığı basılı kâğıdın aynısı: koyu mavi antet, renk bantları |
 | **Sade** | Siyah-beyaz, en az mürekkep |
 
-Üçü de aynı düzeni taşıyor — alanların yeri, QR ve doğrulama kodu değişmiyor.
-Üçünde de Clinical satırları ve hasta şeridi tek satır; deneme dolu ve boş
-kâğıtta bunu ayrıca ölçüyor.
+Dördü de aynı alanları taşıyor; testler kâğıdın parçalarını stilden bağımsız
+`data-rol` kancalarıyla buluyor. Kendiliğinden kaydedilmiş «modern» bir kez
+laciverte döndü (`kagitStiliSurum`); klasik ya da sade seçmiş hekime
+dokunulmadı.
+
+**Lacivert kâğıt sabit bir A4 yaprağı** (194 × 272 mm, 8 mm @page payı) ve
+yoğunluğu içerikten hesaplanıyor (`paylasilan/kagit-yogunluk.js`, saf; önizleme
+ile baskı aynı sonucu alıyor): 10 ilaca dek rahat, 16'ya dek orta, 25'e dek
+sık — hepsi tek sayfa. Üstü temiz devam yaprakları: her yaprakta hasta şeridi
+(«۱/۲»), imza, aynı doğrulama kodu, QR ve ayak. Yazı küçültülmüyor (ilaç adı en
+az 8,2 pt); taşan hiçbir şey kesilmiyor, deneme bunu basılan genişlikte her
+yaprakta ölçüyor. A5'te sık kip yok, orta kipin üstü bölünüyor. QR okunamayacak
+kadar sıkışacaksa (modül < 0,30 mm) iletişim QR'ı ya da kod basılıyor ve altındaki
+yazı bunu söylüyor. İmza görseli (Ayarlar) yalnız bu cihazda kalıyor: yedeğe ve
+eşitlemeye girmiyor; yoksa boş imza çizgisi basılıyor, uydurma imza asla.
 Antetteki her satır (ad, ünvan, slogan, hizmetler, sabıka, adres, telefon, alt
 rozetler) Ayarlar'dan girilir; kâğıt kimseye gömülü değildir, başka bir hekim
 kendi bilgilerini yazınca kendi kâğıdı çıkar.
+
+**Veri kaynakları.** Hazır ilaç listesi (678 ilaç, 18 grup) Shafa'nın kendi
+123 ilacı ile sahibin öbür uygulaması **nuskha**'nın ilaç adlarından, klinik
+listeler (149 belirti, 261 tanı, 133 tetkik; İngilizce ve Dari) yine nuskha'nın
+ad listelerinden üretildi. nuskha'daki ilaç başına hazır doz, zaman, tarika ve
+adet bilgisi **bilerek alınmadı**: kaynak kopyası (`tools/kaynak/`) ayıklanmış
+olarak depoda ve `npm run kontrol` bu alanların geri sızmasını durduruyor. Seçim
+listelerindeki kullanım ifadeleri («روزانه ۱ بار», «بعد از غذا»…) ilaca bağlı
+değil, genel ifadeler; bir ilaca önerilen tek kullanım hekimin o ilaca daha önce
+kendi yazdığıdır ve o da ancak dokununca doldurulur. Kâğıda klinik adlar
+İngilizce basılıyor, Dari adla da aranıyor. Örnek antet uydurma
+(«نمونه احمدی» / "Dr. Nemuna Ahmadi", کابل، افغانستان, 0700000000); tasarım
+görselindeki gerçek görünen adres ve iş yerleri depoya girmiyor, `kontrol` ve
+görsel üreticisi bunları tam ifade olarak arıyor (`tools/gercek-veri.mjs`).
 
 ## Sahteciliğe karşı
 
@@ -760,7 +820,9 @@ app/                      PWA (statik olarak olduğu gibi sunulur)
     uygulama.js           giriş: depo, dil, menü, arama, yönlendirici
     i18n.js               t() ve sözlük yükleme
     hatalar.js            hata, doğrulama ve uyarı kodlarının arayüz metni
-    kagit.js              reçete kâğıdı (dolu ve boş hali) + yazdırma
+    kagit.js              reçete kâğıdı (dolu ve boş hali) + yazdırma + ölçekleme
+    kagit-lacivert.js     lacivert (varsayılan) kâğıt: yapraklar, yoğunluk kipleri
+    onizleme-arayuz.js    önizleme paneli (başlık, yazdır / PDF, yaprak rozeti)
     hesap-arayuz.js       Ayarlar'daki hesap kartı, kurtarma kodu kutusu, hesap bandı
     cekirdek/             dom · yonlendirici · modal · bildirim · simge · cizimler ·
                           tema · tarih-secici · gorsel · kurtarma · kurulum
@@ -768,7 +830,8 @@ app/                      PWA (statik olarak olduğu gibi sunulur)
                           senkron (taşıyıcıdan bağımsız eşitleme motoru)
     senkron/              hesap (WebCrypto) · sunucu (HTTP istemcisi, tek ağ ucu) ·
                           sunucu-adresi · hesap-servisi (akışlar, kendiliğinden eşitleme)
-    paylasilan/           saf alan mantığı: ilac · hasta · recete · qr · dogrulama ·
+    paylasilan/           saf alan mantığı: ilac · hasta · recete · kagit-yogunluk · klinik ·
+                          ilac-listesi · antet · sablon · qr · dogrulama ·
                           tarih · metin · kimlik · senkron (birleşme kararları) ·
                           kasa (şifreleme) · hesap-kurallari (sunucuyla ortak)
     sayfalar/             kagit-yaz (reçete sayfası) · panel · ilaclar · ilac ·

@@ -5,8 +5,9 @@
 // Burada "karşılama" (ne verildi, ne verilmedi) yok: hasta ilacını dışarıdaki
 // eczaneden kendi alıyor, hekim neyin verildiğini zaten bilemez. Reçete
 // yazılır, kâğıda basılır, gönderilir — hikâye burada biter.
-import { satirAdi, ilacAdiFormsuz, ilacEtiketi } from './ilac.js';
+import { satirKagitAdi, ilacAdiFormsuz, ilacEtiketi } from './ilac.js';
 import { normalize } from './metin.js';
+import { parcala, normalizeFa } from './klinik.js';
 
 export const RECETE_TURLERI = [
   ['normal', 'Normal reçete'], ['kirmizi', 'Kırmızı reçete'], ['yesil', 'Yeşil reçete'],
@@ -17,6 +18,16 @@ export const receteTuruAdi = (k) => RECETE_TURLERI.find(([v]) => v === k)?.[1] |
 /** Listelerde gösterilen sayılar. */
 export function receteOzet(recete) {
   return { toplam: (recete?.satirlar || []).length };
+}
+
+/** Reçeteler listesinde aranan metin: numara, hasta, tanı ve kodu, ilaç
+ *  adları (kâğıttaki gibi, etken maddesiyle). Tanı kâğıda İngilizce
+ *  yazılıyor; `taniIndeksi` (klinik.adIndeksi) verilirse listedeki Dari adı
+ *  da ekleniyor: hekim «هپاتیت» yazınca «Chronic hepatitis C» reçetesini bulsun. */
+export function receteAramaMetni(recete, hastaAdi = '', taniIndeksi = null) {
+  const dari = taniIndeksi ? parcala(recete?.tani).map((p) => taniIndeksi.get(normalizeFa(p))?.ad) : [];
+  return [recete?.receteNo, hastaAdi, recete?.tani, recete?.taniKodu, ...dari, ...(recete?.satirlar || []).map(satirKagitAdi)]
+    .filter(Boolean).join(' ');
 }
 
 /** Boş reçete satırı. `zaman` (yemekle ilişkisi: «بعد از غذا») ve `doz`
@@ -218,7 +229,7 @@ export function receteMetni(recete, hasta, ayar = {}, etiket = {}) {
     satirlar.push('', e.ilaclar + ':');
     recete.satirlar.forEach((s, i) => {
       const parcalar = [`${s.adet} ${e.adet}`, s.kullanim, s.zaman, s.sure, s.yol].filter(Boolean).join(' · ');
-      satirlar.push(`${i + 1}) ${satirAdi(s)}${parcalar ? ' — ' + parcalar : ''}${s.not ? ` (${s.not})` : ''}`);
+      satirlar.push(`${i + 1}) ${satirKagitAdi(s)}${parcalar ? ' — ' + parcalar : ''}${s.not ? ` (${s.not})` : ''}`);
     });
   }
   if (recete.laboratuvar) { satirlar.push(''); ekle(e.laboratuvar, recete.laboratuvar); }

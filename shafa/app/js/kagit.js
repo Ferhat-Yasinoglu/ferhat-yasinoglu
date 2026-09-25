@@ -802,15 +802,27 @@ export function kagidiOlcekle(tuval, kagit, gozlenen = null, { pay = 8, yuksekli
     const yapraklar = kagit.querySelectorAll('[data-rol="sayfa"]');
     const yaprakBoyu = yapraklar.length > 1 ? yapraklar[0].offsetHeight : kagit.offsetHeight;
     const sigacak = yukseklik ? yukseklik() - 1 : Infinity;
-    const boyuna = yaprakBoyu ? sigacak / yaprakBoyu : Infinity;
+    // Tuvalin kendi dikey dolgusu da boydan düşülüyor (kutu border-box):
+    // düşülmeyince kayan tuvalin sonuna inildiğinde son yaprağın tepesi
+    // 8 px tuvalin dışında kalıyordu, tek yaprak da dolgu kadar taşıyordu.
+    const tcs = getComputedStyle(tuval);
+    const dikeyPay = (parseFloat(tcs.paddingBlockStart) || 0) + (parseFloat(tcs.paddingBlockEnd) || 0);
+    const boyuna = yaprakBoyu ? (sigacak - dikeyPay) / yaprakBoyu : Infinity;
     const olcek = Math.min(1, Math.max(0.2, Math.min(enine, boyuna)));
     tuval.style.setProperty('--olcek', String(olcek));
-    tuval.toggleAttribute('data-cok-yaprak', yapraklar.length > 1);
+    // Tuval yalnız boy sınırı varken kayıyor; reçete kaydı sayfasında ve
+    // telefonda (sınır yok ya da sonsuz) yapraklar sayfanın akışında alt alta.
+    const kayar = yapraklar.length > 1 && Number.isFinite(sigacak);
+    tuval.toggleAttribute('data-cok-yaprak', kayar);
+    // Kayan tuval klavyeyle de kaydırılabilsin: büyük önizlemedeki kâğıtta
+    // odaklanacak başka öğe yok, ikinci yaprağa ancak fareyle iniliyordu.
+    if (kayar) tuval.tabIndex = 0;
+    else tuval.removeAttribute('tabindex');
     // Ölçek yerleşimi değiştirmiyor: kayan tuvalin içi ölçeklenmemiş boyda
     // kalır, altında boş bir kaydırma payı açılırdı. Eksi alt pay onu kapatıyor.
     kagit.style.marginBlockEnd = yapraklar.length > 1 ? `${(olcek - 1) * kagit.offsetHeight}px` : '';
     // Ölçeklenen öğe yerinde yer kaplamıyor; boyu elle veriliyor.
-    tuval.style.blockSize = Math.ceil(Math.min(kagit.offsetHeight * olcek, yapraklar.length > 1 ? sigacak : Infinity)) + 'px';
+    tuval.style.blockSize = Math.ceil(Math.min(kagit.offsetHeight * olcek + dikeyPay, kayar ? sigacak : Infinity)) + 'px';
   };
   // İlk ölçüm yerleşimden SONRA: hemen ölçünce kap daha dar geliyor.
   requestAnimationFrame(uygula);
@@ -865,10 +877,12 @@ export function tarayiciBaskisi(uret) {
 const YUZ_BEKLEME = 800;
 
 /** Kaydedilen PDF'in önerilen adı: Chrome ve Edge belge başlığını
- *  kullanıyor. Harf, rakam ve tire dışı her şey atılıyor, 60 harfle sınırlı. */
-export function belgeAdi(recete = {}, hasta = null) {
+ *  kullanıyor. Harf, rakam ve tire dışı her şey atılıyor, 60 harfle sınırlı.
+ *  Boş kâğıt tomarı «nuskha-khali»: indirilenler klasöründe reçetelerden ayrılsın. */
+export function belgeAdi(recete = {}, hasta = null, { bos = false } = {}) {
   const parca = (x) => String(x ?? '').replace(/[^\p{L}\p{N}-]+/gu, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-  return ['nuskha', parca(recete.receteNo), parca(tamAd(hasta))].filter(Boolean).join('-').slice(0, 60).replace(/-$/, '');
+  const parcalar = bos ? ['khali'] : [parca(recete?.receteNo), parca(tamAd(hasta))];
+  return ['nuskha', ...parcalar].filter(Boolean).join('-').slice(0, 60).replace(/-$/, '');
 }
 
 /**
@@ -896,7 +910,7 @@ export async function kagidiYazdir({ tekrar = 1, pdf = false, ...secenekler } = 
   if (eski) eski.replaceWith(kagitlar[0]);
   else for (const k of kagitlar) sayfa.appendChild(k);
   const baslik = document.title;
-  if (pdf) document.title = belgeAdi(secenekler.recete, secenekler.hasta);
+  if (pdf) document.title = belgeAdi(secenekler.recete, secenekler.hasta, { bos: secenekler.bos });
   try {
     window.print();
   } finally {

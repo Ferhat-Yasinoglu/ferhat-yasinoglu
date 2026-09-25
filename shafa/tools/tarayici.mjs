@@ -544,12 +544,17 @@ if (!/^\d{4}-\d{2}-\d{2}-\d{2}$/.test(receteNo)) throw new Error('reçete numara
 ok('reçete kaydedildi, numara kendiliğinden verildi: ' + receteNo);
 
 // --- Reçete kartı: satırlar okunur halde, karşılama düğmesi yok
-// Ad kâğıttaki biçimde («Tab: Brufen 400 mg»): kayıttaki ad Türkçe şekil
-// adıyla bitiyor («… Şurup», «… Kapsül») ve kart onu olduğu gibi basıyordu.
+// Ad kâğıttaki biçimde («Tab: Brufen (Ibuprofen) 400 mg»): kayıttaki ad
+// Türkçe şekil adıyla bitiyor («… Şurup», «… Kapsül») ve kart onu olduğu gibi
+// basıyordu; sonra da kâğıttaki etken maddeyi ve gücü göstermiyordu. Aynı ad
+// basılacak kâğıtta da (sayfanın gizli baskı kopyası) duruyor.
 const ilacTablosu = await sayfa.textContent(`.kart:has(h2:text-is("${T('nav.ilaclar')}"))`);
-for (const beklenen of ['Tab: Brufen 400 mg', 'Tab: Panadol 500 mg']) {
-  if (!ilacTablosu.includes(beklenen)) throw new Error(`reçete tablosunda "${beklenen}" yok`);
+const baskiKopyasi = await sayfa.textContent('#sayfa > .yazdir-alan');
+for (const [kisa, ad] of [['Tab', 'Brufen (Ibuprofen) 400 mg'], ['Tab', 'Panadol (Paracetamol) 500 mg']]) {
+  if (!ilacTablosu.includes(`${kisa}: ${ad}`)) throw new Error(`reçete tablosunda "${kisa}: ${ad}" yok`);
+  if (!baskiKopyasi.includes(ad)) throw new Error(`basılacak kâğıtta "${ad}" yok`);
 }
+if (/Şurup|Tablet\b|Kapsül/.test(ilacTablosu)) throw new Error('reçete tablosunda Türkçe şekil adı kaldı');
 if (/\bnull\b/.test(ilacTablosu)) throw new Error('reçete tablosuna düz metin "null" sızmış');
 // Kullanım satırı kâğıttakiyle aynı parçaları taşıyor: yemek zamanı ve yol da.
 const panadolKullanim = [SECENEK.tariqa[2], SECENEK.zaman[1], SECENEK.sure[1], SECENEK.yol[0]].join(' \u00b7 ');
@@ -686,7 +691,7 @@ ok('şablon ayarlarda listelendi');
 
 // Kaldığımız yere dön: sonraki adımlar kaydedilmiş reçetenin sayfasında.
 await sayfa.goto(KOK + `#/recete/${receteId}`);
-await sayfa.waitForSelector('.yazdir-alan', { state: 'attached' });
+await sayfa.waitForSelector('#sayfa > .yazdir-alan', { state: 'attached' });
 
 /* Eski stiller (modern, klasik, sade) seçilebilir kalıyor ve güvenceleri de
    kalıyor: varsayılan artık lacivert olduğu için onların kâğıdı kayıtlı
@@ -709,17 +714,17 @@ const eskiStilKagidi = (kagitStili, { bos = false } = {}) => sayfa.evaluate(asyn
 }, [receteId, kagitStili, bos]);
 
 // Kâğıdın yazı yüzleri yazdırmadan ÖNCE inmiş olmalı: window.print()
-// eşzamanlı ve bu sayfada kâğıt ekranda gizli, yani yüzü isteyen görünür
-// bir yazı yok. Temiz bir belgede (yeniden yükleme) kâğıt çizilince
+// eşzamanlı ve bu sayfanın baskı kopyası ekranda gizli (önizleme paneli
+// ölçekli bir kopya). Temiz bir belgede (yeniden yükleme) kâğıt çizilince
 // yükleme kendiliğinden başlamalı: lacivertte Cinzel (Latin ad, mühür),
 // modernde Kalam (el yazısı satırı).
 await sayfa.reload({ waitUntil: 'load' });
-await sayfa.waitForSelector('.yazdir-alan', { state: 'attached' });
+await sayfa.waitForSelector('#sayfa > .yazdir-alan', { state: 'attached' });
 const cinzelHazir = await sayfa.evaluate(async () => { await document.fonts.ready; return document.fonts.check('700 10pt Cinzel'); });
 if (!cinzelHazir) throw new Error('kâğıt çizildi ama Cinzel yüzü yüklenmedi: yazdırılan kâğıtta Latin ad yedek yüzle çıkar');
 
 // --- Yazdırma alanı: ekranda gizli, içeriği eksiksiz (lacivert, varsayılan)
-const yazdirMetni = await sayfa.textContent('.yazdir-alan');
+const yazdirMetni = await sayfa.textContent('#sayfa > .yazdir-alan');
 for (const [ad, beklenen] of [
   ['doktor adı', 'نمونه احمدی'], ['latin ad', 'Dr. Nemuna Ahmadi'],
   ['ihtisas', 'معالج امراض داخله'], ['İngilizce ihtisas', 'Physician specializing in Internal Medicine'],
@@ -750,7 +755,14 @@ if (lacivertCizim.muhurYazi.length !== 2 || lacivertCizim.muhurYazi[0] !== 'Dr. 
   throw new Error('mühür yazıları yanlış: ' + JSON.stringify(lacivertCizim.muhurYazi));
 }
 if (Math.min(lacivertCizim.kose, lacivertCizim.muhur, lacivertCizim.filigran) < 6) throw new Error('kadüse eksik çizilmiş: ' + JSON.stringify(lacivertCizim));
-if (lacivertCizim.gorunur || await sayfa.isVisible('.yazdir-alan')) throw new Error('yazdırma alanı ekranda görünüyor');
+if (lacivertCizim.gorunur || await sayfa.isVisible('#sayfa > .yazdir-alan')) throw new Error('yazdırma alanı ekranda görünüyor');
+// Ekrandaki önizleme ise görünür: kayıt sayfasında basılacak kâğıt (önizleme
+// panelinde) baskı kopyasıyla aynı metni taşıyor.
+const kayitOnizleme = await sayfa.evaluate(() => {
+  const t = document.querySelector('.recete-kayit__onizleme .kagit-tuval .yazdir-alan');
+  return { gorunur: !!t && getComputedStyle(t).display !== 'none' && t.getBoundingClientRect().height > 100, ayni: t?.textContent === document.querySelector('#sayfa > .yazdir-alan').textContent };
+});
+if (!kayitOnizleme.gorunur || !kayitOnizleme.ayni) throw new Error('kayıt sayfasının önizlemesi: ' + JSON.stringify(kayitOnizleme));
 
 // Modern kâğıdın ikizi: aynı reçete, eski güvencelerin hepsi.
 await eskiStilKagidi('modern');
@@ -918,7 +930,7 @@ if (EKRAN) {
     const { kagitCiz } = await import('./js/kagit.js');
     const { yerelDepoAc } = await import('./js/depo/idb.js');
     const depo = await yerelDepoAc();
-    const eski = document.querySelector('.yazdir-alan');
+    const eski = document.querySelector('#sayfa > .yazdir-alan');
     window.__doluKagit = eski;
     eski.replaceWith(kagitCiz({ ayar: await depo.ayarlar(), bos: true }));
   });
@@ -927,7 +939,7 @@ if (EKRAN) {
   // `'screen'` DEĞİL: media'yı sabitliyor ve sonraki page.pdf() de
   // ekran stilleriyle basıyor. `null` varsayılana döndürür.
   await sayfa.emulateMedia({ media: null });
-  await sayfa.evaluate(() => { document.querySelector('.yazdir-alan').replaceWith(window.__doluKagit); });
+  await sayfa.evaluate(() => { document.querySelector('#sayfa > .yazdir-alan').replaceWith(window.__doluKagit); });
 }
 
 // --- Gönder: WhatsApp bağlantısı ve metin
@@ -4134,6 +4146,181 @@ await sayfa.waitForSelector('.kagit-tuval .kagit');
     throw new Error('önizleme düğmeleri: ' + JSON.stringify({ gecersiz, pdf, once, sonra, eskiBaslik }));
   }
   ok(`önizleme başlığı: geçersiz formda «${T('genel.yazdir')}» basmıyor, hata gösteriyor; büyük önizleme kutuyu açıyor; «${T('recete.pdf_kaydet')}» önce kaydetti (1 reçete), basarken belge adı «${pdf.baski[0]}» oldu, sonra geri alındı, PDF ipucu bir kez`);
+}
+
+/* --- Önizleme paneli her yerde: çok yapraklı kâğıt, kayıt sayfası, boş kâğıt, liste ---
+   Başlıktaki «چاپ» alttaki düğmenin güvencesini taşıyor: geçerli formda
+   önce kaydediyor (tek reçete), sonra basıyor; düzenlemede AYNI reçeteyi
+   güncelliyor. 25 ilacın üstünde kâğıt iki yaprak: panelde rozet bunu
+   söylüyor, tuval kendi içinde kayıyor (klavyeyle de), yazdır düğmesi
+   1536×1024 ve 1366×768'de her kaydırmada tıklanır, her yaprak tuvale
+   sığıyor; büyük önizleme de yaprak sayısını söylüyor. Kayıt sayfası
+   basılacak kâğıdı (her yaprağıyla) gösteriyor ve PDF düğmesi orada da
+   belge adını veriyor; PDF ipucu oturumda bir kez. Boş kâğıt sayfasının PDF'i
+   «nuskha-khali» adıyla, seçilen adet kadar kopya. Reçeteler listesi kâğıda
+   İngilizce yazılan tanıyı Dari adıyla, ilacı etken maddesiyle buluyor. */
+{
+  const receteSayisi = () => sayfa.evaluate(async () => {
+    const { yerelDepoAc } = await import('./js/depo/idb.js');
+    return (await (await yerelDepoAc()).listele('receteler')).filter((r) => !r.silindi).length;
+  });
+  const baskiyiIzle = () => sayfa.evaluate(() => {
+    document.querySelectorAll('.bildirim').forEach((b) => b.remove());
+    window.__baski = [];
+    window.print = () => window.__baski.push({ baslik: document.title, kopya: document.querySelectorAll('#sayfa > .yazdir-alan').length });
+  });
+  const baskilar = () => sayfa.evaluate(() => ({
+    baski: window.__baski, baslik: document.title,
+    ipucu: [...document.querySelectorAll('.bildirim')].some((b) => b.textContent.includes(window.__pdfIpucu)),
+  }));
+  await sayfa.evaluate((m) => { window.__pdfIpucu = m; }, T('recete.pdf_ipucu'));
+  const ikiYaprak = T('recete.onizleme_sayfa').replace('{n}', '2');
+  const hataVer = (ad, o) => { throw new Error(`önizleme paneli (${ad}): ` + JSON.stringify(o)); };
+
+  // (a) Önceki adımın kaydettiği reçetenin sayfası: tek yaprak, rozet yok; PDF adı, ipucu yok (oturumda ikinci kez).
+  await sayfa.waitForSelector('.recete-kayit__onizleme .kagit-tuval [data-rol=sayfa]');
+  const kayitNo = (await sayfa.textContent('h1')).trim();
+  await baskiyiIzle();
+  const eskiBaslik = await sayfa.title();
+  const tekYaprak = await sayfa.$eval('.recete-kayit__onizleme .recete-onizleme__sayfa', (r) => r.hidden);
+  await sayfa.click('[data-odak-adi=kayit-pdf]');
+  const kayitPdf = await baskilar();
+  if (!tekYaprak || kayitPdf.baski.length !== 1 || kayitPdf.baski[0].baslik !== `nuskha-${kayitNo}-محمد-نعیم-رحیمی` || kayitPdf.baski[0].kopya !== 1
+      || kayitPdf.ipucu || kayitPdf.baslik !== eskiBaslik) hataVer('kayıt sayfası PDF', { tekYaprak, kayitPdf, kayitNo });
+
+  // (b) Başlıktaki «چاپ» geçerli formda: bir reçete kaydediyor, bir kez basıyor.
+  await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+  await sayfa.waitForSelector('.recete-duzen .kagit');
+  const once = await receteSayisi();
+  await sayfa.click('.recete-form .secim-alani');
+  await sayfa.click('.ortu .liste__satir--tiklanir:has-text("محمد نعیم رحیمی")');
+  await sayfa.waitForSelector('.ortu', { state: 'detached' });
+  await sayfa.fill('.recete-form input[name=ilacArama]', 'Panadol');
+  await sayfa.click('.ilac-sonuc__satir:has(.liste__baslik:text-is("Panadol")) >> nth=0');
+  await sayfa.click(`.modal button:has-text("${T('genel.ekle')}")`);
+  await sayfa.waitForSelector('.ortu', { state: 'detached' });
+  await baskiyiIzle();
+  await sayfa.click('[data-odak-adi=onizleme-yazdir]');
+  await sayfa.waitForURL(/#\/recete\/rec_[^/]+$/);
+  const yeniId = new URL(sayfa.url()).hash.split('/')[2];
+  const yazdir = { ...(await baskilar()), sayi: await receteSayisi() };
+  if (yazdir.baski.length !== 1 || yazdir.sayi !== once + 1 || yazdir.ipucu) hataVer('چاپ', { yazdir, once });
+
+  // (c) Düzenlemede «چاپ»: aynı reçete güncelleniyor, yenisi yazılmıyor.
+  await sayfa.goto(KOK + `#/recete/${yeniId}/duzenle`, { waitUntil: 'networkidle' });
+  await sayfa.waitForSelector('.recete-panel__bas--duzenle');
+  await baskiyiIzle();
+  await sayfa.click('[data-odak-adi=onizleme-yazdir]');
+  await sayfa.waitForURL(new RegExp(`#/recete/${yeniId}$`));
+  const duzenleme = { ...(await baskilar()), sayi: await receteSayisi() };
+  if (duzenleme.baski.length !== 1 || duzenleme.sayi !== once + 1) hataVer('düzenlemede چاپ', { duzenleme, once });
+
+  // (d) 26 ilaçlı reçete (hazır listenin markaları, Dari tanısı olan İngilizce tanı).
+  const uzun = await sayfa.evaluate(async () => {
+    const { yerelDepoAc } = await import('./js/depo/idb.js');
+    const { receteKaydet } = await import('./js/depo/recete.js');
+    const { ilacEtiketi } = await import('./js/paylasilan/ilac.js');
+    const { tamAd } = await import('./js/paylasilan/hasta.js');
+    const depo = await yerelDepoAc();
+    const liste = (await (await fetch('./veri/ilaclar.json')).json()).ilaclar.filter((h) => h.ad !== h.etkenMadde);
+    const hasta = (await depo.listele('hastalar')).find((h) => tamAd(h) === 'محمد نعیم رحیمی');
+    const secilen = Array.from({ length: 26 }, (_, i) => liste[(i * 11) % liste.length]);
+    const r = await receteKaydet(depo, {
+      hastaId: hasta.id, tarih: '2026-09-25', tur: 'normal', tani: 'Chronic hepatitis C', taniKodu: 'B18.2',
+      satirlar: secilen.map((h) => ({ ilacAdi: ilacEtiketi(h), etkenMadde: h.etkenMadde, doz: h.doz, form: h.form, adet: 1,
+        kullanim: 'روزانه 1 بار', zaman: 'بعد از غذا', sure: '10 روز', yol: '', not: '' })),
+    });
+    return { id: r.id, no: r.receteNo, etken: secilen[0].etkenMadde };
+  });
+  await sayfa.goto(KOK + `#/recete/${uzun.id}/duzenle`, { waitUntil: 'networkidle' });
+  await sayfa.waitForSelector('.recete-onizleme .kagit-tuval[data-cok-yaprak] [data-rol=sayfa] >> nth=1');
+  const olcumler = [];
+  for (const [en, boy] of [[1536, 1024], [1366, 768]]) {
+    await sayfa.setViewportSize({ width: en, height: boy });
+    for (const yer of [0, 0.5, 1]) {
+      olcumler.push(await sayfa.evaluate(async ([o, en]) => {
+        scrollTo(0, (document.documentElement.scrollHeight - innerHeight) * o);
+        await new Promise((r) => setTimeout(r, 150));
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const panel = document.querySelector('.recete-onizleme');
+        const tuval = panel.querySelector('.kagit-tuval');
+        const rozet = panel.querySelector('.recete-onizleme__sayfa');
+        const d = panel.querySelector('[data-odak-adi=onizleme-yazdir]').getBoundingClientRect();
+        const t = tuval.getBoundingClientRect();
+        const yapraklar = [...tuval.querySelectorAll('[data-rol=sayfa]')];
+        tuval.scrollTop = tuval.scrollHeight;
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const son = yapraklar.at(-1).getBoundingClientRect();
+        const tSon = tuval.getBoundingClientRect();
+        tuval.scrollTop = 0;
+        return {
+          en, o, rozet: rozet.hidden ? null : rozet.textContent, tab: tuval.tabIndex,
+          dugme: document.elementFromPoint(d.left + d.width / 2, d.top + d.height / 2)?.closest('[data-odak-adi=onizleme-yazdir]') !== null,
+          ust: Math.round(t.top - document.querySelector('.ust').getBoundingClientRect().bottom), alt: Math.round(innerHeight - t.bottom),
+          sigiyor: yapraklar.every((y) => y.getBoundingClientRect().height <= tuval.clientHeight + 1),
+          sonGorunur: son.top >= tSon.top - 1 && son.bottom <= tSon.bottom + 1,
+        };
+      }, [yer, en]));
+    }
+  }
+  await sayfa.setViewportSize({ width: 1280, height: 900 });
+  if (olcumler.some((o) => o.rozet !== ikiYaprak || o.tab !== 0 || !o.dugme || o.ust < 0 || o.alt < 0 || !o.sigiyor || !o.sonGorunur)) hataVer('26 ilaç', olcumler);
+  // Büyük önizleme: başlıkta yaprak sayısı, tuval klavyeyle kayıyor.
+  await sayfa.evaluate(() => scrollTo(0, 0));
+  await sayfa.click('[data-odak-adi=onizleme-genis]');
+  await sayfa.waitForSelector('.modal--onizleme .kagit-tuval[data-cok-yaprak][tabindex="0"]');
+  await sayfa.focus('.modal--onizleme .kagit-tuval');
+  await sayfa.keyboard.press('End');
+  await sayfa.waitForTimeout(400);
+  const kutu = await sayfa.evaluate(() => {
+    const m = document.querySelector('.modal--onizleme');
+    return { baslik: m.querySelector('h2')?.textContent || m.textContent.slice(0, 80), kaydi: m.querySelector('.kagit-tuval').scrollTop };
+  });
+  await sayfa.click(`.modal--onizleme button:has-text("${T('genel.kapat')}")`);
+  await sayfa.waitForSelector('.ortu', { state: 'detached' });
+  if (!kutu.baslik.includes(ikiYaprak) || !(kutu.kaydi > 0)) hataVer('büyük önizleme', kutu);
+
+  // (e) Kayıt sayfası: iki yaprak alt alta, tuval kaymıyor, altında boş pay yok.
+  await sayfa.goto(KOK + `#/recete/${uzun.id}`, { waitUntil: 'networkidle' });
+  await sayfa.waitForSelector('.recete-kayit__onizleme [data-rol=sayfa] >> nth=1');
+  await sayfa.setViewportSize({ width: 900, height: 900 });
+  await sayfa.waitForTimeout(300);
+  const kayit = await sayfa.evaluate(() => {
+    const panel = document.querySelector('.recete-kayit__onizleme');
+    const tuval = panel.querySelector('.kagit-tuval');
+    const y = [...tuval.querySelectorAll('[data-rol=sayfa]')].map((e) => e.getBoundingClientRect());
+    const t = tuval.getBoundingClientRect();
+    return {
+      rozet: panel.querySelector('.recete-onizleme__sayfa').textContent, kayar: tuval.hasAttribute('data-cok-yaprak'),
+      olcek: Number(getComputedStyle(tuval).getPropertyValue('--olcek')),
+      icinde: y.every((r) => r.top >= t.top - 1 && r.bottom <= t.bottom + 1 && r.left >= t.left - 1 && r.right <= t.right + 1),
+      kuyruk: Math.round(document.documentElement.scrollHeight - (panel.getBoundingClientRect().bottom + scrollY)),
+    };
+  });
+  await sayfa.setViewportSize({ width: 1280, height: 900 });
+  if (kayit.rozet !== ikiYaprak || kayit.kayar || !(kayit.olcek < 1) || !kayit.icinde || kayit.kuyruk > 150) hataVer('kayıt sayfası 26 ilaç', kayit);
+
+  // (f) Boş kâğıt: iki kopya PDF'e «nuskha-khali» adıyla.
+  await sayfa.goto(KOK + '#/recete/bos', { waitUntil: 'networkidle' });
+  await sayfa.waitForSelector('.kagit-tuval .kagit');
+  await sayfa.selectOption('select[name=adet]', '2');
+  await baskiyiIzle();
+  const bosBaslik = await sayfa.title();
+  await sayfa.click('[data-odak-adi=bos-pdf]');
+  const bos = await baskilar();
+  if (bos.baski.length !== 1 || bos.baski[0].baslik !== 'nuskha-khali' || bos.baski[0].kopya !== 2 || bos.baslik !== bosBaslik) hataVer('boş kâğıt PDF', bos);
+
+  // (g) Reçeteler listesi: Dari tanı adı ve etken madde.
+  await sayfa.goto(KOK + '#/receteler', { waitUntil: 'networkidle' });
+  const listeAra = async (q) => {
+    await sayfa.fill('#sayfa input[type=search]', q);
+    await sayfa.waitForTimeout(300);
+    return sayfa.$$eval('#sayfa .tablo tbody tr td:first-child .liste__baslik', (a) => a.map((x) => x.textContent.trim()));
+  };
+  const dari = await listeAra('هپاتیت');
+  const etken = await listeAra(uzun.etken);
+  if (!dari.includes(uzun.no) || !etken.includes(uzun.no)) hataVer('liste araması', { dari, etken, uzun });
+  ok(`önizleme paneli: «${T('genel.yazdir')}» kaydedip bir kez basıyor (düzenlemede aynı reçete); 26 ilaçta «${ikiYaprak}» rozeti, yazdır düğmesi 1536×1024 ve 1366×768'de her kaydırmada tıklanır, iki yaprak da tuvalde görünüyor, büyük önizleme klavyeyle kayıyor; kayıt sayfası iki yaprağı alt alta gösteriyor ve PDF adı «${kayitPdf.baski[0].baslik}» (ipucu tekrar yok); boş kâğıt «nuskha-khali» 2 kopya; liste «هپاتیت» ve «${uzun.etken}» ile buluyor`);
 }
 
 // --- Kurulum kartı: tarayıcı "kurulabilir" deyince düğme çıkıyor mu?

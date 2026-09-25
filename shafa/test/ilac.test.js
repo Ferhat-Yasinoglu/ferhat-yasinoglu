@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ilacEtiketi, ilacAra, muadiller, ilacDogrula, formKisa, ilacAdiFormsuz, satirAdi, satirGorunumu } from '../app/js/paylasilan/ilac.js';
+import { ilacEtiketi, ilacAra, muadiller, ilacDogrula, formKisa, ilacAdiFormsuz, satirAdi, satirGorunumu, satirKagitAdi } from '../app/js/paylasilan/ilac.js';
 
 const ilac = (o) => ({ id: 'ila_1', ad: 'Parol', doz: '500 mg', form: 'tablet', ...o });
 
@@ -69,6 +69,21 @@ describe('formKisa / ilacAdiFormsuz — kâğıttaki ilaç satırı', () => {
     expect(ilacAdiFormsuz('Nurofen 400 mg', 'tablet')).toBe('Nurofen 400 mg');
   });
   it('boş adda patlamaz', () => expect(ilacAdiFormsuz(undefined, 'tablet')).toBe(''));
+});
+
+describe('satirKagitAdi — kayıt sayfası ve gönderilen metin kâğıttaki adı yazıyor', () => {
+  it('şekil kısaltması, etken madde ve güçle', () => {
+    expect(satirKagitAdi({ ilacAdi: 'Feldene 20 mg Kapsül', form: 'kapsul', doz: '20 mg', etkenMadde: 'Piroxicam' }))
+      .toBe('Cap: Feldene (Piroxicam) 20 mg');
+  });
+  it('eski satırda (etken ve güç yok) satirAdi ile aynı', () => {
+    const s = { ilacAdi: 'Panadol Syrup 120 mg/5 ml Şurup', form: 'surup' };
+    expect(satirKagitAdi(s)).toBe(satirAdi(s));
+    expect(satirKagitAdi({ ilacAdi: 'Nurofen 400 mg' })).toBe('Nurofen 400 mg');
+  });
+  it('boş satırda boş metin', () => {
+    expect(satirKagitAdi({})).toBe('');
+  });
 });
 
 describe('satirGorunumu — formdaki tablonun ad ve güç sütunları', () => {
