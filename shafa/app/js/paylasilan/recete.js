@@ -141,10 +141,13 @@ export function bpBol(bp) {
 }
 
 /** İki kutudan tek metin. İkisi boşsa ''; yalnız sistolik yazıldıysa
- *  «130/» (kâğıt onu olduğu gibi basıyor, eksik olduğu görünsün). */
+ *  «130/» (kâğıt onu olduğu gibi basıyor, eksik olduğu görünsün). Sistolik
+ *  sayı değilse (eski serbest değer «بالا (نشسته)», «/» da içeriyorsa) ve
+ *  diyastolik boşsa olduğu gibi: düzeltilen eski değerin sonuna «/» eklenmesin. */
 export function bpBirlestir(sis, dia) {
   const a = String(sis ?? '');
   const b = String(dia ?? '');
+  if (!b.trim() && /[^\d.\s]/.test(a)) return a;
   return a.trim() || b.trim() ? `${a}/${b}` : '';
 }
 

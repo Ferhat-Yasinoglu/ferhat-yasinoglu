@@ -120,9 +120,16 @@ export async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = [], 
   function aramaCiz() {
     temizle(sonuclar);
     const q = kutu.value.trim();
+    const secili = ilac && q === ilacGorunenAd(ilac);
+    // İlaç seçiliyken (formdaki aramadan, satırı düzenlerken ya da listeden
+    // seçince) gezinme listesi kapalı: 220 px'lik başka ilaç listesi adet,
+    // kullanım ve süre alanlarını kutunun altına itiyordu. Hekim ilacı
+    // değiştirmek isterse kutuya dokunuyor, liste o zaman açılıyor.
+    sonuclar.hidden = secili && document.activeElement !== kutu;
+    if (sonuclar.hidden) return;
     // Kutu boşken de liste gösteriyoruz: hekim yazmadan gezinebilsin.
     // Önce kendi çok yazdıkları, sonra alfabetik baş taraf.
-    if (!q || (ilac && q === ilacGorunenAd(ilac))) {
+    if (!q || secili) {
       const gecmisId = new Set(sik.map((x) => x.id));
       const kalan = ilaclar.filter((x) => !gecmisId.has(x.id)).slice(0, 10);
       if (sik.length) {
@@ -159,6 +166,7 @@ export async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = [], 
     return kap;
   }
   kutu.oninput = aramaCiz;
+  kutu.addEventListener('focus', aramaCiz);
   /* Enter: arama kutusunda TEK eşleşme kalınca (ya da adı tam yazılınca)
      onu seçip adete geçiyor; boş kutuda ya da birden çok eşleşmede bir şey
      seçmiyor, yanlış dava kâğıda girmesin (hasta seçicideki gibi). Öbür
@@ -230,8 +238,10 @@ export async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = [], 
       } },
     ],
   });
-  // Formdaki aramadan gelindiyse ilaç zaten seçili: hekim doğrudan adedi yazsın.
-  if (onceSecilen) { adet.focus(); adet.select(); }
+  // Formdaki aramadan gelindiyse ya da satır düzenleniyorsa ilaç zaten
+  // seçili: hekim doğrudan adedi yazsın. Kutu açılırken ilk girdiye (ilaç
+  // kutusu) odaklanıp gezinme listesini açmıştı: odak gidince kapanıyor.
+  if (onceSecilen || mevcut) { adet.focus(); adet.select(); aramaCiz(); }
   const sonuc = await acik;
   if (sonuc === 'sil') return 'sil';
   return sonuc && typeof sonuc === 'object' ? sonuc : null;

@@ -144,12 +144,41 @@ describe('kagitYogunlugu — sayfalara bölünme', () => {
     expect(ilkBelirti.kalemler.length + ikinci.sol[0].kalemler.length).toBe(90);
     expect(ikinci.sol[0].kalemler[0]).toBe(`Symptom number ${ilkBelirti.kalemler.length + 1}`);
   });
+
+  // Not bölünmüyordu: sütuna sığmayan uzun not ilk sayfaya olduğu gibi
+  // konuyor, kalanı imzanın altında kesiliyordu (yaprak taşanı gizliyor).
+  it('uzun not satır sonlarından bölünüyor, kalanı «(cont.)» ile sürüyor; hiçbir satır kaybolmuyor', () => {
+    const satirlar = Array.from({ length: 40 }, (_, i) => `سطر ${i + 1} دوا را بعد از غذا با یک گیلاس آب بخورید`);
+    const y = kagitYogunlugu({ ...recete(3), notlar: satirlar.join('\n') });
+    expect(y.sayfalar.length).toBeGreaterThan(1);
+    const notlar = y.sayfalar.flatMap((s) => (s.sol || []).filter((b) => b.tur === 'not'));
+    expect(notlar.length).toBeGreaterThan(1);
+    expect(notlar[0].devam).toBeUndefined();
+    expect(notlar.slice(1).every((b) => b.devam)).toBe(true);
+    expect(notlar.flatMap((b) => b.metin.split('\n'))).toEqual(satirlar);
+    const butce = [KIP_OLCULERI.orta.govde - 4, ...y.sayfalar.slice(1).map(() => DEVAM_OLCULERI.govde - 4 - 19)];
+    y.sayfalar.forEach((s, i) => {
+      expect(s.sol.reduce((t, b, j) => t + blokBoyu(b, 'orta', { ilk: j === 0 }), 0)).toBeLessThanOrEqual(butce[i]);
+    });
+  });
+
+  it('satır sonu olmayan tek bir uzun not sözcük aralarından bölünüyor', () => {
+    const sozcukler = Array.from({ length: 900 }, (_, i) => `w${i + 1}`);
+    const y = kagitYogunlugu({ ...recete(3), notlar: sozcukler.join(' ') });
+    const notlar = y.sayfalar.flatMap((s) => (s.sol || []).filter((b) => b.tur === 'not'));
+    expect(notlar.length).toBeGreaterThan(1);
+    expect(notlar.flatMap((b) => b.metin.split(' '))).toEqual(sozcukler);
+  });
 });
 
 describe('sol sütunun içeriği', () => {
   it('kalemler dizi de metin de alıyor; «،», «,» ve satır sonuyla bölüyor', () => {
     expect(kalemler('Fever، Chills, Cough\nHeadache')).toEqual(['Fever', 'Chills', 'Cough', 'Headache']);
     expect(kalemler([' Hb ', '', 'ESR'])).toEqual(['Hb', 'ESR']);
+  });
+  it('parantez içindeki virgül bölmüyor: elle yazılmış tetkik tek madde', () => {
+    expect(kalemler('Serum electrolytes (Na, K, Cl), Liver function tests (ALT, AST, ALP, Bilirubin)، ESR'))
+      .toEqual(['Serum electrolytes (Na, K, Cl)', 'Liver function tests (ALT, AST, ALP, Bilirubin)', 'ESR']);
   });
   it('tanı kodu sayılar denkse kendi tanısının yanında, denk değilse sonda', () => {
     expect(taniKalemleri({ tani: 'A، B', taniKodu: 'X1، Y2' })).toEqual(['A · X1', 'B · Y2']);

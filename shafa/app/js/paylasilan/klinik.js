@@ -47,9 +47,15 @@ function parcaYeri(parcalar, x) {
  *  eski kayıtlar ve elle yazılanlar da doğru bölünsün. */
 export const AYRAC = '، ';
 
+/** Seçimlerin ayracı: «،» ya da parantez DIŞINDAKİ Latin virgülü. Elle
+ *  yazılmış «Serum electrolytes (Na, K, Cl)» tek tetkik; parantezin
+ *  içinden bölünseydi kâğıtta «(Na» / «K» / «Cl)» diye üç ayrı madde
+ *  basılıyordu. Kâğıt da (kagit-yogunluk.js) aynı ayracı kullanıyor. */
+export const SECIM_AYRACI = /،|,(?![^()]*\))/;
+
 /** "سردردی، تب" → ['سردردی', 'تب'] */
 export const parcala = (metin) =>
-  String(metin ?? '').split(/[،,]/).map((p) => p.trim()).filter(Boolean);
+  String(metin ?? '').split(SECIM_AYRACI).map((p) => p.trim()).filter(Boolean);
 
 /** ['سردردی', 'تب'] → "سردردی، تب" */
 export const birlestir = (parcalar) => (parcalar || []).filter(Boolean).join(AYRAC);

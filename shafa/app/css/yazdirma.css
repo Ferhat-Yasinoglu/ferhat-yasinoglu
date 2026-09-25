@@ -65,6 +65,9 @@
      akmadığı için daraltmak antedi ve sütunu kırardı. */
   transform: scale(var(--olcek, 1));
   transform-origin: top center;
+  /* Harf aralıkları ölçeklenmemiş boyda piksele yuvarlanıyordu: 1× ekranda
+     küçük yazılar «Stom ach», «Sam ple» diye sözcük içinden açılıyordu. */
+  text-rendering: geometricPrecision;
 }
 /* Ekrandaki çerçeve: yuvarlak köşe, ince açık kenar ve yumuşak gölge —
    tasarımdaki kâğıt kartı. Yalnız ekranda; basılan kâğıtta çerçeve yok.
@@ -920,6 +923,16 @@
     --l-ayak: 19mm; --l-ayak-alt: 3mm; --l-ayak-yazi: 8pt; --l-ayak-en: 6.5pt; --l-qr: 12mm; --l-tel: 10pt;
   }
 
+  /* A5: yaprak 0,701 ölçekle basılıyor (kagit-lacivert.js). Güvenliğe
+     dokunan parçalar bu ölçekle küçülmesin: QR kartı 14,5 mm (içi 12,5 ×
+     0,701 = 8,8 mm; WhatsApp QR'ının 29 modülü 0,30 mm'nin üstünde, önce
+     0,27 mm'ydi), doğrulama kodu ve QR'ın altındaki yazı basılı 7,2 / 5,8
+     pt. Ekranda da aynı: önizleme basılanın aynısı. */
+  .kagit--lacivert.kagit--l-a5 { --l-qr: 14.5mm; }
+  .kagit--l-a5 .kagit__l-kod { font-size: 10.3pt; }
+  .kagit--l-a5 .kagit__l-kod .simge { inline-size: 4.2mm; block-size: 4.2mm; }
+  .kagit--l-a5 .kagit__l-qr-alt { font-size: 8.3pt; }
+
   /* Çerçeve en üstte, köşeler en altta; yazılar arada. */
   .kagit__l-cerceve { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; z-index: 3; pointer-events: none; }
   .kagit__l-kose { position: absolute; inset-block-start: 0; inset-inline: 0; inline-size: 100%; block-size: var(--l-kose); z-index: 0; }
@@ -953,8 +966,12 @@
   .kagit__l-maddeler--lat li { font-size: var(--l-madde-lat); color: #3B5289; }
   .kagit__l-maddeler--lat .simge { flex: none; inline-size: 3.4mm; block-size: 3.4mm; color: var(--l-lacivert); }
   .kagit__l-madde--kalin { font-weight: 700; }
-  .kagit__l-maddeler--fa li { min-block-size: var(--l-adim-fa); font-size: var(--l-madde-fa); color: #1E3576; }
-  .kagit__l-maddeler--fa li::before { content: ''; flex: none; inline-size: 1.1mm; block-size: 1.1mm; border-radius: 50%; background: var(--l-lacivert); }
+  /* Dari madde iki satıra kırılınca nokta satırların ortasında değil ilk
+     satırın hizasında (tasarımda maddeler tek satır); son satırda tek bir
+     sözcük kalmıyor (text-wrap: pretty). */
+  .kagit__l-maddeler--fa li { align-items: flex-start; min-block-size: var(--l-adim-fa); font-size: var(--l-madde-fa); color: #1E3576; }
+  .kagit__l-maddeler--fa li::before { content: ''; flex: none; inline-size: 1.1mm; block-size: 1.1mm; margin-block-start: calc((1.15em - 1.1mm) / 2); border-radius: 50%; background: var(--l-lacivert); }
+  .kagit__l-maddeler--fa li > span { text-wrap: pretty; }
   /* Mühür İngilizce vecizenin altından başlıyor (tasarımda arada boşluk var);
      yukarı çekilince halkası yazıya biniyordu. */
   .kagit__l-muhur { justify-self: center; margin-block-start: var(--l-muhur-ust); inline-size: var(--l-muhur); block-size: var(--l-muhur); }
@@ -1029,9 +1046,13 @@
   .kagit__l-ilaclar > li { display: grid; grid-template-columns: var(--l-sira) 1fr; padding-block: var(--l-ilac-pay); border-block-end: .25mm dashed #DCDCD8; break-inside: avoid; }
   .kagit__l-ilaclar > li:last-child { border-block-end: 0; }
   .kagit__l-sira, .kagit__l-i1 { font-size: var(--l-ad-pt); line-height: var(--l-ad-satir); font-weight: 700; }
-  .kagit__l-sira { color: #0C1F7B; }
+  /* Numara eşit enli rakamlarla; şekil öneki en uzununun («Spray:») eninde:
+     adlar tasarımdaki gibi tek bir sütundan başlıyor. Önce «Spray:»lı
+     satırın adı «Tab:»lılardan 5 mm içeride başlıyordu. */
+  .kagit__l-sira { color: #0C1F7B; font-variant-numeric: tabular-nums; }
   .kagit__l-i1 { color: #091A7E; }
-  .kagit__l-form { margin-inline-end: 1.8mm; color: #0C1F7B; }
+  .kagit__l-form { display: inline-block; min-inline-size: 2.95em; margin-inline-end: 1.2mm; color: #0C1F7B; }
+  .kagit__l-bolunmez { white-space: nowrap; }
   .kagit__l-i2 { display: flex; align-items: baseline; column-gap: 1.6mm; font-size: var(--l-kul); line-height: var(--l-kul-satir); color: #385698; }
   .kagit__l-kul { display: flex; flex-wrap: wrap; column-gap: 1.6mm; min-inline-size: 0; }
   .kagit__l-adet { font-weight: 600; }
@@ -1119,3 +1140,22 @@
 .kagit-tuval .kagit--lacivert .kagit__duz:focus-visible { outline-color: rgb(11 30 114); }
 .kagit-tuval .kagit--lacivert .kagit__duz-bos { border-color: rgb(11 30 114 / .35); color: #0B1E72; font-size: 9pt; block-size: 8mm; margin-block: 1mm; }
 .kagit-tuval .kagit--lacivert .kagit__duz-bos:hover { background: rgb(11 30 114 / .07); }
+/* Düzenlerken eklenen yer tutucular basılan kâğıtta yok; bu yüzden ya yer
+   kaplamıyor ya da hesabın boş bıraktığı yere sığıyor (kagit-yogunluk.js
+   artan / solArtan). Önizleme basılanla aynı boyda kalsın: kapasite
+   sınırında imza ve doğrulama kodu ayağın altına itiliyordu. */
+/* «+ افزودن دوا»: bir ilaç biriminden (sık kipte ≈ 7,2 mm) kısa. */
+.kagit-tuval .kagit__l-sag > .kagit__duz-bos { flex: none; block-size: 6mm; margin-block: 1mm 0; font-size: 8.5pt; }
+/* Boş bölümün eylemi kalem çizgisinin üstünde: bölüm basılanla aynı boyda. */
+.kagit-tuval .kagit__l-bolum--bos { position: relative; }
+.kagit-tuval .kagit__l-bolum-ekle {
+  position: absolute; inset-block-end: 0; inset-inline-start: 2mm;
+  display: inline-flex; align-items: center; gap: 1.2mm; block-size: 4.2mm; padding-inline: 1.6mm;
+  border: .25mm dashed rgb(11 30 114 / .35); border-radius: 1.2mm; background: #FBF8EE;
+  color: #0B1E72; font-size: 7.5pt; font-weight: 700; line-height: 1;
+}
+.kagit-tuval .kagit__l-bolum-ekle .kagit__duz-arti { inline-size: 2.8mm; block-size: 2.8mm; }
+/* Sıkışık kipte basılmayan bölümler: üçü tek satırda (7 mm). */
+.kagit-tuval .kagit__l-eksikler { display: flex; gap: 1.5mm; margin-block-start: 2mm; }
+.kagit-tuval .kagit__l-eksikler .kagit__duz-bos { flex: 1 1 0; min-inline-size: 0; gap: 1mm; block-size: 7mm; margin: 0; padding-inline: 1.5mm; font-size: 7.5pt; white-space: nowrap; overflow: hidden; }
+.kagit-tuval .kagit__l-eksikler .kagit__duz-arti { flex: none; inline-size: 2.8mm; block-size: 2.8mm; }

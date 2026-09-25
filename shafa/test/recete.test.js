@@ -249,6 +249,14 @@ describe('bpBol / bpBirlestir — iki kutu, tek metin', () => {
   it('eski serbest metin ilk kutuya bütün olarak düşüyor', () => {
     expect(bpBol('بالا (نشسته)')).toEqual(['بالا (نشسته)', '']);
   });
+  // Düzeltilen eski değerin sonuna «/» eklenmiyordu değil, ekleniyordu:
+  // «بالا (ایستاده)/» kaydedilip kâğıda «/mmHg» diye basılıyordu.
+  it('düzeltilen eski serbest metne ve sistoliğe yapıştırılan «130/85»e «/» eklenmiyor', () => {
+    expect(bpBirlestir('بالا (ایستاده)', '')).toBe('بالا (ایستاده)');
+    expect(bpBirlestir('بالا (ایستاده) x', '  ')).toBe('بالا (ایستاده) x');
+    expect(bpBirlestir('130/85', '')).toBe('130/85');
+    expect(bpBirlestir('120.5', '')).toBe('120.5/');
+  });
   it('«/» içeren her değerde gidiş-dönüş aynı metni veriyor', () => {
     for (const v of ['118/76', '130 / 85', ' 120/80 ', '120/80 (نشسته)', '130/', '/85', '1/2/3']) {
       expect(bpBirlestir(...bpBol(v))).toBe(v);

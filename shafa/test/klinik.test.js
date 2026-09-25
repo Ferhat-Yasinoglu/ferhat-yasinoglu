@@ -129,6 +129,9 @@ describe('parcala / birlestir', () => {
   it('Latin virgülü de kabul eder', () => expect(parcala('سردردی, تب')).toEqual(['سردردی', 'تب']));
   it('boş metin boş dizi', () => expect(parcala('  ')).toEqual([]));
   it('boşları atar', () => expect(parcala('سردردی،، تب')).toEqual(['سردردی', 'تب']));
+  // Kâğıt da aynı ayracı kullanıyor: form ile kâğıt aynı maddeleri görsün.
+  it('parantez içindeki Latin virgülünden bölmez', () => expect(parcala('Serum electrolytes (Na, K, Cl), Fever'))
+    .toEqual(['Serum electrolytes (Na, K, Cl)', 'Fever']));
   it('geri birleştirir', () => expect(birlestir(['سردردی', 'تب'])).toBe('سردردی' + AYRAC + 'تب'));
 });
 

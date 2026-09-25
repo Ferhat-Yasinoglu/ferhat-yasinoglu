@@ -24,6 +24,11 @@ for (const f of await dosyalar(join(KOK, 'css'), '.css')) {
   const s = await readFile(f, 'utf8');
   const m = s.match(/(^|[^-\w])(margin-left|margin-right|padding-left|padding-right|left:|right:|text-align:\s*(left|right)|border-left|border-right)/m);
   if (m) hataVer(`${f}: fiziksel yön özelliği (${m[2]}); mantıksal özellik kullan`);
+  // İçe gölgeyle çizilen kenar şeridi de fiziksel: yatay kayma sağdan sola
+  // çevrilmiyor. İlaç tablosunun uyarı şeridi satırın başında değil, # ile
+  // ad arasında çıkıyordu. Şerit border-inline-* ile çizilsin.
+  const golge = s.match(/box-shadow:[^;]*\binset\s+-?(?:\d*\.)?\d*[1-9][\d.]*(?:px|em|rem)?\s/);
+  if (golge) hataVer(`${f}: yatay kaymalı içe gölge (${golge[0].trim()}); şeridi border-inline-start/end ile çiz`);
 }
 for (const f of await dosyalar(join(KOK, 'js'), '.js')) {
   const s = await readFile(f, 'utf8');

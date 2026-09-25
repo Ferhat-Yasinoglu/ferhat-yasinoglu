@@ -117,9 +117,10 @@ describe('qrOkunurMu', () => {
 describe('qrBilgisi — basılan QR hiç sessizce kaybolmuyor', () => {
   let kaldir;
   let qrBilgisi;
+  let qrBaskiMm;
   beforeAll(async () => {
     kaldir = sahteDomKur();
-    ({ qrBilgisi } = await import('../app/js/kagit.js'));
+    ({ qrBilgisi, qrBaskiMm } = await import('../app/js/kagit.js'));
   });
   afterAll(() => kaldir());
   const recete = (n, kod = 'MWMW-WMWM') => ({
@@ -139,6 +140,16 @@ describe('qrBilgisi — basılan QR hiç sessizce kaybolmuyor', () => {
     expect(kodlu).toEqual({ metin: 'کد تأیید: MWMW-WMWM', tur: 'kod', yedek: true });
     expect(qrOkunurMu(kodlu.metin, 10)).toBe(true);
     expect(qrBilgisi({ qrIcerik: 'recete' }, recete(15, ''), hasta)).toEqual({ metin: '', tur: 'yok', yedek: true });
+  });
+  // A5'te lacivert yaprak 0,701 ölçekle basılıyor: içerik kararı A4'ün 10
+  // mm'siyle verilirse A5'te okunmayacak bir QR onaylanırdı. Basılan boyun
+  // kendisi tarayıcı denemesinde ölçülüyor (en az bu kadar).
+  it('içerik kararı basılan boydan: lacivert A5\'te kart küçük, eski stillerin A5\'i ölçeklenmiyor', () => {
+    expect(qrBaskiMm({ kagitStili: 'lacivert' })).toBe(10);
+    expect(qrBaskiMm({ kagitStili: 'lacivert', yazdirmaBoyutu: 'A5' })).toBeLessThan(10 * 0.9);
+    expect(qrBaskiMm({ kagitStili: 'modern', yazdirmaBoyutu: 'A5' })).toBe(16);
+    // Salt kod QR'ı A5'teki kartta da okunuyor.
+    expect(qrOkunurMu('کد تأیید: MWMW-WMWM', qrBaskiMm({ kagitStili: 'lacivert', yazdirmaBoyutu: 'A5' }))).toBe(true);
   });
   it('varsayılan iletişim QR\'ı ve boş kâğıt yedek sayılmıyor; «basma» seçiliyse içerik yok', () => {
     expect(qrBilgisi(WA, recete(3), hasta)).toEqual({ metin: 'https://wa.me/93700000000', tur: 'iletisim', yedek: false });

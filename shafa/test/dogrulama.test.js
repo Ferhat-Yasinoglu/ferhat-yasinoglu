@@ -131,6 +131,20 @@ describe('metniDogrula', () => {
   it('boş metinde çökmez', async () => {
     expect((await metniDogrula(depo, '   ')).durum).toBe('kodsuz');
   });
+  // Reçete özeti QR'a sığmayınca kâğıt yalnız kod satırını basıyor («Scan
+  // to Verify»). O metin «metinde kod yok» diyordu; oysa metin koddan ibaret.
+  it('salt kod metni: kaydı bu cihazdaysa o reçetenin özetiyle «kayıtlı»', async () => {
+    const hasta = await depo.kaydet('hastalar', { ad: 'Zeynep', soyad: 'Kaya' });
+    const y = await receteKaydet(depo, { ...recete(), hastaId: hasta.id });
+    const r = await metniDogrula(depo, kodSatiri(y.dogrulamaKodu.toLowerCase()));
+    expect(r).toMatchObject({ durum: 'kayitli', receteNo: y.receteNo, ozet: ozetMetni(y, 'Zeynep Kaya'), eskiyle: false });
+  });
+  it('salt kod metni: kayıt yoksa «bilinmiyor», kaydı sonradan değişmişse «geçersiz»', async () => {
+    expect((await metniDogrula(depo, kodSatiri('ABCD-EFGH'))).durum).toBe('bilinmiyor');
+    const y = await receteKaydet(depo, recete());
+    await depo.kaydet('receteler', { ...y, satirlar: [{ ilacAdi: 'Başka ilaç', adet: 9 }] });
+    expect((await metniDogrula(depo, kodSatiri(y.dogrulamaKodu))).durum).toBe('gecersiz');
+  });
 });
 
 describe('receteKaydet', () => {

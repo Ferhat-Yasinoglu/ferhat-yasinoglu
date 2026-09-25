@@ -11,6 +11,7 @@
 // küçülmüyor: 25 birimin üstünde kâğıt sayfalara bölünüyor (ilk sayfa
 // «orta», devam sayfaları), okunaklılık sıkıştırmaya tercih ediliyor.
 import { satirGorunumu } from './ilac.js';
+import { SECIM_AYRACI } from './klinik.js';
 
 export const KIPLER = ['rahat', 'orta', 'sik'];
 
@@ -46,9 +47,10 @@ const SUTUN_ARASI = 3;
 
 const doluMu = (v) => String(v ?? '').trim() !== '';
 
-/** Liste alanı: dizi ya da «،», «,» ve satır sonuyla ayrılmış metin. */
+/** Liste alanı: dizi ya da satır sonu ve formdaki seçim ayracıyla («،»,
+ *  parantez dışındaki «,») ayrılmış metin. */
 export function kalemler(v) {
-  const liste = Array.isArray(v) ? v : String(v ?? '').split(/[\n،,]/);
+  const liste = Array.isArray(v) ? v : String(v ?? '').split('\n').flatMap((s) => s.split(SECIM_AYRACI));
   return liste.map((x) => String(x ?? '').trim()).filter(Boolean);
 }
 
@@ -143,9 +145,31 @@ export function blokBoyu(blok, kip, { ilk = false } = {}) {
 const solYuku = (bloklar, kip) => bloklar.reduce((t, b, i) => t + blokBoyu(b, kip, { ilk: i === 0 }), 0);
 
 /**
- * Sol sütun bloklarını bütçeye sığdığı kadar alır. Liste bloğu kalem kalem
- * bölünebiliyor (kalanı devam sayfasına «(cont.)» başlığıyla); ölçüm tablosu
- * ve not bölünmüyor. Boş sütuna en az bir blok girer: sonsuz döngü olmasın.
+ * Not bloğunun bütçeye sığan başı ve kalanı. Önce satır sonlarından
+ * bölünüyor (hekimin her talimatı bütün kalsın); ilk satır bile sığmıyorsa
+ * sözcük aralarından. Yaprak sabit boylu ve taşanı kesiyor: bölünmeyen uzun
+ * bir not imzanın altında sessizce kayboluyordu, devam yaprağı da çıkmıyordu.
+ * @returns {[string, string]|null} sığan hiçbir şey yoksa null
+ */
+function notBol(b, kalanButce, kip, ilk) {
+  const parcalar = b.metin.split(/(?<=[ \n])/);
+  const sigar = (k) => blokBoyu({ ...b, metin: parcalar.slice(0, k).join('') }, kip, { ilk }) <= kalanButce;
+  let satirSonu = 0;
+  let sozcuk = 0;
+  for (let k = 1; k < parcalar.length && sigar(k); k++) {
+    sozcuk = k;
+    if (parcalar[k - 1].endsWith('\n')) satirSonu = k;
+  }
+  const k = satirSonu || sozcuk;
+  const kalan = parcalar.slice(k).join('').trim();
+  return k && kalan ? [parcalar.slice(0, k).join('').trim(), kalan] : null;
+}
+
+/**
+ * Sol sütun bloklarını bütçeye sığdığı kadar alır. Liste bloğu kalem kalem,
+ * not satır satır bölünebiliyor (kalanı devam sayfasına «(cont.)»
+ * başlığıyla); ölçüm tablosu bölünmüyor. Boş sütuna en az bir blok (ya da
+ * bloğun bir parçası) girer: sonsuz döngü olmasın.
  */
 function solBol(bloklar, butce, kip) {
   const alinan = [];
@@ -154,7 +178,19 @@ function solBol(bloklar, butce, kip) {
   for (; i < bloklar.length; i++) {
     const b = bloklar[i];
     const boy = blokBoyu(b, kip, { ilk: alinan.length === 0 });
-    if (kullanilan + boy <= butce || (!alinan.length && !b.kalemler?.length)) {
+    if (kullanilan + boy <= butce) {
+      alinan.push(b);
+      kullanilan += boy;
+      continue;
+    }
+    if (b.tur === 'not' && b.metin) {
+      const bolunen = notBol(b, butce - kullanilan, kip, !alinan.length);
+      if (bolunen) {
+        alinan.push({ ...b, metin: bolunen[0] });
+        return [alinan, [{ ...b, metin: bolunen[1], devam: true }, ...bloklar.slice(i + 1)]];
+      }
+    }
+    if (!alinan.length && !b.kalemler?.length) {
       alinan.push(b);
       kullanilan += boy;
       continue;
@@ -189,17 +225,25 @@ function ilacBol(satirlar, bas, kapasite, sinir) {
 /**
  * Kâğıdın kipi ve sayfaları.
  * @returns {{ kip: 'rahat'|'orta'|'sik', sayfalar: Array<{ kip, duzen: 'tek'|'ilk'|'iki'|'genis',
- *   ilk: number, son: number, sol: object[]|null, no: number, toplam: number }> }}
+ *   ilk: number, son: number, sol: object[]|null, artan: number, solArtan: number, no: number, toplam: number }> }}
  *   duzen: tek (her şey tek sayfada), ilk (bölünen kâğıdın ilk sayfası),
  *   iki (devam: solda klinik, sağda ilaç), genis (devam: ilaçlar iki sütun).
  *   ilk/son: sayfanın ilaç aralığı [ilk, son).
+ *   artan / solArtan: ilaç sütununda boş kalan birim ve sol sütunda boş
+ *   kalan mm (tahmin). Düzenlenen kâğıdın yer tutucuları (basılmayan «+»
+ *   kutuları) yalnız bu boşluğa konuyor: kapasite sınırında önizlemeye
+ *   eklenen yer tutucu imzayı ve doğrulama kodunu ayağın altına itiyordu.
  */
 export function kagitYogunlugu(recete = {}, hasta = null, { boyut = 'A4', bos = false } = {}) {
   const satirlar = bos ? [] : (recete.satirlar || []);
   const alerji = !bos && (hasta?.alerjiler || []).length > 0 ? 0.5 : 0;
   const numarala = (sayfalar) => sayfalar.map((s, i) => ({ ...s, no: i + 1, toplam: sayfalar.length }));
 
-  if (bos) return { kip: 'rahat', sayfalar: numarala([{ kip: 'rahat', duzen: 'tek', ilk: 0, son: 0, sol: solBloklari(recete, 'rahat', { bos }) }]) };
+  if (bos) {
+    const sol = solBloklari(recete, 'rahat', { bos });
+    const o = KIP_OLCULERI.rahat;
+    return { kip: 'rahat', sayfalar: numarala([{ kip: 'rahat', duzen: 'tek', ilk: 0, son: 0, sol, artan: o.kapasite, solArtan: o.govde - 4 - solYuku(sol, 'rahat') }]) };
+  }
 
   // A5'te sıkı kip yok: 0,7 kat küçültülünce yazısı ≈ 5,7 pt'ye iniyor.
   const kipler = boyut === 'A5' ? ['rahat', 'orta'] : KIPLER;
@@ -207,8 +251,10 @@ export function kagitYogunlugu(recete = {}, hasta = null, { boyut = 'A4', bos = 
     const o = KIP_OLCULERI[kip];
     const sol = solBloklari(recete, kip);
     const solButce = o.govde - 4 - (kip === 'sik' ? IMZA_SATIRI : 0);
-    if (ilacYuku(satirlar, o) + alerji <= o.kapasite && solYuku(sol, kip) <= solButce) {
-      return { kip, sayfalar: numarala([{ kip, duzen: 'tek', ilk: 0, son: satirlar.length, sol }]) };
+    const artan = o.kapasite - ilacYuku(satirlar, o) - alerji;
+    const solArtan = solButce - solYuku(sol, kip);
+    if (artan >= 0 && solArtan >= 0) {
+      return { kip, sayfalar: numarala([{ kip, duzen: 'tek', ilk: 0, son: satirlar.length, sol, artan, solArtan }]) };
     }
   }
 
@@ -218,16 +264,18 @@ export function kagitYogunlugu(recete = {}, hasta = null, { boyut = 'A4', bos = 
   const sayfalar = [];
   let [sol, kalan] = solBol(solBloklari(recete, 'orta'), o.govde - 4, 'orta');
   let i = ilacBol(satirlar, 0, o.kapasite - alerji - DEVAM_SATIRI, o);
-  sayfalar.push({ kip: 'orta', duzen: 'ilk', ilk: 0, son: i, sol });
+  sayfalar.push({ kip: 'orta', duzen: 'ilk', ilk: 0, son: i, sol,
+    artan: o.kapasite - alerji - DEVAM_SATIRI - ilacYuku(satirlar.slice(0, i), o), solArtan: o.govde - 4 - solYuku(sol, 'orta') });
   while (i < satirlar.length || kalan.length) {
     if (kalan.length) {
       [sol, kalan] = solBol(kalan, d.govde - 4 - IMZA_SATIRI, 'orta');
       const son = i < satirlar.length ? ilacBol(satirlar, i, d.sagKapasite, d) : i;
-      sayfalar.push({ kip: 'orta', duzen: 'iki', ilk: i, son, sol });
+      sayfalar.push({ kip: 'orta', duzen: 'iki', ilk: i, son, sol,
+        artan: d.sagKapasite - ilacYuku(satirlar.slice(i, son), d), solArtan: d.govde - 4 - IMZA_SATIRI - solYuku(sol, 'orta') });
       i = son;
     } else {
       const son = ilacBol(satirlar, i, 2 * d.sutunKapasite, d);
-      sayfalar.push({ kip: 'orta', duzen: 'genis', ilk: i, son, sol: null });
+      sayfalar.push({ kip: 'orta', duzen: 'genis', ilk: i, son, sol: null, artan: 2 * d.sutunKapasite - ilacYuku(satirlar.slice(i, son), d), solArtan: 0 });
       i = son;
     }
   }

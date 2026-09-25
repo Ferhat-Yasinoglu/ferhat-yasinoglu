@@ -367,6 +367,14 @@ export const QR_VARSAYILAN = 'whatsapp';
    mm) alınıyor ki içerik kararı kipe bağlı olmasın — önizleme ve baskı hangi
    kipte olursa olsun aynı QR'ı bassın. Öbür stillerde QR 16 mm. */
 const QR_BASKI_MM = { lacivert: 10, modern: 16, klasik: 16, sade: 16 };
+/* A5'te lacivert yaprak 0,701 ölçekle basılıyor; kartı orada 14,5 mm
+   (yazdirma.css .kagit--l-a5), içi 12,5 × 0,701 ≈ 8,7 mm. Karar basılan
+   boydan verilmeli: A4'ün 10 mm'siyle A5'te okunmayacak bir QR onaylanırdı. */
+const QR_BASKI_MM_A5_LACIVERT = 8.7;
+export const qrBaskiMm = (ayar) => {
+  const stil = kagitStiliCoz(ayar);
+  return stil === 'lacivert' && ayar.yazdirmaBoyutu === 'A5' ? QR_BASKI_MM_A5_LACIVERT : QR_BASKI_MM[stil];
+};
 
 /**
  * Kâğıdın QR'ı: içerik ve türü. Ayarlardan seçilir.
@@ -389,7 +397,7 @@ export function qrBilgisi(ayar, recete, hasta, { bos = false } = {}) {
     // yazıyla karşılaştırır; ikisi tutmuyorsa kâğıt üzerinde oynanmıştır.
     const ozet = ozetMetni(recete, tamAd(hasta));
     const metin = recete.dogrulamaKodu ? `${ozet}\n${kodSatiri(recete.dogrulamaKodu)}` : ozet;
-    if (qrOkunurMu(metin, QR_BASKI_MM[kagitStiliCoz(ayar)])) return { metin, tur: 'recete', yedek: false };
+    if (qrOkunurMu(metin, qrBaskiMm(ayar))) return { metin, tur: 'recete', yedek: false };
     if (iletisim.metin) return { ...iletisim, yedek: true };
     return recete.dogrulamaKodu
       ? { metin: kodSatiri(recete.dogrulamaKodu), tur: 'kod', yedek: true }

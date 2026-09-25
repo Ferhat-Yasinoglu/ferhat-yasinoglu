@@ -13,7 +13,7 @@
 // şey buraya taşındı: alerji uyarıları, şablonlar, düzenleme ve ilaç satırı
 // kutusu — sonuncusu artık ilac-satir-arayuz.js'te, iki yerden de kullanılsın
 // diye değil, tek yerde dursun diye.
-import { el, temizle, btn, btnS, girdi, alan, kart, bosDurum, uyariSeridi, onayKutusu, rozet } from '../cekirdek/dom.js';
+import { el, temizle, btn, btnS, girdi, metinAlani, alan, kart, bosDurum, uyariSeridi, onayKutusu, rozet } from '../cekirdek/dom.js';
 import { tarihSecici } from '../cekirdek/tarih-secici.js';
 import { simge } from '../cekirdek/simge.js';
 import { rxIsareti } from '../cekirdek/cizimler.js';
@@ -93,10 +93,21 @@ async function listeKutusu(ctx, { baslik, kayitlar, ara, etiket, alt }) {
   return sonuc && typeof sonuc === 'object' ? sonuc : null;
 }
 
-/** Tek satırlık değer kutusu: ölçümler, not, tarih. */
-async function degerKutusu(ctx, { baslik, deger = '', ipucu = '', tur = 'text' }) {
-  const kutu = girdi({ type: tur, name: 'deger', value: deger, placeholder: ipucu });
-  enterleOnayla(kutu);
+/** Değer kutusu: ölçümler tek satır; `cok` (not) çok satırlı. Not tek
+ *  satırlık <input>'la açılıyordu: tarayıcı değerdeki satır sonlarını
+ *  siliyor, hiç değiştirmeden «Kaydet»e basmak bile çok satırlı notu tek
+ *  satıra yapıştırıyordu. Çok satırlıda Enter yeni satır; klavyeyle
+ *  onaylamak Ctrl+Enter. */
+async function degerKutusu(ctx, { baslik, deger = '', ipucu = '', tur = 'text', cok = false }) {
+  const kutu = cok
+    ? metinAlani({ name: 'deger', rows: 6, placeholder: ipucu, value: deger })
+    : girdi({ type: tur, name: 'deger', value: deger, placeholder: ipucu });
+  if (!cok) enterleOnayla(kutu);
+  else {
+    kutu.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !e.isComposing) { e.preventDefault(); kutuyuOnayla(kutu); }
+    });
+  }
   const sonuc = await ctx.modal({
     baslik,
     govde: el('div', {}, kutu),
@@ -345,7 +356,7 @@ export default {
       laboratuvar: () => klinikSec('laboratuvar', klinik?.laboratuvar, klinik?.labGruplari, t('recete.lab_sec', 'Laboratuvar / görüntüleme seç')),
       'ilac-ekle': () => satirEkle(),
       notlar: async () => {
-        const n = await degerKutusu(ctx, { baslik: t('recete.not', 'Reçete notu'), deger: recete.notlar });
+        const n = await degerKutusu(ctx, { baslik: t('recete.not', 'Reçete notu'), deger: recete.notlar, cok: true });
         if (n !== null) recete.notlar = n;
       },
     };
@@ -648,7 +659,7 @@ export default {
       const numaraGirdisi = el('span', { class: 'girdi-simgeli' },
         simge('recete', { boy: 22, dolu: true, sinif: 'girdi-simgesi' }),
         girdi({
-          value: recete.receteNo || '', readonly: true, title: numaraIpucu, dir: 'ltr',
+          class: 'input recete-no', value: recete.receteNo || '', readonly: true, title: numaraIpucu, dir: 'ltr',
           placeholder: t('recete.numara_oto', 'Otomatik'), 'aria-describedby': 'recete-no-ipucu',
         }));
       // Yaş hastadan türüyor, elle yazılmıyor: gölgeli kutuda sayı ve «سال».
@@ -765,9 +776,10 @@ export default {
          Formla aynı biçimde bir panel. Başlık satırında başlık (solda) ve
          üç düğme (sağda): büyük önizleme, «چاپ», «ذخیره PDF». Bu sütun
          yapışkan: tablo uzayıp sayfa kaydıkça yazdır düğmesi hep görünür
-         kalıyor (alttaki «ذخیره و چاپ» ekranın dışına inse de). Yazdır ve
-         PDF alttaki düğmenin yolu: önce kaydet (numara ve doğrulama kodu
-         kayıtta üretiliyor), sonra bas. */
+         kalıyor (alttaki «ذخیره و چاپ» masaüstünde formun dibine yapışık,
+         telefonda ekranın dışına inebiliyor). Yazdır ve PDF alttaki düğmenin
+         yolu: önce kaydet (numara ve doğrulama kodu kayıtta üretiliyor),
+         sonra bas. */
       onizlemeKabi = el('div', { class: 'kagit-tuval' });
       const sag = onizlemePaneli({
         baslik: t('recete.onizleme_bas', 'پیش نمایش نسخه'), id: 'recete-onizleme-bas', sinif: 'recete-onizleme', tuval: onizlemeKabi,
@@ -817,7 +829,10 @@ export default {
     /** Kan basıncı: tek çerçevede iki kutu, «/» arada. Reçetede yine tek
      *  metin (bpBirlestir); yalnız hekim yazınca birleştiriliyor. Sistolikte
      *  «/», boşluk ya da üçüncü rakam yazılınca diyastoliğe geçiyor;
-     *  diyastolik boşken geri silme sistoliğe dönüyor. */
+     *  diyastolik boşken geri silme sistoliğe dönüyor. Boşluk yalnız kutu
+     *  rakamken geçiyor: eski serbest değeri («بالا (نشسته)») düzelten hekim
+     *  sözcük arası yazabilsin. Yapıştırılan «130/85» iki kutuya bölünüyor
+     *  (tuş olayı yok, önce sistoliğe «130/85» yazılıp «130/85/» oluyordu). */
     function bpKutusu(id, olcumYaz) {
       const [sisDeger, diaDeger] = bpBol(recete.olcumler?.bp);
       const ortak = { dir: 'ltr', inputmode: 'numeric', autocomplete: 'off', class: 'olcum-bp__girdi' };
@@ -825,9 +840,15 @@ export default {
       const dia = el('input', { ...ortak, id: id + '-dia', name: 'olcum_bp_dia', value: diaDeger, 'aria-label': t('olcum.bp_dia', 'Diyastolik') });
       const yaz = () => olcumYaz('bp', bpBirlestir(sis.value, dia.value));
       sis.addEventListener('keydown', (e) => {
-        if ((e.key === '/' || e.key === ' ') && !e.isComposing) { e.preventDefault(); dia.focus(); dia.select(); }
+        if ((e.key === '/' || (e.key === ' ' && /^\d*$/.test(sis.value))) && !e.isComposing) { e.preventDefault(); dia.focus(); dia.select(); }
       });
       sis.addEventListener('input', (e) => {
+        if (sis.value.includes('/')) {
+          const [a, b] = bpBol(sis.value);
+          sis.value = a.trim();
+          dia.value = b.trim();
+          dia.focus();
+        }
         yaz();
         if (e.inputType === 'insertText' && /^\d{3}$/.test(sis.value)) { dia.focus(); dia.select(); }
       });
@@ -972,6 +993,10 @@ export default {
         const u = uyarilar.filter((x) => x.satir === i).sort((a, b) => (a.tur === 'hata' ? 0 : 1) - (b.tur === 'hata' ? 0 : 1));
         const ad = satirAdi(s);
         const dozMetni = [g.doz, g.kisa ? `(${g.kisa})` : ''].filter(Boolean).join(' ');
+        // Etken madde (satirGorunumu'nun eklediği « (…)») adın altında, küçük.
+        // Rakamla biten markadan («Folic-500») sonraki ayraç da bölünmez:
+        // sayı ile ardındaki yazı hiçbir yerde ayrı satıra düşmüyor.
+        const [, marka, etken] = g.ad.match(/^(.+?) (\([^()]+\))$/) || [null, g.ad, ''];
         const ek = [s.zaman, s.yol, s.not].filter(Boolean).join(' · ');
         const silMetni = t('recete.satir_sil_ad', 'Sil: {ad}', { ad });
         return el('tr', {
@@ -988,15 +1013,19 @@ export default {
               type: 'button', class: 'ilac-ad', 'data-odak-adi': 'ilac-duzenle-' + i,
               'aria-label': t('recete.satir_duzenle_ad', 'Düzenle: {ad}', { ad }),
               onkeydown: (e) => { if (e.key === 'Delete') { e.preventDefault(); satirSil(i); } },
-            }, el('bdi', { dir: 'ltr' }, g.ad ? bolunmez(g.ad) : '—'))),
-          // Hücre soldan sağa: sığmayan güç sonundan üç noktayla kısalsın
-          // («20 mg (Ca…»), başından değil.
-          el('td', { class: 'ilac-doz', dir: 'ltr', title: dozMetni || null }, dozMetni ? bolunmez(dozMetni) : '—'),
-          el('td', { class: 'ilac-adet' }, String(s.adet ?? '')),
-          el('td', { class: 'ilac-kullanim', title: [s.kullanim, ek].filter(Boolean).join('\n') || null },
-            el('span', { class: 'ilac-kullanim__satir' }, s.kullanim || (ek ? '' : '—')),
-            ek ? el('span', { class: 'ilac-kullanim__satir' }, ek) : null),
-          el('td', { class: 'ilac-sure' }, s.sure || '—'),
+            }, el('bdi', { dir: 'ltr' }, marka ? bolunmez(marka) : '—', etken ? [/\d$/.test(marka) ? '\u00a0' : ' ', el('span', { class: 'ilac-ad__etken' }, bolunmez(etken))] : null))),
+          // Güç ve şekil ayrı parçalar: sığmazsa şekil bütün olarak alt satırda.
+          el('td', { class: 'ilac-doz', dir: 'ltr', title: dozMetni || null }, dozMetni
+            ? [g.doz ? bolunmez(g.doz) : null, g.doz && g.kisa ? ' ' : null, g.kisa ? el('span', { class: 'ilac-doz__sekil' }, `(${g.kisa})`) : null]
+            : '—'),
+          // Değerler <bdi> içinde: telefonda satır sağdan sola dizilirken araya
+          // giren «·» ayracı rakama yapışıp «۷· روز» (yetmiş gibi) okunuyordu.
+          // Boş kullanım ve süre masaüstünde «—», telefonda hiç yok (ilac--bos).
+          el('td', { class: 'ilac-adet' }, el('bdi', { class: 'ilac-adet__deger', dir: 'ltr' }, String(s.adet ?? ''))),
+          el('td', { class: 'ilac-kullanim' + (s.kullanim || ek ? '' : ' ilac--bos'), title: [s.kullanim, ek].filter(Boolean).join('\n') || null },
+            s.kullanim || !ek ? el('bdi', { class: 'ilac-kullanim__satir' }, s.kullanim || '—') : null,
+            ek ? el('bdi', { class: 'ilac-kullanim__satir' }, ek) : null),
+          el('td', { class: 'ilac-sure' + (s.sure ? '' : ' ilac--bos') }, el('bdi', {}, s.sure || '—')),
           el('td', { class: 'ilac-islem' }, btn(simge('cop', { boy: 18, dolu: true }), {
             class: 'btn btn--ikon ilac-sil', 'data-odak-adi': 'ilac-sil-' + i, 'aria-label': silMetni, title: silMetni,
             onclick: (e) => { e.stopPropagation(); satirSil(i); },

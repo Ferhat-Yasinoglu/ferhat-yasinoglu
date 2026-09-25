@@ -194,11 +194,12 @@ export default {
         name: 'qrIcerik', value: ayar.qrIcerik || QR_VARSAYILAN,
         onchange: () => { qrIpucu.hidden = qr.value !== 'recete'; },
       });
-      // Reçete metni çoğu reçetede basılı QR'a okunur sıklıkta sığmıyor:
-      // o zaman iletişim QR'ı basılıyor (kagit.js qrBilgisi). Hekim bunu
-      // seçerken bilsin.
+      // Reçete özeti basılı QR'a okunur sıklıkta sığmıyor (en kısası bile
+      // ≈ 60 bayt, kartta en çok ≈ 25 bayt okunur): iletişim QR'ı, numara
+      // yoksa doğrulama kodu basılıyor (kagit.js qrBilgisi). İpucu önce
+      // «kısa reçetelerde sığar» diyordu; hiçbirinde sığmıyor.
       const qrIpucu = el('span', { class: 'alan__ipucu', hidden: qr.value !== 'recete' },
-        t('ayar.qr_recete_ipucu', 'Reçete metni yalnız kısa reçetelerde QR\'a sığar; sığmazsa iletişim QR\'ı basılır.'));
+        t('ayar.qr_recete_ipucu', 'Reçete metni basılı QR\'da okunacak sıklıkta sığmıyor: yerine iletişim QR\'ı, numara yoksa doğrulama kodu basılır.'));
       const para = secim(PARA_BIRIMLERI, { name: 'paraBirimi', value: ayar.paraBirimi || 'AFN' });
 
       /* Modern kâğıtta Clinical sütununun altındaki fotoğraf. Hekim
@@ -267,8 +268,12 @@ export default {
               gecerli: ['uyari--bilgi', 'basari', t('dogrula.gecerli', 'Geçerli — bu reçete senin cihazlarından birinden (bu cihaz ya da aynı hesabın cihazları) çıkmış ve değiştirilmemiş.')],
               gecersiz: ['uyari--hata', 'hata', t('dogrula.gecersiz', 'TUTMUYOR — metin değiştirilmiş ya da kod başka bir cihazdan veya hesaptan. Beklenen kod: {k}', { k: r.beklenen })],
               kodsuz: ['uyari', 'uyari', t('dogrula.kodsuz', 'Metinde doğrulama kodu yok. Bu metnin kodu şu olmalıydı: {k}', { k: r.beklenen || '—' })],
+              kayitli: ['uyari--bilgi', 'bilgi', t('dogrula.kayitli', 'Bu kod bu cihazdaki {n} numaralı reçetenin. QR yalnız kodu taşıyor: kâğıttaki yazıyı aşağıdaki kayıtla karşılaştır.', { n: r.receteNo })],
+              bilinmiyor: ['uyari--hata', 'hata', t('dogrula.bilinmiyor', 'Bu kod bu cihazdaki reçetelerde yok: reçete başka bir cihazdan ya da hesaptan, ya da kod uydurma.')],
             }[r.durum];
             sonuc.appendChild(el('div', { class: `uyari ${bicim[0]}` }, simge(bicim[1], { boy: 16 }), el('span', {}, bicim[2])));
+            // Salt kod QR'ında karşılaştırılacak metin kaydın kendisi.
+            if (r.durum === 'kayitli') sonuc.appendChild(el('div', { class: 'dogrula-ozet', dir: 'rtl', 'data-rol': 'dogrula-ozet' }, r.ozet));
           } catch (e) { hata(hataMetni(e)); }
         } }),
         sonuc));

@@ -40,13 +40,30 @@ describe('ilacSuz', () => {
     expect(ara('500 PARACETAMOL', {}).sonuclar[0]).toMatchObject({ id: 'k1' });
   });
 
+  // Kademeler sözcük başı eşleşenlerin içinde: «amox»un yalnız ortasında
+  // geçtiği Vigamox (Moxifloxacin, yaygın) hepsinin ardında.
   it('sıra: sık yazdıkları, öbür kendi kayıtları, listenin yaygınları, gerisi', () => {
     const r = ara('amox', {}, { sikIdler: ['k3'] });
     expect(r.sonuclar[0].id).toBe('k3');
     const listeden = r.sonuclar.filter((x) => x.katalog);
-    const ilkSeyrek = listeden.findIndex((x) => !x.sik);
+    expect(listeden.at(-1)).toMatchObject({ ad: 'Vigamox', sik: 1 });
+    const basta = listeden.slice(0, -1);
+    const ilkSeyrek = basta.findIndex((x) => !x.sik);
     expect(ilkSeyrek).toBeGreaterThan(0);
-    expect(listeden.slice(ilkSeyrek).every((x) => !x.sik)).toBe(true);
+    expect(basta.slice(ilkSeyrek).every((x) => !x.sik)).toBe(true);
+  });
+
+  // «omepraz» aranınca yaygın diye önde duran Nexium (Esomeprazole) ilk
+  // satırdaydı; hekim ona dokunup yanlış ilacı ekliyordu.
+  it('adı ya da etken maddesi sorguyla BAŞLAYAN, yalnız ortasında geçenden önce (kademeden de önce)', () => {
+    const r = ara('omepraz', {}).sonuclar;
+    const nexium = r.findIndex((x) => x.ad === 'Nexium');
+    expect(nexium).toBeGreaterThan(0);
+    expect(r.slice(0, nexium).every((x) => x.etkenMadde === 'Omeprazole')).toBe(true);
+    expect(r.slice(0, nexium).map((x) => x.ad)).toEqual(expect.arrayContaining(['Omeprazole', 'Risek']));
+    expect(r.slice(nexium).every((x) => x.etkenMadde === 'Esomeprazole')).toBe(true);
+    // Etken maddenin ikinci sözcüğü de sözcük başı: «clav» → Augmentin.
+    expect(ara('clav', {}).sonuclar[0].etkenMadde).toMatch(/Clavulanic/);
   });
 
   it('kademe içinde adı sorguyla başlayan önce, sonra ad, sonra doz sayısı', () => {

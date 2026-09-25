@@ -185,6 +185,8 @@ export function aramaDizini(havuzKayitlari, indeks) {
     ilac,
     metin: normalize([ilac.ad, ilac.etkenMadde, ilac.doz, ilac.barkod, ilac.uretici].filter(Boolean).join(' ')),
     ad: normalize(ilac.ad),
+    // Adın ve etken maddenin sözcükleri: sorgu bir sözcüğün başında mı?
+    sozcukler: normalize(`${ilac.ad} ${ilac.etkenMadde || ''}`).split(/[^\p{L}\p{N}]+/u).filter(Boolean),
     grup: grupBul(ilac, indeks),
     marka: markaMi(ilac, indeks),
   }));
@@ -192,9 +194,13 @@ export function aramaDizini(havuzKayitlari, indeks) {
 
 /**
  * Arama + süzgeç. `suzgec.marka` üç durumlu: '' hepsi, 'marka' ticari,
- * 'jenerik' jenerik. Sıra: hekimin sık yazdıkları, öbür kendi kayıtları,
- * listenin yaygınları (`sik`), gerisi; her kademede adı sorguyla başlayan
- * önce, sonra ad, sonra dozun sayısı (5 mg, 10 mg, 20 mg).
+ * 'jenerik' jenerik. Sıra: önce adının ya da etken maddesinin bir sözcüğü
+ * sorgunun ilk kelimesiyle BAŞLAYANLAR (yalnız sözcüğün ortasında geçenler
+ * sonra: «omepraz» aranınca Esomeprazole'lü Nexium, listede yaygın diye
+ * Omeprazole'ün önüne geçiyordu, hekim ilk satıra dokunup yanlış ilacı
+ * ekliyordu); sonra hekimin sık yazdıkları, öbür kendi kayıtları, listenin
+ * yaygınları (`sik`), gerisi; her kademede adı sorguyla başlayan önce, sonra
+ * ad, sonra dozun sayısı (5 mg, 10 mg, 20 mg).
  * @param {string[]} sikIdler hekimin sık yazdığı ilaçların kimlikleri
  * @returns {{sonuclar: object[], toplam: number}} en çok `sinir` sonuç ve eşleşen sayısı
  */
@@ -209,7 +215,9 @@ export function ilacSuz(dizin, sorgu = '', suzgec = {}, { sikIdler = [], sinir =
     && (!suzgec.form || d.ilac.form === suzgec.form)
     && (!suzgec.marka || (suzgec.marka === 'marka') === d.marka)
     && kelimeler.every((k) => d.metin.includes(k)));
-  bulunan.sort((a, b) => kademe(a.ilac) - kademe(b.ilac)
+  const basta = (d) => !kelimeler.length || d.sozcukler.some((s) => s.startsWith(kelimeler[0]));
+  bulunan.sort((a, b) => Number(!basta(a)) - Number(!basta(b))
+    || kademe(a.ilac) - kademe(b.ilac)
     || (qn ? Number(!a.ad.startsWith(qn)) - Number(!b.ad.startsWith(qn)) : 0)
     || a.ad.localeCompare(b.ad)
     || sayi(a.ilac.doz) - sayi(b.ilac.doz));

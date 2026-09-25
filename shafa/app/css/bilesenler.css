@@ -192,6 +192,9 @@ a.sayac:hover { border-color: rgb(var(--vurgu) / .4); box-shadow: var(--golge-2)
 
 /* ---------- Liste ---------- */
 .liste { display: flex; flex-direction: column; border: var(--kenarlik); border-radius: var(--r); overflow: hidden; background: rgb(var(--yuzey)); }
+/* Gizlenen liste (ilaç kutusunun seçiliyken kapanan gezinme listesi) boş
+   bir çerçeve olarak da kalmasın. */
+.liste[hidden] { display: none; }
 /* Kartın içindeki liste kendi kenarlığını taşımaz — kutu içinde kutu oluyor
    ve satırlar kartın kenarına kadar uzanamıyordu. */
 .kart > .liste {
@@ -285,6 +288,11 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 }
 .uyari--hata { background: rgb(var(--kirmizi) / .1); color: rgb(var(--kirmizi)); border-inline-start-color: rgb(var(--kirmizi)); }
 .uyari--bilgi { background: rgb(var(--mavi) / .1); color: rgb(var(--mavi)); border-inline-start-color: rgb(var(--mavi)); }
+/* Salt kod QR'ında bulunan kaydın özeti: eczacı kâğıtla satır satır karşılaştırıyor. */
+.dogrula-ozet {
+  margin-block-start: var(--b-2); padding: var(--b-2) var(--b-3); border: 1px solid rgb(var(--cizgi) / .2); border-radius: var(--r-kucuk);
+  background: rgb(var(--yuzey-2)); white-space: pre-line; line-height: 1.7;
+}
 
 /* ---------- Boş durum ---------- */
 .durum { display: flex; flex-direction: column; align-items: center; gap: var(--b-2); padding: var(--b-8) var(--b-4); text-align: center; color: rgb(var(--metin-2)); }
@@ -356,6 +364,8 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 
 /* Başlıklı çip kümesi: "Yaygın", "Senin sık yazdıkların" gibi. */
 .cip-kume { display: flex; flex-wrap: wrap; align-items: center; gap: var(--b-2); margin-block-start: var(--b-2); }
+/* Çip sırasının ardındaki alanın etiketi çiplere yapışmasın. */
+.cip-kume + .alan { margin-block-start: var(--b-3); }
 .cip-kume__etiket {
   font-size: var(--f-xs); font-weight: 600; color: rgb(var(--metin-3));
   inline-size: 100%; margin-block-end: -2px;
@@ -556,8 +566,14 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
    Dar formda her sütun kendi içeriğinin altına inmiyor: kısa bir ad
    simgesiyle, şemsi tarih takvim düğmesiyle sığıyor. */
 .izgara--hasta {
-  grid-template-columns: minmax(150px, 172fr) minmax(64px, 92fr) minmax(136px, 172fr) minmax(102px, 149fr);
+  grid-template-columns: minmax(150px, 172fr) minmax(64px, 92fr) minmax(136px, 172fr) minmax(150px, 149fr);
   gap: 12px 16px;
+}
+/* Tasarımın genişliğinin (1536) altında form daralıyor: oranıyla ad «محمد
+   نعیم رح…» diye kesiliyordu (1440'ta da); tarih ve yaş ise boşluklu. En
+   azlar içerikten (ad + simge 164, numara 150), yaşın payı onlara. */
+@media (max-width: 1535px) {
+  .izgara--hasta { grid-template-columns: minmax(164px, 172fr) minmax(64px, 72fr) minmax(136px, 150fr) minmax(150px, 149fr); gap: 12px; }
 }
 .izgara--hasta .alan { margin: 0; gap: 1px; min-inline-size: 0; }
 .izgara--hasta .alan__yildiz { margin-inline-start: 5px; }
@@ -589,6 +605,9 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
   color: rgb(var(--simge-sessiz)); pointer-events: none;
 }
 .izgara--hasta .girdi-simgeli .input { padding-inline-start: 44px; }
+/* Düzenlenen reçetenin numarası («2026-09-25-01») 150 px'lik kutuya tam
+   sığsın: son iki hanesi kesiliyordu (1536'da da). */
+.izgara--hasta .girdi-simgeli .recete-no { padding-inline: 36px 8px; font-size: 14px; }
 /* Yaş hastadan türüyor: salt okunur kutu, sayı ve «سال» ortada. */
 .yas-kutu {
   display: flex; align-items: center; justify-content: center; gap: 14px;
@@ -612,11 +631,15 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
    220'ye iniyor; daha darında «Temperature» etiketi küçülüyor (aşağıda). */
 .recete-ikili {
   display: grid; grid-template-columns: minmax(220px, 244fr) minmax(0, 412fr);
-  gap: 8px; align-items: stretch;
+  gap: 8px; align-items: start;
 }
 .recete-ilaclar { display: flex; flex-direction: column; gap: 8px; min-inline-size: 0; }
-/* Liste kartı kalan boyu alıyor: tablo kısayken alt kenarı Clinical'la hizalı. */
+/* Liste kartı kalan boyu alıyor: tablo kısayken alt kenarı Clinical'la
+   hizalı. Sütunlar gerilmiyor (align-items: start): ilaçlar uzayınca
+   Clinical kartı Blood Gr.'nin altında 650 px boş kutu oluyordu. Kısa
+   tabloda hizayı sağ sütunun en az boyu tutuyor (Clinical'ın boyu). */
 .recete-ilaclar .kart--liste { flex: 1; }
+.recete-ikili > .recete-ilaclar { align-self: stretch; }
 
 /* ---- Clinical: ölçüm satırları ----
    Satır dört sütun: simge (30), etiket, kutu (84; dar satırlarda 52),
@@ -762,18 +785,28 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 .tablo--ilac tbody tr:not(.tablo__bos):hover { background: rgb(var(--vurgu) / .06); }
 .ilac-sira { font-weight: 600; }
 /* Ad hiç kesilmiyor, sarıyor: yanlış ilaç okunabilir kalmalı. Ad düğmesi
-   satırın sekme durağı; görünüşü düz yazı. */
+   satırın sekme durağı; görünüşü düz yazı. Tasarımdaki gibi 500 ağırlık
+   (kalın değil); etken madde ikinci satırda, küçük. Kalın ve yanındayken
+   26%'lık sütunda «Nexium (Esomeprazole» yazıp «)»yu tek başına alt
+   satıra atıyordu. Sütundan uzun tek sözcük («Sulfamethoxazole») yine her yerden
+   bölünebiliyor: düğme sığdırılan kutu, break-word'le sütunu taşırıyordu. */
 .ilac-ad {
   display: inline; padding: 0; border: 0; background: none; cursor: pointer;
-  font: inherit; color: inherit; text-align: center; overflow-wrap: anywhere;
+  font: inherit; font-weight: 500; color: inherit; text-align: center; overflow-wrap: anywhere;
 }
+.ilac-ad__etken { display: block; font-size: 12px; font-weight: 400; line-height: 1.3; color: rgb(var(--metin-2)); }
 .ilac-ad:focus-visible { outline: 2px solid rgb(var(--vurgu)); outline-offset: 2px; border-radius: 3px; }
-.tablo--ilac td.ilac-doz { padding-inline: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11.5px; font-weight: 400; color: rgb(var(--metin-2)); }
+/* Güç ve şekil ayrı parçalar; şekil bölünmüyor, sığmazsa alt satıra
+   iniyor. Önce üç noktayla kısalıyordu, «100 mcg (Spr…»da şekil hiç
+   görünmüyordu. Uzun bileşik güç («225/200/25 mg/5 ml») de kesilmiyor,
+   sarıyor. */
+.tablo--ilac td.ilac-doz { padding-inline: 2px; font-size: 11.5px; font-weight: 400; line-height: 1.3; color: rgb(var(--metin-2)); overflow-wrap: anywhere; }
+.ilac-doz__sekil { white-space: nowrap; }
 .tablo--ilac td.ilac-sure { padding-inline: 2px; white-space: nowrap; font-size: 13px; }
-/* Kullanım iki satır: kullanım, altında zaman · yol · not; her biri tek
-   satır, sığmayan üç noktayla (tamamı title'da ve kâğıtta). */
+/* Kullanım iki satır: kullanım, altında zaman · yol · not. Sığmayan
+   sarıyor: 1366 ve 1280'de «روزانه 1 …», «بعد از غ…» diye kesiliyordu. */
 .ilac-kullanim__satir {
-  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  display: block; overflow-wrap: break-word;
   font-size: 12.5px; font-weight: 400; line-height: 20px;
 }
 .ilac-sil {
@@ -781,9 +814,11 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
   border-color: transparent; background: none; color: rgb(var(--kirmizi));
 }
 .ilac-sil:hover:not(:disabled) { background: rgb(var(--kirmizi) / .1); border-color: transparent; }
-/* Uyarılı satır: başta 3 px şerit ve adın önünde simge (metni title'da). */
-.ilac-satir--hata td:first-child { box-shadow: inset 3px 0 0 rgb(var(--kirmizi)); }
-.ilac-satir--uyari td:first-child { box-shadow: inset 3px 0 0 rgb(var(--sari)); }
+/* Uyarılı satır: başta 3 px şerit ve adın önünde simge (metni title'da).
+   Şerit mantıksal kenarlık: gölgenin kayması fiziksel (x), sağdan sola
+   tabloda satırın başında değil, # ile ad arasında çıkıyordu. */
+.ilac-satir--hata td:first-child { border-inline-start: 3px solid rgb(var(--kirmizi)); }
+.ilac-satir--uyari td:first-child { border-inline-start: 3px solid rgb(var(--sari)); }
 .ilac-satir__uyari { display: inline-flex; vertical-align: -2px; margin-inline-end: 4px; }
 .ilac-satir--hata .ilac-satir__uyari { color: rgb(var(--kirmizi)); }
 .ilac-satir--uyari .ilac-satir__uyari { color: rgb(var(--sari)); }
@@ -885,6 +920,17 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 .recete-eylem {
   display: grid; grid-template-columns: 210fr 211fr 224fr; gap: 10px;
   margin-block-start: 4px;
+}
+/* Masaüstünde formun dibine yapışık: tasarımın kendi 1536 × 1024'ünde bile
+   (ek not satırıyla) «ذخیره و چاپ» ekranın altında kalıyordu. Paneli
+   `overflow: clip` (kaydırma kabı değil), yapışma sayfaya. Telefonda iki
+   satırlık düğmeler ekranın beşte birini kapatırdı: orada akışta. */
+@media (min-width: 561px) {
+  .recete-panel > .recete-eylem {
+    position: sticky; inset-block-end: 0; z-index: 3;
+    margin-inline: -6px; margin-block-end: -8px; padding: 8px 6px;
+    background: rgb(var(--form-panel)); box-shadow: 0 -8px 12px -8px rgb(0 0 0 / .35);
+  }
 }
 .recete-eylem .btn { inline-size: 100%; justify-content: center; }
 .recete-btn { gap: 12px; border-radius: 7px; font-size: 15px; font-weight: 600; }
@@ -1013,9 +1059,16 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
   .tablo--ilac tbody tr:not(.tablo__bos) .ilac-kullanim { order: 6; display: flex; flex-wrap: wrap; column-gap: 6px; }
   .tablo--ilac tbody tr:not(.tablo__bos) .ilac-sure { order: 7; }
   .tablo--ilac tbody tr:not(.tablo__bos) .ilac-kullanim__satir { font-size: 12.5px; white-space: normal; }
-  /* Ayraç ve «N=» (kâğıttaki adet yazımı) yalnız bu dizilişte gerekiyor. */
-  .tablo--ilac tbody tr:not(.tablo__bos) .ilac-adet::before { content: '· N='; }
-  .tablo--ilac tbody tr:not(.tablo__bos) :is(.ilac-kullanim, .ilac-sure)::before { content: '·'; }
+  /* Ayraç ve «N=» (kâğıttaki adet yazımı) yalnız bu dizilişte gerekiyor.
+     Ayraç satır içi blok: çift yönlü dizilişte yansız bir kutu, iki yanında
+     eşit boşluk (esnek aralık + kendi payı); değerler <bdi> içinde, rakama
+     yapışmıyor. «N=» adedin soldan sağa kutusunda: «N=2», «2=N» değil. */
+  .tablo--ilac tbody tr:not(.tablo__bos) :is(.ilac-adet, .ilac-sure, .ilac-kullanim__satir)::before {
+    content: '·'; display: inline-block; margin-inline-end: 6px; font-weight: 700;
+  }
+  .tablo--ilac tbody tr:not(.tablo__bos) .ilac-adet__deger::before { content: 'N='; }
+  /* Boş kullanım ve süre telefonda yer tutucu «—» değil, hiç yok. */
+  .tablo--ilac tbody tr:not(.tablo__bos) .ilac--bos { display: none; }
   .tablo--ilac tbody tr:not(.tablo__bos) .ilac-sil { inline-size: 44px; block-size: 44px; min-width: 44px; min-height: 44px; }
   .tablo--ilac tbody tr:not(.tablo__bos) .ilac-sil .simge { inline-size: 20px; block-size: 20px; }
   .tablo--sik td { block-size: auto; }

@@ -106,13 +106,13 @@ export default {
       const uyarilar = receteUyarilari(recete.satirlar, hasta, ilaclar, { alerjiBul: alerjiCakismasi });
 
       temizle(kok);
+      // Yazdır ve PDF başlıkta değil, önizleme panelinin başında (aşağıda):
+      // aynı iki eylem iki kez duruyordu, klavye iki çiftten geçiyordu.
       kok.append(sayfaBas(recete.receteNo || t('nav.recete', 'Reçete'), {
         alt: [tarihMetni(recete.tarih), secenekAdi(RECETE_TURLERI, recete.tur, 'recete.tur'), tamAd(hasta)].filter(Boolean).join(' · '),
         geri: () => git('/receteler'),
         eylemler: [
           btnS('telefon', t('paylas.gonder', 'Gönder'), { class: 'btn btn--birincil', onclick: () => paylasKutusu(ctx, recete, hasta, ayar) }),
-          btnS('yazdir', t('genel.yazdir', 'Yazdır'), { class: 'btn', onclick: () => kagidiYazdir({ recete, hasta, ayar }) }),
-          btnS('pdf', t('recete.pdf_kaydet', 'PDF kaydet'), { class: 'btn', 'data-odak-adi': 'recete-pdf', onclick: () => pdfKaydet({ recete, hasta, ayar }) }),
           btnS('kalem', t('genel.duzenle', 'Düzenle'), { class: 'btn', onclick: () => git(`/recete/${recete.id}/duzenle`) }),
           btnS('cop', t('genel.sil', 'Sil'), { class: 'btn', onclick: async () => {
             if (await onayla(t('recete.sil_onay', 'Reçete silinsin mi?'), { tehlikeli: true, evet: t('genel.sil', 'Sil') })) {

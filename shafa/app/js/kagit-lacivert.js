@@ -354,21 +354,29 @@ function seritCiz({ recete, hasta, bos, duz, cizgi }, sayfa) {
     hucre(el('b', {}, t('kagit.serit_tarih', 'DATE:')), bos ? '' : tarihMetni(recete.tarih), { rol: 'tarih', alan: 'tarih' }));
 }
 
-/* Sol sütunun bölüm başlıkları ve kâğıttaki adları. */
+/* Sol sütunun bölüm başlıkları, kâğıttaki adları ve düzenlerken boş
+   bölümün eylemi (başlığı yinelemiyor: «+ SYMPTOMS AND SIGNS:» yerine
+   «+ افزودن علائم»). */
 const BOLUMLER = {
-  belirtiler: { baslik: ['kagit.l_belirti', 'SYMPTOMS AND SIGNS:'], alan: 'belirtiler', rol: 'belirtiler', bos: 4 },
-  lab: { baslik: ['kagit.l_lab', 'LABORATORY FINDINGS:'], alan: 'laboratuvar', rol: 'lab', bos: 4 },
-  tani: { baslik: ['kagit.l_tani', 'DIAGNOSIS / IMPRESSION:'], alan: 'tani', rol: 'tani', bos: 2 },
+  belirtiler: { baslik: ['kagit.l_belirti', 'SYMPTOMS AND SIGNS:'], ekle: ['kagit.l_belirti_ekle', 'Belirti ekle'], alan: 'belirtiler', rol: 'belirtiler', bos: 4 },
+  lab: { baslik: ['kagit.l_lab', 'LABORATORY FINDINGS:'], ekle: ['kagit.l_lab_ekle', 'Tetkik ekle'], alan: 'laboratuvar', rol: 'lab', bos: 4 },
+  tani: { baslik: ['kagit.l_tani', 'DIAGNOSIS / IMPRESSION:'], ekle: ['kagit.l_tani_ekle', 'Tanı ekle'], alan: 'tani', rol: 'tani', bos: 2 },
 };
+/* Sıkışık kipte basılmayan bölümlerin yer tutucu satırı (7 mm) ve payı. */
+const EKSIK_SATIRI = 9;
 
 /** Ölçüm tablosu: yedi ölçüm ve sekizinci satırda kan grubu. Boş değer
- *  noktalı çizginin üstünde boşluk (kalemle yazılsın); tire basılmıyor. */
+ *  noktalı çizginin üstünde boşluk (kalemle yazılsın); tire basılmıyor.
+ *  Boşluk gerçek bir karakter (U+00A0), boş span değil: taban çizgisi
+ *  hizalı ızgarada içi boş öğenin sentetik taban çizgisi satırın üstüne
+ *  taşıyor ve Chromium BASARKEN o satırı hiç çizmiyordu (ekranda vardı):
+ *  boş kâğıtta «VITAL SIGNS:» altında sekiz satırın hepsi kayboluyordu. */
 function olcumTablosu({ recete, bos, duz }) {
   const satir = (anahtar, etiket, deger, birim) => duz(anahtar === 'kanGrubu' ? 'kanGrubu' : 'olcum:' + anahtar,
     el('div', { class: 'kagit__l-olcum', 'data-rol': anahtar === 'kanGrubu' ? 'kan' : 'olcum', 'data-olcum': anahtar === 'kanGrubu' ? null : anahtar },
       el('b', {}, etiket + ':'),
-      el('span', { class: 'kagit__l-olcum-deger' }, deger),
-      el('i', {}, birim)));
+      el('span', { class: 'kagit__l-olcum-deger' }, deger || '\u00a0'),
+      birim ? el('i', {}, birim) : null));
   return el('div', { class: 'kagit__l-olcumler', 'data-rol': 'olcumler' },
     ...OLCUMLER.map(([anahtar, , , birim]) => {
       const ham = bos ? '' : String(recete.olcumler?.[anahtar] ?? '').trim();
@@ -381,7 +389,7 @@ function olcumTablosu({ recete, bos, duz }) {
 }
 
 /** Sol sütun: bölümler, ölçüm tablosu ve ek not kutusu. */
-function solSutun(bloklar, kip, c, imzaSatiri) {
+function solSutun(bloklar, kip, c, imzaSatiri, solArtan) {
   const { duz, yerTutucu } = c;
   const baslik = (anahtar, yedek, devam) => el('div', { class: 'kagit__l-bas' },
     t(anahtar, yedek) + (devam ? ' ' + t('kagit.l_devam', '(cont.)') : ''));
@@ -394,24 +402,33 @@ function solSutun(bloklar, kip, c, imzaSatiri) {
         duz('notlar', el('div', { class: 'kagit__l-not', 'data-rol': 'not', dir: 'auto' }, b.metin)));
     }
     const tanim = BOLUMLER[b.tur];
-    const icerik = b.kalemler.length
-      ? el('ul', { class: 'kagit__l-liste' + (ikiSutunMu(kip, b.kalemler.length) ? ' kagit__l-liste--iki' : '') },
-        ...b.kalemler.map((k) => el('li', { dir: 'auto' }, k)))
-      // Boş bölüm: düzenlerken yer tutucu, basılırken kalem çizgileri
-      // (boş kâğıtta bölüm başına 4/4/2, dolu kâğıtta 1).
-      : (yerTutucu(tanim.alan, t(...tanim.baslik)) || el('div', { class: 'kagit__l-cizgiler' },
-        ...Array.from({ length: c.bos ? tanim.bos : 1 }, () => el('span', { class: 'kagit__l-kalem' }))));
-    const kap = el('section', { class: 'kagit__l-bolum', 'data-rol': b.kalemler.length ? tanim.rol : null },
-      baslik(...tanim.baslik, b.devam), icerik);
-    return b.kalemler.length ? duz(tanim.alan, kap) : kap;
+    if (!b.kalemler.length) {
+      // Boş bölüm basılırken kalem çizgileri (boş kâğıtta bölüm başına
+      // 4/4/2, dolu kâğıtta 1). Düzenlerken de aynı çizgiler: eylem yazısı
+      // çizginin ÜSTÜNDE, bölümün kendisi dokunulan yer. Çizgilerin yerine
+      // konan yer tutucu 6 mm uzundu, önizleme basılandan uzun düşüyordu.
+      const cizgiler = el('div', { class: 'kagit__l-cizgiler' },
+        ...Array.from({ length: c.bos ? tanim.bos : 1 }, () => el('span', { class: 'kagit__l-kalem' })));
+      const eylem = c.duzenlenebilir
+        ? el('span', { class: 'kagit__l-bolum-ekle' }, simge('arti', { boy: 12, sinif: 'kagit__duz-arti' }), el('span', {}, t(...tanim.ekle)))
+        : null;
+      return duz(tanim.alan, el('section', { class: 'kagit__l-bolum kagit__l-bolum--bos' }, baslik(...tanim.baslik, b.devam), cizgiler, eylem));
+    }
+    return duz(tanim.alan, el('section', { class: 'kagit__l-bolum', 'data-rol': tanim.rol },
+      baslik(...tanim.baslik, b.devam),
+      el('ul', { class: 'kagit__l-liste' + (ikiSutunMu(kip, b.kalemler.length) ? ' kagit__l-liste--iki' : '') },
+        ...b.kalemler.map((k) => el('li', { dir: 'auto' }, k)))));
   };
   // Sıkışık kiplerde boş bölümler basılmıyor, ama düzenlerken dokunulacak
-  // yerleri kalmalı: yer tutucuları (yalnız ekranda) sütunun sonunda.
-  const eksik = c.duzenlenebilir && kip !== 'rahat' && !c.bos
+  // yerleri kalmalı: yer tutucuları (yalnız ekranda) tek satırda, sütunun
+  // sonunda — ve yalnız sütunda yer varsa: kapasite sınırında önizlemeye
+  // eklenen satır imzayı ayağın altına itiyordu (form kartları yine açık).
+  const eksik = c.duzenlenebilir && kip !== 'rahat' && !c.bos && solArtan >= EKSIK_SATIRI
     ? Object.keys(BOLUMLER).filter((tur) => !bloklar.some((b) => b.tur === tur))
-      .map((tur) => yerTutucu(BOLUMLER[tur].alan, t(...BOLUMLER[tur].baslik)))
+      .map((tur) => yerTutucu(BOLUMLER[tur].alan, t(...BOLUMLER[tur].ekle)))
     : [];
-  return el('div', { class: 'kagit__l-sol' }, ...bloklar.map(bolum), ...eksik, imzaSatiri);
+  return el('div', { class: 'kagit__l-sol' }, ...bloklar.map(bolum),
+    eksik.length ? el('div', { class: 'kagit__l-eksikler' }, ...eksik) : null, imzaSatiri);
 }
 
 /** İmza satırı: doğrulama kodu (sol) ve imza bloğu (sağ). İmza görseli
@@ -430,6 +447,11 @@ function imzaSatiriCiz({ recete, ayar, bos }) {
       el('div', { class: 'kagit__l-imza-en' }, t('kagit.imza_en', "Doctor's Signature"))));
 }
 
+/* Güç («375 mg», «10 mg/5») sözcük kaydırmada bölünmüyor: ad satırın sonuna
+   denk gelince «375 / mg» diye iki satıra düşüyordu. Boşluk bölünmez karakter
+   değil, bölünmez kutu: kâğıdın metni (kopyalanan, aranan) aynı kalsın. */
+const gucBolunmez = (ad) => ad.split(/(\S*\d \D\S*)/).map((p, i) => (i % 2 ? el('span', { class: 'kagit__l-bolunmez' }, p) : p));
+
 /** İlaç listesi: numara, «Tab: Ad (Etken) güç», altında «N=… | kullanım |
  *  zaman | süre». Numara gerçek metin: okuyucu ve arama da görüyor.
  *  İkinci satırda adet solda (eczacı miktarları alt alta okusun), Dari
@@ -443,7 +465,8 @@ function ilacListesi({ recete, duz }, ilk, son, { genis = false } = {}) {
       return duz('ilac:' + (ilk + j), el('li', { 'data-rol': 'ilac' },
         el('span', { class: 'kagit__l-sira' }, `${ilk + j + 1}.`),
         el('div', {},
-          el('div', { class: 'kagit__l-i1' }, x.kisa ? el('span', { class: 'kagit__l-form' }, x.kisa + ':') : null, el('b', {}, x.ad)),
+          // Şekli tanınmayan ilaçta önek boş ama yeri duruyor: ad sütunu kaymasın.
+          el('div', { class: 'kagit__l-i1' }, el('span', { class: 'kagit__l-form' }, x.kisa ? x.kisa + ':' : ''), el('b', {}, ...gucBolunmez(x.ad))),
           el('div', { class: 'kagit__l-i2' },
             el('span', { class: 'kagit__l-adet' }, x.adet),
             x.kullanim.length ? el('span', { class: 'kagit__l-ayir', 'aria-hidden': 'true' }, '|') : null,
@@ -465,8 +488,15 @@ function sagSutun(c, sayfa, imzaSatiri) {
         simge('uyari', { boy: 12 }), el('b', {}, t('kagit.alerji', 'حساسیت') + ': '), alerjiler.join('، '))
       : null,
     bos ? null : ilacListesi(c, sayfa.ilk, sayfa.son),
-    !bos && sayfa.son === (c.recete.satirlar || []).length ? yerTutucu('ilac-ekle', t('recete.ilac_ekle', 'İlaç ekle')) : null,
-    sayfa.no < sayfa.toplam && sayfa.son > sayfa.ilk ? el('div', { class: 'kagit__l-devam-var', dir: 'rtl' }, t('kagit.devam_var', 'ادامه در صفحهٔ بعد ←')) : null,
+    // «+ افزودن دوا» yalnız sütunda bir ilaçlık yer varsa (tutucu bir
+    // birimden kısa): kapasite sınırında imzayı ve kodu ayağın altına itiyor,
+    // önizleme basılan kâğıttan farklı görünüyordu. Form tablosunun
+    // «افزودن دوا»sı her zaman orada.
+    !bos && sayfa.son === (c.recete.satirlar || []).length && sayfa.artan >= 1 ? yerTutucu('ilac-ekle', t('recete.ilac_ekle', 'İlaç ekle')) : null,
+    // «Devam ediyor» yalnız ilaçlar gerçekten sonraki yaprakta sürüyorsa:
+    // yalnız klinik sütun taştığında da basılıyordu, eczacı ikinci yaprakta
+    // olmayan ilaçları arıyordu.
+    sayfa.son < (c.recete.satirlar || []).length ? el('div', { class: 'kagit__l-devam-var', dir: 'rtl' }, t('kagit.devam_var', 'ادامه در صفحهٔ بعد ←')) : null,
     imzaSatiri);
 }
 
@@ -510,11 +540,11 @@ function yaprakCiz(c, sayfa) {
     // Sık kipte imza satırı sol sütunun dibinde: sağ sütunun her milimetresi ilaçlara.
     const solda = kip === 'sik';
     govde = el('div', { class: 'kagit__l-govde', dir: 'ltr' },
-      solSutun(sayfa.sol || [], kip, c, solda ? imza : null),
+      solSutun(sayfa.sol || [], kip, c, solda ? imza : null, sayfa.solArtan),
       sagSutun(c, sayfa, solda ? null : imza));
   }
   return el('div', {
-    class: `kagit kagit--lacivert kagit--l-${kip}${kisa ? ' kagit--l-devam' : ''}`,
+    class: `kagit kagit--lacivert kagit--l-${kip}${kisa ? ' kagit--l-devam' : ''}${c.boyut === 'A5' ? ' kagit--l-a5' : ''}`,
     'data-rol': 'sayfa', 'data-sayfa': `${sayfa.no}/${sayfa.toplam}`,
   },
   cerceveCiz(), koseCiz(),
@@ -542,6 +572,6 @@ export function lacivertKagit(c) {
   // A5: aynı yaprak 136/194 = 0,701 oranında (sayfa 136 × 190,7 mm).
   stil.textContent = `@page { size: ${boyut}; margin: ${boyut === 'A5' ? '6mm' : '8mm'}; }`
     + (boyut === 'A5' ? ' @media print { .yazdir-alan--lacivert .kagit--lacivert { zoom: 0.7010; } }' : '');
-  const ctx = { ...c, recete, hasta, bos };
+  const ctx = { ...c, recete, hasta, bos, boyut };
   return el('div', { class: 'yazdir-alan yazdir-alan--lacivert' }, stil, ...sayfalar.map((s) => yaprakCiz(ctx, s)));
 }
