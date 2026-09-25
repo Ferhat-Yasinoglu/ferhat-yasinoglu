@@ -213,11 +213,18 @@ export class HesapServisi {
    * Parolayı unutan hekim: kurtarma koduyla K açılır, yeni parola ve YENİ bir
    * kurtarma kodu (yeniKod, arayüz önceden gösterip onaylatır) sunucuya gider.
    * Eski kod bir daha çalışmaz, öbür cihazların oturumları düşer.
+   *
+   * `yeniKod` bir işlev de olabilir (arayüz böyle veriyor): eski kod sunucuda
+   * TUTTUKTAN sonra çağrılır, yeni kodu gösterip onaylatır ve döndürür; null
+   * dönerse kurtarma 'iptal'le biter, sunucuda hiçbir şey değişmez. Yoksa
+   * eski kodu yanlış yazan hekim her denemede yeni bir kodu boşuna kâğıda
+   * yazardı.
    */
   async kurtar({ kullanici, kod, yeniParola, yeniKod, yerel } = {}) {
     const u = this._kullanici(kullanici);
     this._kod(kod);
-    this._kod(yeniKod);
+    const kodSor = typeof yeniKod === 'function' ? yeniKod : null;
+    if (!kodSor) this._kod(yeniKod);
     this._yeniParola(yeniParola, u);
     await this._girisliDegil();
     await this._yerelKarari(u, yerel);
@@ -231,7 +238,10 @@ export class HesapServisi {
       throw e;
     }
     const K = await ac(ka.sarma, kurtarmaSarili, 'kurtarma', u);
-    const [pa, yka] = await Promise.all([parolaAnahtarlari(u, yeniParola), kurtarmaAnahtarlari(u, yeniKod)]);
+    const yeni = kodSor ? await kodSor() : yeniKod;
+    if (!yeni) throw new HesapHatasi('iptal', 'Kurtarma yarıda bırakıldı.');
+    this._kod(yeni);
+    const [pa, yka] = await Promise.all([parolaAnahtarlari(u, yeniParola), kurtarmaAnahtarlari(u, yeni)]);
     const [sarili, yeniKurtarmaSarili] = await Promise.all([sar(pa.sarma, K, 'parola', u), sar(yka.sarma, K, 'kurtarma', u)]);
     const { jeton } = await istemci.kurtarBitir({
       kullanici: u, kurtarma: ka.kurtarma, giris: pa.giris, sarili, yeniKurtarma: yka.kurtarma, yeniKurtarmaSarili,

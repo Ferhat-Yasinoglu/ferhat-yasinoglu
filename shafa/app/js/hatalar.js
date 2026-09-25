@@ -71,6 +71,9 @@ const DEPO = {
   parola_rakam: 'Parola yalnız rakamlardan oluşamaz.',
   parola_kullanici: 'Parola kullanıcı adını içeremez.',
   parola_yaygin: 'Bu parola çok yaygın, kolay tahmin edilir. Kısa bir cümle dene.',
+  // Kartın kendi denetimleri (hesap-arayuz.js): ağdan ve kutulardan önce.
+  parola_farkli: 'İki parola aynı değil.',
+  davet_bos: 'Davet kodunu yaz. Kodu uygulamanın sahibi verir.',
   kurtarma_gecersiz: 'Kurtarma kodu 24 harf ve rakamdan oluşmalı.',
   kurtarma_yanlis: 'Kullanıcı adı ya da kurtarma kodu yanlış.',
   girisli: 'Bu cihaz zaten bir hesaba bağlı; önce çıkış yap.',

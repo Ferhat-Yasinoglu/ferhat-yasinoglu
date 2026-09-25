@@ -11,7 +11,7 @@ import { tarihSaatMetni } from '../paylasilan/tarih.js';
 import { sayiMetni, bicimAyarla, PARA_BIRIMLERI } from '../paylasilan/metin.js';
 import { t } from '../i18n.js';
 import { sablonListesi } from '../sablon-arayuz.js';
-import { hesapKarti } from '../hesap-arayuz.js';
+import { hesapKarti, hesapKipi } from '../hesap-arayuz.js';
 import { kurulumKarti } from '../kurulum-arayuz.js';
 import { kagidiYazdir, QR_VARSAYILAN } from '../kagit.js';
 import { hataMetni } from '../hatalar.js';
@@ -123,7 +123,13 @@ export default {
        geçtiyse geç kalan çizim yeni sayfanın üstüne Ayarlar'ı basıyordu. */
     let sira = 0;
     let ayrildi = false;
-    async function ciz() {
+    // Hesap kartı servisi dinliyor: sayfa her yeniden çizildiğinde eski
+    // kartın dinleyicisi bırakılmalı, yoksa sökülmüş kartlar birikir.
+    let hesapBirak = null;
+    /* `hesaba`: çizimden sonra hesap kartına kaydır ve ilk kutusuna odaklan
+       (ilk açılıştaki «حساب دارید؟» düğmesi, hata bandı, kayıtları silen
+       hesap işlemlerinden sonra). */
+    async function ciz({ hesaba = false } = {}) {
       const benim = ++sira;
       const meta = await depo.meta();
       const ayar = await depo.ayarlar();
@@ -138,6 +144,8 @@ export default {
       }
       if (benim !== sira || ayrildi) return;
 
+      hesapBirak?.();
+      hesapBirak = null;
       temizle(kok);
       kok.append(sayfaBas(t('nav.ayarlar', 'Ayarlar'), { alt: t('ayar.alt', 'Reçete antedi, yedek ve uygulama bilgileri.') }));
 
@@ -264,7 +272,7 @@ export default {
           : t('ayar.yedek_yok', 'Henüz yedek alınmadı.')),
         el('div', { class: 'uyari uyari--bilgi', style: { marginBlock: 'var(--b-3)' } },
           simge('kilit', { boy: 16 }),
-          el('span', {}, t('ayar.gizlilik', 'Kayıtlar yalnız bu cihazda ve bu tarayıcıda durur. Tarayıcı verisi temizlenirse hepsi silinir — düzenli yedek al ve dosyayı güvenli bir yerde sakla. Yedek dosyası hasta bilgisi içerir.'))),
+          el('span', {}, t('ayar.gizlilik', 'Kayıtlar bu cihazda ve bu tarayıcıda durur. Tarayıcı verisi temizlenirse bu cihazdaki kayıtlar silinir — düzenli yedek al ve dosyayı güvenli bir yerde sakla. Yedek dosyası hasta bilgisi içerir.'))),
         el('div', { class: 'satir' },
           btnS('indir', t('yedek.indir', 'Yedek indir'), { class: 'btn btn--birincil', onclick: async () => {
             indir(await yedekOlustur(depo));
@@ -276,7 +284,11 @@ export default {
 
       /* --- Hesap: dosya yedeğinin hemen ardında, çünkü ikisi aynı sorunun
              iki cevabı. --- */
-      if (hesapDurumu) kok.appendChild(hesapKarti(hesapDurumu));
+      if (hesapDurumu) {
+        const hk = hesapKarti(ctx, hesapDurumu, { yenileSayfa: () => ciz({ hesaba: true }) });
+        hesapBirak = hk.birak;
+        kok.appendChild(hk.kart);
+      }
 
       /* --- Bu cihaza kur --- */
       kok.appendChild(kurulumKarti(ctx, ciz));
@@ -364,9 +376,15 @@ export default {
         btnS('cop', t('ayar.hepsini_sil', 'Tüm verileri sil'), { class: 'btn btn--tehlike', style: { marginBlockStart: 'var(--b-3)' }, onclick: async () => {
           const onayKelimesi = t('ayar.sil_kelimesi', 'SİL');
           const kutu = girdi({ placeholder: onayKelimesi, autocomplete: 'off' });
+          // Hesaba bağlıysa dürüstçe söylenir: bu düğme sunucudaki kopyayı silmez.
+          // Durum o an okunur: sayfa çizildikten sonra girilmiş olabilir.
+          const simdiki = ctx.hesap ? await ctx.hesap.hesapDurumu() : null;
+          const hesapli = simdiki?.girisli || simdiki?.oturumBitti;
           const onay = await modal({
             baslik: t('ayar.hepsini_sil', 'Tüm verileri sil'),
-            govde: el('div', {}, el('p', {}, t('ayar.sil_onay', 'Bu işlem geri alınamaz. Onaylamak için kutuya {k} yaz.', { k: onayKelimesi })), kutu),
+            govde: el('div', {},
+              hesapli ? el('p', {}, t('ayar.sil_hesap', 'Bu cihazda hesaptan da çıkılır. Sunucudaki şifreli kopya durur; onu silmek için önce hesabı sil (Hesap → Gelişmiş).')) : null,
+              el('p', {}, t('ayar.sil_onay', 'Bu işlem geri alınamaz. Onaylamak için kutuya {k} yaz.', { k: onayKelimesi })), kutu),
             dugmeler: [
               { metin: t('genel.vazgec', 'Vazgeç'), deger: null },
               { metin: t('genel.sil', 'Sil'), sinif: 'btn--tehlike', cb: () => {
@@ -389,15 +407,28 @@ export default {
           } catch (e) { hata(hataMetni(e, t('genel.silinemedi', 'Silinemedi'))); }
         } })));
 
+      /* Yönlendirici çizimden sonra sayfayı başa kaydırıp odağı başlığa
+         veriyor; kaydırma ondan SONRA olmalı. */
+      if (hesaba) {
+        setTimeout(() => {
+          const k = kok.querySelector('#hesap-karti');
+          if (!k || ayrildi) return;
+          k.scrollIntoView({ block: 'start' });
+          // Girişli kartta ilk kutu katlı «پیشرفته»de: odak o zaman başlığa.
+          (k.querySelector('.hesap-govde > form input:not([hidden])') || k.querySelector('h2')).focus({ preventScroll: true });
+        }, 0);
+      }
+
       /* --- Hakkında --- */
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' }, el('h2', {}, t('ayar.hakkinda', 'Hakkında'))),
         el('p', { class: 'kart__alt' }, `${t('uygulama.tam_ad', 'Shafa — Reçete')} · ${t('ayar.surum', 'sürüm')} ${ctx.uygulamaSurumu}`),
-        el('p', { class: 'kart__alt' }, t('ayar.hakkinda_alt', 'Çerçevesiz, derleme adımsız bir PWA. İnternet olmadan da tam çalışır; hiçbir veri sunucuya gönderilmez.'))));
+        el('p', { class: 'kart__alt' }, t('ayar.hakkinda_alt', 'Çerçevesiz, derleme adımsız bir PWA. İnternet olmadan da tam çalışır. Hesap yoksa hiçbir veri sunucuya gitmez; hesapla yalnız şifreli bir kopya.'))));
     }
 
-    await ciz();
+    if (ctx.sorgu?.hesap) hesapKipi('giris');
+    await ciz({ hesaba: !!ctx.sorgu?.hesap });
     const birak = depo.dinle('*', () => {});
-    return () => { ayrildi = true; birak(); };
+    return () => { ayrildi = true; hesapBirak?.(); birak(); };
   },
 };

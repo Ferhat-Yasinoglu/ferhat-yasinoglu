@@ -6,7 +6,7 @@ import { hatirlatmaGerekli, yedekOlustur, indir } from './depo/yedek.js';
 import { hazirListeyiTazele } from './depo/hazir-ilaclar.js';
 import { eskiSenkronAyarlariniSil } from './depo/senkron.js';
 import { HesapServisi } from './senkron/hesap-servisi.js';
-import { senkronOzeti } from './hesap-arayuz.js';
+import { senkronOzeti, hesapBandi } from './hesap-arayuz.js';
 import { kur, kurulabilirMi, kuruluMu, elleKurulur, dinle as kurulumuDinle } from './cekirdek/kurulum.js';
 import { Yonlendirici } from './cekirdek/yonlendirici.js';
 import { el, temizle, btn, girdi, sirala } from './cekirdek/dom.js';
@@ -266,23 +266,37 @@ function zilDugmesi() {
 }
 
 // Depo açılamadıysa (kayıtlar sekmeyle silinecek) kutu bir kez kendiliğinden
-// açılıyor: bu uyarı bir noktanın arkasında kalamayacak kadar önemli.
+// açılıyor: bu uyarı bir noktanın arkasında kalamayacak kadar önemli. Hesabın
+// kalıcı hatası açtırmıyor: oturum düşmüşse her açılışta kutu açılıp sayfanın
+// üstünü kapatırdı; kırmızı nokta, bant ve Ayarlar'daki kart yetiyor.
 let hataGosterildi = false;
+// Bantlar hesabın her olayında da tazeleniyor (tur başladı/bitti); üst üste
+// gelen iki çağrının yarım listeleri birbirine eklenmesin diye sıra numarası.
+let bantSirasi = 0;
 
 async function bantlariYenile(ctx) {
+  const benim = ++bantSirasi;
+  const h = hatirlatmaGerekli(await ctx.depo.meta());
+  const hesapDurumu = ctx.hesap ? await ctx.hesap.hesapDurumu() : null;
+  if (benim !== bantSirasi) return;
   const kap = document.getElementById('bantlar');
   temizle(kap);
   kap.dataset.bos = t('ust.bildirim_yok', 'Yeni bildirim yok.');
-  if (!ctx.depo.kalici) {
+  const depoHatasi = !ctx.depo.kalici;
+  if (depoHatasi) {
     kap.appendChild(el('div', { class: 'bant bant--hata' }, simge('uyari', { boy: 18 }),
       el('span', {}, t('bant.kalici_degil', 'Tarayıcı depolaması açılamadı: kayıtlar bu sekme kapanınca silinir. Yedek al ve başka bir tarayıcı dene.'))));
   }
-  const h = hatirlatmaGerekli(await ctx.depo.meta());
+  const hesapBanti = hesapBandi(hesapDurumu, ctx.git);
+  if (hesapBanti) kap.appendChild(hesapBanti);
   if (h.gerekli) {
+    // Hesapla eşitlenen cihazda «veriler yalnız bu cihazda» doğru değil; ama
+    // asıl yedek yine dosya: hatırlatma susmuyor, yalnız cümlesi değişiyor.
+    const hic = hesapDurumu?.girisli
+      ? t('bant.yedek_hic_hesap', 'Henüz hiç dosya yedeği almadın. Hesaptaki kopya olsa da asıl yedek dosya yedeğidir.')
+      : t('bant.yedek_hic', 'Henüz hiç yedek almadın. Veriler yalnız bu cihazda duruyor.');
     kap.appendChild(el('div', { class: 'bant' }, simge('kaydet', { boy: 18 }),
-      el('span', {}, h.sebep === 'hic'
-        ? t('bant.yedek_hic', 'Henüz hiç yedek almadın. Veriler yalnız bu cihazda duruyor.')
-        : t('bant.yedek_eski', 'Son yedekten bu yana {n} değişiklik var.', { n: h.sayac })),
+      el('span', {}, h.sebep === 'hic' ? hic : t('bant.yedek_eski', 'Son yedekten bu yana {n} değişiklik var.', { n: h.sayac })),
       btn(t('yedek.indir', 'Yedek indir'), { class: 'btn btn--kucuk', onclick: async () => {
         indir(await yedekOlustur(ctx.depo));
         basari(t('yedek.indirildi', 'Yedek indirildi'));
@@ -295,7 +309,7 @@ async function bantlariYenile(ctx) {
     zil.querySelector('.ust__zil-nokta').hidden = !n;
     zil.setAttribute('aria-label', n ? t('ust.bildirim_var', 'Bildirimler: {n} yeni', { n }) : t('ust.bildirimler', 'Bildirimler'));
   }
-  if (!hataGosterildi && kap.querySelector('.bant--hata')) { hataGosterildi = true; zilAc(true); }
+  if (!hataGosterildi && depoHatasi) { hataGosterildi = true; zilAc(true); }
 }
 
 function temaDugmesi() {
@@ -461,9 +475,12 @@ async function baslat() {
   // Hesaba kendiliğinden eşitleme: açılıştan 1,5 sn SONRA, sonra değişiklik,
   // internetin gelişi ve uygulamaya dönüş üzerine. Kapı jeton + K: hesap
   // yoksa tek bir ağ isteği atılmaz. Turlar sessiz; olan biten Ayarlar'daki
-  // kartta yazıyor. Başka cihazdan kayıt inince menü sayaçları tazelenir.
+  // kartta yazıyor, kalıcı hata (oturum düştü, kasa bozuk…) Ayarlar'a
+  // gidilmeden de görünsün diye bantta da: her durum değişiminde bantlar
+  // tazelenir. Başka cihazdan kayıt inince menü sayaçları tazelenir.
   hesap.dinle((olay) => {
     if (olay.tur === 'indi') { menuCiz(depo); bildir(senkronOzeti(olay.sonuc)); }
+    if (olay.tur === 'durum') bantlariYenile(ctx);
   });
   hesap.baslat();
 }

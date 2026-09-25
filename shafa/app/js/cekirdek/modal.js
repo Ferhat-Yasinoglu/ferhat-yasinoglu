@@ -75,7 +75,11 @@ export function modal({ baslik, govde, dugmeler = [], kapatilabilir = true, geni
             try {
               const r = d.cb ? await d.cb() : d.deger;
               if (r === false) { e.currentTarget.disabled = false; return; }
-              kapat(r ?? d.deger ?? true);
+              // `deger: null` (Vazgeç) null döner. Önce `r ?? d.deger ?? true`
+              // idi: null iki kez atlanıp true oluyordu ve «Tüm verileri sil»de
+              // Vazgeç'e basan hekimin bütün kayıtları siliniyordu, yedekten
+              // geri yüklemede de Vazgeç yüklüyordu.
+              kapat(r !== undefined ? r : d.deger !== undefined ? d.deger : true);
             } catch (err) { e.currentTarget.disabled = false; throw err; }
           },
         }, d.metin)))

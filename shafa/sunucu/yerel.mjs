@@ -133,10 +133,13 @@ async function apiSun(env, istek, yanit) {
   yanit.end();
 }
 
-function yerelSunucu({ gelistirme = false, davet = '' } = {}) {
+/** HTTP sunucusu (dinlemeye başlamamış). `ortam` Worker'ın env'i: tarayıcı
+ *  denemesi sunucuyu kendi sürecinde açıp depolanan her şeye buradan bakar
+ *  (sunucuda hasta adı var mı?) — ayrı bir "deneme ucu" açmaya gerek yok. */
+export function yerelSunucu({ gelistirme = false, davet = '' } = {}) {
   const env = bellekOrtami({ DAVET_KODU: davet, GELISTIRME: gelistirme ? '1' : '' });
   const kok = fileURLToPath(new URL('../app/', import.meta.url));
-  return createServer((istek, yanit) => {
+  const sunucu = createServer((istek, yanit) => {
     if (!new URL(istek.url, 'http://x').pathname.startsWith('/v1/')) return statikSun(kok, istek, yanit);
     apiSun(env, istek, yanit).catch(() => {
       // worker.fetch hatayı kendisi yanıta çeviriyor; buraya ancak soket koparsa düşülür.
@@ -144,6 +147,7 @@ function yerelSunucu({ gelistirme = false, davet = '' } = {}) {
       yanit.end();
     });
   });
+  return Object.assign(sunucu, { ortam: env });
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {

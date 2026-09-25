@@ -410,7 +410,20 @@ describe('akışlar gerçek sunucu koduna karşı', () => {
     expect(await soyadlar(B.depo)).toContain('Karimzada');            // çıkış kayıtları silmiyor
     await expect(B.servis.kurtar({ kullanici: 'dr.nemuna', kod: kurtarmaKoduUret(), yeniParola: P3, yeniKod }))
       .rejects.toMatchObject({ kod: 'kurtarma_yanlis' });
-    const r = await B.servis.kurtar({ kullanici: 'dr.nemuna', kod, yeniParola: P3, yeniKod });
+    // Arayüzün yolu: yeni kod ancak eski kod TUTUNCA sorulur (yanlış kodla
+    // hekim boşuna yeni kod yazmasın); vazgeçerse sunucuda bir şey değişmez,
+    // eski kod çalışmaya devam eder.
+    const sorulan = [];
+    const sor = (donen) => async () => { sorulan.push(donen); return donen; };
+    await expect(B.servis.kurtar({ kullanici: 'dr.nemuna', kod: kurtarmaKoduUret(), yeniParola: P3, yeniKod: sor(yeniKod) }))
+      .rejects.toMatchObject({ kod: 'kurtarma_yanlis' });
+    expect(sorulan).toEqual([]);
+    await expect(B.servis.kurtar({ kullanici: 'dr.nemuna', kod, yeniParola: P3, yeniKod: sor(null) }))
+      .rejects.toMatchObject({ kod: 'iptal' });
+    expect(sorulan).toEqual([null]);
+    expect(await B.servis.hesapDurumu()).toMatchObject({ girisli: false });
+    const r = await B.servis.kurtar({ kullanici: 'dr.nemuna', kod, yeniParola: P3, yeniKod: sor(yeniKod) });
+    expect(sorulan).toEqual([null, yeniKod]);
     expect(r.hata).toBe(null);
     await B.servis.cikisYap();
     await expect(B.servis.kurtar({ kullanici: 'dr.nemuna', kod, yeniParola: P3, yeniKod: kurtarmaKoduUret() }))

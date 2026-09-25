@@ -198,6 +198,12 @@ export default {
        O karşılama olmadan yeni kuran hekim boş bir kâğıda düşüyor: ne hasta
        var, ne dava, ne de nereden başlayacağını söyleyen bir şey. */
     if (!duzenleme && !ilaclar.length && !hastalar.length) {
+      /* Boş cihaz çoğu zaman yeni kurulmuş ya da verisi silinmiş bir cihaz
+         (iOS Safari sekmesi 7 günde siler, ana ekran uygulamasının deposu
+         ayrı): hesabı olan hekim girişi Ayarlar'da aramadan bulsun. Sunucu
+         yoksa ya da zaten girişliyse düğme yok — gideceği yer boş olurdu. */
+      const hesapDurumu = ctx.hesap?.sunucuVar ? await ctx.hesap.hesapDurumu() : null;
+      if (benimSira !== cizimSirasi) return;
       // Kökü sayfa modülü temizler, yönlendirici değil: temizlemezsek
       // index.html'deki «javascript kapalı» metni karşılamanın üstünde kalıyor.
       temizle(kok);
@@ -207,7 +213,10 @@ export default {
         alt: t('kagit.ilk_alt', 'Önce bir hasta ve birkaç dava lazım. Ayarlar\'dan hazır dava listesini yükleyebilir ya da örnek kayıtlarla deneyebilirsin — ikisi de tek tuşla silinir.'),
         eylem: el('div', { class: 'satir' },
           btnS('hasta', t('kagit.ilk_hasta', 'Hasta ekle'), { class: 'btn btn--birincil', onclick: () => git('/hastalar') }),
-          btnS('ayarlar', t('panel.ayarlara_git', 'Ayarlar\'a git'), { class: 'btn', onclick: () => git('/ayarlar') })),
+          btnS('ayarlar', t('panel.ayarlara_git', 'Ayarlar\'a git'), { class: 'btn', onclick: () => git('/ayarlar') }),
+          hesapDurumu && !hesapDurumu.girisli
+            ? btnS('kilit', t('hesap.var_mi', 'Hesabın var mı? Giriş yap'), { class: 'btn btn--sade', onclick: () => git('/ayarlar?hesap=1') })
+            : null),
       }));
       return;
     }

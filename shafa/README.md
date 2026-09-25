@@ -2,8 +2,11 @@
 
 Klinikte çalışan bir hekim için reçete yazma ve hasta kaydı: çerçevesiz,
 derleme adımsız bir PWA.
-Bütün veriler tarayıcıda (IndexedDB) durur: sunucu yok, hesap yok, hiçbir kayıt
-cihazdan çıkmaz. İnternet olmadan da tam çalışır.
+Bütün veriler tarayıcıda (IndexedDB) durur ve internet olmadan da tam çalışır.
+Hesap **isteğe bağlı**: hesap yokken hiçbir kayıt cihazdan çıkmaz, açılışta tek
+bir ağ isteği bile yok. Hesap açan hekimin bilgisayarı ve telefonu aynı kayıtları
+kullanır; sunucuya yalnız cihazda şifrelenmiş bir kopya gider (aşağıda
+[Hesap](#hesap-bilgisayar-ve-telefon-aynı-kayıtlar)).
 
 **Arayüz dili فارسی'dir** ve sayfa sağdan sola akar — CSS baştan beri yalnız
 mantıksal yön özellikleri kullandığı için düzen kendiliğinden dönüyor, ayrı bir
@@ -11,7 +14,8 @@ RTL sayfası yok. Çoklu dil şimdilik kapalı; altyapı duruyor, yeni bir dil
 eklemek `DILLER`'e bir satır ve `app/i18n/<kod>.json` dosyası eklemekten ibaret.
 
 **Neden böyle:** Hasta verisi hassas veri. En güvenli sunucu, olmayan sunucudur —
-bu yüzden veri cihazda tutulur ve tek güvence yedektir. Uygulama yedek almayı
+bu yüzden veri cihazda tutulur, hesap açılsa bile sunucu yalnız okuyamadığı
+şifreli baytları saklar ve asıl güvence yine dosya yedeğidir. Uygulama yedek almayı
 hatırlatır, yedek tek JSON dosyasıdır.
 
 ## Adres
@@ -121,20 +125,19 @@ ya da sayfa yüklenirken zıplardı.
   adresi buraya yazılamaz. Bu bilgiler yalnız cihazdaki Ayarlar'da durur.
 - **Fiyat yazmıyor.** İkinci sürüm paralı olacak ama rakam belli değil; belli
   olmadan sayfaya sayı yazılmıyor. Tarife kartı "به زودی" diyor.
-- **Google hesabına yedek sayılmıyor.** Uygulamada var, sitede reklamı yok.
-  Onay ekranı "Testing" modunda olduğu sürece yalnız test listesindeki adresler
-  (en çok 100) giriş yapabiliyor; siteyi görüp indiren bir hekim düğmeye bassa
-  Google onu reddediyor. Bir süre sayfa bunu bir "imkân" diye saydı —
-  verilmeyen bir sözdü. Özellik kartı, tarife satırı ve "iki cihazı nasıl
-  birleştiririm" sorusunun Google'lı cevabı kaldırıldı; o sorunun cevabı artık
-  bugün **herkeste** çalışan yol: dosya yedeğini öbür cihaza taşımak.
+- **Hesap reklam edilmiyor.** Sunucunun adresi uygulamaya yazılana kadar
+  (`VARSAYILAN_SUNUCU` boş) hesap kartı dürüstçe «henüz açık değil» diyor;
+  sitenin söz vermesi erken olurdu. Google döneminde aynı hata yapılmıştı:
+  sayfa, çoğu hekimin kullanamadığı bir özelliği "imkân" diye saydı. Bu yüzden
+  "iki cihazı nasıl birleştiririm" sorusunun cevabı bugün **herkeste** çalışan
+  yol olarak kalıyor: dosya yedeğini öbür cihaza taşımak.
 
-  Gizlilik sorusundaki *«در تنظیمات یک امکان اختیاری هم هست»* cümlesi **duruyor**:
-  uygulamada gerçekten var, ve "معلومات دستگاه را ترک نمی‌کند" derken bunu
-  söylememek eksik bilgi olurdu.
-
-  Onay ekranı yayına alınınca geri konabilir — ya da özellik ikinci sürümde
-  paralı tarifeye alınabilir.
+  Gizlilik sorusunun (۰۱) cevabı ise hesabı **anlatıyor**: "معلومات دستگاه را
+  ترک نمی‌کند" derken isteğe bağlı şifreli kopyayı söylememek eksik bilgi olurdu.
+  Cevap tasarımdaki dürüst metnin aynısı: kopya cihazda şifreleniyor; sunucuyu
+  uygulamanın sahibi Cloudflare'de işletiyor; parola güçlüyse kimse açamıyor;
+  sunucu kullanıcı adını, zamanları, boyutu ve IP'yi görüyor; parola da kurtarma
+  kodu da kaybolursa çevrimiçi kopya açılmıyor; asıl yedek dosya.
 
 ## Çalıştırma
 
@@ -370,9 +373,9 @@ kod değişmez.
 
 ## Hesap sunucusu (`sunucu/`)
 
-Kullanıcı adı + parolalı hesap için küçük bir Cloudflare Worker. Google yedeğinin
-yerini alacak; istemci tarafı sonraki adımlarda bağlanıyor, o zamana kadar
-uygulama sunucuya hiç istek atmıyor. Düz ES modülleri, bağımlılık yok, derleme yok.
+Kullanıcı adı + parolalı hesap için küçük bir Cloudflare Worker; Google yedeğinin
+yerini aldı. Hekimin gördüğü taraf aşağıda, [Hesap](#hesap-bilgisayar-ve-telefon-aynı-kayıtlar)
+bölümünde. Düz ES modülleri, bağımlılık yok, derleme yok.
 
 | Dosya | Ne yapar |
 |---|---|
@@ -482,168 +485,183 @@ Worker hiç DO'ya göndermiyor; birim testi bunu tutuyor.
 
 Dağıtım `.github/workflows/shafa-sunucu.yml` ile (repo değişkeni
 `SHAFA_SUNUCU_ACIK = 1`, secret `SHAFA_DAVET_KODU`; Cloudflare secret'ları
-sosyal-studyo'dan zaten var). Sahibin adımları ayrıca yazılacak.
+sosyal-studyo'dan zaten var). Sahibin adımları aşağıda:
+[Sahibin yapacakları](#sahibin-yapacakları-dağıtım).
 
-## Kendi Google hesabına yedek
+## Hesap: bilgisayar ve telefon aynı kayıtlar
 
-Varsayılan kapalı. Açılırsa hekimin **kendi** Google hesabına şifreli bir kopya
-gider ve bilgisayarla telefon aynı kayıtları kullanır.
+İsteğe bağlı. Hesap yokken uygulama ağa hiç çıkmaz — tarayıcı denemesi bunu
+her koşuda ölçüyor (açılışta, Ayarlar çizilirken, Google dönemi ayarları
+dururken: sıfır `/v1/` isteği). Kayıtlar hesapla da cihazda kalır; sunucuya
+yalnız cihazda şifrelenmiş kasa gider. Kodun yerleri:
 
-**Neden "yedek" deniyor, "eşitleme" değil.** Hekimin kafasındaki şey "kendi
-hesabıma kaydetmek"; uygulama ise "همگام‌سازی" (eşitleme) diyordu. Arayüzdeki
-ad artık «پشتیبان در حساب گوگل خودتان». Özellik gerçekte çift yönlü olduğu için
-**alt satır bunu söylemeye devam ediyor** — yalnız "yedek" deyip geçmek, öbür
-cihazdan kayıt inince hekimi şaşırtırdı. Ayarlar'da iki kart yan yana duruyor:
-«پشتیبان فایلی» (dosya) ve «پشتیبان در حساب گوگل خودتان».
+| Dosya | Ne yapar |
+|---|---|
+| `js/hesap-arayuz.js` | Ayarlar'daki «حساب» kartı, kurtarma kodu kutusu, hesap değişimi sorusu, kalıcı hata bandı |
+| `js/senkron/hesap-servisi.js` | akışlar (kayıt, giriş, kurtarma, parola, çıkış, silme) ve kendiliğinden eşitleme — DOM yok |
+| `js/senkron/hesap.js` | WebCrypto: paroladan/kurtarma kodundan anahtar, K'yi sarma/açma |
+| `js/senkron/sunucu.js` · `sunucu-adresi.js` | HTTP istemcisi, hata eşleme; sunucunun adresi (`VARSAYILAN_SUNUCU`) |
+| `js/paylasilan/hesap-kurallari.js` | kullanıcı adı/parola/kod normalleştirme ve kuralları (sunucuyla ortak) |
 
-**Google girişi girişte değil.** Yeni kuran hekimde eşitleme kapalı, dolayısıyla
-`senkron/google.js` hiç yüklenmiyor; açılışta ne giriş ekranı var ne hesap
-sorusu. Bu bugün doğruydu ama **bunu tutan bir denetim yoktu**: biri açılışa bir
-import koysa hiçbir test patlamazdı. `npm run deneme` artık temiz bir tarayıcı
-bağlamı açıp bütün ağ isteklerini dinliyor — Google'a giden tek bir istek olsa,
-ya da ekranda bir modal/e-posta kutusu çıksa, deneme düşüyor.
+### Hekimin gördüğü
 
-**Nereye yazıyor:** hekimin kendi Google Drive'ındaki gizli uygulama klasörüne
-(`appDataFolder`). İstenen izin `drive.appdata`: Drive'ın geri kalanı görünmez,
-klasör Drive arayüzünde çıkmaz, başka uygulamalar okuyamaz.
+**Ayarlar → «حساب»** (dosya yedeği kartının hemen altında; ikisi aynı sorunun iki cevabı):
 
-**Google ne görüyor:** şifreli baytlar. Belge yüklenmeden önce cihazda
-kapatılıyor — parola → PBKDF2-SHA256 (310 000 tur) → AES-GCM-256. Parola
-cihazdan çıkmaz, kasanın içine de girmez (girseydi kasayı açacak anahtar
-kasanın içinde olurdu). Bu yüzden **iki cihaza da aynı parola elle yazılır.**
-Parola kaybolursa buluttaki kopya açılamaz; cihazdaki veri ve indirilmiş yedek
-dosyaları bundan etkilenmez.
+- **Sunucu yok** (`VARSAYILAN_SUNUCU` boş, sayfa localhost değil): kart
+  «حساب‌ها هنوز فعال نشده‌اند…» der, tek kutu yok. Bu sürüm böyle çıkıyor;
+  adres dağıtımdan sonra ayrı bir değişiklikle yazılır.
+- **Çıkışlı**: «ورود» / «ساختن حساب» sekmeleri, «رمز را فراموش کرده‌اید؟» ile
+  kurtarma formu. Kullanıcı adı kutusu `autocapitalize=none autocorrect=off
+  spellcheck=false dir=ltr inputmode=email autocomplete=username`; yazılırken
+  küçük harfe ve ASCII rakama döner (`Dr.Ahmad۱۲` → `dr.ahmad12`). Parola
+  kutuları `current-password` / `new-password` (parola yöneticisi ancak böyle
+  kaydediyor). Facebook/Instagram/WhatsApp/Android WebView içinde açılmışsa
+  «önce Chrome ya da Safari'de aç» uyarısı: oraların deposu ayrı ve geçici,
+  indirme ve pano da çoğu zaman sessizce çalışmıyor.
+- **Hesap açma sırası**: kurallar (kutu ve ağdan önce) → hesap değişimi
+  sorusu → **kurtarma kodu kutusu** → ancak onay alınınca `POST /v1/kayit` →
+  ilk eşitleme. Kod hesaptan ÖNCE gösteriliyor: kutu açıkken uygulama kapanırsa
+  (iOS arkadaki PWA'yı öldürür) ortada kodunu kimsenin görmediği bir hesap
+  kalmasın. Kutuda kod büyük ve `dir=ltr`, kullanıcı adı, uygulamanın adresi ve
+  tarih; «اشتراک» (`navigator.share` varsa), «کاپی», «دانلود فایل» (.txt, Dari +
+  İngilizce); «kâğıda yaz ya da fotoğrafını çek, yalnız bu telefonda tutma»;
+  işaretlenmeden «ادامه» açılmayan onay kutusu.
+- **Hesap değişimi sorusu**: girişte ya da hesap açarken bu cihazda örnek
+  olmayan kayıt varsa ve cihaz en son başka bir hesapla (ya da hiç) eşitlenmişse:
+  «این دستگاه N ثبت دارد. به حساب X اضافه شود؟» — «اضافه کن», «اول این دستگاه
+  را پاک کن» (önce yedek indirtir; silme ancak giriş başarılı olunca), «لغو».
+  Varsayılan eklemek değil: odak kapat düğmesinde, Enter vazgeçer.
+- **Kurtarma**: kullanıcı adı + kurtarma kodu + yeni parola. Yeni kurtarma kodu
+  ancak eski kod sunucuda **tuttuktan sonra** gösteriliyor (kodu yanlış yazan
+  hekim her denemede boşuna yeni kod yazmasın); eski kod bir daha geçmez, öbür
+  cihazların oturumu düşer.
+- **Girişli**: «وارد شده: <ad>», son eşitleme, gönderilmemiş değişiklik sayısı,
+  «همگام‌سازی اکنون», «خروج از این دستگاه» (isteğe bağlı «ثبت‌های این دستگاه را
+  هم پاک کن»). «پیشرفته»: parola değiştir (öbür cihazlar yeniden sorar), yeni
+  kurtarma kodu (parola ister, kutu yine önce), hesabı sil (şifreli kopyanın
+  Cloudflare yedeklerinde 30 güne kadar durabileceğini söyler).
+- **Oturum düştü** (parola ya da kurtarma başka cihazda): kart kullanıcı adını
+  hazır tutup yalnız parolayı sorar; o zamana kadar kendiliğinden eşitleme durur.
+- **Kalıcı hatalar** (`buyuk`, `kasa_bozuk`, `parola`, `oturum`, `sunucu_dolu`…)
+  kartta ve bantta (zil kutusu; telefonda sayfanın tepesi). İnternet yok, sunucu o
+  an yok, yazım temposu ve çakışma sessiz: kendiliğinden geçerler.
+- **Meşgul**: anahtar türetme (600 bin tur PBKDF2) telefonda saniyeler sürüyor;
+  kartın bütün düğme ve kutuları kilitlenir ve «لطفاً صبر کنید…» yazar.
+- **Boş cihaz**: reçete sayfasının karşılamasında «حساب دارید؟ وارد شوید» —
+  Ayarlar'ı hesap kartında, kullanıcı adı kutusunda açar. iOS Safari sekmesi
+  verisini 7 günde siler, ana ekran uygulamasının deposu ayrıdır: yeniden
+  kuran hekim girişi aramadan bulmalı.
+- **«پاک کردن همه اطلاعات»** önce hesaptan çıkar (jeton ve K silinir; yoksa
+  bir sonraki tur sunucudaki kopyayı boş cihaza geri indirirdi) ve sunucudaki
+  kopyanın durduğunu, silmek için hesabın silinmesi gerektiğini söyler.
 
-**Çakışma:** bağımsız kayıtlarda `guncellendi`si yeni olan kazanır, silme mezar
-taşı olduğu için silinen kayıt öbür cihazda dirilmez. Ayarlar kaydı tek zarfı
-paylaştığı için ayrı işlenir: alan alan birleşir, bir tarafta boş olan alan dolu
-kalır, iki taraf da doluysa yenisi seçilir ve eski değer hekime gösterilir.
+**Kendiliğinden eşitleme** yalnız girişliyken: açılıştan 1,5 sn sonra, son
+değişiklikten 2 dk sonra, internet gelince (30 sn) ve uygulamaya dönülünce
+(son tur 10 dk'dan eskiyse). Önce ucuz ön denetim (`GET veri/surum`): sunucudaki
+sürüm bilinenle aynı ve gönderilmemiş değişiklik yoksa tur hiç başlamaz.
+Sekmeler arası tek tur (`navigator.locks`). Dosya yedeğinin hatırlatması
+susmuyor: hesapla eşitlenen cihazda da asıl yedek dosyadır.
 
-**Çevrimdışı:** eşitleme kapalıyken Google'a ait tek satır yüklenmez (dinamik
-import). Açıkken bile uygulama internetsiz eskisi gibi tam çalışır; eşitleme
-internet gelince yapılır.
+**Dürüst metinler** (kart, tanıtım SSS'i, `app/index.html` açıklaması): kayıtlar
+cihazda kalır; hesapla uygulamanın sunucusunda (uygulamanın sahibi Cloudflare'de
+işletiyor) **şifreli** bir kopya durur; parola güçlüyse sunucunun sahibi dahil
+kimse açamaz; sunucu kullanıcı adını, zamanları, boyutu ve IP adreslerini görür;
+parola da kurtarma kodu da kaybolursa çevrimiçi kopya açılmaz (cihazdaki
+kayıtlar kalır); asıl yedek dosya yedeğidir.
 
-### Açmak için
+### Sahibin yapacakları (dağıtım)
 
-**Ayarlar → Kendi Google hesabına yedek → «Google ile giriş yap».** Tek düğme.
-Hekim bu uygulamada **hiçbir parola yazmıyor** — yazdığı tek şifre kendi Gmail
-şifresi, o da Google'ın kendi penceresinde.
+1. GitHub → depo → **Settings → Secrets and variables → Actions**:
+   - **Variables** sekmesi → *New repository variable*: `SHAFA_SUNUCU_ACIK` = `1`.
+   - **Secrets** sekmesi → *New repository secret*: `SHAFA_DAVET_KODU` = hekimlere
+     verilecek davet kodu (herhangi bir kelime, ör. iki kelimelik bir söz; depoya
+     hiçbir yerde yazılmaz). `CLOUDFLARE_API_TOKEN` ve `CLOUDFLARE_ACCOUNT_ID`
+     sosyal-studyo'dan zaten var.
+2. **Actions → Shafa Sunucu → Run workflow** (ya da `shafa/sunucu/**`'ya dokunan
+   bir `main` gönderimi). İş sunucu testlerini koşar, Worker'ı ve Durable
+   Object'leri dağıtır, `DAVET_KODU`'nu yazar, `/v1/durum` ve CORS ön-uçuşuyla
+   duman testi yapar ve adresi işin özetine yazar
+   (`https://shafa-sunucu.<alt-alan>.workers.dev`).
+3. Adresi asistana ver: ayrı bir değişiklik `VARSAYILAN_SUNUCU`'yu ve
+   `app/index.html`'deki CSP'ye (`connect-src`) **tam** adresi yazar — joker
+   (`*.workers.dev`) değil, yoksa herkesin kendi Worker'ına veri çıkarılabilirdi.
+4. Davet kodunu hekimlere (WhatsApp'tan) ver. Sızarsa secret'ı değiştirip işi
+   yeniden çalıştır; açılmış hesaplar etkilenmez.
 
-Kartta eskiden iki kutu vardı: «kasa parolası» ve «Google istemci kimliği».
-İkincisi geliştirici işiydi; bir doktorun ekranında `992727769946-82oa2…` diye
-bir dize durmamalıydı. İkisi de artık **«Gelişmiş»** başlığının altında katlı.
-`npm run deneme` kartta görünür tek bir kutu bile olmadığını ve tek düğmenin
-giriş düğmesi olduğunu denetliyor.
+İlk gerçek dağıtım, "Edit Cloudflare Workers" şablonundaki jetonun Durable
+Object göçüne yetip yetmediğini de gösterecek (büyük olasılıkla yeter: DO
+sınıfları betikle birlikte yükleniyor).
 
-**Kasa kodunu uygulama üretiyor.** İlk girişte `kasaKoduUret()` (bkz.
-`paylasilan/kimlik.js`) 100 bitlik bir kod üretip ayarlara yazıyor:
-`G5KF-RFXS-7KPZ-626R-X9FW`. Birbirine benzeyen harfler (I, O, 0, 1) alfabede
-yok, çünkü bu kod elle öbür cihaza geçirilecek. `crypto` yoksa `Math.random`'a
-**düşülmüyor**, hata veriliyor: burada üretilen şey bir şifreleme anahtarı ve
-tahmin edilebilir olması sessiz bir güvenlik kaybı olurdu.
+### Google döneminden geçiş ve Drive temizliği
 
-**İkinci cihaz.** Orada da tek düğmeye basılır. Uygulama kendi kodunu üretir,
-Google'daki dosyayı indirir, açamaz ve `parola` hatası düşer — bu kodu
-`meta.sonSenkronHataKodu`'na yazılır. Kart o zaman, ancak o zaman, «bu yedeği
-başka bir cihaz yaptı, onun kodunu yaz» kutusunu gösterir. İlk cihazda kod
-«Gelişmiş» altında, kopyalama düğmesiyle duruyor.
+Google yedeğini kullanmış cihazlarda kayıtlar olduğu gibi duruyor; yeni sürüm
+açılışta Google döneminin ayarlarını (kasa kodu dahil) bir kez siliyor.
 
-Bu sıra bilerek böyle: hekim ilk cihazda kodla hiç karşılaşmıyor. Kodu ancak
-gerçekten lazım olduğu anda görüyor.
+1. Her cihazı yeni sürüme güncelle (açık sekmeyi kapatıp aç; «نسخه تازه آماده
+   است.» çıkarsa «تازه‌سازی»).
+2. Güvence için bir cihazda **dosya yedeği** al.
+3. Birinci cihazda (ör. bilgisayar) **hesap aç**; soru gelince «اضافه کن».
+4. İkinci cihazda (telefon) aynı hesapla **gir**; soru gelince yine «اضافه کن»
+   (ikisi de aynı hekimin kayıtları; birleşme sıradan bağımsız, kayıp yok).
+   İki cihazda Ayarlar → «داده‌ها» sayılarını karşılaştır.
+5. **Drive'daki şifreli kopyayı sil**: drive.google.com → sağ üstte dişli →
+   *Ayarlar* → *Uygulamaları yönet* → *Shafa* → *Seçenekler* → **Gizli uygulama
+   verilerini sil**, ardından *Drive bağlantısını kes*.
+6. **Erişimi kaldır**: myaccount.google.com → *Güvenlik* → *Üçüncü taraf
+   uygulamalar ve hizmetlerle bağlantılarınız* → *Shafa* → **Tüm bağlantıları sil**.
+7. **OAuth istemcisini sil**: console.cloud.google.com → projeyi seç →
+   *APIs & Services → Credentials* → OAuth istemci kimliği → **Delete** (ya da
+   projeyi tamamen kapat: *IAM & Admin → Settings → Shut down*).
 
-**Tanıtım sayfası bundan söz etmiyor** — bilerek. Gerekçesi yukarıda,
-"Sayfada bilerek olmayanlar" başlığında.
+### Bilerek kabul edilenler ve yapılmayanlar
 
-Onay ekranı "Testing" modunda olduğu sürece yalnız **test listesindeki adresler**
-giriş yapabilir (en çok 100). Listede olmayan bir hekim `hesap_izinsiz` hatasını
-ve onu dosya yedeğine yönlendiren cümleyi görür. Herkese açmak için onay
-ekranının yayına alınması gerekiyor; `drive.appdata` hassas olmayan bir kapsam
-olduğu için ağır doğrulama süreci gerekmez, ama gizlilik politikası sayfası
-gerekir.
+- **Veritabanı sızarsa** saldırganın yolu parola başına 600 bin turluk PBKDF2
+  denemesi; zayıf parola düşer. Kurallar bunun için sıkı (en az 10 karakter,
+  yalnız rakam ya da telefon numarası olamaz, kullanıcı adını içeremez, ~400
+  yaygın parola — Dari olanlar dahil — reddedilir).
+- **Kullanıcı adına bağlı sabit tuz** (`SHA-256("shafa-hesap-v1|" + ad)`): bilinen
+  bir kullanıcı adı için önceden hesaplama yapılabilir. Standart bir ödünleşim;
+  tur sayısı istemcide sabit, sahte bir sunucu onu düşüremez.
+- **K döndürülmüyor** («bütün cihazları çıkar ve yeni anahtar üret» yok).
+  Çalınan, kilidi açık bir cihaz K'yi ve jetonu taşır; parola değişince oturumu
+  düşer ve API'den yeni veri alamaz, ama elindeki K eskimez. Tam döndürme
+  yeniden şifreleme ve yeniden sarmayı tek atomik adımda ister; sonraya.
+- **Köken ortak**: Shafa ve sosyal-studyo aynı `ferhat-yasinoglu.github.io`
+  kökeninde; aynı kökendeki bir sayfa bu kökenin IndexedDB'sini okuyabilir. Bu
+  bugün cihazdaki hasta kayıtları için de doğru. Kendi kökenine taşımak her
+  hekimin yerel veritabanını taşımak demek; ayrı bir iş.
+- **Kasa tek parça**: her turda bütün kasa gidip geliyor (gzip'li). Kasa
+  büyürse ileride kovalara bölünür, yalnız değişen kova yüklenir.
+- **Doğrulama anahtarı kasada** (şifreli): iki cihazın aynı reçeteyi
+  doğrulayabilmesi için gitmek zorunda. K'yi ve sunucudaki kasayı birlikte ele
+  geçiren biri geçerli doğrulama kodu üretebilir.
+- **Silinen hesabın** şifreli kopyası Cloudflare yedeklerinde 30 güne kadar
+  kalabilir (kart bunu söylüyor).
+- **Kota sosyal-studyo ile ortak** (aynı Cloudflare hesabı; bkz. yukarıda
+  *Sınırlar*). Kabaca: günde 40 hasta ≈ yılda 12 MB JSON; gzip bunu 5–10 kat
+  küçültüyor, yani 20 MB tavanı yıllarca yetiyor. Kota dolarsa hekim «حد روزانهٔ
+  سرور پر شده» görür (internet yok değil), gece yarısı UTC'de (Kabil 04:30) açılır.
 
-### İstemci kimliği nerede
+### Ne otomatik deneniyor
 
-`app/js/senkron/google.js` içinde, `VARSAYILAN_ISTEMCI` sabitinde, açıkça.
-Durmasında sakınca yok: OAuth **web istemci kimlikleri tasarımı gereği
-herkese açıktır** — Google ile giriş kullanan her sitenin kaynak kodunda
-görünürler. Gizli olan `client secret`tir ve bu akış onu hiç kullanmaz.
-
-Kötüye kullanımı engelleyen şey gizliliği değil, Google'ın kimliği **kaynak
-adresine** bağlaması. Yalnız şu iki adresten çalışır:
-
-```
-https://ferhat-yasinoglu.github.io
-http://localhost:8788
-```
-
-Başka biri bu kimlikle olsa olsa **kendi** Drive'ının uygulama klasörüne
-erişir — buradaki hiçbir şeye değil.
-
-### Kendi projesini kullanmak isteyen için
-
-Ayarlardaki **Google istemci kimliği** alanı yedek yol olarak duruyor; oraya
-yazılan değer gömülü olanın yerine geçer. Kendi kimliğini üretmek için:
-
-1. <https://console.cloud.google.com> → yeni proje.
-2. **APIs & Services → Library** → *Google Drive API* → Enable.
-3. **Google Auth Platform → Get started**: uygulama adı, destek e-postası,
-   **External**, iletişim adresi. Yayına almaya gerek yok — *Audience* altında
-   **Test users**'a kendi Gmail adresini eklemek yeter.
-4. **Data Access** → `.../auth/drive.appdata` kapsamı eklenir.
-5. **Clients → Create client → Web application.** *Authorized JavaScript
-   origins*'e uygulamanın adresi yazılır; *redirect URIs* boş bırakılır
-   (kullanılan akış yönlendirme değil).
-
-Google Cloud Console iki adımlı doğrulama (2SV) açık olmayan hesapları
-içeri almıyor; hesapta açık değilse ilk adımda takılır.
-
-### Bilerek kabul edilen iki şey
-
-**Google'ın betiği bizim sayfamızda çalışıyor.** Giriş için `accounts.google.com`
-üzerinden bir betik yükleniyor ve o betik, sayfanın görebildiği her şeyi
-görebilir — IndexedDB'deki hasta kayıtları ve kasa parolası dahil. Bu, Google'ın
-desteklediği giriş yolunun (GIS) doğasında var. İki şeyle sınırlandı: betik
-uygulama açılışında değil, yalnız gerçek bir eşitleme sırasında yükleniyor; ve
-CSP'de joker yok, tam adres yazılı. Bundan tamamen kurtulmanın yolu yönlendirme
-tabanlı OAuth'a geçmek; şimdilik yapılmadı.
-
-**Reçete doğrulama anahtarı da buluta gidiyor** (şifreli). Gitmek zorunda: iki
-cihazın aynı reçeteyi doğrulayabilmesi için aynı anahtarı taşıması gerekiyor.
-Sonucu şu: kasa parolasını ve Drive dosyasını birlikte ele geçiren biri geçerli
-doğrulama kodu üretebilir. Parola yalnız hekimin iki cihazında.
-
-### Ne otomatik deneniyor, ne elle doğrulandı
-
-Eşitleme mantığı, kasa ve iki cihazın buluşması hem birim testleriyle hem de
-gerçek tarayıcıda gerçek IndexedDB/WebCrypto ile deneniyor — taşıyıcı yerine
-bellek taşıyıcısı konuyor. Taşıyıcı bu yüzden bilerek ince tutuldu
-(`oku()` ve `yaz()`): eşitlemenin doğruluğu Google'a bağlı olmadan denenebiliyor.
-
-**Google'ın kendi uç noktaları CI'da denenmiyor** ve denenemez: gerçek bir
-OAuth onayı bir insanın tıklamasını gerektiriyor. Gerçek hesapla uçtan uca ilk
-tur 23 Eylül 2026'da elle yapıldı ve geçti — giriş, izin, Drive'a yazma ve
-okuma. Yani akış çalışıyor; ama bu yoldaki bir gerileme testlerden değil,
-ancak kullanımdan anlaşılır.
-
-Yolda çıkan ve düzeltilen şey de buydu: arıza değil, arızanın görünmezliği.
-Bir hata Google'ın ekranında çıkıp uygulamada iz bırakmayınca sebebi kimse
-bulamıyor. Artık kod hangi kimliğin kullanıldığını yazıyor, engellenen betiği
-"internet yok"tan ayırıyor ve yanıt gelmezse takılıp kalmıyor.
-
-**Aynı dersin ikinci vakası: `access_denied`.** Onay ekranı "Testing" modunda
-olduğu sürece, test listesinde OLMAYAN her adres Google'dan `access_denied`
-alıyor. Kod bunu pencere kapatmayla aynı kovaya (`yetki`) atıyordu ve hekim
-şunu okuyordu:
-
-> «گوگل اجازه نداد. حساب را انتخاب کنید و اجازهٔ دسترسی بدهید.»
-> *(Google izin vermedi. Hesabı seçin ve erişime izin verin.)*
-
-Bu, o hekimin **yapamayacağı** bir şey. Kaç kez denerse denesin olmayacaktı.
-Artık `access_denied` kendi kodunda (`hesap_izinsiz`) ve mesajı iki sebebi
-birden sayıyor — hekim "İptal"e bastığında da aynı hata dönüyor, istemciden
-ikisi ayırt edilemiyor — sonra da bugün **herkeste** çalışan yolu gösteriyor:
-«دانلود پشتیبان». Tarayıcı denemesi yalnız kodun ayrıştığını değil, **metnin
-"izin ver" demediğini ve dosya yedeğine yönlendirdiğini** de denetliyor.
+- **Birim** (`npm test`): sunucu (`test/sunucu`), kurallar, `hesap.js`'in
+  bağımsız hesaplanmış bilinen-cevap değerleri, HTTP eşlemesi, kasa v1/v2,
+  `hesap-servisi` akışları gerçek Worker koduna ve bellek DO'larına karşı,
+  kartın saf parçaları (`test/hesap-arayuz.test.js`).
+- **Tarayıcı** (`npm run deneme`, CI koşmuyor): yerel sunucu denemenin kendi
+  sürecinde açılıyor, böylece sunucunun deposuna doğrudan bakılıyor. Üç bağlam
+  üç cihaz: A bilgisayar, B telefon (390×844), C Instagram'ın uygulama içi
+  tarayıcısı. Denenen: kutuların autocomplete/dir ayarları; sunucusuz kart;
+  boş cihazdaki «حساب دارید؟»; hesap açmada kural hataları, hesap değişimi
+  sorusu ve kurtarma kodu kutusunun hesaptan ÖNCE geldiği; sunucunun deposunda
+  hasta adı, parola, K ve kurtarma kodunun hiçbir değerde geçmediği; B'nin
+  «önce temizle» ile girişi; B'deki değişikliğin 2 dk sonra kendiliğinden
+  gidip A'ya ön denetimle (`veri/surum`) geldiği; yanlış parola, meşgul hâli ve
+  10 denemeden sonra Dari kilit metni — A bu arada eşitlemeye devam ediyor;
+  kurtarma (yeni kod, eski kod geçmiyor), A'nın parolayı yeniden sorması ve
+  bandı; parola değişince B'nin yeniden sorması; silerek/silmeden çıkış; «tüm
+  verileri sil»in önce çıkması; sunucuya konan şifresiz paketin reddi; hesap
+  silme. Zamanlayıcılar Playwright saatiyle ileri alınıyor.
 
 ## Yapılacaklar
 
@@ -655,7 +673,8 @@ ikisi ayırt edilemiyor — sonra da bugün **herkeste** çalışan yolu göster
 - [x] Farsça arayüz ve sağdan sola düzen
 - [x] Reçete kâğıdı: antet, klinik ölçüm sütunu, QR, boş kâğıt
 - [x] WhatsApp / e-posta ile gönderme
-- [x] Kendi Google hesabına şifreli yedek; iki cihaz aynı kayıtları kullanır (yukarıya bak)
+- [x] Kullanıcı adı + parolalı hesap: şifreli kopya, iki cihaz aynı kayıtları kullanır (yukarıya bak)
+- [ ] Hesap sunucusunun adresi: dağıtımdan sonra `VARSAYILAN_SUNUCU` ve CSP'deki tam adres
 - [ ] Reçete başlık alanlarının gözden geçirilmesi (aşağıya bak)
 - [ ] Reçeteyi dosya (PDF/görsel) olarak gönderme — şu an metin olarak gidiyor,
       kâğıt görünümü için "Yazdır → PDF" kullanılıyor
@@ -691,12 +710,13 @@ app/                      PWA (statik olarak olduğu gibi sunulur)
     i18n.js               t() ve sözlük yükleme
     hatalar.js            hata, doğrulama ve uyarı kodlarının arayüz metni
     kagit.js              reçete kâğıdı (dolu ve boş hali) + yazdırma
-    senkron-arayuz.js     Ayarlar'daki eşitleme kartı ve eşitleme turu
+    hesap-arayuz.js       Ayarlar'daki hesap kartı, kurtarma kodu kutusu, hesap bandı
     cekirdek/             dom · yonlendirici · modal · bildirim · simge · cizimler ·
                           tema · tarih-secici · gorsel · kurtarma · kurulum
     depo/                 sema · depo · idb · recete · dogrulama · yedek · ornek ·
                           senkron (taşıyıcıdan bağımsız eşitleme motoru)
-    senkron/              google.js — Drive appDataFolder taşıyıcısı (tek ağ ucu)
+    senkron/              hesap (WebCrypto) · sunucu (HTTP istemcisi, tek ağ ucu) ·
+                          sunucu-adresi · hesap-servisi (akışlar, kendiliğinden eşitleme)
     paylasilan/           saf alan mantığı: ilac · hasta · recete · qr · dogrulama ·
                           tarih · metin · kimlik · senkron (birleşme kararları) ·
                           kasa (şifreleme) · hesap-kurallari (sunucuyla ortak)
@@ -725,8 +745,8 @@ tools/                    sun (statik sunucu) · kontrol (statik denetim) ·
   `npm run kontrol` her anahtarın sözlükte karşılığı olduğunu denetler, tarayıcı
   denemesi de ekranda Türkçe kalmadığını ayrıca doğrular.
 - Eşitlemenin **kararı** `paylasilan/senkron.js`'te (saf), **yürütmesi**
-  `depo/senkron.js`'te, **ağı** `senkron/google.js`'te. Taşıyıcı arayüzü iki
-  yöntemden ibaret (`oku`, `yaz`) — böylece eşitlemenin doğruluğu Google'a
+  `depo/senkron.js`'te, **ağı** `senkron/sunucu.js`'te. Taşıyıcı arayüzü iki
+  yöntemden ibaret (`oku`, `yaz`) — böylece eşitlemenin doğruluğu sunucuya
   bağlı olmadan denenebiliyor.
 - **Saf modüller cümle kurmaz.** Doğrulama, hata, uyarı ve "3 gün önce" gibi
   göreli tarihler `paylasilan/` ve `depo/` içinde **kod** olarak döner; metne
@@ -738,7 +758,7 @@ tools/                    sun (statik sunucu) · kontrol (statik denetim) ·
 - **e-Reçete / Medula entegrasyonu yoktur.** Resmî kurum kimliği gerektirir. Bu uygulama
   kendi içinde çalışan bir kayıt ve takip sistemidir; çıktısı yazdırılabilir reçetedir.
 - Veri varsayılan olarak tek cihazdadır. İki cihazı buluşturmak için ya yedek
-  dosyası taşınır ya da Google hesabına yedek açılır (aşağıya bak).
+  dosyası taşınır ya da hesap açılır (yukarıya bak).
 - Tarayıcı verisi temizlenirse kayıtlar silinir. Düzenli yedek şart.
 - Yedek dosyası şifresiz JSON'dur ve hasta bilgisi içerir; güvenli bir yerde saklanmalı.
 - Reçete WhatsApp ve e-postaya **metin** olarak gider. Tarayıcıdan sunucusuz
