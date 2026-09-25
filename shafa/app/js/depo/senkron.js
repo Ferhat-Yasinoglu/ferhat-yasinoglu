@@ -7,11 +7,14 @@
 // Böylece iki cihaz da her eşitlemede birleşimi alıyor; hangisinin önce
 // eşitlendiği sonucu değiştirmiyor.
 //
-// Sunucu yok. Taşıyıcı bir arayüz: `oku()` ve `yaz()`. Google Drive bunun tek
-// gerçeklemesi; testler bellekte duran sahte bir taşıyıcı kullanıyor. Eşitleme
-// mantığının doğruluğu Google'a bağlı değil, bu ayrım bilerek.
+// Taşıyıcı bir arayüz: `oku()` ve `yaz()`. Hesap sunucusu (senkron/sunucu.js)
+// bunun gerçeklemesi; testler bellekte duran sahte bir taşıyıcı kullanıyor.
+// Eşitleme mantığının doğruluğu ağa bağlı değil, bu ayrım bilerek.
+//
+// Buluta giden belgede cihaza özel ayarlar ve örnek (demo) kayıtlar yok;
+// buluttan gelende de olsalar yok sayılır.
 import { belgeDerle, iceAktar, yedekDogrula } from './yedek.js';
-import { belgeyiTemizle, belgeParmakIzi, raporToplami } from '../paylasilan/senkron.js';
+import { belgeyiTemizle, belgeParmakIzi, raporToplami, ornekleriAyikla, ESKI_SENKRON_AYARLARI } from '../paylasilan/senkron.js';
 import { kasayaKoy, kasadanAl, kasaMi, kasaTuzu, KasaHatasi } from '../paylasilan/kasa.js';
 
 export class SenkronHatasi extends Error {
@@ -22,12 +25,25 @@ export class SenkronHatasi extends Error {
  *  baştan başlarız. Üç deneme: ikisi bile pratikte fazla, tek kullanıcı var. */
 const DENEME = 3;
 
+/* Kasa hatalarından bu kodlar olduğu gibi geçer: her biri hekime ayrı bir
+   şey söylüyor (anahtar tutmuyor / uygulamayı güncelle / tarayıcıyı güncelle).
+   Gerisi "bulutta bozuk bir kasa" demek. */
+const GECEN_KASA_HATALARI = ['parola', 'surum', 'gzip_yok'];
+
 /**
  * Bir eşitleme turu.
  * tasima: { oku(): {paket, surum}, yaz(paket, {surum}): {surum} }
  * Döner: { indirildi, yuklendi, rapor, cakisan, surum }
+ *
+ * `sifresizKabul` VARSAYILANDA KAPALI: uzaktaki paket bir kasa değilse
+ * birleştirilmez, 'kasa_bozuk' düşer. Kasa AES-GCM ile K'ye bağlı; K'yi
+ * bilmeyen biri (jetonu çalan, sahte bir sunucu, ele geçirilmiş bir dağıtım)
+ * yalnız kasa DIŞI bir paket koyabilir. Onu kabul etseydik sahte hasta,
+ * antet ve reçete doğrulama anahtarı bütün cihazlara yayılır, sonra her cihaz
+ * onu kendi K'siyle şifreleyip "meşru" hale getirirdi. Seçenek yalnız bilerek
+ * açık belge okuyan çağıranlar için (testler).
  */
-export async function senkronEt(depo, tasima, { parola } = {}) {
+export async function senkronEt(depo, tasima, { parola, sifresizKabul = false } = {}) {
   if (!parola) throw new SenkronHatasi('parola_yok', 'Kasa parolası gerekli.');
 
   for (let deneme = 1; deneme <= DENEME; deneme++) {
@@ -38,16 +54,17 @@ export async function senkronEt(depo, tasima, { parola } = {}) {
       if (kasaMi(paket)) {
         try { uzakBelge = await kasadanAl(paket, parola); }
         catch (e) {
-          if (e instanceof KasaHatasi) throw new SenkronHatasi(e.kod === 'parola' ? 'parola' : 'kasa_bozuk', e.message);
+          if (e instanceof KasaHatasi) throw new SenkronHatasi(GECEN_KASA_HATALARI.includes(e.kod) ? e.kod : 'kasa_bozuk', e.message);
           throw e;
         }
-      } else if (paket.bicim) {
-        // Şifresiz belge: elle konmuş ya da kasa açılmadan önce yüklenmiş.
-        // Reddetmiyoruz — veriyi geri vermemek kabul etmemekten kötü.
+      } else if (sifresizKabul && paket.bicim) {
         uzakBelge = paket;
       } else {
-        throw new SenkronHatasi('kasa_bozuk', 'Buluttaki dosya tanınmadı.');
+        throw new SenkronHatasi('kasa_bozuk', 'Uzaktaki paket bir kasa değil; birleştirilmedi.');
       }
+      // Örnek kayıtlar (eski bir istemci yüklemiş olabilir) hiçbir zaman
+      // indirilmez: hekim onları bu cihazda silmiş olabilir.
+      if (uzakBelge && typeof uzakBelge === 'object') uzakBelge = ornekleriAyikla(uzakBelge);
     }
 
     let rapor = {};
@@ -61,14 +78,14 @@ export async function senkronEt(depo, tasima, { parola } = {}) {
       cakisan = sonuc.cakisan;
     }
 
-    const yerel = belgeyiTemizle(await belgeDerle(depo));
+    const yerel = ornekleriAyikla(belgeyiTemizle(await belgeDerle(depo)));
     const indirildi = raporToplami(rapor);
 
     // Birleşim uzaktakiyle bire bir aynıysa yüklemeye gerek yok. Parmak izi
     // rev'e bakmıyor: her içe aktarma rev'i artırdığı için aynı içerik iki
     // cihazda farklı rev taşıyor ve buna baksaydık boş yere yazıp dururduk.
     //
-    // ŞİFRESİZ kopya bu kısayoldan muaf. Bulutta açık bir belge duruyorsa
+    // ŞİFRESİZ kopya (yalnız sifresizKabul ile okunur) bu kısayoldan muaf:
     // içerik aynı diye atlasaydık hasta bilgisi orada açık haliyle kalırdı;
     // "değişen bir şey yok" doğru ama "yapılacak bir şey yok" değil.
     const degismedi = uzakBelge && kasaMi(paket)
@@ -89,7 +106,7 @@ export async function senkronEt(depo, tasima, { parola } = {}) {
 }
 
 /** Bellekte duran sahte taşıyıcı — testler ve tarayıcı denemesi için.
- *  Google'ın davranışını taklit eder: sürüm tutmayan yazma reddedilir. */
+ *  Sunucunun davranışını taklit eder: sürüm tutmayan yazma reddedilir. */
 export function bellekTasima(baslangic = null) {
   let paket = baslangic;
   let surum = baslangic ? '1' : '';
@@ -104,4 +121,22 @@ export function bellekTasima(baslangic = null) {
       return { surum };
     },
   };
+}
+
+/**
+ * Google döneminin ayarlarını (kasa anahtarı, istemci kimliği, Drive dosya
+ * kimliği…) bu cihazın ayar kaydından bir kez siler. Her açılışta çağrılır;
+ * alan yoksa hiçbir şey yazmaz.
+ *
+ * `kaydet` yerine doğrudan yazılıyor: bunlar cihaza özel alanlar, eşitlemeye
+ * de yedeğe de girmiyorlar. `kaydet` damgayı ve değişiklik sayacını artırıp
+ * olmayan bir değişikliği hem yedek hatırlatmasına hem eşitlemeye sayardı.
+ */
+export async function eskiSenkronAyarlariniSil(depo) {
+  const ayar = await depo._oku('ayarlar', 'genel');
+  if (!ayar || !ESKI_SENKRON_AYARLARI.some((a) => a in ayar)) return false;
+  const temiz = { ...ayar };
+  for (const a of ESKI_SENKRON_AYARLARI) delete temiz[a];
+  await depo._yaz('ayarlar', temiz);
+  return true;
 }

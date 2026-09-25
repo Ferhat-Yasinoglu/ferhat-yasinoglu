@@ -11,7 +11,7 @@ import { tarihSaatMetni } from '../paylasilan/tarih.js';
 import { sayiMetni, bicimAyarla, PARA_BIRIMLERI } from '../paylasilan/metin.js';
 import { t } from '../i18n.js';
 import { sablonListesi } from '../sablon-arayuz.js';
-import { senkronKarti } from '../senkron-arayuz.js';
+import { hesapKarti } from '../hesap-arayuz.js';
 import { kurulumKarti } from '../kurulum-arayuz.js';
 import { kagidiYazdir, QR_VARSAYILAN } from '../kagit.js';
 import { hataMetni } from '../hatalar.js';
@@ -105,6 +105,9 @@ async function geriYukle(ctx, dosya) {
 
   const sonuc = await iceAktar(depo, belge, { strateji: strateji.value });
   if (!sonuc.ok) { hata(sonuc.hatalar.join(' ')); return false; }
+  // Geri yüklenen kayıtlar hesaba da gitmeli. İçe aktarma kendisi saymıyor
+  // (eşitleme de onu kullanıyor, indirdiğini yeniden göndermesin diye).
+  await depo.degisiklikSay({ yedek: false });
   const eklenen = Object.values(sonuc.rapor).reduce((a, r) => a + r.eklendi + r.guncellendi, 0);
   basari(t('yedek.yuklendi', '{n} kayıt yüklendi', { n: eklenen }));
   return true;
@@ -115,7 +118,11 @@ export default {
   async cizim(kok, ctx) {
     const { depo, modal, onayla, basari, hata, uyar } = ctx;
 
+    /* Kart eylemleri (hazır liste, örnek veri…) bitince sayfayı yeniden
+       çiziyor ve bu çizim birkaç okuma sürüyor. Hekim o arada başka sayfaya
+       geçtiyse geç kalan çizim yeni sayfanın üstüne Ayarlar'ı basıyordu. */
     let sira = 0;
+    let ayrildi = false;
     async function ciz() {
       const benim = ++sira;
       const meta = await depo.meta();
@@ -123,12 +130,13 @@ export default {
       const h = hatirlatmaGerekli(meta);
       const kapasite = depo.kapasite ? await depo.kapasite() : null;
       const sablonlar = await depo.listele('sablonlar', { sirala: 'ad' });
+      const hesapDurumu = ctx.hesap ? await ctx.hesap.hesapDurumu() : null;
       const sayilar = {};
       for (const ad of Object.keys(KOLEKSIYONLAR)) {
         if (ad === 'meta' || ad === 'ayarlar') continue;
         sayilar[ad] = await depo.say(ad);
       }
-      if (benim !== sira) return;
+      if (benim !== sira || ayrildi) return;
 
       temizle(kok);
       kok.append(sayfaBas(t('nav.ayarlar', 'Ayarlar'), { alt: t('ayar.alt', 'Reçete antedi, yedek ve uygulama bilgileri.') }));
@@ -266,9 +274,9 @@ export default {
           } }),
           el('label', { class: 'btn' }, simge('yukle', { boy: 18 }), t('yedek.geri_yukle', 'Yedekten geri yükle'), dosyaGirdisi))));
 
-      /* --- Google hesabına yedek: dosya yedeğinin hemen ardında, çünkü
-             ikisi aynı sorunun iki cevabı. --- */
-      kok.appendChild(senkronKarti(ctx, ayar, meta, ciz));
+      /* --- Hesap: dosya yedeğinin hemen ardında, çünkü ikisi aynı sorunun
+             iki cevabı. --- */
+      if (hesapDurumu) kok.appendChild(hesapKarti(hesapDurumu));
 
       /* --- Bu cihaza kur --- */
       kok.appendChild(kurulumKarti(ctx, ciz));
@@ -371,8 +379,10 @@ export default {
           });
           if (!onay) return;
           try {
-            for (const ad of Object.keys(KOLEKSIYONLAR)) if (ad !== 'meta') await depo.kaliciSil(ad);
-            await depo.metaKaydet({ ornekYuklendi: 0, degisiklikSayaci: 0, sonYedek: '' });
+            // Önce hesaptan çıkılır (jeton ve K silinir): yoksa bir sonraki
+            // eşitleme sunucudaki kopyayı bu boş cihaza geri indirirdi.
+            await ctx.hesap?.cikisYap();
+            await depo.hepsiniSil();
             basari(t('ayar.hepsi_silindi', 'Bütün veriler silindi'));
             ctx.yenileMenu?.();
             ciz();
@@ -387,6 +397,7 @@ export default {
     }
 
     await ciz();
-    return depo.dinle('*', () => {});
+    const birak = depo.dinle('*', () => {});
+    return () => { ayrildi = true; birak(); };
   },
 };

@@ -1,4 +1,5 @@
-// IndexedDB deposu: verilerin yaşadığı yer. Hiçbir kayıt cihazdan çıkmaz.
+// IndexedDB deposu: verilerin yaşadığı yer. Hesap açılmadıkça hiçbir kayıt
+// cihazdan çıkmaz; açılırsa yalnız şifreli kasa olarak çıkar (depo/senkron.js).
 // Açılamazsa (özel pencere, dolu disk) BellekDepo'ya düşülür ve arayüz
 // "veriler kalıcı değil" bandını gösterir.
 import { TemelDepo, BellekDepo, DepoHatasi } from './depo.js';
@@ -33,6 +34,27 @@ export class IdbDepo extends TemelDepo {
     try { await istek(this._tx(kol, 'readwrite').put(k)); }
     catch (e) { throw new DepoHatasi(e?.name === 'QuotaExceededError' ? 'kota' : 'yazma', e?.message); }
   }
+  /* Okuma ve yazma aynı işlemde; yazma okumanın geri çağrısında EŞZAMANLI
+     kuruluyor (arada söz beklenirse işlem kendiliğinden kapanabiliyor). */
+  _guncelle(kol, id, fn) {
+    return new Promise((cozul, reddet) => {
+      let tx;
+      try { tx = this.db.transaction(kol, 'readwrite'); } catch (e) { reddet(e); return; }
+      const magaza = tx.objectStore(kol);
+      let yeni;
+      const r = magaza.get(id);
+      r.onsuccess = () => {
+        try { yeni = fn(r.result || null); magaza.put(yeni); } catch (e) { reddet(e); tx.abort(); }
+      };
+      tx.oncomplete = () => cozul(yeni);
+      const hata = () => {
+        const e = tx.error || r.error;
+        reddet(new DepoHatasi(e?.name === 'QuotaExceededError' ? 'kota' : 'yazma', e?.message));
+      };
+      tx.onerror = hata;
+      tx.onabort = hata;
+    });
+  }
   async _kaldir(kol, id) { await istek(this._tx(kol, 'readwrite').delete(id)); }
   async _hepsi(kol) { return istek(this._tx(kol).getAll()); }
 
@@ -40,6 +62,14 @@ export class IdbDepo extends TemelDepo {
     const y = await super.kaydet(kol, kayit, sec);
     if (kol !== 'meta') await this.degisiklikSay();
     return y;
+  }
+
+  /* Silme de bir değişiklik: mezar taşı öbür cihazlara gitmeli. Yedek
+     hatırlatması silmeyi saymıyordu; o davranış korunuyor. */
+  async sil(kol, id) {
+    const oldu = await super.sil(kol, id);
+    if (oldu && kol !== 'meta') await this.degisiklikSay({ yedek: false });
+    return oldu;
   }
 
   async kapasite() {

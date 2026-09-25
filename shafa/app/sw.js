@@ -30,7 +30,10 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
-  if (e.request.method !== 'GET' || url.origin !== location.origin) return;
+  // Hesap API'si (/v1/) önbelleğe girmez: yerelde uygulamayla aynı kökenden
+  // sunuluyor ve "önce önbellek" eski bir kasa sürümü döndürürdü. Yayında
+  // zaten başka kökende.
+  if (e.request.method !== 'GET' || url.origin !== location.origin || url.pathname.includes('/v1/')) return;
   // Önbellekten hemen ver, arkada tazele.
   e.respondWith(caches.open(ONBELLEK).then(async (c) => {
     const eski = await c.match(e.request);

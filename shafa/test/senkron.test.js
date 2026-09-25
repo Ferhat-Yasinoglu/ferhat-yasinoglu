@@ -1,10 +1,12 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { BellekDepo } from '../app/js/depo/depo.js';
-import { senkronEt, bellekTasima, SenkronHatasi } from '../app/js/depo/senkron.js';
-import { ayarlariBirlestir, anahtarlariBirlestir, belgeyiTemizle, belgeParmakIzi, CIHAZA_OZEL_AYARLAR, bozukKimligiAyikla } from '../app/js/paylasilan/senkron.js';
-import { kasayaKoy, kasadanAl, kasaMi, KasaHatasi, donguSayisi, DONGU } from '../app/js/paylasilan/kasa.js';
+import { IdbDepo } from '../app/js/depo/idb.js';
+import { senkronEt, bellekTasima, SenkronHatasi, eskiSenkronAyarlariniSil } from '../app/js/depo/senkron.js';
+import { ayarlariBirlestir, anahtarlariBirlestir, belgeyiTemizle, belgeParmakIzi, CIHAZA_OZEL_AYARLAR, ESKI_SENKRON_AYARLARI } from '../app/js/paylasilan/senkron.js';
+import { kasayaKoy, kasadanAl, kasaMi, KasaHatasi, donguSayisi, DONGU, KASA_SURUMU } from '../app/js/paylasilan/kasa.js';
 import { kodUret, metniDogrula, anahtarlar } from '../app/js/depo/dogrulama.js';
-import { belgeDerle } from '../app/js/depo/yedek.js';
+import { belgeDerle, yedekOlustur, iceAktar } from '../app/js/depo/yedek.js';
+import { ornekYukle } from '../app/js/depo/ornek.js';
 
 const PAROLA = 'kabil-1404';
 
@@ -112,6 +114,12 @@ describe('ayar birleştirme', () => {
     expect(sonuc.senkronParolasi).toBe('benim');
     expect(sonuc.senkronIstemciId).toBeUndefined();
   });
+  it('yerelde ayar kaydı yokken de uzaktakinin cihaza özel alanları alınmıyor', () => {
+    const { sonuc } = ayarlariBirlestir(null, kayit({ doktorAd: 'A', senkronParolasi: 'onunki', hesapJetonu: 'j' }, 'T'));
+    expect(sonuc.doktorAd).toBe('A');
+    expect(sonuc.senkronParolasi).toBeUndefined();
+    expect(sonuc.hesapJetonu).toBeUndefined();
+  });
   it('kaybeden doğrulama anahtarı silinmiyor, eskiye düşüyor', () => {
     const r = anahtarlariBirlestir({ dogrulamaAnahtari: 'YENI' }, { dogrulamaAnahtari: 'ESKI' });
     expect(r.dogrulamaAnahtari).toBe('YENI');
@@ -124,25 +132,14 @@ describe('ayar birleştirme', () => {
   });
 });
 
-describe('bozuk istemci kimliği', () => {
-  const GECERLI = '992727769946-82oa2himlups0dihvjau26hp7det5pu8.apps.googleusercontent.com';
-
-  it('yarım kalmış kimliği kenara alıyor, silmiyor', () => {
-    const yama = bozukKimligiAyikla({ senkronIstemciId: '992727769946-82oa2him' });
-    expect(yama).toEqual({ senkronIstemciId: '', senkronIstemciIdBozuk: '992727769946-82oa2him' });
-  });
-  it('geçerli kimliğe dokunmuyor', () => {
-    // Kendi Google Cloud projesini kullanan hekimin değeri kaybolmamalı.
-    expect(bozukKimligiAyikla({ senkronIstemciId: GECERLI })).toBe(null);
-    expect(bozukKimligiAyikla({ senkronIstemciId: ' ' + GECERLI + ' ' })).toBe(null);
-  });
-  it('alan zaten boşsa bir şey yapmıyor', () => {
-    expect(bozukKimligiAyikla({})).toBe(null);
-    expect(bozukKimligiAyikla({ senkronIstemciId: '' })).toBe(null);
-    expect(bozukKimligiAyikla(null)).toBe(null);
-  });
-  it('kenara alınan değer buluta gitmiyor', () => {
-    expect(CIHAZA_OZEL_AYARLAR).toContain('senkronIstemciIdBozuk');
+describe('Google döneminin ayarları', () => {
+  // Google yedeği kalktı ama eski bir cihazın yedeğinde ya da kasasında bu
+  // alanlar hâlâ gelebilir: hiçbiri bir daha cihazdan çıkmamalı.
+  it('eski adların hepsi cihaza özel listede kalıyor', () => {
+    for (const a of ['senkronParolasi', 'senkronIstemciId', 'senkronIstemciIdBozuk', 'senkronAcik', 'senkronHesap', 'senkronDosyaId']) {
+      expect(ESKI_SENKRON_AYARLARI).toContain(a);
+      expect(CIHAZA_OZEL_AYARLAR).toContain(a);
+    }
   });
 });
 
@@ -303,12 +300,30 @@ describe('iki cihaz', () => {
     expect(await adlar(b)).toEqual(['Ahmadi', 'Karimi', 'Zadran']);
   });
 
-  it('bulutta şifresiz bir belge varsa yine de okunuyor', async () => {
+  it('şifresiz belge YALNIZ açıkça istenirse okunuyor ve şifreli yazılıyor', async () => {
     await a.kaydet('hastalar', { ad: 'Ali', soyad: 'Ahmadi' });
     const acik = bellekTasima(belgeyiTemizle(await belgeDerle(a)));
-    await senkronEt(b, acik, { parola: PAROLA });
+    await senkronEt(b, acik, { parola: PAROLA, sifresizKabul: true });
     expect(await adlar(b)).toEqual(['Ahmadi']);
     expect(kasaMi(acik.icerik)).toBe(true);   // bir daha şifreli yazılıyor
+  });
+
+  it('varsayılanda şifresiz uzak paket REDDEDİLİYOR, yerele hiçbir şey yazılmıyor', async () => {
+    // K'yi bilmeyen biri (jetonu çalan, sahte sunucu) yalnız kasa dışı bir
+    // paket koyabilir: sahte hasta, antet ve reçete doğrulama anahtarı.
+    await b.kaydet('hastalar', { ad: 'Sara', soyad: 'Zadran' });
+    const once = await b.ayarlar();
+    const sahte = bellekTasima({
+      bicim: 'shafa-yedek', semaSurumu: 3,
+      koleksiyonlar: {
+        hastalar: [{ id: 'has_sahte', ad: 'Sahte', soyad: 'Hasta', rev: 1, guncellendi: '2099-01-01T00:00:00.000Z' }],
+        ayarlar: [{ id: 'genel', doktorAd: 'Saldırgan', eskiAnahtarlar: ['QUFBQQ=='], guncellendi: '2099-01-01T00:00:00.000Z' }],
+      },
+    });
+    await expect(senkronEt(b, sahte, { parola: PAROLA })).rejects.toMatchObject({ kod: 'kasa_bozuk' });
+    expect(await adlar(b)).toEqual(['Zadran']);
+    expect(await b.ayarlar()).toEqual(once);
+    expect(kasaMi(sahte.icerik)).toBe(false);  // üstüne de yazılmadı
   });
 
   it('bozuk bir dosya eşitlemeyi patlatıyor ama yereli bozmuyor', async () => {
@@ -316,5 +331,209 @@ describe('iki cihaz', () => {
     const bozuk = bellekTasima({ bicim: 'shafa-yedek', koleksiyonlar: { yok_boyle: [] } });
     await expect(senkronEt(b, bozuk, { parola: PAROLA })).rejects.toThrow(SenkronHatasi);
     expect(await adlar(b)).toEqual(['Zadran']);
+  });
+});
+
+describe('kasa 2. sürüm: gzip', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  // Eski kod (1. sürüm, sıkıştırmasız) ile üretilmiş gerçek bir kasa: bugünkü
+  // okuyucu onu açabilmeli. Değer git geçmişindeki kasa.js ile üretildi.
+  const V1 = {
+    bicim: 'shafa-kasa', surum: 1, dongu: 310000, tuz: 'IGo8j9AxFLt+KpnJVJ7X/Q==', iv: 'e8A1H1220jBN9cHu',
+    veri: 'B9958V3aDHmpfauInf3nvxIkUWjFJ46TRhoZisQQ3deMMDr4NKVXvN+m0fO1PyEagSsG8n+FXvsmexdMXvA33rt2YLql9q4ToPymT2lONkfGGAoIY/GyAjXpXir5SHMqGEwzhQ6dfqdNxqvf1fbSdySXg/FZ',
+  };
+
+  it('1. sürüm kasa hâlâ açılıyor', async () => {
+    const b = await kasadanAl(V1, 'eski-kasa-kodu');
+    expect(b.koleksiyonlar.hastalar[0]).toMatchObject({ id: 'has_v1', soyad: 'Sultani' });
+  });
+
+  it('gzip\'li kasa gidip geliyor ve gerçekten küçülüyor', async () => {
+    const buyuk = { hastalar: Array.from({ length: 300 }, (_, i) => ({ id: 'has_' + i, ad: 'عبدالله', soyad: 'احمدی', notlar: 'سابقه ندارد' })) };
+    const sikisik = await kasayaKoy(buyuk, PAROLA);
+    const duz = await kasayaKoy(buyuk, PAROLA, { sikistir: false });
+    expect(sikisik).toMatchObject({ surum: KASA_SURUMU, sikistirma: 'gzip' });
+    expect(duz.sikistirma).toBeUndefined();
+    expect(sikisik.veri.length * 5).toBeLessThan(duz.veri.length);
+    expect(await kasadanAl(sikisik, PAROLA)).toEqual(buyuk);
+    expect(await kasadanAl(duz, PAROLA)).toEqual(buyuk);
+    expect(JSON.stringify(sikisik)).not.toContain('عبدالله');
+  });
+
+  it('paket JSON\'u sunucunun beklediği önekle başlıyor', async () => {
+    for (const sikistir of [true, false]) {
+      const p = await kasayaKoy({ a: 1 }, PAROLA, { sikistir });
+      expect(JSON.stringify(p).startsWith('{"bicim":"shafa-kasa"')).toBe(true);
+    }
+  });
+
+  it('CompressionStream olmayan tarayıcı sıkıştırmasız yazıyor, öbürleri okuyor', async () => {
+    vi.stubGlobal('CompressionStream', undefined);
+    const p = await kasayaKoy({ a: 1 }, PAROLA);
+    expect(p.sikistirma).toBeUndefined();
+    vi.unstubAllGlobals();
+    expect(await kasadanAl(p, PAROLA)).toEqual({ a: 1 });
+  });
+
+  it('DecompressionStream yoksa gzip\'li kasa "tarayıcıyı güncelle" diyor, parola suçlanmıyor', async () => {
+    const p = await kasayaKoy({ a: 1 }, PAROLA);
+    vi.stubGlobal('DecompressionStream', undefined);
+    await expect(kasadanAl(p, PAROLA)).rejects.toMatchObject({ kod: 'gzip_yok' });
+  });
+
+  it('tanınmayan sıkıştırma "daha yeni sürüm" sayılıyor', async () => {
+    const p = await kasayaKoy({ a: 1 }, PAROLA);
+    await expect(kasadanAl({ ...p, sikistirma: 'brotli' }, PAROLA)).rejects.toMatchObject({ kod: 'surum' });
+  });
+
+  it('sıkıştırma etiketi oynanırsa "bozuk", açık veri sızmıyor', async () => {
+    const p = await kasayaKoy({ a: 1 }, PAROLA);
+    const { sikistirma, ...etiketsiz } = p;
+    expect(sikistirma).toBe('gzip');
+    await expect(kasadanAl(etiketsiz, PAROLA)).rejects.toMatchObject({ kod: 'bozuk' });
+  });
+
+  it('eşitleme gzip_yok ve surum kodlarını yutmuyor', async () => {
+    const a = new BellekDepo();
+    const bulut = bellekTasima();
+    await a.kaydet('hastalar', { ad: 'Ali', soyad: 'Ahmadi' });
+    await senkronEt(a, bulut, { parola: PAROLA });
+    vi.stubGlobal('DecompressionStream', undefined);
+    await expect(senkronEt(new BellekDepo(), bulut, { parola: PAROLA })).rejects.toMatchObject({ kod: 'gzip_yok' });
+    vi.unstubAllGlobals();
+    const ileri = bellekTasima({ ...bulut.icerik, surum: 99 });
+    await expect(senkronEt(new BellekDepo(), ileri, { parola: PAROLA })).rejects.toMatchObject({ kod: 'surum' });
+  });
+});
+
+describe('örnek kayıtlar eşitlenmiyor', () => {
+  it('yüklenmiyor; eski bir istemcinin yüklediği örnek de inmiyor', async () => {
+    const a = new BellekDepo();
+    await ornekYukle(a);
+    await a.kaydet('hastalar', { ad: 'Ali', soyad: 'Ahmadi' });
+    const bulut = bellekTasima();
+    await senkronEt(a, bulut, { parola: PAROLA });
+    const icerik = await kasadanAl(bulut.icerik, PAROLA);
+    const tumu = Object.values(icerik.koleksiyonlar).flat();
+    expect(tumu.some((k) => k.ornek === 1)).toBe(false);
+    expect(icerik.koleksiyonlar.hastalar.map((h) => h.soyad)).toEqual(['Ahmadi']);
+
+    // Eski istemci örnekleri de yüklemiş olsun: öbür cihaza inmemeli.
+    const eski = await kasayaKoy(belgeyiTemizle(await belgeDerle(a)), PAROLA);
+    const b = new BellekDepo();
+    await senkronEt(b, bellekTasima(eski), { parola: PAROLA });
+    expect((await b.listele('hastalar')).map((h) => h.soyad)).toEqual(['Ahmadi']);
+    expect(await b.say('ilaclar')).toBe(0);
+  });
+
+  it('bu cihazda silinen örnekler eşitlemeyle geri gelmiyor', async () => {
+    const a = new BellekDepo();
+    const bulut = bellekTasima();
+    await ornekYukle(a);
+    await senkronEt(a, bulut, { parola: PAROLA });
+    await a.ornekSil();
+    await senkronEt(a, bulut, { parola: PAROLA });
+    expect(await a.say('hastalar')).toBe(0);
+    expect(await a.say('ilaclar')).toBe(0);
+  });
+});
+
+describe('cihaza özel ayarlar dosya yedeğine ve içe aktarmaya karışmıyor', () => {
+  const SIRLAR = { senkronParolasi: 'GIZLI-KASA-KODU', senkronIstemciId: 'x.apps', senkronAcik: 1, hesapJetonu: 'jeton-gizli' };
+
+  it('yedek dosyasında jeton, K ya da Google dönemi sırrı yok', async () => {
+    const d = await new IdbDepo('yedek-sir-' + Math.random().toString(36).slice(2)).ac();
+    await d.ayarKaydet({ ...SIRLAR, doktorAd: 'Ahmad' });
+    await d.hesapKaydet({ kullanici: 'dr.nemuna', jeton: 'ZHIubmVtdW5h.jeton-degeri', kasa: 'KASA-ANAHTARI-K' });
+    const metin = JSON.stringify(await yedekOlustur(d));
+    for (const deger of [...Object.values(SIRLAR).map(String).filter((v) => v.length > 2), 'jeton-degeri', 'KASA-ANAHTARI-K']) {
+      expect(metin).not.toContain(deger);
+    }
+    for (const alan of CIHAZA_OZEL_AYARLAR) expect(metin).not.toContain(`"${alan}"`);
+    expect(metin).not.toContain('"meta"');
+    expect(metin).toContain('Ahmad');
+  });
+
+  for (const strateji of ['birlestir', 'degistir']) {
+    it(`içe aktarma (${strateji}) gelen cihaza özel alanları yok sayıyor, yereldekini koruyor`, async () => {
+      const d = new BellekDepo();
+      await d.ayarKaydet({ senkronParolasi: 'BENIM', doktorAd: 'Eski' });
+      const belge = {
+        bicim: 'shafa-yedek', semaSurumu: 3,
+        koleksiyonlar: { ayarlar: [{ id: 'genel', rev: 1, guncellendi: '2099-01-01T00:00:00.000Z', doktorAd: 'Yeni', ...SIRLAR, senkronParolasi: 'ONUNKI' }] },
+      };
+      await iceAktar(d, belge, { strateji });
+      const ayar = await d.ayarlar();
+      expect(ayar.doktorAd).toBe('Yeni');
+      expect(ayar.senkronParolasi).toBe('BENIM');
+      expect(ayar.hesapJetonu).toBeUndefined();
+      expect(ayar.senkronIstemciId).toBeUndefined();
+    });
+  }
+
+  it('ayar kaydı olmayan cihaza da gelen cihaza özel alan yazılmıyor', async () => {
+    const d = new BellekDepo();
+    const belge = { bicim: 'shafa-yedek', semaSurumu: 3, koleksiyonlar: { ayarlar: [{ id: 'genel', guncellendi: 'T', doktorAd: 'Yeni', ...SIRLAR }] } };
+    await iceAktar(d, belge);
+    const ayar = await d.ayarlar();
+    expect(ayar.doktorAd).toBe('Yeni');
+    for (const alan of Object.keys(SIRLAR)) expect(ayar[alan]).toBeUndefined();
+  });
+
+  it('dosyadaki "meta" koleksiyonu cihazın hesap durumunu ezmiyor', async () => {
+    // Başka birinin jetonunu ve K'sini taşıyan bir dosya cihazı onun hesabına
+    // bağlayıp bu cihazın hastalarını ona yükletebilirdi.
+    const d = new BellekDepo();
+    await d.hesapKaydet({ kullanici: 'dr.nemuna', jeton: 'benim-jetonum', kasa: 'BENIM-K' });
+    const belge = {
+      bicim: 'shafa-yedek', semaSurumu: 3,
+      koleksiyonlar: { meta: [{ id: 'hesap', kullanici: 'saldirgan', jeton: 'onun-jetonu', kasa: 'ONUN-K' }, { id: 'meta', senkronSayaci: -5 }] },
+    };
+    for (const strateji of ['birlestir', 'degistir']) {
+      expect((await iceAktar(d, belge, { strateji })).ok).toBe(true);
+      expect(await d.hesap()).toMatchObject({ kullanici: 'dr.nemuna', jeton: 'benim-jetonum', kasa: 'BENIM-K' });
+      expect((await d.meta()).senkronSayaci).toBeUndefined();
+    }
+  });
+});
+
+describe('Google döneminin ayarları açılışta siliniyor', () => {
+  it('bir kez siliniyor, damga ve sayaç oynamıyor, antet kalıyor', async () => {
+    const d = await new IdbDepo('eski-ayar-' + Math.random().toString(36).slice(2)).ac();
+    await d.ayarKaydet({ senkronParolasi: 'ESKI-K', senkronAcik: 1, senkronIstemciId: 'x', senkronIstemciIdBozuk: 'y', senkronHesap: 'a@b', senkronDosyaId: 'z', doktorAd: 'Ahmad' });
+    const once = await d.ayarlar();
+    const metaOnce = await d.meta();
+    expect(await eskiSenkronAyarlariniSil(d)).toBe(true);
+    const sonra = await d.ayarlar();
+    for (const a of ESKI_SENKRON_AYARLARI) expect(sonra[a]).toBeUndefined();
+    expect(sonra).toMatchObject({ doktorAd: 'Ahmad', guncellendi: once.guncellendi, rev: once.rev });
+    expect(await d.meta()).toEqual(metaOnce);
+    expect(await eskiSenkronAyarlariniSil(d)).toBe(false);
+  });
+});
+
+describe('eşitleme sayacı', () => {
+  it('kayıt ve silme sayılıyor; silme yedek hatırlatmasını oynatmıyor', async () => {
+    const d = await new IdbDepo('sayac-' + Math.random().toString(36).slice(2)).ac();
+    const h = await d.kaydet('hastalar', { ad: 'Ali', soyad: 'Ahmadi' });
+    expect(await d.meta()).toMatchObject({ degisiklikSayaci: 1, senkronSayaci: 1 });
+    await d.sil('hastalar', h.id);
+    expect(await d.meta()).toMatchObject({ degisiklikSayaci: 1, senkronSayaci: 2 });
+    await yedekOlustur(d);
+    expect(await d.meta()).toMatchObject({ degisiklikSayaci: 0, senkronSayaci: 2 });
+  });
+
+  it('eşzamanlı meta yazmaları birbirini ezmiyor', async () => {
+    // Hesap durumu, yedek sayacı ve eşitleme sayacı aynı depoda; okuma ile
+    // yazma arasına giren bir yazma öbürünü silmemeli.
+    const d = await new IdbDepo('yaris-' + Math.random().toString(36).slice(2)).ac();
+    await Promise.all([
+      d.metaKaydet({ sonYedek: 'T' }),
+      ...Array.from({ length: 10 }, () => d.degisiklikSay()),
+      d.hesapKaydet({ jeton: 'j' }),
+      d.hesapKaydet({ kasa: 'k' }),
+    ]);
+    expect(await d.meta()).toMatchObject({ degisiklikSayaci: 10, senkronSayaci: 10, sonYedek: 'T' });
+    expect(await d.hesap()).toMatchObject({ jeton: 'j', kasa: 'k' });
   });
 });

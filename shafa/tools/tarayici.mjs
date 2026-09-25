@@ -78,11 +78,7 @@ const tarayici = await chromium.launch();
 // Açık bir bağlam: yan sekmeler aynı IndexedDB'yi görsün diye gerekli.
 const baglam = await tarayici.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
 const sayfa = await baglam.newPage();
-/* Son adım Google betiğini BİLEREK yüklenemez halde çağırıyor; tarayıcı da
-   bunu konsola hata olarak yazıyor. O adım boyunca konsol susturuluyor, öncesi
-   ve sonrasında değil — başka bir yerdeki gerçek hata yine denemeyi düşürür. */
-let googleDenemesi = false;
-sayfa.on('console', (m) => { if (m.type() === 'error' && !googleDenemesi) hatalar.push('console: ' + m.text()); });
+sayfa.on('console', (m) => { if (m.type() === 'error') hatalar.push('console: ' + m.text()); });
 sayfa.on('pageerror', (e) => hatalar.push('pageerror: ' + e.message));
 
 await sayfa.goto(KOK, { waitUntil: 'networkidle' });
@@ -893,7 +889,15 @@ const ayniSayfa = await sayfa.evaluate(() => {
 if (ayniSayfa.n !== 0) throw new Error(`Ctrl+K kutusu aynı sayfanın sonucuyla kapanınca ${ayniSayfa.n} keydown dinleyicisi açık kaldı`);
 ok(`Ctrl+K sonucu zaten açık sayfaysa (${ayniSayfa.hash.slice(0, 6)}…) kutu kendi kapatışıyla kapanıyor, dinleyici kalmıyor`);
 
-// --- Yedek al ve içeriğini doğrula
+// --- Yedek al ve içeriğini doğrula. Önce cihaza özel sırlar konuyor: eski
+// Google kasa kodu ayarlarda, hesabın K'si meta'da (jetonsuz: bu adım
+// sunucuya gitmesin). Yedek dosyası elden ele dolaşıyor, hiçbiri orada olmamalı.
+await sayfa.evaluate(async () => {
+  const { yerelDepoAc } = await import('./js/depo/idb.js');
+  const d = await yerelDepoAc();
+  await d.ayarKaydet({ senkronParolasi: 'ESKI-KASA-SIRRI' });
+  await d.hesapKaydet({ kasa: 'HESAP-K-SIRRI' });
+});
 const indirme = sayfa.waitForEvent('download');
 await sayfa.click('#kenar-menu a[href="#/ayarlar"]');
 // Ayarlar sayfasının kendi düğmesi. Aynı yazılı düğme yedek hatırlatma
@@ -907,6 +911,12 @@ if (belge.bicim !== 'shafa-yedek' || belge.koleksiyonlar.ilaclar.length !== 9) {
 }
 ok(`yedek indirildi (${dosya.suggestedFilename()}): 9 ilaç, ${belge.koleksiyonlar.hastalar.length} hasta, ${belge.koleksiyonlar.receteler.length} reçete`);
 if ('hareketler' in belge.koleksiyonlar) throw new Error('yedekte stok hareketleri koleksiyonu duruyor');
+const yedekMetni = await readFile(yol, 'utf8');
+for (const sir of ['ESKI-KASA-SIRRI', 'HESAP-K-SIRRI', 'senkronParolasi']) {
+  if (yedekMetni.includes(sir)) throw new Error('yedek dosyasında cihaza özel sır var: ' + sir);
+}
+if ('meta' in belge.koleksiyonlar) throw new Error('yedekte meta koleksiyonu var');
+ok('yedek dosyasında cihaza özel sır yok (eski kasa kodu, hesabın K\'si, meta)');
 
 // --- "Veriler" kartı: her koleksiyonun etiketi ÇEVRİLMİŞ olmalı.
 // Etiket anahtarı `KOL_ANAHTARI[ad] || ad` ile dinamik kuruluyor, yani statik
@@ -2754,11 +2764,6 @@ if (!telefonSatiri.length || telefonSatiri.some(([n, bosluk]) => n !== 2 || !bos
 if (altYari.length) throw new Error('kâğıdın alt yarısı bozuk: ' + altYari.join('; '));
 ok(`kâğıdın alt yarısı: hat ve imza içeriğin altında (${altOzet.join(' · ')}), Clinical satırları ve hasta şeridi her stilde tek satır, numara kesilmiyor, en geniş doğrulama kodu bölünmüyor (modernde etiketin yanında), sade çizim renksiz (${sutunAyak.sadeSekil} parça), el yazısı çizime binmiyor (${yaziMurekkebi} px), telefon satırı tek metin`);
 
-// --- Eşitleme: gerçek tarayıcıda, gerçek IndexedDB ve gerçek WebCrypto ile.
-// Google'ın kendi uç noktaları burada denenemiyor (istemci kimliği hekimde),
-// o yüzden taşıyıcı yerine bellek taşıyıcısı konuyor. Denenen şey taşıyıcı
-// değil zaten: iki deponun aynı veriye yakınsaması, kasanın gerçek tarayıcıda
-// açılıp kapanması ve hasta adının şifreli gövdede GÖRÜNMEMESİ.
 // --- Kurulum kartı: tarayıcı "kurulabilir" deyince düğme çıkıyor mu?
 // Headless tarayıcı gerçek `beforeinstallprompt` üretmiyor, o yüzden olay
 // elle yollanıyor — kodun yakaladığı olayın aynısı. Denenen şey olayın
@@ -2790,85 +2795,19 @@ if (await kurKart.locator(`button:has-text("${T('kurulum.kur')}")`).count()) {
 }
 ok('kurulabilir olunca kart kendini tazeliyor, düğme gerçekten kurulum penceresini çağırıyor ve sonra kayboluyor');
 
-await sayfa.waitForSelector(`h2:has-text("${T('senkron.baslik')}")`);
-const senkronKart = sayfa.locator('.kart', { has: sayfa.locator(`h2:has-text("${T('senkron.baslik')}")`) });
+// --- Hesap kartı: Google kartının yerinde. Yerelde (localhost) sunucu aynı
+// kökende olduğu için kart "bağlı değil" diyor; hesap yokken tek kutu,
+// tek istek yok. Giriş formları bir sonraki adımda bu karta geliyor.
+const hesapKart = sayfa.locator('.kart', { has: sayfa.locator(`h2:has-text("${T('hesap.baslik')}")`) });
+await hesapKart.waitFor({ timeout: 5000 });
+await hesapKart.locator(`text=${T('hesap.cikisli')}`).waitFor({ timeout: 5000 });
+if (await hesapKart.locator('input').count()) throw new Error('hesap kartında kutu var');
+ok(`hesap kartı Google kartının yerinde: «${T('hesap.baslik')}», bu cihaz hesaba bağlı değil`);
 
-// --- Kartta hekimin yazacağı HİÇBİR ŞEY yok: tek düğme.
-// Eskiden burada bir "kasa parolası" ve bir "Google istemci kimliği" kutusu
-// duruyordu. İkincisi geliştirici işi — bir doktorun ekranında `992727769946-…`
-// diye bir dize durmamalı. Hekimin bu uygulamada yazdığı tek şifre kendi Gmail
-// şifresi, o da Google'ın kendi penceresinde.
-const gorunurKutu = await senkronKart.locator('input:visible').count();
-const gorunurDugme = (await senkronKart.locator('button:visible').allTextContents()).map((x) => x.trim());
-if (gorunurKutu) throw new Error(`kartta ${gorunurKutu} görünür kutu var; hekim burada hiçbir şey yazmamalı`);
-if (gorunurDugme.length !== 1) throw new Error('tek düğme olmalıydı: ' + gorunurDugme.join(' | '));
-if (!gorunurDugme[0].includes(T('senkron.giris'))) throw new Error('tek düğme giriş düğmesi değil: ' + gorunurDugme[0]);
-ok(`yedek kartı tek düğme: «${T('senkron.giris')}» — görünür kutu yok, parola sorulmuyor`);
-
-// --- Düğmeye basınca kasa kodunu uygulama kendi üretiyor.
-// Bu ortamda Google betiği yüklenemiyor, yani tur düşecek — ama düşmeden ÖNCE
-// kodun üretilip saklanmış olması gerekiyor. Sınanan şey bu.
-googleDenemesi = true;
-await senkronKart.locator(`button:has-text("${T('senkron.giris')}")`).click();
-await senkronKart.locator('.rozet', { hasText: T('senkron.acik') }).waitFor({ timeout: 15000 });
-googleDenemesi = false;
-const kodDurumu = await sayfa.evaluate(async () => {
-  const { yerelDepoAc } = await import('./js/depo/idb.js');
-  const a = await (await yerelDepoAc()).ayarlar();
-  return { kod: a.senkronParolasi || '', acik: !!a.senkronAcik, kimlik: a.senkronIstemciId || '' };
-});
-if (!kodDurumu.acik) throw new Error('düğmeye basıldı ama yedekleme açılmadı');
-if (!/^[A-Z0-9]{4}(-[A-Z0-9]{4}){4}$/.test(kodDurumu.kod)) {
-  throw new Error('kasa kodu üretilmedi ya da biçimi bozuk: ' + JSON.stringify(kodDurumu.kod));
-}
-if (kodDurumu.kimlik) throw new Error('istemci kimliği kendiliğinden doldu: ' + kodDurumu.kimlik);
-const gomuluKimlik = await sayfa.evaluate(async () => {
-  const { VARSAYILAN_ISTEMCI } = await import('./js/senkron/google.js');
-  const { istemciKimligi } = await import('./js/senkron-arayuz.js');
-  return { gomulu: VARSAYILAN_ISTEMCI, bosAyarla: istemciKimligi({ senkronIstemciId: '' }) };
-});
-if (!/^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/.test(gomuluKimlik.gomulu)) {
-  throw new Error(`gömülü istemci kimliği beklenen biçimde değil: ${gomuluKimlik.gomulu}`);
-}
-if (gomuluKimlik.bosAyarla !== gomuluKimlik.gomulu) throw new Error('alan boşken gömülü kimliğe düşmüyor');
-ok(`tek tuşla açıldı: hekim parola yazmadı, kodu uygulama üretti (${kodDurumu.kod.slice(0, 9)}…), kimlik gömülüden geliyor`);
-
-// --- Ayara yarım bir kimlik yapıştırılmışsa görünüyor mu?
-// Hekimin telefonunda tam bu oldu: kimliği koda gömmeden önce ayara yapıştırdığı
-// değer eksik kaldı, gömülü kimliğin yerine geçti ve Google "client bulunamadı"
-// dedi. Hata Google'dan geldiği için sebebi uygulamada hiç görünmüyordu.
-// Alan artık «Gelişmiş» altında: açmak gerekiyor.
-await senkronKart.locator('details.gelismis > summary').click();
-await senkronKart.locator('input[name=senkronIstemciId]').fill('992727769946-82oa2him');
-await senkronKart.locator(`button:has-text("${T('senkron.kaydet')}")`).click();
-await sayfa.waitForSelector(`text=${T('senkron.kimlik_bozuk').split('{k}')[0].trim()}`, { timeout: 5000 });
-const bozukUyari = (await senkronKart.locator('.uyari--hata', { hasText: '992727769946-82oa2him' }).first().textContent()).trim();
-if (!bozukUyari.includes('992727769946-82oa2him')) {
-  throw new Error(`bozuk kimlik uyarısı değeri göstermiyor: ${bozukUyari}`);
-}
-ok(`ayara yarım yapıştırılmış kimlik yakalanıyor ve ekranda yazıyor: «${bozukUyari.slice(0, 60)}…»`);
-
-// Hekimin telefonda bu alanı bulup boşaltması beklenmiyor: uygulama açılışta
-// kendi düzeltiyor. Bozuk değer DURUYORKEN sayfa yenileniyor.
-await sayfa.reload({ waitUntil: 'networkidle' });
-await sayfa.waitForSelector('#kenar-menu a');
-await sayfa.waitForSelector(`h2:has-text("${T('senkron.baslik')}")`);
-const kartYeni = sayfa.locator('.kart', { has: sayfa.locator(`h2:has-text("${T('senkron.baslik')}")`) });
-await kartYeni.locator('details.gelismis > summary').click();
-await kartYeni.locator(`text=${T('senkron.kimlik_gomulu').split('{k}')[0].trim()}`).waitFor({ timeout: 5000 });
-if (await kartYeni.locator('.uyari--hata', { hasText: '992727769946-82oa2him' }).count()) {
-  throw new Error('açılışta onarım olmadı, bozuk kimlik uyarısı duruyor');
-}
-
-const onarim = await sayfa.evaluate(async () => {
-  const { yerelDepoAc } = await import('./js/depo/idb.js');
-  const a = await (await yerelDepoAc()).ayarlar();
-  return { alan: a.senkronIstemciId, kenara: a.senkronIstemciIdBozuk };
-});
-if (onarim.alan) throw new Error(`kimlik alanı temizlenmedi: ${onarim.alan}`);
-if (onarim.kenara !== '992727769946-82oa2him') throw new Error(`eski değer saklanmadı: ${onarim.kenara}`);
-ok(`açılışta kendi düzeltiyor: bozuk kimlik kenara alındı («${onarim.kenara}» saklandı, silinmedi), gömülü kimliğe dönüldü`);
-
+// --- Eşitleme: gerçek tarayıcıda, gerçek IndexedDB ve gerçek WebCrypto ile.
+// Taşıyıcı olarak bellek taşıyıcısı: denenen şey iki deponun aynı veriye
+// yakınsaması, kasanın (gzip dahil) gerçek tarayıcıda açılıp kapanması, hasta
+// adının şifreli gövdede GÖRÜNMEMESİ ve örnek kayıtların hiç gitmemesi.
 const senkronSonucu = await sayfa.evaluate(async () => {
   const { yerelDepoAc } = await import('./js/depo/idb.js');
   const { BellekDepo } = await import('./js/depo/depo.js');
@@ -2886,7 +2825,13 @@ const senkronSonucu = await sayfa.evaluate(async () => {
   await kodUret(telefon, 'başka');
   const ayriAnahtar = (await bilgisayar.ayarlar()).dogrulamaAnahtari !== (await telefon.ayarlar()).dogrulamaAnahtari;
 
-  const hastaAdi = (await bilgisayar.listele('hastalar'))[0]?.ad || '';
+  // Örnek kayıtlar eşitlenmiyor: karşılaştırma hekimin kendi kayıtlarıyla.
+  // Önceki adımlar hastaları silmiş olabilir; ikisinden de birer tane konuyor.
+  await bilgisayar.kaydet('hastalar', { ad: 'دنیا', soyad: 'نظری' });
+  await bilgisayar.kaydet('hastalar', { ad: 'نمونه‌گل', soyad: 'نمونه', ornek: 1 });
+  const gercek = async (depo, kol) => (await depo.listele(kol)).filter((k) => k.ornek !== 1);
+  const hastaAdi = (await gercek(bilgisayar, 'hastalar'))[0]?.ad || '';
+  const ornekAdi = (await bilgisayar.listele('hastalar')).find((k) => k.ornek === 1)?.ad || '';
   await senkronEt(bilgisayar, bulut, { parola: PAROLA });
   await senkronEt(telefon, bulut, { parola: PAROLA });
   await senkronEt(bilgisayar, bulut, { parola: PAROLA });
@@ -2896,11 +2841,14 @@ const senkronSonucu = await sayfa.evaluate(async () => {
 
   return {
     hastaAdi,
+    ornekAdi,
     ayriAnahtar,
-    bilgisayarHasta: (await bilgisayar.listele('hastalar')).length,
+    gzip: bulut.icerik.sikistirma,
+    bilgisayarHasta: (await gercek(bilgisayar, 'hastalar')).length,
     telefonHasta: (await telefon.listele('hastalar')).length,
     telefonIlac: (await telefon.listele('ilaclar')).length,
-    bilgisayarIlac: (await bilgisayar.listele('ilaclar')).length,
+    bilgisayarIlac: (await gercek(bilgisayar, 'ilaclar')).length,
+    ornekGitti: (await telefon.listele('hastalar')).some((k) => k.ad === ornekAdi || k.ornek === 1),
     sifreli: govde.includes('shafa-kasa') && !govde.includes(hastaAdi) && !govde.includes(PAROLA),
     parolaSizdi: govde.includes(PAROLA),
     telefondaDogrulandi: (await metniDogrula(telefon, `${ozet}\nکد تأیید: ${kod}`)).durum,
@@ -2910,7 +2858,10 @@ const senkronSonucu = await sayfa.evaluate(async () => {
 
 const s = senkronSonucu;
 if (!s.ayriAnahtar) throw new Error('iki cihaz aynı doğrulama anahtarıyla başladı — deneme bir şey kanıtlamıyor');
-if (!s.hastaAdi) throw new Error('örnek hasta bulunamadı, sızıntı denetimi boşa döner');
+if (!s.hastaAdi) throw new Error('hekimin kendi hastası bulunamadı, sızıntı denetimi boşa döner');
+if (!s.ornekAdi) throw new Error('örnek hasta yok; örneklerin gitmediği denetlenemiyor');
+if (s.ornekGitti) throw new Error(`örnek hasta («${s.ornekAdi}») öbür cihaza gitti`);
+if (s.gzip !== 'gzip') throw new Error('gerçek tarayıcıda kasa sıkıştırılmadı: ' + s.gzip);
 if (s.telefonHasta !== s.bilgisayarHasta || s.telefonIlac !== s.bilgisayarIlac) {
   throw new Error(`cihazlar aynı veriye gelmedi: hasta ${s.bilgisayarHasta}/${s.telefonHasta}, ilaç ${s.bilgisayarIlac}/${s.telefonIlac}`);
 }
@@ -2918,112 +2869,41 @@ if (s.parolaSizdi) throw new Error('kasa parolası buluta yazılan gövdede geç
 if (!s.sifreli) throw new Error(`buluta yazılan gövdede hasta adı açık duruyor ("${s.hastaAdi}")`);
 if (s.telefondaDogrulandi !== 'gecerli') throw new Error(`öbür cihazda basılmış reçete doğrulanmadı: ${s.telefondaDogrulandi}`);
 if (s.bosTurYukledi) throw new Error('değişiklik yokken yine de yükleme yapıldı');
-ok(`eşitleme: iki cihaz da ${s.bilgisayarHasta} hasta / ${s.bilgisayarIlac} ilaçta buluştu; gövde şifreli (hasta adı «${s.hastaAdi}» geçmiyor); öbür cihazın reçetesi doğrulandı; boş tur yükleme yapmadı`);
+ok(`eşitleme: iki cihaz da ${s.bilgisayarHasta} hasta / ${s.bilgisayarIlac} ilaçta buluştu (örnekler gitmedi); gövde gzip'li ve şifreli (hasta adı «${s.hastaAdi}» geçmiyor); öbür cihazın reçetesi doğrulandı; boş tur yükleme yapmadı`);
 
-// --- Google hataları birbirinden ayrılıyor mu?
-// Bu ortamda GIS betiği ÇEVRİMİÇİYKEN yüklenemiyor (vekil sunucunun sertifikası
-// tanınmıyor) — yani tam olarak "internet var ama betik engellendi" durumu.
-// Hekimi internetini kurcalamaya göndermemek için bu 'ag' değil 'betik' olmalı.
-googleDenemesi = true;
-const googleHatalari = await sayfa.evaluate(async () => {
-  const g = await import('./js/senkron/google.js');
-  const out = {};
-
-  try { await g.belgeAl(g.VARSAYILAN_ISTEMCI); out.engel = 'HATA_YOK'; }
-  catch (e) { out.engel = e?.kod || '?'; }
-
-  try { await g.belgeAl(''); out.kimliksiz = 'HATA_YOK'; }
-  catch (e) { out.kimliksiz = e?.kod || '?'; }
-
-  // Zaman aşımı: hiç geri çağırmayan bir istemci taklit ediliyor. Bu olmadan
-  // söz hiç çözülmüyor ve arayüzde "Eşitleniyor…" sonsuza kadar dönüyordu.
-  globalThis.google = { accounts: { oauth2: { initTokenClient: () => ({ requestAccessToken() {} }) } } };
-  g.cikisYap();
-  const t0 = Date.now();
-  try { await g.belgeAl('sahte.apps.googleusercontent.com', { sure: 250 }); out.zaman = 'HATA_YOK'; }
-  catch (e) { out.zaman = e?.kod || '?'; }
-  out.sure = Date.now() - t0;
-  return out;
-});
-
-googleDenemesi = false;
-if (googleHatalari.engel !== 'betik') {
-  throw new Error(`engellenen betik '${googleHatalari.engel}' diye raporlandı; 'betik' olmalıydı`);
-}
-if (googleHatalari.kimliksiz !== 'istemci_yok') throw new Error(`kimliksiz çağrı: ${googleHatalari.kimliksiz}`);
-if (googleHatalari.zaman !== 'zaman_asimi') throw new Error(`geri çağırmayan istemci: ${googleHatalari.zaman}`);
-if (googleHatalari.sure > 3000) throw new Error(`zaman aşımı geç düştü: ${googleHatalari.sure}ms`);
-ok(`Google hataları ayrışıyor: engellenen betik «betik» (internet suçlanmıyor), kimliksiz «istemci_yok», geri çağırmayan istemci ${googleHatalari.sure}ms'de «zaman_asimi» (sonsuza kadar dönmüyor)`);
-
-// --- Listede olmayan hekim ne okuyor?
-// Onay ekranı "Testing" modundayken listede OLMAYAN her adres access_denied
-// alıyor. Bu eskiden pencere kapatmayla aynı kovaya düşüyor ve hekim
-// «hesabı seç, izin ver» diye YAPAMAYACAĞI bir şey okuyordu: kaç kez
-// denerse denesin olmayacaktı, sebebini de öğrenemeyecekti.
-googleDenemesi = true;
-const izinHatalari = await sayfa.evaluate(async () => {
-  const g = await import('./js/senkron/google.js');
-  const { hataMetni } = await import('./js/hatalar.js');
-  // Her durum için AYRI kimlik: istemciKur kimliğe göre önbellekliyor.
-  const dene = async (hata, kimlik) => {
-    globalThis.google = { accounts: { oauth2: { initTokenClient: () => {
-      const c = { requestAccessToken() { c.callback({ error: hata }); } };
-      return c;
-    } } } };
-    g.cikisYap();
-    try { await g.belgeAl(kimlik, { sure: 2000 }); return { kod: 'HATA_YOK', metin: '' }; }
-    catch (e) { return { kod: e?.kod || '?', metin: hataMetni(e, '') }; }
-  };
-  return {
-    red: await dene('access_denied', 'a.apps.googleusercontent.com'),
-    kapandi: await dene('popup_closed', 'b.apps.googleusercontent.com'),
-  };
-});
-googleDenemesi = false;
-
-if (izinHatalari.red.kod !== 'hesap_izinsiz') {
-  throw new Error(`access_denied '${izinHatalari.red.kod}' diye raporlandı; 'hesap_izinsiz' olmalıydı`);
-}
-if (izinHatalari.kapandi.kod !== 'yetki') {
-  throw new Error(`popup_closed '${izinHatalari.kapandi.kod}' diye raporlandı; 'yetki' olmalıydı`);
-}
-if (izinHatalari.red.metin === izinHatalari.kapandi.metin) {
-  throw new Error('iki durum aynı cümleyi basıyor; ayrışmanın anlamı kalmıyor');
-}
-// Asıl mesele metnin İÇERİĞİ: hekime yapamayacağı bir şey söylememeli ve
-// bugün herkeste çalışan yolu (dosya yedeği) göstermeli.
-const izinMetni = izinHatalari.red.metin;
-if (/اجازهٔ دسترسی بدهید|حساب را انتخاب کنید/.test(izinMetni)) {
-  throw new Error('«izin ver / hesabı seç» hâlâ deniyor — listede olmayan hekim bunu yapamaz: ' + izinMetni);
-}
-if (!izinMetni.includes(T('yedek.indir'))) {
-  throw new Error('mesaj dosya yedeğine yönlendirmiyor: ' + izinMetni);
-}
-ok(`listede olmayan hesap ayrı: access_denied «hesap_izinsiz», pencere kapanışı «yetki»; mesaj "izin ver" demiyor, «${T('yedek.indir')}» diyor`);
-
-// --- Hesapsız açılış: Google girişi GİRİŞTE değil.
-// Yeni kuran hekimde eşitleme kapalı; Google'a ait tek satır yüklenmemeli,
-// giriş ekranı ya da hesap sorusu çıkmamalı. Bugün böyle — ama bunu tutan
-// bir denetim yoktu: biri açılışa giriş koysa hiçbir test patlamazdı.
+// --- Hesapsız açılış: hesap yokken tek bir /v1/ isteği yok, giriş sorulmuyor.
+// Google dönemini yaşamış cihaz da öyle: eski `senkronAcik` bayrağı ve kasa
+// kodu ayarlarda dururken açılış onlara bakmıyor (kapı jeton + K) ve onları
+// bir kez siliyor.
 const temizBaglam = await tarayici.newContext({ viewport: { width: 1280, height: 900 } });
 const istekler = [];
 temizBaglam.on('request', (r) => istekler.push(r.url()));
 const temizHatalar = [];
 temizBaglam.on('console', (m) => { if (m.type() === 'error') temizHatalar.push(m.text()); });
 const temizSayfa = await temizBaglam.newPage();
+await temizSayfa.goto(KOK, { waitUntil: 'load' });
+await temizSayfa.waitForSelector('#kenar-menu a[href="#/ayarlar"]');
+await temizSayfa.evaluate(async () => {
+  const { yerelDepoAc } = await import('./js/depo/idb.js');
+  await (await yerelDepoAc()).ayarKaydet({ senkronAcik: 1, senkronParolasi: 'ESKI-GOOGLE-KODU', senkronHesap: 'x@y' });
+});
 // 'networkidle' bilerek kullanılmıyor: bu deneme iki bağlamı ve vitest'i
 // izleyen makinede koşuyor, ağ 30 saniye boyunca bir an bile boşalmazsa
 // kendiliğinden düşerdi. Menü çizilene kadar bekleyip üstüne sabit bir pay
-// koymak hem yeterli (açılış sonrası sessiz tur 1500ms'de) hem sağlam.
-await temizSayfa.goto(KOK, { waitUntil: 'load' });
+// koymak hem yeterli (açılış sonrası kendiliğinden tur 1500ms'de) hem sağlam.
+istekler.length = 0;
+await temizSayfa.reload({ waitUntil: 'load' });
 await temizSayfa.waitForSelector('#kenar-menu a[href="#/ayarlar"]');
 await temizSayfa.waitForTimeout(2500);
 
-const googleIstekleri = istekler.filter((u) => /accounts\.google\.com|googleapis\.com|senkron\/google\.js/.test(u));
-if (googleIstekleri.length) {
-  throw new Error('açılışta Google isteği yapıldı: ' + [...new Set(googleIstekleri)].join(', '));
-}
-// Hesap sunucusu da öyle: hesap yokken açılış /v1/'e tek istek atmaz.
+const disIstekler = istekler.filter((u) => new URL(u).origin !== new URL(KOK).origin);
+if (disIstekler.length) throw new Error('açılışta dışarıya istek yapıldı: ' + [...new Set(disIstekler)].join(', '));
+const eskiAyar = await temizSayfa.evaluate(async () => {
+  const { yerelDepoAc } = await import('./js/depo/idb.js');
+  const a = await (await yerelDepoAc()).ayarlar();
+  return ['senkronAcik', 'senkronParolasi', 'senkronHesap'].filter((k) => k in a);
+});
+if (eskiAyar.length) throw new Error('Google dönemi ayarları açılışta silinmedi: ' + eskiAyar.join(', '));
 const apiIstekleri = istekler.filter((u) => new URL(u).pathname.startsWith('/v1/'));
 if (apiIstekleri.length) throw new Error('hesap yokken açılışta sunucu isteği yapıldı: ' + [...new Set(apiIstekleri)].join(', '));
 const engel = await temizSayfa.evaluate(() => ({
@@ -3048,7 +2928,7 @@ await temizSayfa.waitForFunction(
   (eski) => location.hash === '#/hastalar' && document.querySelector('#sayfa')?.textContent !== eski,
   girisMetni, { timeout: 15000 });
 if (temizHatalar.length) throw new Error('temiz açılışta konsol hatası: ' + temizHatalar.join(' | '));
-ok(`hesapsız açılış: ${istekler.length} istekte tek bir Google ya da /v1/ isteği yok, modal/giriş kutusu yok, giriş sayfası reçete kâğıdı, gezinme çalışıyor`);
+ok(`hesapsız açılış (Google dönemi ayarlarıyla): ${istekler.length} istekte tek bir /v1/ ya da dış istek yok, eski ayarlar silindi, modal/giriş kutusu yok, giriş sayfası reçete kâğıdı, gezinme çalışıyor`);
 
 // --- Yerel sunucu API'yi uygulamayla AYNI kökenden veriyor: uygulamanın
 // CSP'si (connect-src 'self') altında sayfanın kendisinden erişilebilmeli.

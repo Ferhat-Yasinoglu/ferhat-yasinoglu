@@ -3,7 +3,7 @@
 // belirli aralıklarla hatırlatır. Dosya hasta bilgisi içerir, arayüz bunu söyler.
 import { KOLEKSIYONLAR, DUSEN_KOLEKSIYONLAR, SEMA_SURUMU, YEDEKLENEN } from './sema.js';
 import { simdi } from '../paylasilan/kimlik.js';
-import { ayarlariBirlestir } from '../paylasilan/senkron.js';
+import { ayarlariBirlestir, belgeyiTemizle, cihazaOzelSiz, CIHAZA_OZEL_AYARLAR } from '../paylasilan/senkron.js';
 
 export const YEDEK_BICIMI = 'shafa-yedek';
 /** Uygulama "Eczane" adıyla çıkmıştı; o sürümün yedekleri hâlâ kabul edilir.
@@ -11,9 +11,9 @@ export const YEDEK_BICIMI = 'shafa-yedek';
 const ESKI_BICIMLER = ['eczane-yedek'];
 
 /** Belgeyi derler. Meta'ya DOKUNMAZ: eşitleme de bu belgeyi kullanıyor ama
- *  "yedek alındı" saymamalı. Buluttaki kopya Google hesabı ile bizim kodumuzun
- *  doğruluğuna bağlı; elde duran dosyanın yerini tutmuyor, o yüzden yedek
- *  hatırlatması eşitlemeyle susmuyor. */
+ *  "yedek alındı" saymamalı. Sunucudaki kopya sunucunun ayakta kalmasına ve
+ *  bizim kodumuzun doğruluğuna bağlı; elde duran dosyanın yerini tutmuyor, o
+ *  yüzden yedek hatırlatması eşitlemeyle susmuyor. */
 export async function belgeDerle(depo) {
   const koleksiyonlar = {};
   for (const ad of YEDEKLENEN) koleksiyonlar[ad] = await depo.listele(ad, { silinmisDahil: true });
@@ -26,8 +26,12 @@ export async function belgeDerle(depo) {
   };
 }
 
+/* Dosyaya giden belge cihaza özel ayarlardan arındırılır. Önceden
+   arındırılmıyordu ve Google döneminin kasa anahtarı (senkronParolasi) düz
+   JSON olarak her yedek dosyasında duruyordu: hekimin paylaştığı bir dosya,
+   buluttaki bütün kayıtları açmaya yetiyordu. */
 export async function yedekOlustur(depo) {
-  const belge = await belgeDerle(depo);
+  const belge = belgeyiTemizle(await belgeDerle(depo));
   await depo.metaKaydet({ sonYedek: belge.olusturuldu, degisiklikSayaci: 0 });
   return belge;
 }
@@ -63,9 +67,23 @@ export async function iceAktar(depo, belge, { strateji = 'birlestir', prova = fa
 
   const rapor = {};
   const cakisan = [];
-  for (const [ad, kayitlar] of Object.entries(belge.koleksiyonlar)) {
-    if (DUSEN_KOLEKSIYONLAR.includes(ad)) continue;
+  for (const [ad, gelen] of Object.entries(belge.koleksiyonlar)) {
+    // Yalnız yedeklenen koleksiyonlar yazılır. `meta` şemada var ama cihaza
+    // ait (hesabın jetonu ve anahtarı orada): dışarıdan gelen bir dosya onu
+    // yazabilseydi cihazı sessizce başka birinin hesabına bağlardı.
+    if (!YEDEKLENEN.includes(ad)) continue;
     const r = { eklendi: 0, guncellendi: 0, atlandi: 0 };
+    // Ayarlarda gelen cihaza özel alanlar her iki stratejide de yok sayılır,
+    // bu cihazınkiler kalır. 'degistir' koleksiyonu boşalttığı için yereldekiler
+    // silmeden önce ayrılıyor.
+    const kayitlar = ad === 'ayarlar' ? gelen.map((k) => (k && typeof k === 'object' ? cihazaOzelSiz(k) : k)) : gelen;
+    const korunan = new Map();
+    if (ad === 'ayarlar' && strateji === 'degistir') {
+      for (const k of await depo._hepsi(ad)) {
+        const ozel = Object.fromEntries(CIHAZA_OZEL_AYARLAR.filter((a) => a in k).map((a) => [a, k[a]]));
+        if (Object.keys(ozel).length) korunan.set(k.id, ozel);
+      }
+    }
     if (!prova && strateji === 'degistir') await depo.kaliciSil(ad);
     for (const k of kayitlar) {
       if (!k?.id) { r.atlandi++; continue; }
@@ -87,7 +105,7 @@ export async function iceAktar(depo, belge, { strateji = 'birlestir', prova = fa
         if ((eski.guncellendi || '') >= (k.guncellendi || '')) { r.atlandi++; continue; }
         r.guncellendi++;
       } else r.eklendi++;
-      if (!prova) await depo._yaz(ad, { ...k, rev: Math.max(eski?.rev || 0, k.rev || 0) + 1 });
+      if (!prova) await depo._yaz(ad, { ...k, ...korunan.get(k.id), rev: Math.max(eski?.rev || 0, k.rev || 0) + 1 });
     }
     rapor[ad] = r;
     if (!prova) depo._yay(ad, { tur: 'temizle' });

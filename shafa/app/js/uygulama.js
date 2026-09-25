@@ -4,7 +4,9 @@
 import { yerelDepoAc } from './depo/idb.js';
 import { hatirlatmaGerekli, yedekOlustur, indir } from './depo/yedek.js';
 import { hazirListeyiTazele } from './depo/hazir-ilaclar.js';
-import { bozukKimligiAyikla } from './paylasilan/senkron.js';
+import { eskiSenkronAyarlariniSil } from './depo/senkron.js';
+import { HesapServisi } from './senkron/hesap-servisi.js';
+import { senkronOzeti } from './hesap-arayuz.js';
 import { kur, kurulabilirMi, kuruluMu, elleKurulur, dinle as kurulumuDinle } from './cekirdek/kurulum.js';
 import { Yonlendirici } from './cekirdek/yonlendirici.js';
 import { el, temizle, btn, girdi, sirala } from './cekirdek/dom.js';
@@ -143,8 +145,8 @@ async function menuCiz(depo) {
 }
 
 /* Üst çubuğun ucundaki hekim bloğu: ad, "hekim hesabı" ve baş harfler.
-   Ad ayarlardan geliyor ve BU CİHAZDA duruyor — hiçbir hesap sunucusu yok,
-   "hesap" sözcüğü burada yalnız "bu kâğıtları kim imzalıyor" demek. */
+   Ad ayarlardaki antetten geliyor; eşitleme hesabıyla ilgisi yok, "hesap"
+   sözcüğü burada yalnız "bu kâğıtları kim imzalıyor" demek. */
 async function hesabiCiz(depo) {
   const kap = document.getElementById('ust-hesap');
   if (!kap) return;
@@ -313,16 +315,10 @@ async function baslat() {
   const depo = await yerelDepoAc();
   if (depo.kaliciYap) depo.kaliciYap();
 
+  // Google döneminin ayarları (kasa anahtarı dahil) bir kez silinir. Google
+  // yedeği kalktı; bu değerlerin cihazda durmasının bir getirisi yok.
+  await eskiSenkronAyarlariniSil(depo);
   const ayar = await depo.ayarlar();
-
-  // Ayarlarda biçime uymayan bir Google istemci kimliği kalmışsa kenara alınır.
-  // Böyle bir değer gömülü kimliğin yerine geçip eşitlemeyi sessizce çökertiyor
-  // ve hata Google'ın ekranında çıktığı için sebebi burada hiç görünmüyor.
-  const kimlikYamasi = bozukKimligiAyikla(ayar);
-  if (kimlikYamasi) {
-    await depo.ayarKaydet(kimlikYamasi);
-    Object.assign(ayar, kimlikYamasi);
-  }
 
   // Hazır ilaç listesi eski bir sürümden yüklenmişse adları bir kez yenile:
   // ilk sayfa Türkçe kalmış eski adlarla çizilmesin. Liste okunamazsa
@@ -332,8 +328,9 @@ async function baslat() {
   await dilYukle();
   bicimAyarla({ dil: suankiDil(), kur: ayar.paraBirimi || 'AFN' });
 
+  const hesap = new HesapServisi(depo);
   const ctx = {
-    depo, t, bildir, basari, uyar, hata, modal, sor, onayla, uygulamaSurumu: UYGULAMA_SURUMU,
+    depo, hesap, t, bildir, basari, uyar, hata, modal, sor, onayla, uygulamaSurumu: UYGULAMA_SURUMU,
     git: (yol) => { location.hash = '#' + yol; },
     yenileBantlar: () => bantlariYenile(ctx),
     yenileMenu: () => menuCiz(depo),
@@ -461,22 +458,14 @@ async function baslat() {
     if (!gosterildi) kurulumuDinle(goster);   // olay açılıştan sonra da gelebiliyor
   }
 
-  // Eşitleme açıksa açılıştan SONRA sessiz bir tur. İki şey bilerek böyle:
-  //  • dinamik import — eşitleme kapalıyken Google'a ait tek satır bile
-  //    yüklenmiyor, uygulamanın açılışı internetten hiç etkilenmiyor;
-  //  • sessiz — internet yokken ya da Google izin vermediğinde hekim
-  //    uygulamayı her açtığında kırmızı kutu görmesin. Olan biten Ayarlar'daki
-  //    kartta yazıyor, düğmeyle elle denenebiliyor.
-  if (ayar.senkronAcik && navigator.onLine) {
-    setTimeout(async () => {
-      try {
-        const { senkronTuru, senkronOzeti } = await import('./senkron-arayuz.js');
-        const s = await senkronTuru(ctx, { sessiz: true });
-        const inen = (s?.indirildi?.eklendi || 0) + (s?.indirildi?.guncellendi || 0);
-        if (inen) { menuCiz(depo); bildir(senkronOzeti(s)); }
-      } catch (e) { console.warn('Eşitleme olmadı', e); }
-    }, 1500);
-  }
+  // Hesaba kendiliğinden eşitleme: açılıştan 1,5 sn SONRA, sonra değişiklik,
+  // internetin gelişi ve uygulamaya dönüş üzerine. Kapı jeton + K: hesap
+  // yoksa tek bir ağ isteği atılmaz. Turlar sessiz; olan biten Ayarlar'daki
+  // kartta yazıyor. Başka cihazdan kayıt inince menü sayaçları tazelenir.
+  hesap.dinle((olay) => {
+    if (olay.tur === 'indi') { menuCiz(depo); bildir(senkronOzeti(olay.sonuc)); }
+  });
+  hesap.baslat();
 }
 
 baslat().catch(async (e) => {

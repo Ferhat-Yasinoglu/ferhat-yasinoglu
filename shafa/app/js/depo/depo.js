@@ -4,7 +4,7 @@
 // Her kayıt bir zarf taşır: id, rev, olusturuldu, guncellendi, silindi (mezar taşı).
 // Silme mezar taşıdır: kayıt kalır, `silindi: 1` olur. Yedek geri yüklenirken
 // silinmiş bir kaydın diriltilmemesi için gerekli.
-import { KOLEKSIYONLAR, SEMA_SURUMU } from './sema.js';
+import { KOLEKSIYONLAR, SEMA_SURUMU, YEDEKLENEN } from './sema.js';
 import { yeniId, simdi } from '../paylasilan/kimlik.js';
 
 /** Depo hatası. `kod` arayüzde çevrilir, `veri` çeviriye geçen değişkenlerdir;
@@ -98,9 +98,46 @@ export class TemelDepo {
     for (const cb of this._dinleyiciler.get('*') || []) { try { cb({ kol, ...olay }); } catch (e) { console.error(e); } }
   }
 
+  /* Meta kayıtları okuma-değiştirme-yazma ile güncelleniyor ve aynı kaydı
+     birden çok yer yazıyor (yedek sayacı, eşitleme sayacı, hesabın durumu).
+     `_guncelle` okumayla yazmayı TEK işlemde yapıyor: arada başka bir yazma
+     araya girip değişikliği ezemiyor — sekmeler arasında da. */
   async meta() { return (await this._oku('meta', 'meta')) || { id: 'meta', semaSurumu: SEMA_SURUMU, degisiklikSayaci: 0 }; }
-  async metaKaydet(parca) { const m = await this.meta(); const y = { ...m, ...parca, id: 'meta' }; await this._yaz('meta', y); return y; }
-  async degisiklikSay() { const m = await this.meta(); return this._yaz('meta', { ...m, id: 'meta', degisiklikSayaci: (m.degisiklikSayaci || 0) + 1 }); }
+  async metaKaydet(parca) {
+    return this._guncelle('meta', 'meta', (m) => ({ ...(m || { semaSurumu: SEMA_SURUMU, degisiklikSayaci: 0 }), ...parca, id: 'meta' }));
+  }
+
+  /**
+   * Bir değişikliği sayar. İki sayaç var ve BİLEREK ayrı:
+   *  - degisiklikSayaci: dosya yedeği hatırlatması; yedek alınınca sıfırlanır.
+   *  - senkronSayaci: hesaba eşitleme; hiç sıfırlanmaz, eşitleme en son hangi
+   *    değere kadar gönderdiğini kendi tutar (hesap kaydında). Sıfırlansaydı
+   *    tur sürerken yapılan bir değişiklik "gönderildi" sayılabilirdi.
+   * `yedek: false` yalnız eşitleme sayacını artırır: silme ve dosyadan geri
+   * yükleme yedek hatırlatmasını bugüne kadar oynatmıyordu, oynatmıyor.
+   */
+  async degisiklikSay({ yedek = true } = {}) {
+    const y = await this._guncelle('meta', 'meta', (m) => {
+      const k = { ...(m || { semaSurumu: SEMA_SURUMU, degisiklikSayaci: 0 }), id: 'meta' };
+      if (yedek) k.degisiklikSayaci = (k.degisiklikSayaci || 0) + 1;
+      k.senkronSayaci = (k.senkronSayaci || 0) + 1;
+      return k;
+    });
+    this._yay('meta', { tur: 'degisiklik' });
+    return y;
+  }
+
+  /** Hesabın cihaza özel durumu (jeton, K, son eşitleme…): meta deposunda
+   *  ayrı bir kayıt. Meta ne yedeğe ne eşitlemeye girer (sema.js: yedek:false)
+   *  ve içe aktarma onu yazmaz (yedek.js). */
+  async hesap() { return (await this._oku('meta', 'hesap')) || { id: 'hesap' }; }
+  async hesapKaydet(parca) { return this._guncelle('meta', 'hesap', (h) => ({ ...(h || {}), ...parca, id: 'hesap' })); }
+
+  /** Bu cihazdaki bütün kayıtları siler (meta ve hesap durumu hariç). */
+  async hepsiniSil() {
+    for (const ad of YEDEKLENEN) await this.kaliciSil(ad);
+    await this.metaKaydet({ ornekYuklendi: 0, degisiklikSayaci: 0, sonYedek: '' });
+  }
 
   /** Örnek (demo) kayıtları temizler — gerçek veriye dokunmaz. */
   async ornekSil() {
@@ -119,6 +156,11 @@ export class BellekDepo extends TemelDepo {
   _tablo(kol) { if (!this._veri.has(kol)) this._veri.set(kol, new Map()); return this._veri.get(kol); }
   async _oku(kol, id) { return this._tablo(kol).get(id) || null; }
   async _yaz(kol, k) { this._tablo(kol).set(k.id, structuredClone(k)); }
+  async _guncelle(kol, id, fn) {
+    const y = fn(structuredClone(this._tablo(kol).get(id) || null));
+    this._tablo(kol).set(id, structuredClone(y));
+    return y;
+  }
   async _kaldir(kol, id) { this._tablo(kol).delete(id); }
   async _hepsi(kol) { return [...this._tablo(kol).values()].map((k) => structuredClone(k)); }
 }
