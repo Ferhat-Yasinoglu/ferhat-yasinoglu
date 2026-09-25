@@ -108,6 +108,11 @@ describe('receteMetni', () => {
   it('boş reçetede çökmez', () => {
     expect(receteMetni({ satirlar: [] }, null, {})).toBeTypeOf('string');
   });
+  it('kayıttaki Türkçe şekil adını göndermez, kâğıttaki gibi yazar', () => {
+    const m = receteMetni({ satirlar: [{ ilacAdi: 'Panadol Syrup 120 mg/5 ml Şurup', form: 'surup', adet: 1 }] }, null, {});
+    expect(m).toContain('1) Syr: Panadol Syrup 120 mg/5 ml');
+    expect(m).not.toContain('Şurup');
+  });
 });
 
 describe('doluOlcumler', () => {

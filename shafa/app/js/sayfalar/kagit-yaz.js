@@ -28,7 +28,7 @@ import { satirKutusu } from '../ilac-satir-arayuz.js';
 import { sablonuUygula } from '../paylasilan/sablon.js';
 import { sablonSecKutusu, sablonKaydetKutusu } from '../sablon-arayuz.js';
 import { tamAd, hastaYasi, hastaAra, alerjiCakismasi } from '../paylasilan/hasta.js';
-import { ilacAdiFormsuz } from '../paylasilan/ilac.js';
+import { ilacAdiFormsuz, satirAdi } from '../paylasilan/ilac.js';
 import { receteKaydet } from '../depo/recete.js';
 import { bugun, tarihMetni } from '../paylasilan/tarih.js';
 import { t } from '../i18n.js';
@@ -300,7 +300,7 @@ export default {
       if (!s) return;
       const y = await satirKutusu(ctx, ilaclar, hasta, s, sikYazilanlar);
       if (y === 'sil') {
-        if (await onayla(t('recete.satir_sil_soru', '"{ad}" reçeteden çıkarılsın mı?', { ad: s.ilacAdi }))) {
+        if (await onayla(t('recete.satir_sil_soru', '"{ad}" reçeteden çıkarılsın mı?', { ad: satirAdi(s) }))) {
           recete.satirlar = recete.satirlar.filter((_, j) => j !== i);
         }
       } else if (y) {
@@ -533,7 +533,10 @@ export default {
       // altında yazıyordu; hekim her seferinde kafadan çeviriyordu.
       const tarihGirdisi = tarihSecici({
         name: 'tarih', id: 'recete-tarih', value: recete.tarih,
-        degisti: (iso) => { recete.tarih = iso; tazeleGecikmeli(); },
+        // Tarih hatası gösteriliyorsa form yeniden çiziliyor: geçerli tarih
+        // yazılınca şerit hemen gitsin. Yalnız kâğıt tazelendiğinde şerit
+        // bir sonraki tam çizime kadar «tarih geçersiz» demeye devam ediyordu.
+        degisti: (iso) => { recete.tarih = iso; if (hatalar.tarih) ciz(); else tazeleGecikmeli(); },
       });
       // Numara ipucu görünür satır olarak kartı 36 px uzatıyordu; artık
       // üzerine gelince (title) ve ekran okuyucuya (aria-describedby) söyleniyor.
@@ -636,7 +639,7 @@ export default {
               el('td', {}, String(i + 1)),
               // Latin ad sağdan sola hücrede kendi yönünde (bdi): sonu ")" olan
               // ad aynalanmasın.
-              el('td', { class: 'ilac-ad', title: s.ilacAdi || null },
+              el('td', { class: 'ilac-ad', title: ilacAdiFormsuz(s.ilacAdi, s.form) || null },
                 el('span', { class: 'ilac-ad__metin' }, el('bdi', {}, s.ilacAdi ? tablodakiAd(s) : '—'))),
               el('td', {}, String(s.adet ?? '')),
               el('td', { title: s.kullanim || null }, s.kullanim || '—'),

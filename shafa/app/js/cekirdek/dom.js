@@ -2,6 +2,7 @@
 // yazılır, hasta adından gelen bir tırnak işareti hiçbir zaman kod olmaz.
 import { simge } from './simge.js';
 import { qrYolu } from '../paylasilan/qr.js';
+import { t } from '../i18n.js';
 
 export function el(tag, attrs = {}, ...cocuklar) {
   const e = document.createElement(tag);
@@ -84,7 +85,7 @@ export const kart = (attrs = {}, ...c) => el('section', { class: 'kart', ...attr
 /** Sayfa başlığı: başlık, açıklama, sağda eylem düğmeleri, istenirse geri oku. */
 export function sayfaBas(baslik, { alt, eylemler = [], geri } = {}) {
   return el('div', { class: 'sayfa-bas' },
-    geri ? btn(simge('geri'), { class: 'btn btn--ikon btn--sade', 'aria-label': 'Geri', onclick: geri }) : null,
+    geri ? btn(simge('geri'), { class: 'btn btn--ikon btn--sade', 'aria-label': t('genel.geri', 'Geri'), onclick: geri }) : null,
     el('div', { class: 'sayfa-bas__govde' }, el('h1', {}, baslik), alt ? el('p', { class: 'sayfa-bas__alt' }, alt) : null),
     eylemler.filter(Boolean).length ? el('div', { class: 'sayfa-bas__eylem' }, ...eylemler.filter(Boolean)) : null);
 }

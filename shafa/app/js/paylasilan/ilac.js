@@ -34,10 +34,26 @@ export function ilacAdiFormsuz(ilacAdi, form) {
   return f && ad.endsWith(f) ? ad.slice(0, -f.length).trim() : ad;
 }
 
-/** Listede ve reçetede gösterilen tek satırlık ad: "Parol 500 mg Tablet". */
-export function ilacEtiketi(ilac) {
+/** Tek satırlık ad: "Parol 500 mg Tablet". Varsayılan şekil adı Türkçe ve
+ *  reçete satırına (ilacAdi) böyle yazılıyor; ekranda arayüz çevrilmiş şekil
+ *  adını `formAdiBul` ile veriyor (ilac-satir-arayuz.js ilacGorunenAd). */
+export function ilacEtiketi(ilac, formAdiBul = formAdi) {
   if (!ilac) return '';
-  return [ilac.ad, ilac.doz, formAdi(ilac.form)].map((x) => String(x ?? '').trim()).filter(Boolean).join(' ');
+  return [ilac.ad, ilac.doz, formAdiBul(ilac.form)].map((x) => String(x ?? '').trim()).filter(Boolean).join(' ');
+}
+
+/**
+ * Reçete satırının adı, kâğıttaki gibi: "Syr: Panadol Syrup 120 mg/5 ml".
+ * Kayıttaki ilacAdi ilacEtiketi()'nden gelir, yani Türkçe şekil adıyla biter
+ * ("… Şurup"); kâğıt onu düşürüp Latin kısaltmayı öne koyuyordu ama reçete
+ * kartı, gönderilen metin ve sayımlar kaydı olduğu gibi basıyor, Afgan hekim
+ * de «Şurup», «Kapsül» okuyordu. Kayıt değişmiyor (doğrulama kodu ona
+ * bağlı); yalnız gösterilen ad buradan geçiyor.
+ */
+export function satirAdi(s) {
+  const ad = ilacAdiFormsuz(s?.ilacAdi, s?.form);
+  const kisa = formKisa(s?.form);
+  return kisa && ad ? `${kisa}: ${ad}` : ad;
 }
 
 /** Ad, barkod, etken madde ve üretici üzerinden arama. */

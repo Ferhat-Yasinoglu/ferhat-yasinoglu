@@ -132,6 +132,27 @@ for (const m of (await oku('js/uygulama.js')).matchAll(/anahtar:\s*'([^']+)'/g))
   dinamik.push([m[1], 'uygulama.js MENU']);
 }
 
+// 6f. Önekle kurulan öbür anahtarlar: Ayarlar'daki antet alanları
+// (`t('ayar.' + anahtar)` ve ipucu için `…_ipucu`), QR seçenekleri ve Clinical
+// ölçümleri. Antete ikinci telefon eklenince iki alanın etiketi de ipucu da
+// sözlüğe girmedi; hekim Ayarlar'da «İkinci telefon» diye Türkçe okudu.
+const antetGovde = ayarlarKaynak.match(/const ANTET_ALANLARI\s*=\s*\[(.*?)\n\];/s);
+if (!antetGovde) hataVer('ayarlar.js: ANTET_ALANLARI okunamadı — antet etiketleri doğrulanamıyor');
+else {
+  for (const m of antetGovde[1].matchAll(/\[\s*'(\w+)',\s*'[^']*',\s*'([^']*)'/g)) {
+    dinamik.push([`ayar.${m[1]}`, 'ANTET_ALANLARI (ayarlar.js)']);
+    if (m[2]) dinamik.push([`ayar.${m[1]}_ipucu`, 'ANTET_ALANLARI (ayarlar.js)']);
+  }
+}
+for (const [yol, ad, onek] of [
+  ['js/sayfalar/ayarlar.js', 'QR_SECENEKLERI', 'ayar.qr'],
+  ['js/paylasilan/recete.js', 'OLCUMLER', 'olcum'],
+]) {
+  const liste = listeAnahtarlari(await oku(yol), ad);
+  if (!liste?.length) { hataVer(`${yol}: ${ad} listesi okunamadı — denetim bu listeyi doğrulayamıyor`); continue; }
+  for (const a of liste) dinamik.push([`${onek}.${a}`, `${ad} (${yol})`]);
+}
+
 for (const [dil, sozluk] of Object.entries(sozlukler)) {
   const eksik = dinamik.filter(([a]) => !(a in sozluk));
   for (const [a, nereden] of eksik) hataVer(`i18n/${dil}.json: dinamik anahtar eksik → ${a} (${nereden})`);

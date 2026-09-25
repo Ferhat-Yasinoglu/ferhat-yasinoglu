@@ -10,7 +10,8 @@ import { el, temizle, btn, girdi, sirala } from './cekirdek/dom.js';
 import { simge } from './cekirdek/simge.js';
 import { bildir, basari, uyar, hata } from './cekirdek/bildirim.js';
 import { modal, onayla, sor } from './cekirdek/modal.js';
-import { ilacAra, ilacEtiketi } from './paylasilan/ilac.js';
+import { ilacAra } from './paylasilan/ilac.js';
+import { ilacGorunenAd } from './ilac-satir-arayuz.js';
 import { hastaAra, tamAd } from './paylasilan/hasta.js';
 import { eslesir, bicimAyarla, basHarfler } from './paylasilan/metin.js';
 import { tarihMetni, bugun } from './paylasilan/tarih.js';
@@ -207,7 +208,10 @@ async function aramaAc(ctx, ilk = '') {
   const [ilaclar, hastalar, receteler] = await Promise.all([
     depo.listele('ilaclar'), depo.listele('hastalar'), depo.listele('receteler'),
   ]);
-  const kapat = () => document.querySelector('.ortu')?.remove();
+  // Sonuca basınca kutu modalın kendi kapatışıyla kapanıyor. Önce örtü elle
+  // sökülüyordu: sonuç zaten açık olan sayfaysa adres değişmiyor, modal da
+  // hashchange'i duymadığı için keydown dinleyicisi ve sözü açık kalıyordu.
+  let kapat = () => {};
 
   function ciz() {
     temizle(sonuc);
@@ -215,7 +219,7 @@ async function aramaAc(ctx, ilk = '') {
     if (!q) { sonuc.appendChild(el('div', { class: 'liste__satir sessiz' }, t('ara.basla', 'Aramak için yazmaya başla.'))); return; }
     const bulunan = [
       ...ilacAra(ilaclar, q).slice(0, 6).map((i) => ({
-        ad: ilacEtiketi(i), alt: t('ara.ilac', 'İlaç · {e}', { e: i.etkenMadde || '—' }), s: 'ilac', yol: `/ilac/${i.id}`,
+        ad: ilacGorunenAd(i), alt: t('ara.ilac', 'İlaç · {e}', { e: i.etkenMadde || '—' }), s: 'ilac', yol: `/ilac/${i.id}`,
       })),
       ...hastaAra(hastalar, q).slice(0, 6).map((h) => ({
         ad: tamAd(h), alt: t('ara.hasta', 'Hasta · {b}', { b: h.telefon || h.kimlikNo || '—' }), s: 'hasta', yol: `/hasta/${h.id}`,
@@ -226,7 +230,7 @@ async function aramaAc(ctx, ilk = '') {
     ];
     if (!bulunan.length) { sonuc.appendChild(el('div', { class: 'liste__satir sessiz' }, t('ara.yok', 'Sonuç yok.'))); return; }
     for (const x of bulunan) {
-      sonuc.appendChild(el('a', { class: 'liste__satir', href: '#' + x.yol, onclick: kapat },
+      sonuc.appendChild(el('a', { class: 'liste__satir', href: '#' + x.yol, onclick: () => kapat(null) },
         el('span', { class: 'avatar' }, simge(x.s, { boy: 18 })),
         el('div', { class: 'liste__govde' }, el('div', { class: 'liste__baslik' }, x.ad), el('div', { class: 'liste__alt' }, x.alt))));
     }
@@ -235,7 +239,7 @@ async function aramaAc(ctx, ilk = '') {
   kutu.oninput = ciz;
   kutu.onkeydown = (e) => { if (e.key === 'Enter') sonuc.querySelector('a')?.click(); };
   ciz();
-  modal({ baslik: t('ara.etiket', 'Ara'), govde: el('div', {}, kutu, sonuc) });
+  modal({ baslik: t('ara.etiket', 'Ara'), govde: el('div', {}, kutu, sonuc), kapatici: (k) => { kapat = k; } });
   setTimeout(() => kutu.focus(), 30);
 }
 
@@ -322,19 +326,8 @@ async function baslat() {
   await dilYukle();
   bicimAyarla({ dil: suankiDil(), kur: ayar.paraBirimi || 'AFN' });
 
-  // onayla()'nın varsayılanları (başlık, "Evet", "Vazgeç") kodda Türkçe:
-  // cekirdek/ saf tutuluyor, sözlüğü oradan çağırmıyoruz. Çeviri burada,
-  // ctx kurulurken giydiriliyor — yoksa Farsça arayüzün ortasında Türkçe
-  // bir onay kutusu açılıyordu. Çağıran yer yine kendi metnini geçebilir.
-  const onaylaCevirili = (mesaj, secenekler = {}) => onayla(mesaj, {
-    baslik: t('genel.emin', 'Emin misin?'),
-    evet: t('genel.evet', 'Evet'),
-    hayir: t('genel.vazgec', 'Vazgeç'),
-    ...secenekler,
-  });
-
   const ctx = {
-    depo, t, bildir, basari, uyar, hata, modal, sor, onayla: onaylaCevirili, uygulamaSurumu: UYGULAMA_SURUMU,
+    depo, t, bildir, basari, uyar, hata, modal, sor, onayla, uygulamaSurumu: UYGULAMA_SURUMU,
     git: (yol) => { location.hash = '#' + yol; },
     yenileBantlar: () => bantlariYenile(ctx),
     yenileMenu: () => menuCiz(depo),

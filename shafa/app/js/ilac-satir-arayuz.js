@@ -7,18 +7,23 @@
 import { el, temizle, btn, girdi, alan } from './cekirdek/dom.js';
 import { simge } from './cekirdek/simge.js';
 import { KULLANIM_ONERILERI, SURE_ONERILERI, YOLLAR, bosSatir } from './paylasilan/recete.js';
-import { ilacAra, ilacEtiketi } from './paylasilan/ilac.js';
+import { FORMLAR, formAdi, ilacAra, ilacEtiketi } from './paylasilan/ilac.js';
 import { alerjiCakismasi } from './paylasilan/hasta.js';
 import { cip } from './klinik-arayuz.js';
-import { t } from './i18n.js';
+import { t, secenekAdi } from './i18n.js';
 import { uyariMetni } from './hatalar.js';
+
+/** Ekranda gösterilen ilaç adı: şekil adı sözlükten ("Parol 500 mg تابلیت").
+ *  Reçete satırına giden ilacAdi yine ilacEtiketi(): kâğıt o Türkçe şekil
+ *  adını tanıyıp düşürüyor (ilacAdiFormsuz). */
+export const ilacGorunenAd = (ilac) => ilacEtiketi(ilac, (k) => (formAdi(k) ? secenekAdi(FORMLAR, k, 'form') : ''));
 
 /** İlaç satırı kutusu: ilaç ara/seç, adet, kullanım, süre. */
 export async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = []) {
   const { modal } = ctx;
   let ilac = mevcut?.ilacId ? ilaclar.find((x) => x.id === mevcut.ilacId) : null;
 
-  const kutu = girdi({ type: 'search', name: 'ilacArama', placeholder: t('recete.ilac_ara', 'İlaç adı, barkod, etken madde…'), value: ilac ? ilacEtiketi(ilac) : '' });
+  const kutu = girdi({ type: 'search', name: 'ilacArama', placeholder: t('recete.ilac_ara', 'İlaç adı, barkod, etken madde…'), value: ilac ? ilacGorunenAd(ilac) : '' });
   const sonuclar = el('div', { class: 'liste', style: { maxBlockSize: '220px', overflowY: 'auto' } });
   const secilenKutusu = el('div', {});
   const adet = girdi({ type: 'number', name: 'adet', min: 1, step: 1, value: mevcut?.adet ?? 1 });
@@ -39,7 +44,7 @@ export async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = []) 
         el('div', { class: 'liste__satir' },
           el('span', { class: 'avatar' }, simge('ilac', { boy: 18 })),
           el('div', { class: 'liste__govde' },
-            el('div', { class: 'liste__baslik' }, ilacEtiketi(ilac)),
+            el('div', { class: 'liste__baslik' }, ilacGorunenAd(ilac)),
             el('div', { class: 'liste__alt' }, ilac.etkenMadde || '—')))),
       ...uyarilar.map((u) => el('div', { class: `uyari uyari--${u.tur}`, style: { marginBlockStart: 'var(--b-2)' } }, simge(u.tur === 'hata' ? 'hata' : 'uyari', { boy: 16 }), el('span', {}, u.metin))));
   }
@@ -47,10 +52,10 @@ export async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = []) 
   const ilacSatiri = (i) => el('button', {
     class: 'liste__satir liste__satir--tiklanir', type: 'button',
     style: { border: 'none', background: 'none', textAlign: 'start', font: 'inherit', cursor: 'pointer', inlineSize: '100%' },
-    onclick: () => { ilac = i; kutu.value = ilacEtiketi(i); aramaCiz(); secileniCiz(); },
+    onclick: () => { ilac = i; kutu.value = ilacGorunenAd(i); aramaCiz(); secileniCiz(); },
   },
     el('div', { class: 'liste__govde' },
-      el('div', { class: 'liste__baslik' }, ilacEtiketi(i)),
+      el('div', { class: 'liste__baslik' }, ilacGorunenAd(i)),
       el('div', { class: 'liste__alt' }, i.etkenMadde || '—')));
 
   function aramaCiz() {
@@ -58,7 +63,7 @@ export async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = []) 
     const q = kutu.value.trim();
     // Kutu boşken de liste gösteriyoruz: hekim yazmadan gezinebilsin.
     // Önce kendi çok yazdıkları, sonra alfabetik baş taraf.
-    if (!q || (ilac && q === ilacEtiketi(ilac))) {
+    if (!q || (ilac && q === ilacGorunenAd(ilac))) {
       const gecmisId = new Set(sik.map((x) => x.id));
       const kalan = ilaclar.filter((x) => !gecmisId.has(x.id)).slice(0, 10);
       if (sik.length) {

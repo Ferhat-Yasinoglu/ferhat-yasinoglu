@@ -636,10 +636,14 @@ a.liste__satir:hover, .liste__satir--tiklanir:hover { background: rgb(var(--vurg
 }
 /* Satırın üst/alt payı dış kenar payı: dolgu kırpma kutusunun içinde
    kalıyordu, üç satırda kesilen metnin dördüncü satırının tepesi o
-   dolgunun içinde görünüyordu. */
+   dolgunun içinde görünüyordu. Hizalama `start`: her paragraf kendi
+   yönünün başına yaslanıyor (masaüstü bloğundaki plaintext). `end` iken
+   Chrome kesilen satırın üç noktasını kutunun dışına koyuyordu: Latin
+   metinde hiç görünmüyor, Farsçada yarısı kırpılıyordu. Tek satırlık
+   değer zaten kutuyu içeriği kadar daraltıp sona (auto pay) yaslanıyor. */
 .rx-satir__deger {
   min-inline-size: 0; margin-block: 7px; margin-inline: auto 8px;
-  font-size: 13.5px; font-weight: 500; line-height: 1.45; color: rgb(var(--metin)); text-align: end;
+  font-size: 13.5px; font-weight: 500; line-height: 1.45; color: rgb(var(--metin)); text-align: start;
   overflow-wrap: anywhere;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
 }

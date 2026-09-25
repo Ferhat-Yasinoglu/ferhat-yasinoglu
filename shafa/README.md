@@ -80,7 +80,7 @@ Sürüm yükseltmek tek satır — `js/uygulama.js`; rozet peşinden gelir.
 ### Ekran görüntüleri
 
 ```bash
-node tools/gorsel-uret.mjs      # panel.png ve mobil.png'yi yeniden üretir
+node tools/gorsel-uret.mjs      # panel.png, mobil.png ve recete.png'yi yeniden üretir
 ```
 
 Elle alınan görüntüler sessizce eskiyor: tanıtımdaki `panel.png` örnek hastalar
@@ -89,16 +89,24 @@ Mehmet Demir, Zeynep Kaya»** gösterdi. Hiçbir test bunu yakalamadı, çünkü
 görüntü bir ikili dosya.
 
 Araç uygulamayı **koyu temada** açıyor (tanıtım sayfası koyu), örnek veriyi
-yüklüyor, 14 güne yayılmış sabit dağılımla 28 örnek reçete yazıyor ve
-`panel.png`'yi **1600×1000 — 16:10, gerçek bir bilgisayar ekranı oranında**
-alıyor. Reçete satırlarında doz/kullanım alanı boş bırakılıyor: bu depo ilaç
+yüklüyor ve 14 güne yayılmış sabit dağılımla 28 örnek reçete yazıyor. Üç görüntü:
+
+| Dosya | Ne gösteriyor |
+|---|---|
+| `panel.png` | **1600×1000 — 16:10**, bilgisayarda giriş sayfası, yani reçete sayfası: örnek hasta, ölçümler, tanı ve iki ilaç formdan tıklanarak girilmiş, sağdaki kâğıt onlarla dolu. Tanıtımın açılış görüntüsü; yanındaki metin de «مریض را انتخاب کنید، دواها را اضافه کنید…» diyor. Adı eski (panel), ölçüsü ve yeri aynı kalsın diye değişmedi |
+| `mobil.png` | Telefonda panel (`#/panel`): sayaçlar ve 14 günlük grafik |
+| `recete.png` | Basılan kâğıdın kendisi, **açık temada, yalnız kâğıt**. Kayıtlı bir örnek reçeteden basıldığı gibi kuruluyor: numarası ve doğrulama kodu var, ekrandaki düzenleme işaretleri (kesik çerçeveli «+» satırları) yok |
+
+Reçete satırlarında doz/kullanım alanı boş bırakılıyor: bu depo ilaç
 **adlarının** sözlüğü, tedavi tarifi değil.
 
 Yedek hatırlatma bandı (`.bant`) görüntüye girmesin diye örnek veri yazıldıktan
 sonra "yedek alındı" işaretleniyor — ve araç bandın gerçekten yok olduğunu
 denetliyor, sessizce fotoğrafa girmesin diye.
 
-`recete.png` bilerek dışarıda: o basılı reçete kâğıdı, kâğıt beyazdır.
+`recete.png` eskiden elle alınıyordu ve kâğıt yeniden tasarlanınca eski
+kâğıdı göstermeye devam etti — `panel.png`'nin başına gelenin aynısı. Artık o
+da araçta. Araç bir kutu, takvim ya da bildirim görüntüye girecekse durur.
 
 `npm run kontrol` HTML'deki `width`/`height` ile dosyanın gerçek ölçüsünü
 karşılaştırıyor. Bu olmasa 1280×900 yazan etiket 1600×1000'lik görüntüyü ezer
@@ -133,7 +141,7 @@ npm install          # yalnız geliştirme bağımlılıkları (vitest, fake-ind
 npm run sun          # http://localhost:8788/  — uygulama app/ klasöründen sunulur
 npm test             # alan mantığı, depo, reçete ve yedek testleri
 npm run kontrol      # statik denetimler (mantıksal CSS, innerHTML yok, saf modüller)
-npm run deneme       # gerçek tarayıcıda uçtan uca deneme (playwright kuruluysa)
+npm run deneme       # gerçek tarayıcıda uçtan uca deneme (playwright kuruluysa; CI koşmuyor, elle)
 npm run site         # yayın düzenini kurup gerçek tarayıcıda dener
 ```
 
@@ -150,8 +158,8 @@ kurulu değilse betik kendini atlar:
 | **Panel** | Bugün yazılan reçeteler, son reçeteler, son hastalar, sayaçlar |
 | **İlaçlar** | Künye: ad, etken madde, şekil, doz, barkod, üretici; muadil bulma |
 | **Hastalar** | Kayıt, alerjiler, kronik hastalıklar, sürekli ilaçlar, reçete geçmişi |
-| **Reçete yazma** | Hasta ve ilaç seçimi, tanı/ICD, kullanım ve süre; alerji ve çift etken madde uyarıları |
-| **Reçete kâğıdı** | Üç stil (modern / klasik / sade): antet (ad, ünvan), hizmet satırları, sabıka şeridi, Name/Age/Date şeridi, solda Clinical sütunu (BP · PR · RR · BW · Temperature), sağda ℞ alanı, altta rozetler ve iletişim |
+| **Reçete yazma** | Solda form, sağda canlı kâğıt: hasta ve ilaç seçimi, ölçümler, belirti/tanı/ICD ve laboratuvar çiple, kullanım ve süre; alerji ve çift etken madde uyarıları; şablonlar, Ctrl+S |
+| **Reçete kâğıdı** | Üç stil (modern / klasik / sade): antet (ad, ünvan), hizmet satırları, sabıka şeridi, Name/Age/Date/No şeridi, solda Clinical sütunu (BP · PR · RR · BW · Temperature · SpO2 · Height · Blood Gr.), sağda ℞ alanı, hat ve imza, altta rozetler ve iletişim |
 | **Boş kâğıt** | Aynı kâğıdı boş bastırıp elle doldurma — tomar halinde çıkar, alanlar çizgili gelir |
 | **Gönderme** | WhatsApp, e-posta, panoya kopyalama ve cihazın kendi paylaşma penceresi |
 | **Doğrulama** | Her reçete kâğıda basılan sekiz harflik bir kod taşır; kâğıtta oynanmışsa kod tutmaz |
@@ -215,7 +223,7 @@ Kayma animasyonu ancak hekim ☰'ye **bir kez bastıktan sonra** açılıyor: yo
 geniş ekrandan dar ekrana geçildiği anda medya sorgusu da bir değer değişimi
 sayılıyor ve çekmece bir kez görünüp kayarak kapanıyordu.
 
-**Renk klinik turkuazı.** Uygulamayı hekim muayene sırasında, hastayla
+**Renk petrol mavisi ve turkuaz** (reçete sayfasının tasarımından). Uygulamayı hekim muayene sırasında, hastayla
 konuşurken, çoğu zaman telefonda kullanıyor; bu yüzden palet sakin ve dikkat
 çeken tek şey uyarılar. Karanlık tema gece nöbeti için.
 
@@ -229,23 +237,7 @@ Arayüz "animasyonlu" değil, çevik hissetsin diye kısa tutuldu.
 yalnız div'ler ve CSS. Sıfır olan gün ince bir çizgi olarak duruyor ki "veri
 yok" ile "o gün yazılmamış" birbirine karışmasın.
 
-**Yazı tipi Vazirmatn** (`app/yazi/`, OFL lisansı, tek değişken dosya 111 KB).
-Sistem yazı tipleri Arap harflerini genelde ikinci sınıf taşıyor: harf
-yükseklikleri oynuyor, nokta kümeleri birbirine giriyor, kalın gerektiğinde
-kalınlık sahteleniyor. Yazı tipi service worker'ın önbelleğinde, ilk açılıştan
-sonra çevrimdışı da geliyor; inene kadar metin sistem yazı tipiyle görünür
-kalıyor (`font-display: swap`). Reçete kâğıdı da bu yazı tipini kullanıyor.
-Kâğıttaki tek el yazısı satırı ("Healthy Life Brighter Tomorrow") **Kalam
-700** ile basılıyor: yalnız ASCII'ye indirilmiş 12 KB'lık bir dosya
-(`app/yazi/kalam-700.woff2`, OFL, `OFL-Kalam.txt`). Rx işareti ve «سلامت
-سرمایهٔ زندگی است» hattı yazı tipi dosyası değil, Noto Serif ve Noto Nastaliq
-Urdu'dan alınmış satır içi SVG yolları (`app/js/cekirdek/cizimler.js`, OFL,
-`OFL-Noto.txt`).
-
-**Dolgulu simgelerin bir kısmı bootstrap-icons 1.13.1'den** (MIT): yol
-verisi `app/js/cekirdek/simge.js` içinde satır içi, her girdi `// bi: <ad>` ile
-işaretli; lisans metni `app/js/cekirdek/bootstrap-icons-LICENSE.txt`. Paket
-bağımlılık olarak eklenmedi, dışarıdan hiçbir şey indirilmiyor.
+Yazı tipleri ve simgeler aşağıda, «Reçete sayfası» başlığında.
 
 Arap yazısı Latin'den daha çok satır aralığı ister — harfler satırın altına ve
 üstüne uzanıyor — bu yüzden gövde satır aralığı 1.62.
@@ -259,17 +251,82 @@ Düzen yalnız mantıksal yön özellikleriyle kurulu (`margin-inline-start` gib
 bu yüzden sağdan sola akış kendiliğinden çıkıyor — ayrı bir RTL sayfası yok.
 `npm run kontrol` fiziksel yön özelliği kullanıldığında uyarıyor.
 
+## Reçete sayfası
+
+Reçete sayfası (`#/recete/kagit`, giriş sayfası) bir tasarım görselinden birebir
+kuruldu. Bilgisayarda **solda hekimin doldurduğu form, sağda canlı kâğıt**:
+formda yazılan her şey kâğıda anında düşüyor, kâğıttaki alana dokunmak da aynı
+kutuyu açıyor. Form tek panel: başlık bandı, hasta kartı (hasta, yaş, şemsi
+tarih, numara), Clinical kartı (sekiz ölçüm), ℞ satırları (belirti, tanı, dava,
+laboratuvar, not) ve ilaç tablosu; altta پاک کردن · پیش نمایش · ذخیره و چاپ.
+Ctrl+S yalnız kaydeder. İki sütun ancak form 620 px alabildiğinde, yani 1280 px
+ve üstünde; 861–1279 arasında form tam genişlikte, kâğıt altında. Telefonda
+(≤ 860 px) her şey sağdan sola, kenar çubuğu sağdan açılan çekmece.
+
+**Yön tek blokta.** `<html dir="rtl">` değişmedi. Tasarımdaki yerleşim
+(kenar çubuğu solda, Clinical ℞'nin solunda, asıl düğme kâğıdın yanında)
+yalnız yerleşim kaplarına `direction` vererek kuruldu ve masaüstünün yönle
+ilgili bütün kuralları `app/css/uygulama.css` sonundaki **tek**
+`@media screen and (min-width: 861px)` bloğunda. Blok silinirse düzen bugünkü
+aynalanmış sağdan sola hâline döner — geri dönüş yolu budur. Başka yerde yeni
+`[dir="rtl"]`/`[dir="ltr"]` seçici yazılmaz (hesaplanan yöne değil `<html dir>`'e
+bakar); blokta `direction: rtl` yalnız ebeveynin yerleştirdiği yapraklara
+veriliyor, kenar payı taşıyan yazıda `unicode-bidi: plaintext` kullanılıyor.
+
+**Yazı tipleri, çizimler, simgeler** — hepsi depoda, CDN yok:
+
+- **Vazirmatn** (`app/yazi/vazirmatn.woff2`, OFL, `OFL.txt`): arayüzün ve
+  kâğıdın yazı tipi, tek değişken dosya. Sistem yazı tipleri Arap harflerini
+  genelde ikinci sınıf taşıyor (harf yükseklikleri oynuyor, noktalar birbirine
+  giriyor). Service worker'ın önbelleğinde; inene kadar `font-display: swap`.
+- **Kalam 700** (`app/yazi/kalam-700.woff2`, OFL, `OFL-Kalam.txt`): kâğıttaki
+  tek el yazısı satırı ("Healthy Life Brighter Tomorrow"). Yalnız ASCII'ye
+  indirilmiş 12 KB'lık bir alt küme.
+- **℞ işareti ve «سلامت سرمایهٔ زندگی است» hattı** yazı tipi dosyası değil:
+  Noto Serif ve Noto Nastaliq Urdu'dan alınmış satır içi SVG yolları
+  (`app/js/cekirdek/cizimler.js`, OFL, `app/yazi/OFL-Noto.txt`). Yazı tipiyle
+  basılsaydı cihazdan cihaza değişirdi.
+- **Dolgulu simgelerin bir kısmı bootstrap-icons 1.13.1'den** (MIT): yol
+  verisi `app/js/cekirdek/simge.js` içinde satır içi, her girdi `// bi: <ad>`
+  ile işaretli; lisans `app/js/cekirdek/bootstrap-icons-LICENSE.txt`. Paket
+  bağımlılık olarak eklenmedi.
+
+**Tasarımdan bilerek ayrılan yerler:**
+
+- Sözcükler Dari: «مریض» (بیمار değil), «دوا». Tasarımdaki bazı sözcükler
+  İran Farsçası.
+- Menü sırası hekimlerin sırası (reçete, hasta, dava, reçete listesi…),
+  tasarımınki değil.
+- Clinical'da sekizinci satır **Blood Gr.** (formda da kâğıtta da): hastanın
+  künyesinden geliyor, tasarımda yok.
+- Kâğıttaki imza çizgisinin altında «امضا» yazıyor.
+- Alt şeritteki sürüm görselden değil koddaki sabitten: `'v' + UYGULAMA_SURUMU`.
+- Clinical sütununun altındaki resim tasarımdaki fotoğraf değil, vektör bir
+  çizim (stetoskop ve kalp); hekim Ayarlar'dan kendi fotoğrafını koyabiliyor.
+- Kâğıtta «Age» simgesi kum saati: tasarımdaki açık kitabın yaşla ilgisi yok.
+
+**Ekran ve deneme.** `npm run deneme` (`tools/tarayici.mjs`) sayfanın
+yerleşimini tasarımın ölçüleriyle, klavyeyle gezinmeyi, dört kâğıt stilinin
+A4'e tek sayfada sığmasını (≤ 272 mm) ve ekranda Türkçe kalmadığını
+denetliyor. **CI'da çalışmıyor** (Playwright proje bağımlılığı değil): CI
+yalnız `kontrol` ve `test` koşuyor. Arayüze dokunan her değişiklikten sonra
+elle çalıştırılmalı; `-- --ekran <klasör>` ekran görüntülerini de bırakıyor.
+Portlar ortam değişkeniyle değişiyor (`DENEME_PORT`, `GORSEL_PORT`,
+`SITE_PORT`): aynı makinede iki deneme birbirinin sunucusuna çarpmasın.
+
 ## Reçete kâğıdı
 
 Üç stil var, Ayarlar'dan seçilir:
 
 | Stil | Ne zaman |
 |---|---|
-| **Modern** (varsayılan) | Beyaz zemin, üstte tek bir turkuaz çizgi, ince kurallar ve boşluk. Az mürekkep yer, fotokopide dağılmaz, klinik evrakı gibi durur |
+| **Modern** (varsayılan) | Tasarımdaki kâğıt: dalgalı turkuaz antet, kadüse ve aile amblemi, kartuşlu vecize, tek kutuda Name/Age/Date/No, açık turkuaz Clinical paneli, dalgalı ayak ve rozetler |
 | **Klasik** | Hekimin hâlihazırda kullandığı basılı kâğıdın aynısı: koyu mavi antet, renk bantları |
 | **Sade** | Siyah-beyaz, en az mürekkep |
 
 Üçü de aynı düzeni taşıyor — alanların yeri, QR ve doğrulama kodu değişmiyor.
+Üçünde de Clinical satırları ve hasta şeridi tek satır; deneme dolu ve boş
+kâğıtta bunu ayrıca ölçüyor.
 Antetteki her satır (ad, ünvan, slogan, hizmetler, sabıka, adres, telefon, alt
 rozetler) Ayarlar'dan girilir; kâğıt kimseye gömülü değildir, başka bir hekim
 kendi bilgilerini yazınca kendi kâğıdı çıkar.
@@ -491,13 +548,14 @@ hasta, tanı, tanı kodu (ICD-10), protokol no, reçete notu; doktor adı, ünva
 diploma no ve kurumu Ayarlar'dan gelir ve kaydedilirken reçeteye işlenir.
 Satırda: ilaç, adet, kullanım şekli, süre, not.
 
-Klinik ölçümler ayrı tutulur: kan basıncı, nabız, solunum, kilo, ateş
-(`paylasilan/recete.js` içindeki `OLCUMLER`). Kâğıtta bunların etiketleri
-İngilizce durur (BP · PR · RR · BW · Temperature) — basılı kâğıt da böyle ve
+Klinik ölçümler ayrı tutulur: kan basıncı, nabız, solunum, kilo, ateş,
+oksijen, boy (`paylasilan/recete.js` içindeki `OLCUMLER`); kan grubu hastanın
+künyesinden gelir. Kâğıtta bunların etiketleri İngilizce durur (BP · PR · RR ·
+BW · Temperature · SpO2 · Height · Blood Gr.) — basılı kâğıt da böyle ve
 bunlar hekimlikte evrensel kısaltmalar.
 
 Alan eklemek için üç yer: `paylasilan/recete.js` içindeki `bosRecete`,
-`sayfalar/recete-yeni.js` içindeki form ızgarası ve `kagit.js` içindeki kâğıt
+`sayfalar/kagit-yaz.js` içindeki form ve `kagit.js` içindeki kâğıt
 düzeni. Yeni bir arayüz metni eklediğinde `npm run kontrol` sözlüklerde karşılığı
 olup olmadığını söyler.
 
@@ -514,16 +572,17 @@ app/                      PWA (statik olarak olduğu gibi sunulur)
     hatalar.js            hata, doğrulama ve uyarı kodlarının arayüz metni
     kagit.js              reçete kâğıdı (dolu ve boş hali) + yazdırma
     senkron-arayuz.js     Ayarlar'daki eşitleme kartı ve eşitleme turu
-    cekirdek/             dom · yonlendirici · modal · bildirim · simge · tema ·
-                          tarih-secici · gorsel · kurtarma
+    cekirdek/             dom · yonlendirici · modal · bildirim · simge · cizimler ·
+                          tema · tarih-secici · gorsel · kurtarma · kurulum
     depo/                 sema · depo · idb · recete · dogrulama · yedek · ornek ·
                           senkron (taşıyıcıdan bağımsız eşitleme motoru)
     senkron/              google.js — Drive appDataFolder taşıyıcısı (tek ağ ucu)
     paylasilan/           saf alan mantığı: ilac · hasta · recete · qr · dogrulama ·
                           tarih · metin · kimlik · senkron (birleşme kararları) ·
                           kasa (şifreleme)
-    sayfalar/             panel · ilaclar · ilac · hastalar · hasta ·
-                          receteler · recete-yeni · recete · ayarlar · bulunamadi
+    sayfalar/             kagit-yaz (reçete sayfası) · panel · ilaclar · ilac ·
+                          hastalar · hasta · receteler · recete · bos-kagit ·
+                          tanilar · laboratuvar · raporlar · ayarlar · bulunamadi
 test/                     vitest
 tanitim/index.html        tanıtım ve indirme sayfası (tek dosya)
 tools/                    sun (statik sunucu) · kontrol (statik denetim) ·

@@ -1,11 +1,25 @@
 import { describe, it, expect } from 'vitest';
-import { ilacEtiketi, ilacAra, muadiller, ilacDogrula, formKisa, ilacAdiFormsuz } from '../app/js/paylasilan/ilac.js';
+import { ilacEtiketi, ilacAra, muadiller, ilacDogrula, formKisa, ilacAdiFormsuz, satirAdi } from '../app/js/paylasilan/ilac.js';
 
 const ilac = (o) => ({ id: 'ila_1', ad: 'Parol', doz: '500 mg', form: 'tablet', ...o });
 
 describe('ilacEtiketi', () => {
   it('ad, doz ve formu birleştirir', () => expect(ilacEtiketi(ilac({}))).toBe('Parol 500 mg Tablet'));
   it('eksik alanları atlar', () => expect(ilacEtiketi({ ad: 'Parol' })).toBe('Parol'));
+  it('şekil adını arayüzün verdiği çeviriyle yazar', () => {
+    expect(ilacEtiketi(ilac({ form: 'surup' }), (k) => (k === 'surup' ? 'شربت' : ''))).toBe('Parol 500 mg شربت');
+  });
+});
+
+describe('satirAdi — kayıttaki ad ekranda ve metinde', () => {
+  it('Türkçe şekil adı düşer, Latin kısaltma öne gelir (kâğıttaki gibi)', () => {
+    expect(satirAdi({ ilacAdi: 'Panadol Syrup 120 mg/5 ml Şurup', form: 'surup' })).toBe('Syr: Panadol Syrup 120 mg/5 ml');
+    expect(satirAdi({ ilacAdi: 'Amoxicillin 500 mg Kapsül', form: 'kapsul' })).toBe('Cap: Amoxicillin 500 mg');
+  });
+  it('şekli bilinmeyen eski satırda adı olduğu gibi bırakır', () => {
+    expect(satirAdi({ ilacAdi: 'Parol 500 mg' })).toBe('Parol 500 mg');
+  });
+  it('boş satırda boş döner', () => expect(satirAdi({ form: 'tablet' })).toBe(''));
 });
 
 describe('ilacAra', () => {

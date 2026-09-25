@@ -2,7 +2,8 @@
 // Stok yok — hasta ilacını dışarıdaki eczaneden kendi alıyor.
 import { el, temizle, btn, btnS, kart, sayfaBas, bosDurum } from '../cekirdek/dom.js';
 import { simge } from '../cekirdek/simge.js';
-import { ilacEtiketi, FORMLAR, muadiller } from '../paylasilan/ilac.js';
+import { FORMLAR, muadiller } from '../paylasilan/ilac.js';
+import { ilacGorunenAd } from '../ilac-satir-arayuz.js';
 import { tarihMetni } from '../paylasilan/tarih.js';
 import { ilacKutusu, ilacRozetleri } from './ilaclar.js';
 import { t, secenekAdi } from '../i18n.js';
@@ -30,7 +31,7 @@ export default {
       const gectigi = receteler.filter((r) => (r.satirlar || []).some((s) => s.ilacId === ilac.id)).slice(0, 8);
 
       temizle(kok);
-      kok.append(sayfaBas(ilacEtiketi(ilac), {
+      kok.append(sayfaBas(ilacGorunenAd(ilac), {
         alt: [ilac.etkenMadde, ilac.uretici].filter(Boolean).join(' · '),
         geri: () => git('/ilaclar'),
         eylemler: [
@@ -67,7 +68,7 @@ export default {
           el('div', { class: 'liste' }, ...esdeger.map((m) =>
             el('a', { class: 'liste__satir', href: `#/ilac/${m.id}` },
               el('span', { class: 'avatar' }, simge('ilac', { boy: 18 })),
-              el('div', { class: 'liste__govde' }, el('div', { class: 'liste__baslik' }, ilacEtiketi(m)), el('div', { class: 'liste__alt' }, m.etkenMadde || '—')))))));
+              el('div', { class: 'liste__govde' }, el('div', { class: 'liste__baslik' }, ilacGorunenAd(m)), el('div', { class: 'liste__alt' }, m.etkenMadde || '—')))))));
       }
 
       const receteGovdesi = gectigi.length

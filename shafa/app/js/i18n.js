@@ -39,11 +39,18 @@ export function t(anahtar, varsayilan = '', degiskenler = null) {
 export const suankiDil = () => dil;
 export const sagdanSola = () => SAGDAN_SOLA.includes(dil);
 
-/** HTML'deki data-i18n metinlerini çevirir. Özgün metin ilk çağrıda saklanır. */
+/** HTML'deki data-i18n metinlerini ve data-i18n-label adlarını (aria-label)
+ *  çevirir. Özgün metin ilk çağrıda saklanır. Adlar eskiden hiç çevrilmiyordu:
+ *  kontrol anahtarın sözlükte olduğuna bakıyordu ama onu uygulayan kod yoktu,
+ *  ekran okuyucu kenar çubuğuna «Menü» diyordu. */
 export function uygula(kok = document) {
   for (const e of kok.querySelectorAll('[data-i18n]')) {
     if (!e.dataset.i18nAsil) e.dataset.i18nAsil = e.textContent;
     e.textContent = t(e.dataset.i18n, e.dataset.i18nAsil);
+  }
+  for (const e of kok.querySelectorAll('[data-i18n-label]')) {
+    if (!e.dataset.i18nAsilAd) e.dataset.i18nAsilAd = e.getAttribute('aria-label') || '';
+    e.setAttribute('aria-label', t(e.dataset.i18nLabel, e.dataset.i18nAsilAd));
   }
 }
 

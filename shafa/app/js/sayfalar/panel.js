@@ -6,6 +6,7 @@ import { tarihMetni, bugun, isoGun, goreliGun } from '../paylasilan/tarih.js';
 import { tamAd } from '../paylasilan/hasta.js';
 import { basHarfler } from '../paylasilan/metin.js';
 import { receteOzet } from '../paylasilan/recete.js';
+import { satirAdi } from '../paylasilan/ilac.js';
 import { t } from '../i18n.js';
 import { goreliMetni } from '../hatalar.js';
 
@@ -101,7 +102,7 @@ export default {
       const sayim = new Map();
       for (const r of receteler) {
         for (const satir of r.satirlar || []) {
-          const ad = String(satir.ilacAdi ?? '').trim();
+          const ad = satirAdi(satir);
           if (ad) sayim.set(ad, (sayim.get(ad) || 0) + 1);
         }
       }

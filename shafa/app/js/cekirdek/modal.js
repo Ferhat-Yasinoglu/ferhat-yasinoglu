@@ -1,11 +1,19 @@
 // Modal, onay ve tek alanlı soru kutusu: odak tuzağı, Escape ile kapanma.
+//
+// Hazır yazılar (kapat düğmesinin adı, Evet/Vazgeç/Tamam) sözlükten geliyor.
+// Önce kodda Türkçe duruyordu ve çeviri ctx kurulurken yalnız onayla()'ya
+// giydiriliyordu: kapat düğmesi ekran okuyucuya «Kapat» diyor, sor() da
+// Türkçe düğmelerle açılıyordu. tarih-secici.js gibi burası da t() çağırıyor.
 import { el, btn } from './dom.js';
 import { simge } from './simge.js';
+import { t } from '../i18n.js';
 
 // `sinif`: kutuya ek sınıf; bir sayfanın kendi kutusunu (ör. reçete
 // önizlemesi) öbür kutuları etkilemeden biçimlemek için. Düğmedeki
-// `simge`: yazının önündeki çizim (hazır bir öğe).
-export function modal({ baslik, govde, dugmeler = [], kapatilabilir = true, genis = false, sinif = '' }) {
+// `simge`: yazının önündeki çizim (hazır bir öğe). `kapatici`: kutuyu
+// düğme dışında kapatacak olana (ör. aramadaki bağlantı) kapat işlevini
+// verir; örtüyü elle sökmek dinleyiciyi ve sözü açık bırakıyordu.
+export function modal({ baslik, govde, dugmeler = [], kapatilabilir = true, genis = false, sinif = '', kapatici }) {
   return new Promise((cozul) => {
     // Kutuyu açan öğe: kapanınca odak ona dönüyor. Dönmezse <body>'ye
     // düşüyordu ve klavyeyle çalışan hekim forma dönmek için sayfanın
@@ -40,7 +48,7 @@ export function modal({ baslik, govde, dugmeler = [], kapatilabilir = true, geni
     const kutu = el('div', { class: `modal${genis ? ' modal--genis' : ''}${sinif ? ' ' + sinif : ''}`, role: 'dialog', 'aria-modal': 'true', 'aria-label': baslik },
       el('header', { class: 'modal__bas' },
         el('h2', {}, baslik),
-        kapatilabilir ? btn(simge('kapat'), { class: 'btn btn--ikon btn--sade', 'aria-label': 'Kapat', onclick: () => kapat(null) }) : null),
+        kapatilabilir ? btn(simge('kapat'), { class: 'btn btn--ikon btn--sade', 'aria-label': t('genel.kapat', 'Kapat'), onclick: () => kapat(null) }) : null),
       el('div', { class: 'modal__govde' }, govde),
       dugmeler.length
         ? el('footer', { class: 'modal__ayak' }, ...dugmeler.map((d) => btn(d.simge, {
@@ -67,13 +75,16 @@ export function modal({ baslik, govde, dugmeler = [], kapatilabilir = true, geni
       onclick: (e) => { if (e.target === ortu && ortudeBasildi && e.detail < 2 && kapatilabilir) kapat(null); },
     }, kutu);
     document.body.appendChild(ortu);
+    kapatici?.(kapat);
     document.addEventListener('keydown', tus);
     addEventListener('hashchange', gezinti);
     (kutu.querySelector('input:not([type=hidden]), textarea, select, button.btn--birincil') || kutu.querySelector('button') || kutu).focus();
   });
 }
 
-export async function onayla(mesaj, { baslik = 'Emin misin?', tehlikeli = false, evet = 'Evet', hayir = 'Vazgeç' } = {}) {
+export async function onayla(mesaj, {
+  baslik = t('genel.emin', 'Emin misin?'), tehlikeli = false, evet = t('genel.evet', 'Evet'), hayir = t('genel.vazgec', 'Vazgeç'),
+} = {}) {
   const r = await modal({
     baslik,
     govde: el('p', { style: { margin: 0 } }, mesaj),
@@ -90,7 +101,10 @@ export async function sor(baslik, { varsayilan = '', ipucu = '', cokSatir = fals
   g.value = varsayilan;
   const r = await modal({
     baslik, govde: g,
-    dugmeler: [{ metin: 'Vazgeç', deger: null }, { metin: 'Tamam', sinif: 'btn--birincil', cb: () => g.value.trim() || false }],
+    dugmeler: [
+      { metin: t('genel.vazgec', 'Vazgeç'), deger: null },
+      { metin: t('genel.tamam', 'Tamam'), sinif: 'btn--birincil', cb: () => g.value.trim() || false },
+    ],
   });
   return typeof r === 'string' ? r : null;
 }
