@@ -3,13 +3,14 @@
 import { el, temizle, btn, btnS, girdi, alan, bosDurum } from './cekirdek/dom.js';
 import { simge } from './cekirdek/simge.js';
 import { sablonAra, receteyiSablonaCevir, sablonDogrula } from './paylasilan/sablon.js';
+import { satirAdi } from './paylasilan/ilac.js';
 import { t } from './i18n.js';
 import { dogrulaMetni, hataMetni } from './hatalar.js';
 
 /** Şablonun bir satırlık özeti: "3 ilaç · Parol, Augmentin, …" */
 export function sablonOzeti(sablon) {
   const satirlar = sablon?.satirlar || [];
-  const adlar = satirlar.map((s) => s.ilacAdi).filter(Boolean);
+  const adlar = satirlar.map(satirAdi).filter(Boolean);
   const kisa = adlar.slice(0, 3).join('، ') + (adlar.length > 3 ? ' …' : '');
   return [t('recete.ilac_sayisi', '{n} ilaç', { n: satirlar.length }), kisa].filter(Boolean).join(' · ');
 }

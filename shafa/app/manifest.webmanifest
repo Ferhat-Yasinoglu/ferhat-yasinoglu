@@ -1,13 +1,13 @@
 {
-  "name": "Shafa — Reçete",
+  "name": "شفا — نسخه‌نویسی",
   "short_name": "Shafa",
-  "description": "Hekim için reçete yazma ve hasta kaydı. Veriler yalnız bu cihazda durur.",
+  "description": "نسخه‌نویسی و ثبت مریضان برای داکتر. معلومات تنها در همین دستگاه می‌ماند.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#f6f9f9",
-  "theme_color": "#0f766e",
+  "background_color": "#f6fafd",
+  "theme_color": "#f6fafd",
   "lang": "fa",
   "dir": "rtl",
   "icons": [

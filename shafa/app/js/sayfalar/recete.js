@@ -6,6 +6,7 @@ import { RECETE_TURLERI, doluOlcumler, receteUyarilari, receteMetni } from '../p
 import { tamAd, hastaYasi, alerjiCakismasi } from '../paylasilan/hasta.js';
 import { basHarfler, telefonNormalize } from '../paylasilan/metin.js';
 import { tarihMetni, tarihSaatMetni } from '../paylasilan/tarih.js';
+import { satirAdi } from '../paylasilan/ilac.js';
 import { t, secenekAdi } from '../i18n.js';
 import { kagitCiz, kagidiYazdir } from '../kagit.js';
 import { uyariMetni } from '../hatalar.js';
@@ -160,7 +161,7 @@ export default {
         tbody.appendChild(el('tr', {},
           el('td', { class: 'sayi' }, String(i + 1)),
           el('td', {},
-            el('div', { class: 'liste__baslik' }, s.ilacAdi),
+            el('div', { class: 'liste__baslik' }, el('bdi', {}, satirAdi(s))),
             el('div', { class: 'liste__alt' }, [s.kullanim, s.sure].filter(Boolean).join(' \u00b7 ') || '\u2014'),
             s.not ? el('div', { class: 'liste__alt' }, s.not) : null,
             ...satirUyarilari.map((u) => el('div', { class: 'alan__hata', style: u.tur === 'uyari' ? { color: 'rgb(var(--sari))' } : null }, uyariMetni(u)))),

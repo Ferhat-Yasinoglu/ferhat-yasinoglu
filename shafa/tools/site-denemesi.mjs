@@ -28,7 +28,7 @@ try {
 
 const KOK = fileURLToPath(new URL('../../', import.meta.url));   // depo kökü
 const SITE = join(tmpdir(), 'shafa-site-denemesi');
-const PORT = 8801;
+const PORT = Number(process.env.SITE_PORT) || 8801;
 
 /* ---- site.yml'nin "Siteyi hazirla" adımı ---- */
 await rm(SITE, { recursive: true, force: true });
@@ -53,7 +53,7 @@ const TUR = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8',
   '.webmanifest': 'application/manifest+json', '.svg': 'image/svg+xml',
-  '.woff2': 'font/woff2', '.png': 'image/png',
+  '.woff2': 'font/woff2', '.png': 'image/png', '.jpg': 'image/jpeg',
 };
 const bulunamayan = [];
 const sunucu = createServer(async (q, y) => {

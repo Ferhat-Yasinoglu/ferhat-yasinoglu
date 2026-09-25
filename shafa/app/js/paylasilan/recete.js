@@ -5,6 +5,7 @@
 // Burada "karşılama" (ne verildi, ne verilmedi) yok: hasta ilacını dışarıdaki
 // eczaneden kendi alıyor, hekim neyin verildiğini zaten bilemez. Reçete
 // yazılır, kâğıda basılır, gönderilir — hikâye burada biter.
+import { satirAdi } from './ilac.js';
 
 export const RECETE_TURLERI = [
   ['normal', 'Normal reçete'], ['kirmizi', 'Kırmızı reçete'], ['yesil', 'Yeşil reçete'],
@@ -192,7 +193,7 @@ export function receteMetni(recete, hasta, ayar = {}, etiket = {}) {
     satirlar.push('', e.ilaclar + ':');
     recete.satirlar.forEach((s, i) => {
       const parcalar = [`${s.adet} ${e.adet}`, s.kullanim, s.sure, s.yol].filter(Boolean).join(' · ');
-      satirlar.push(`${i + 1}) ${s.ilacAdi}${parcalar ? ' — ' + parcalar : ''}${s.not ? ` (${s.not})` : ''}`);
+      satirlar.push(`${i + 1}) ${satirAdi(s)}${parcalar ? ' — ' + parcalar : ''}${s.not ? ` (${s.not})` : ''}`);
     });
   }
   if (recete.laboratuvar) { satirlar.push(''); ekle(e.laboratuvar, recete.laboratuvar); }

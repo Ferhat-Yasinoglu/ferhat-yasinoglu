@@ -3,8 +3,9 @@
 // künye: ad, etken madde, şekil, doz, barkod.
 import { el, temizle, btn, btnS, girdi, secim, metinAlani, alan, onayKutusu, rozet, sayfaBas, bosDurum, sirala } from '../cekirdek/dom.js';
 import { simge } from '../cekirdek/simge.js';
-import { FORMLAR, formAdi, ilacAra, ilacEtiketi, bosIlac, ilacDogrula } from '../paylasilan/ilac.js';
-import { t, secenekleriCevir } from '../i18n.js';
+import { FORMLAR, formAdi, ilacAra, bosIlac, ilacDogrula } from '../paylasilan/ilac.js';
+import { t, secenekleriCevir, secenekAdi } from '../i18n.js';
+import { ilacGorunenAd } from '../ilac-satir-arayuz.js';
 import { dogrulaMetni, hataMetni } from '../hatalar.js';
 
 const SUZGECLER = [['', 'Tümü'], ['receteli', 'Yalnız reçeteli']];
@@ -124,17 +125,21 @@ export default {
 
       const tbody = el('tbody', {});
       for (const i of liste) {
+        const receteli = () => (i.receteli ? rozet(t('ilac.receteli_kisa', 'Reçeteli'), 'vurgu') : '');
         tbody.appendChild(el('tr', { class: 'liste__satir--tiklanir', style: { cursor: 'pointer' }, onclick: () => git(`/ilac/${i.id}`) },
           el('td', {},
-            el('div', { class: 'liste__baslik' }, ilacEtiketi(i)),
-            el('div', { class: 'liste__alt' }, [i.etkenMadde, i.uretici].filter(Boolean).join(' · ') || '—')),
-          el('td', {}, formAdi(i.form) || '—'),
-          el('td', {}, i.receteli ? rozet(t('ilac.receteli_kisa', 'Reçeteli'), 'vurgu') : ''),
+            el('div', { class: 'liste__baslik' }, ilacGorunenAd(i)),
+            el('div', { class: 'liste__alt' }, [i.etkenMadde, i.uretici].filter(Boolean).join(' · ') || '—'),
+            // Telefonda rozet sütunları gizli; rozetler burada, adın altında
+            // (bilesenler.css .tablo--ilac-listesi). Geniş ekranda gizli.
+            el('div', { class: 'ilac-hucre__rozet' }, receteli(), ...ilacRozetleri(i))),
+          el('td', {}, formAdi(i.form) ? secenekAdi(FORMLAR, i.form, 'form') : '—'),
+          el('td', {}, receteli()),
           el('td', {}, ...ilacRozetleri(i)),
           el('td', { class: 'sayi' }, btn(simge('sag', { boy: 16 }), { class: 'btn btn--kucuk btn--ikon btn--sade', 'aria-label': t('ilac.karti_ac', '{ad} kartını aç', { ad: i.ad }) }))));
       }
       const tablo = el('div', { class: 'tablo-kap' },
-        el('table', { class: 'tablo' },
+        el('table', { class: 'tablo tablo--ilac-listesi' },
           el('thead', {}, el('tr', {},
             el('th', {}, t('nav.ilac', 'İlaç')), el('th', {}, t('ilac.form', 'Form')),
             el('th', {}, ''), el('th', {}, ''), el('th', {}, ''))),

@@ -3,6 +3,7 @@
 // ctx: { depo, t, git, bildir, basari, uyar, hata, modal, onayla, sor, param, sorgu, … }
 import { yerelDepoAc } from './depo/idb.js';
 import { hatirlatmaGerekli, yedekOlustur, indir } from './depo/yedek.js';
+import { hazirListeyiTazele } from './depo/hazir-ilaclar.js';
 import { bozukKimligiAyikla } from './paylasilan/senkron.js';
 import { kur, kurulabilirMi, kuruluMu, elleKurulur, dinle as kurulumuDinle } from './cekirdek/kurulum.js';
 import { Yonlendirici } from './cekirdek/yonlendirici.js';
@@ -10,14 +11,15 @@ import { el, temizle, btn, girdi, sirala } from './cekirdek/dom.js';
 import { simge } from './cekirdek/simge.js';
 import { bildir, basari, uyar, hata } from './cekirdek/bildirim.js';
 import { modal, onayla, sor } from './cekirdek/modal.js';
-import { ilacAra, ilacEtiketi } from './paylasilan/ilac.js';
+import { ilacAra } from './paylasilan/ilac.js';
+import { ilacGorunenAd } from './ilac-satir-arayuz.js';
 import { hastaAra, tamAd } from './paylasilan/hasta.js';
 import { eslesir, bicimAyarla, basHarfler } from './paylasilan/metin.js';
 import { tarihMetni, bugun } from './paylasilan/tarih.js';
 import { t, yukle as dilYukle, uygula as dilUygula, suankiDil } from './i18n.js';
 import { kurtar } from './cekirdek/kurtarma.js';
 
-export const UYGULAMA_SURUMU = '0.2.0';
+export const UYGULAMA_SURUMU = '1.0.0';
 globalThis.UYGULAMA_SURUMU = UYGULAMA_SURUMU;
 
 /* Menü TEK liste: tasarımda grup başlığı yok ve sıra hekimin iş akışını
@@ -32,18 +34,22 @@ globalThis.UYGULAMA_SURUMU = UYGULAMA_SURUMU;
 
    «Reçeteler» dördüncü kutuda BİLEREK: hekim yazdığı reçeteyi en çok oradan
    arıyor (eczane telefon edince, hasta geri gelince). Menüye gömülmesi
-   günlük işi yavaşlatırdı. */
+   günlük işi yavaşlatırdı.
+
+   `simge` telefondaki alt çubuğun çizgi simgesi, `dolu` kenar çubuğunun
+   dolgulu simgesi (tasarımda koyu kolonda dolgulu şekiller var; alt çubuk
+   bugünkü görünümünde kalıyor). */
 const MENU = [
-  { yol: '/recete/kagit', ad: 'Reçete yaz', anahtar: 'nav.kagit', simge: 'kalem', alt: true },
-  { yol: '/hastalar', ad: 'Hastalar', anahtar: 'nav.hastalar', simge: 'hasta', alt: true, sayac: 'hastalar' },
-  { yol: '/ilaclar', ad: 'İlaçlar', anahtar: 'nav.ilaclar', simge: 'ilac', alt: true, sayac: 'ilaclar' },
-  { yol: '/receteler', ad: 'Reçeteler', anahtar: 'nav.receteler', simge: 'recete', alt: true, sayac: 'receteler' },
-  { yol: '/panel', ad: 'Panel', anahtar: 'nav.panel', simge: 'panel', alt: false },
-  { yol: '/recete/bos', ad: 'Boş kâğıt', anahtar: 'nav.bos_kagit', simge: 'yazdir', alt: false },
-  { yol: '/tanilar', ad: 'Tanılar', anahtar: 'nav.tanilar', simge: 'not', alt: false },
-  { yol: '/laboratuvar', ad: 'Laboratuvar', anahtar: 'nav.laboratuvar', simge: 'tup', alt: false },
-  { yol: '/raporlar', ad: 'Raporlar', anahtar: 'nav.raporlar', simge: 'grafik', alt: false },
-  { yol: '/ayarlar', ad: 'Ayarlar', anahtar: 'nav.ayarlar', simge: 'ayarlar', alt: false },
+  { yol: '/recete/kagit', ad: 'Reçete yaz', anahtar: 'nav.kagit', simge: 'kalem', dolu: 'recete', alt: true },
+  { yol: '/hastalar', ad: 'Hastalar', anahtar: 'nav.hastalar', simge: 'hasta', dolu: 'hastalar', alt: true, sayac: 'hastalar' },
+  { yol: '/ilaclar', ad: 'İlaçlar', anahtar: 'nav.ilaclar', simge: 'ilac', dolu: 'ilac', alt: true, sayac: 'ilaclar' },
+  { yol: '/receteler', ad: 'Reçeteler', anahtar: 'nav.receteler', simge: 'recete', dolu: 'liste', alt: true, sayac: 'receteler' },
+  { yol: '/panel', ad: 'Panel', anahtar: 'nav.panel', simge: 'panel', dolu: 'panel', alt: false },
+  { yol: '/recete/bos', ad: 'Boş kâğıt', anahtar: 'nav.bos_kagit', simge: 'yazdir', dolu: 'kagazi', alt: false },
+  { yol: '/tanilar', ad: 'Tanılar', anahtar: 'nav.tanilar', simge: 'not', dolu: 'tani', alt: false },
+  { yol: '/laboratuvar', ad: 'Laboratuvar', anahtar: 'nav.laboratuvar', simge: 'tup', dolu: 'tup', alt: false },
+  { yol: '/raporlar', ad: 'Raporlar', anahtar: 'nav.raporlar', simge: 'grafik', dolu: 'rapor', alt: false },
+  { yol: '/ayarlar', ad: 'Ayarlar', anahtar: 'nav.ayarlar', simge: 'ayarlar', dolu: 'ayarlar', alt: false },
 ];
 
 const ROTALAR = [
@@ -89,7 +95,7 @@ async function menuCiz(depo) {
   // slogan ayarlardan gelemezdi.
   temizle(kenar);
   kenar.appendChild(el('a', { class: 'kenar__marka', href: '#/' },
-    el('span', { class: 'kenar__marka-simge' }, simge('nabiz-kalp', { boy: 24 })),
+    el('span', { class: 'kenar__marka-simge' }, simge('logo', { boy: 57, dolu: true })),
     el('span', { class: 'kenar__marka-ad' },
       el('b', {}, 'Shafa'),
       el('span', {}, t('uygulama.alt_latin', 'Medical System')))));
@@ -99,7 +105,7 @@ async function menuCiz(depo) {
     // Sayaç yalnız doluysa: boş kurulumda menü "0" yığınına dönüyordu.
     const n = o.sayac ? sayilar[o.sayac] : 0;
     nav.appendChild(el('a', { href: '#' + o.yol, dataset: { yol: o.yol } },
-      simge(o.simge), el('span', {}, t(o.anahtar, o.ad)),
+      simge(o.dolu, { boy: 22, dolu: true }), el('span', {}, t(o.anahtar, o.ad)),
       n ? el('span', { class: 'menu__sayi' }, String(n)) : null));
   }
   kenar.appendChild(nav);
@@ -111,10 +117,23 @@ async function menuCiz(depo) {
     ...slogan.map((x) => el('div', { class: 'kenar__slogan-fa' }, x)),
     sloganAlt ? el('div', { class: 'kenar__slogan-lat', dir: 'ltr' }, sloganAlt) : null));
 
+  // Sürüm ayakta yalnız telefon çekmecesinde görünüyor; masaüstünde alt
+  // şeritte yazılı (CSS gizliyor).
   kenar.appendChild(el('div', { class: 'kenar__ayak' },
-    simge('nabiz-kalp', { boy: 15 }),
-    el('span', { dir: 'ltr' }, 'Shafa ', el('b', {}, t('uygulama.alt_latin', 'Medical System'))),
+    simge('logo', { boy: 33, dolu: true }),
+    el('span', { dir: 'ltr' }, el('b', {}, 'Shafa'), ' ', t('uygulama.alt_latin', 'Medical System')),
     el('span', { class: 'kenar__surum', dir: 'ltr' }, 'v' + UYGULAMA_SURUMU)));
+
+  // Masaüstünün alt şeridi: solda sürüm, sağda kalpli not. Kalp yalnız
+  // süs (aria-hidden); ekran okuyucu notu iki parçanın birleşimi olarak okur.
+  const serit = document.getElementById('alt-serit');
+  temizle(serit);
+  serit.append(
+    el('span', { class: 'alt-serit__surum', dir: 'ltr' }, 'v' + UYGULAMA_SURUMU),
+    el('span', { class: 'alt-serit__not', dir: 'rtl' },
+      el('span', {}, t('alt_serit.not_bas', 'Teknolojiyle')),
+      simge('kalp', { boy: 14, dolu: true }),
+      el('span', {}, t('alt_serit.not_son', 'daha sağlıklı bir yaşam için'))));
 
   temizle(alt);
   for (const o of TUM_OGELER.filter((x) => x.alt)) {
@@ -190,7 +209,10 @@ async function aramaAc(ctx, ilk = '') {
   const [ilaclar, hastalar, receteler] = await Promise.all([
     depo.listele('ilaclar'), depo.listele('hastalar'), depo.listele('receteler'),
   ]);
-  const kapat = () => document.querySelector('.ortu')?.remove();
+  // Sonuca basınca kutu modalın kendi kapatışıyla kapanıyor. Önce örtü elle
+  // sökülüyordu: sonuç zaten açık olan sayfaysa adres değişmiyor, modal da
+  // hashchange'i duymadığı için keydown dinleyicisi ve sözü açık kalıyordu.
+  let kapat = () => {};
 
   function ciz() {
     temizle(sonuc);
@@ -198,7 +220,7 @@ async function aramaAc(ctx, ilk = '') {
     if (!q) { sonuc.appendChild(el('div', { class: 'liste__satir sessiz' }, t('ara.basla', 'Aramak için yazmaya başla.'))); return; }
     const bulunan = [
       ...ilacAra(ilaclar, q).slice(0, 6).map((i) => ({
-        ad: ilacEtiketi(i), alt: t('ara.ilac', 'İlaç · {e}', { e: i.etkenMadde || '—' }), s: 'ilac', yol: `/ilac/${i.id}`,
+        ad: ilacGorunenAd(i), alt: t('ara.ilac', 'İlaç · {e}', { e: i.etkenMadde || '—' }), s: 'ilac', yol: `/ilac/${i.id}`,
       })),
       ...hastaAra(hastalar, q).slice(0, 6).map((h) => ({
         ad: tamAd(h), alt: t('ara.hasta', 'Hasta · {b}', { b: h.telefon || h.kimlikNo || '—' }), s: 'hasta', yol: `/hasta/${h.id}`,
@@ -209,7 +231,7 @@ async function aramaAc(ctx, ilk = '') {
     ];
     if (!bulunan.length) { sonuc.appendChild(el('div', { class: 'liste__satir sessiz' }, t('ara.yok', 'Sonuç yok.'))); return; }
     for (const x of bulunan) {
-      sonuc.appendChild(el('a', { class: 'liste__satir', href: '#' + x.yol, onclick: kapat },
+      sonuc.appendChild(el('a', { class: 'liste__satir', href: '#' + x.yol, onclick: () => kapat(null) },
         el('span', { class: 'avatar' }, simge(x.s, { boy: 18 })),
         el('div', { class: 'liste__govde' }, el('div', { class: 'liste__baslik' }, x.ad), el('div', { class: 'liste__alt' }, x.alt))));
     }
@@ -218,13 +240,37 @@ async function aramaAc(ctx, ilk = '') {
   kutu.oninput = ciz;
   kutu.onkeydown = (e) => { if (e.key === 'Enter') sonuc.querySelector('a')?.click(); };
   ciz();
-  modal({ baslik: t('ara.etiket', 'Ara'), govde: el('div', {}, kutu, sonuc) });
+  modal({ baslik: t('ara.etiket', 'Ara'), govde: el('div', {}, kutu, sonuc), kapatici: (k) => { kapat = k; } });
   setTimeout(() => kutu.focus(), 30);
 }
+
+/* Zil: geniş ekranda uyarı bantları (yedek hatırlatması, açılamayan depo)
+   sayfanın tepesinde değil, zilin açtığı kutuda duruyor — tasarımdaki gibi
+   paneller üst çubuğun hemen altından başlasın diye. Zil süs değil: bekleyen
+   uyarı varsa kırmızı nokta taşıyor, basınca aynı bantlar açılıyor. Telefonda
+   zil gizli ve bantlar bugünkü gibi sayfanın tepesinde (CSS). */
+function zilAc(acik) {
+  document.body.classList.toggle('zil-acik', acik);
+  document.querySelector('.ust__zil')?.setAttribute('aria-expanded', acik ? 'true' : 'false');
+}
+
+function zilDugmesi() {
+  return btn('', {
+    class: 'btn btn--ikon btn--sade ust__zil',
+    'aria-label': t('ust.bildirimler', 'Bildirimler'),
+    'aria-expanded': 'false', 'aria-controls': 'bantlar',
+    onclick: () => zilAc(!document.body.classList.contains('zil-acik')),
+  }, simge('zil', { boy: 18, dolu: true }), el('span', { class: 'ust__zil-nokta', hidden: true }));
+}
+
+// Depo açılamadıysa (kayıtlar sekmeyle silinecek) kutu bir kez kendiliğinden
+// açılıyor: bu uyarı bir noktanın arkasında kalamayacak kadar önemli.
+let hataGosterildi = false;
 
 async function bantlariYenile(ctx) {
   const kap = document.getElementById('bantlar');
   temizle(kap);
+  kap.dataset.bos = t('ust.bildirim_yok', 'Yeni bildirim yok.');
   if (!ctx.depo.kalici) {
     kap.appendChild(el('div', { class: 'bant bant--hata' }, simge('uyari', { boy: 18 }),
       el('span', {}, t('bant.kalici_degil', 'Tarayıcı depolaması açılamadı: kayıtlar bu sekme kapanınca silinir. Yedek al ve başka bir tarayıcı dene.'))));
@@ -241,11 +287,18 @@ async function bantlariYenile(ctx) {
         bantlariYenile(ctx);
       } })));
   }
+  const n = kap.childElementCount;
+  const zil = document.querySelector('.ust__zil');
+  if (zil) {
+    zil.querySelector('.ust__zil-nokta').hidden = !n;
+    zil.setAttribute('aria-label', n ? t('ust.bildirim_var', 'Bildirimler: {n} yeni', { n }) : t('ust.bildirimler', 'Bildirimler'));
+  }
+  if (!hataGosterildi && kap.querySelector('.bant--hata')) { hataGosterildi = true; zilAc(true); }
 }
 
 function temaDugmesi() {
   const b = btn('', { class: 'btn btn--ikon btn--sade ust__tema', 'aria-label': t('ayar.tema_degistir', 'Temayı değiştir'), title: t('ayar.tema', 'Tema') });
-  const ciz = () => { temizle(b); b.appendChild(simge(document.documentElement.dataset.tema === 'karanlik' ? 'gunduz' : 'gece')); };
+  const ciz = () => { temizle(b); b.appendChild(simge(document.documentElement.dataset.tema === 'karanlik' ? 'gunduz' : 'gece', { boy: 17, dolu: true })); };
   b.onclick = () => {
     const y = document.documentElement.dataset.tema === 'karanlik' ? 'aydinlik' : 'karanlik';
     document.documentElement.dataset.tema = y;
@@ -271,28 +324,27 @@ async function baslat() {
     Object.assign(ayar, kimlikYamasi);
   }
 
+  // Hazır ilaç listesi eski bir sürümden yüklenmişse adları bir kez yenile:
+  // ilk sayfa Türkçe kalmış eski adlarla çizilmesin. Liste okunamazsa
+  // (çevrimdışı, önbellekte yok) bir sonraki açılışta yeniden denenir.
+  await hazirListeyiTazele(depo).catch(() => 0);
+
   await dilYukle();
   bicimAyarla({ dil: suankiDil(), kur: ayar.paraBirimi || 'AFN' });
 
-  // onayla()'nın varsayılanları (başlık, "Evet", "Vazgeç") kodda Türkçe:
-  // cekirdek/ saf tutuluyor, sözlüğü oradan çağırmıyoruz. Çeviri burada,
-  // ctx kurulurken giydiriliyor — yoksa Farsça arayüzün ortasında Türkçe
-  // bir onay kutusu açılıyordu. Çağıran yer yine kendi metnini geçebilir.
-  const onaylaCevirili = (mesaj, secenekler = {}) => onayla(mesaj, {
-    baslik: t('genel.emin', 'Emin misin?'),
-    evet: t('genel.evet', 'Evet'),
-    hayir: t('genel.vazgec', 'Vazgeç'),
-    ...secenekler,
-  });
-
   const ctx = {
-    depo, t, bildir, basari, uyar, hata, modal, sor, onayla: onaylaCevirili, uygulamaSurumu: UYGULAMA_SURUMU,
+    depo, t, bildir, basari, uyar, hata, modal, sor, onayla, uygulamaSurumu: UYGULAMA_SURUMU,
     git: (yol) => { location.hash = '#' + yol; },
     yenileBantlar: () => bantlariYenile(ctx),
     yenileMenu: () => menuCiz(depo),
   };
 
   await menuCiz(depo);
+  // Telefonun üst çubuğundaki marka kenar çubuğununkiyle aynı çizim. Önce
+  // eski ℞ karosu (img/logo.svg) ve «شفا» duruyordu; çekmece açılınca iki
+  // ayrı marka yan yana görünüyordu. Çizim simge tablosunda, yani JS'te.
+  document.querySelector('.ust__logo')?.prepend(
+    el('span', { class: 'ust__logo-simge' }, simge('logo', { boy: 38, dolu: true })));
   dilUygula(document);
 
   const ustAra = document.getElementById('ust-ara');
@@ -310,9 +362,9 @@ async function baslat() {
   // Büyüteç kutunun İÇİNDE: ayrı bir düğme olarak durduğunda arama alanıyla
   // ilgisi görünmüyordu. Tıklanınca da arama açılıyor.
   ustAra.appendChild(el('div', { class: 'ara-kutu' },
-    el('span', { class: 'ara-kutu__simge', onclick: () => aramaKutusu.focus() }, simge('ara', { boy: 17 })),
+    el('span', { class: 'ara-kutu__simge', onclick: () => aramaKutusu.focus() }, simge('ara', { boy: 18 })),
     aramaKutusu,
-    klavyeli ? el('kbd', { class: 'ara-kutu__kisayol', dir: 'ltr' }, 'Ctrl K') : null));
+    klavyeli ? el('kbd', { class: 'ara-kutu__kisayol', dir: 'ltr' }, 'Ctrl + K') : null));
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); aramaAc(ctx, ''); }
   });
@@ -320,21 +372,28 @@ async function baslat() {
   const ustSag = document.getElementById('ust-sag');
   // Bugünün tarihi şemsi takvimde. Seçici DEĞİL, yazı: üst çubuktaki bir
   // tarih seçicinin değiştireceği bir şey yok, reçetenin tarihi kendi
-  // ekranında duruyor.
+  // ekranında duruyor. Yazı önce, simge sonra: tasarımda tarih kutunun
+  // başında, takvim ucunda.
   ustSag.appendChild(el('div', { class: 'ust__tarih', title: t('genel.bugun', 'Bugün') },
-    simge('takvim', { boy: 16 }),
-    el('span', { dir: 'ltr' }, tarihMetni(bugun()))));
+    el('span', { dir: 'ltr' }, tarihMetni(bugun())),
+    simge('takvim', { boy: 19, dolu: true })));
   ustSag.appendChild(temaDugmesi());
+  ustSag.appendChild(zilDugmesi());
   ustSag.appendChild(menuDugmesi());
   ustSag.appendChild(el('div', { class: 'ust__hesap', id: 'ust-hesap' }));
   await hesabiCiz(depo);
 
   document.getElementById('kenar-perde')?.addEventListener('click', menuyuKapat);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') menuyuKapat(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { menuyuKapat(); zilAc(false); } });
+  // Zil kutusu dışına basınca kapanır; kutunun içindeki "yedek indir" gibi
+  // düğmeler kutuyu kapatmıyor.
+  document.addEventListener('click', (e) => {
+    if (document.body.classList.contains('zil-acik') && !e.target.closest('.ust__zil, #bantlar')) zilAc(false);
+  });
 
   const yonlendirici = new Yonlendirici(ROTALAR, {
     kok: document.getElementById('sayfa'),
-    cizimOncesi: ({ yol }) => { aktifIsaretle(yol); bantlariYenile(ctx); menuyuKapat(); },
+    cizimOncesi: ({ yol }) => { aktifIsaretle(yol); zilAc(false); bantlariYenile(ctx); menuyuKapat(); },
   });
   yonlendirici.ctx = ctx;
   ctx.git = (yol) => yonlendirici.git(yol);

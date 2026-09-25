@@ -6,6 +6,7 @@
 import { el, temizle, kart, sayacKutusu, sayfaBas, bosDurum, sutunGrafik, yatayGrafik } from '../cekirdek/dom.js';
 import { tarihMetni, bugun } from '../paylasilan/tarih.js';
 import { parcala } from '../paylasilan/klinik.js';
+import { satirAdi } from '../paylasilan/ilac.js';
 import { t } from '../i18n.js';
 
 /** En çok geçen N değer: [{ etiket, deger }], çoktan aza. */
@@ -61,7 +62,7 @@ export default {
     let ilacKalemi = 0;
     for (const r of receteler) {
       for (const satir of r.satirlar || []) {
-        const ad = String(satir.ilacAdi ?? '').trim();
+        const ad = satirAdi(satir);
         if (!ad) continue;
         ilacKalemi++;
         ilacSayimi.set(ad, (ilacSayimi.get(ad) || 0) + 1);

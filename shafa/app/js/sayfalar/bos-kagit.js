@@ -8,7 +8,7 @@
 // olduğu için kimse bulamıyordu. Buradaki ekran onun yerini alıyor: ne
 // basılacağı önce görünüyor, sonra basılıyor.
 import { el, temizle, btnS, kart, sayfaBas, alan, secim } from '../cekirdek/dom.js';
-import { kagitCiz, kagidiYazdir, kagidiOlcekle } from '../kagit.js';
+import { kagitCiz, kagidiYazdir, kagidiOlcekle, tarayiciBaskisi } from '../kagit.js';
 import { t } from '../i18n.js';
 
 export default {
@@ -48,6 +48,10 @@ export default {
         el('h2', {}, t('bos_kagit.onizleme', 'Basılacak kâğıt')),
         el('span', { class: 'kart__alt' }, ayar.yazdirmaBoyutu === 'A5' ? 'A5' : 'A4')),
       tuval));
-    kagidiOlcekle(tuval, kagit, kok);
+    // Sayfadan çıkınca boyut gözcüsü ve yazdırma dinleyicileri bırakılsın
+    // (yönlendirici temizleyiciyi çağırıyor). Ctrl+P tek boş kâğıt basıyor.
+    const olcekBirak = kagidiOlcekle(tuval, kagit, kok);
+    const baskiBirak = tarayiciBaskisi(() => kagitCiz({ ayar, bos: true }));
+    return () => { olcekBirak(); baskiBirak(); };
   },
 };

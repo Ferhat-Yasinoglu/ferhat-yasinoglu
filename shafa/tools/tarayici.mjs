@@ -7,9 +7,10 @@
 // değilse betik atlanır. Kurmak için: npm i -D playwright && npx playwright install chromium
 import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
+import { inflateSync } from 'node:zlib';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -45,7 +46,7 @@ const taniAdi = (tr) => klinikAdi('tanilar', tr);
 const belirtiAdi = (tr) => klinikAdi('belirtiler', tr);
 const labAdi = (tr) => klinikAdi('laboratuvar', tr);
 
-const PORT = 8799;
+const PORT = Number(process.env.DENEME_PORT) || 8799;
 const KOK = `http://localhost:${PORT}/?nosw=1`;
 const ekranBayragi = process.argv.indexOf('--ekran');
 const EKRAN = ekranBayragi > -1 ? process.argv[ekranBayragi + 1] : '';
@@ -242,6 +243,9 @@ const alanlar = await sayfa.$$eval('.kagit-tuval [data-alan]', (e) => e.map((x) 
 for (const beklenen of ['hasta', 'tarih', 'kanGrubu', 'tani', 'belirtiler', 'laboratuvar', 'ilac-ekle', 'notlar', 'olcum:bp']) {
   if (!alanlar.includes(beklenen)) throw new Error(`kâğıtta "${beklenen}" alanı dokunulabilir değil: ${alanlar.join(', ')}`);
 }
+// Adı olmayan alan (Age, No) işaretlenmemeli: "null" adıyla dokunulabilir
+// görünüp hiçbir şey açmıyordu.
+if (alanlar.some((a) => !a || a === 'null')) throw new Error('kâğıtta adsız dokunulabilir alan var: ' + alanlar.join(', '));
 ok(`kâğıt üzerinde ${alanlar.length} alan dokunulabilir`);
 
 // --- İki sütunlu düzen: solda form, sağda CANLI kâğıt.
@@ -452,8 +456,29 @@ if (kacak.length) throw new Error('kâğıtta kaçak değer görünüyor: ' + ka
 ok('kâğıtta kaçak "null"/"undefined" yok');
 await resim(sayfa, '7-kagit-yaz.png', { fullPage: true });
 
-// --- Kaydet
-await sayfa.click(`button:has-text("${T('recete.kaydet')}")`);
+// --- Kaydet: tasarımda ortadaki düğme «پیش نمایش»; yalnız kaydetmek
+// önizleme kutusunun içinde. Kutudaki kâğıt sayfadakinin aynısı ama
+// dokunulamaz: data-alan işaretleri yalnız sayfadaki asıl kâğıtta.
+await sayfa.click(`.recete-eylem button:has-text("${T('recete.onizle')}")`);
+await sayfa.waitForSelector('.modal--onizleme .kagit-tuval .kagit');
+const onizlemeKutusu = await sayfa.evaluate(() => {
+  const m = document.querySelector('.modal--onizleme');
+  const tuval = m.querySelector('.kagit-tuval');
+  return {
+    metin: m.querySelector('.kagit').textContent,
+    alan: m.querySelectorAll('[data-alan]').length,
+    dugmeler: [...m.querySelectorAll('.modal__ayak .btn')].map((b) => b.textContent.trim()),
+    // Kâğıt kutunun genişliğine ölçekli: tuvalden taşmıyor.
+    tasma: m.querySelector('.kagit').getBoundingClientRect().width - tuval.clientWidth,
+  };
+});
+if (!onizlemeKutusu.metin.includes('Brufen') || !onizlemeKutusu.metin.includes('زهرا صدیقی') || onizlemeKutusu.alan
+    || onizlemeKutusu.dugmeler.join('|') !== [T('genel.kapat'), T('recete.kaydet'), T('recete.kaydet_yazdir')].join('|')
+    || onizlemeKutusu.tasma > 1) {
+  throw new Error('önizleme kutusu: ' + JSON.stringify({ ...onizlemeKutusu, metin: onizlemeKutusu.metin.slice(0, 80) }));
+}
+ok(`önizleme kutusu kâğıdı ölçekli ve dokunulamaz gösteriyor; ayakta ${onizlemeKutusu.dugmeler.join(' · ')}`);
+await sayfa.click(`.modal--onizleme button:has-text("${T('recete.kaydet')}")`);
 // Kaydedilen reçetenin sayfasına geçilmesini bekle: "İlaçlar" başlığı reçete
 // yazma ekranında da var, tek başına geçişi kanıtlamıyor.
 await sayfa.waitForURL(/#\/recete\/rec_/);
@@ -465,8 +490,10 @@ if (!/^\d{4}-\d{2}-\d{2}-\d{2}$/.test(receteNo)) throw new Error('reçete numara
 ok('reçete kaydedildi, numara kendiliğinden verildi: ' + receteNo);
 
 // --- Reçete kartı: satırlar okunur halde, karşılama düğmesi yok
+// Ad kâğıttaki biçimde («Tab: Brufen 400 mg»): kayıttaki ad Türkçe şekil
+// adıyla bitiyor («… Şurup», «… Kapsül») ve kart onu olduğu gibi basıyordu.
 const ilacTablosu = await sayfa.textContent(`.kart:has(h2:text-is("${T('nav.ilaclar')}"))`);
-for (const beklenen of ['Brufen 400 mg Tablet', 'Panadol 500 mg Tablet']) {
+for (const beklenen of ['Tab: Brufen 400 mg', 'Tab: Panadol 500 mg']) {
   if (!ilacTablosu.includes(beklenen)) throw new Error(`reçete tablosunda "${beklenen}" yok`);
 }
 if (/\bnull\b/.test(ilacTablosu)) throw new Error('reçete tablosuna düz metin "null" sızmış');
@@ -507,6 +534,42 @@ await sayfa.fill('.modal input[name=ad]', 'ÜSYE denemesi');
 await sayfa.click(`.modal button:has-text("${T('genel.kaydet')}")`);
 await sayfa.waitForSelector('.bildirim--basari');
 ok('kaydedilmiş reçete düzenlemeye dolu açıldı, şablon olarak kaydedildi (ad tanıdan önerildi)');
+
+// Düzenlemede ortadaki düğme önizleme değil «ذخیره تغییرات»: yazım hatası
+// düzelten hekim kutudan geçmeden kaydediyor. Ctrl+S de yalnız kaydediyor;
+// ikisi de AYNI reçeteyi güncelliyor, yenisini yazmıyor.
+const receteSayisi = () => sayfa.evaluate(async () => {
+  const { yerelDepoAc } = await import('./js/depo/idb.js');
+  return (await (await yerelDepoAc()).listele('receteler')).length;
+});
+const oncekiSayi = await receteSayisi();
+const ortaDugme = await sayfa.$$eval('.recete-eylem .btn', (bs) => bs.map((b) => b.textContent.trim()));
+if (ortaDugme[1] !== T('recete.kaydet_degisiklik')) throw new Error('düzenlemede ortadaki düğme: ' + ortaDugme.join(' | '));
+const kayitliAdres = new RegExp(`#/recete/${receteId}$`);
+await sayfa.click(`.recete-eylem button:has-text("${T('recete.kaydet_degisiklik')}")`);
+await sayfa.waitForURL(kayitliAdres);
+await sayfa.goto(KOK + `#/recete/${receteId}/duzenle`);
+await sayfa.waitForSelector('.kagit-tuval .kagit');
+await sayfa.keyboard.press('Control+s');
+await sayfa.waitForURL(kayitliAdres);
+if (await receteSayisi() !== oncekiSayi) throw new Error('düzenlemede kaydetmek yeni bir reçete yazdı');
+// Kısayol yalnız reçete sayfasında: sayfadan çıkınca dinleyici kalkmış olmalı
+// (tarayıcının kendi Ctrl+S'i engellenmiyor).
+const kisayolEngellendi = await sayfa.evaluate(() => {
+  const e = new KeyboardEvent('keydown', { key: 's', code: 'KeyS', ctrlKey: true, bubbles: true, cancelable: true });
+  document.dispatchEvent(e);
+  return e.defaultPrevented;
+});
+if (kisayolEngellendi) throw new Error('Ctrl+S dinleyicisi reçete sayfasından çıkınca kalkmadı');
+// Düzenlemede temizlemek düzenlemeden de çıkarıyor: başlık «نسخه جدید» olmalı,
+// yoksa sonraki kayıt eski reçetenin yerine yenisini yazıyordu.
+await sayfa.goto(KOK + `#/recete/${receteId}/duzenle`);
+await sayfa.waitForSelector('.kagit-tuval .kagit');
+await sayfa.click(`.recete-eylem button:has-text("${T('genel.temizle')}")`);
+await sayfa.click(`.modal button:has-text("${T('genel.temizle')}")`);
+await sayfa.waitForURL(/#\/recete\/kagit$/);
+await sayfa.waitForSelector(`.recete-panel__bas h1:text-is("${T('recete.yeni')}")`);
+ok(`düzenlemede «${T('recete.kaydet_degisiklik')}» ve Ctrl+S aynı reçeteyi kaydetti (${oncekiSayi} reçete); kısayol sayfadan çıkınca kalktı; temizle düzenlemeden çıkardı`);
 
 // Şablonu temiz bir sekmede uygula: aynı sekmede gezinince önceki sayfanın
 // yeniden çizimiyle yarışıyor. Hekim de gerçekte yeni reçeteye sıfırdan
@@ -564,6 +627,15 @@ ok('şablon ayarlarda listelendi');
 // Kaldığımız yere dön: sonraki adımlar kaydedilmiş reçetenin sayfasında.
 await sayfa.goto(KOK + `#/recete/${receteId}`);
 await sayfa.waitForSelector('.yazdir-alan', { state: 'attached' });
+
+// Kâğıdın el yazısı yüzü (Kalam) yazdırmadan ÖNCE inmiş olmalı:
+// window.print() eşzamanlı ve bu sayfada kâğıt ekranda gizli, yani yüzü
+// isteyen görünür bir yazı yok. Temiz bir belgede (yeniden yükleme)
+// kâğıt çizilince yükleme kendiliğinden başlamalı.
+await sayfa.reload({ waitUntil: 'load' });
+await sayfa.waitForSelector('.yazdir-alan', { state: 'attached' });
+const kalamHazir = await sayfa.evaluate(async () => { await document.fonts.ready; return document.fonts.check('700 10pt Kalam'); });
+if (!kalamHazir) throw new Error('kâğıt çizildi ama Kalam yüzü yüklenmedi: yazdırılan kâğıtta el yazısı yedek yüzle çıkar');
 
 // --- Yazdırma alanı: ekranda gizli, içeriği eksiksiz
 const yazdirMetni = await sayfa.textContent('.yazdir-alan');
@@ -794,10 +866,38 @@ await sayfa.waitForSelector('.modal .liste__baslik:has-text("Ventolin")');
 ok('Ctrl+K araması ilacı buldu');
 await sayfa.keyboard.press('Escape');
 
+// Sonuç zaten açık olan sayfaysa adres değişmiyor. Kutu eskiden örtüsü elle
+// sökülerek kapanıyordu: ekrandan gidiyor ama keydown dinleyicisi ve modalın
+// sözü açık kalıyordu. Belgedeki keydown dinleyicileri sayılıyor: kutu açılıp
+// aynı sayfanın sonucuyla kapanınca sayı başa dönmeli.
+await sayfa.click('#kenar-menu a[href="#/ilaclar"]');
+await sayfa.click('.tablo tbody tr:has-text("Ventolin")');
+await sayfa.waitForSelector('h1:has-text("Ventolin")');
+await sayfa.evaluate(() => {
+  const ekle = document.addEventListener, sil = document.removeEventListener;
+  window.__tusSayaci = { n: 0, ekle, sil };
+  document.addEventListener = function (tur, ...a) { if (tur === 'keydown') window.__tusSayaci.n++; return ekle.call(this, tur, ...a); };
+  document.removeEventListener = function (tur, ...a) { if (tur === 'keydown') window.__tusSayaci.n--; return sil.call(this, tur, ...a); };
+});
+await sayfa.keyboard.press('Control+k');
+await sayfa.fill('.modal input[type=search]', 'ventolin');
+await sayfa.click('.modal .liste__satir:has-text("Ventolin")');
+await sayfa.waitForSelector('.ortu', { state: 'detached' });
+const ayniSayfa = await sayfa.evaluate(() => {
+  const { n, ekle, sil } = window.__tusSayaci;
+  document.addEventListener = ekle;
+  document.removeEventListener = sil;
+  return { n, hash: location.hash };
+});
+if (ayniSayfa.n !== 0) throw new Error(`Ctrl+K kutusu aynı sayfanın sonucuyla kapanınca ${ayniSayfa.n} keydown dinleyicisi açık kaldı`);
+ok(`Ctrl+K sonucu zaten açık sayfaysa (${ayniSayfa.hash.slice(0, 6)}…) kutu kendi kapatışıyla kapanıyor, dinleyici kalmıyor`);
+
 // --- Yedek al ve içeriğini doğrula
 const indirme = sayfa.waitForEvent('download');
 await sayfa.click('#kenar-menu a[href="#/ayarlar"]');
-await sayfa.click(`button:has-text("${T('yedek.indir')}")`);
+// Ayarlar sayfasının kendi düğmesi. Aynı yazılı düğme yedek hatırlatma
+// bandında da var; bant geniş ekranda zilin kapalı kutusunda duruyor.
+await sayfa.click(`#sayfa button:has-text("${T('yedek.indir')}")`);
 const dosya = await indirme;
 const yol = await dosya.path();
 const belge = JSON.parse(await readFile(yol, 'utf8'));
@@ -841,11 +941,49 @@ for (const anahtar of ['nav.panel', 'nav.ilaclar', 'nav.hastalar', 'nav.recetele
 // saf modüllerde kod olarak durup arayüzde çevrildiği için asıl sınav burada:
 // alerji uyarısı taşıyan hasta kartı ile reçete kartı taranır.
 const TURKCE = ['Stok', 'İlaç', 'Hasta', 'Reçete', 'Kaydet', 'gün önce', 'gün sonra', 'Alerji', 'yaş'];
+// Hazır yazılar ve adlar ayrıca taranıyor: etiket, ipucu, başlık, düğme,
+// tablo başlığı, sekme adı ve aria-label/placeholder/title. Sözlükte
+// karşılığı olmayan anahtar Türkçe yedeğine düşüyor ve kelime listesi onu
+// görmüyordu: Ayarlar'daki antet alanları «İkinci telefon», modalın kapat
+// düğmesi «Kapat», sekme adı «Shafa — Reçete», kenar çubuğunun adı «Menü»
+// kalmıştı. Üç ölçüt: Türkçeye özgü harf, koddaki bir t() yedeğinin aynısı
+// (yedek sözlüktekinden farklıysa) ve Arap harfi hiç olmayan aria-label.
+// Kullanıcı verisi (hasta adı, not, kâğıt) taranmıyor: denemenin kendi
+// verisi de Türkçe harf taşıyor.
+const jsDosyalari = async (dizin) => (await Promise.all((await readdir(dizin, { withFileTypes: true })).map((e) => {
+  const yol = `${dizin}/${e.name}`;
+  return e.isDirectory() ? jsDosyalari(yol) : e.name.endsWith('.js') ? [yol] : [];
+}))).flat();
+const yedekler = new Set();
+for (const f of await jsDosyalari(new URL('../app/js', import.meta.url).pathname)) {
+  for (const m of (await readFile(f, 'utf8')).matchAll(/\bt\(\s*'([\w.]+)'\s*,\s*'([^'\\]*)'/g)) {
+    if (sozluk[m[1]] && sozluk[m[1]] !== m[2] && m[2].length > 2) yedekler.add(m[2]);
+  }
+}
+const hazirYaziAra = async (nerede) => {
+  const bulunan = await sayfa.evaluate((yedek) => {
+    const metinler = [document.title];
+    for (const e of document.querySelectorAll('.alan__etiket, .alan__ipucu, h1, h2, h3, th, button, option, .sayfa-bas__alt')) {
+      metinler.push(e.textContent.trim());
+    }
+    const adlar = [];
+    for (const e of document.querySelectorAll('[aria-label], [placeholder], [title]')) {
+      for (const a of ['aria-label', 'placeholder', 'title']) if (e.hasAttribute(a)) metinler.push(e.getAttribute(a));
+      if (e.hasAttribute('aria-label')) adlar.push(e.getAttribute('aria-label'));
+    }
+    return [
+      ...metinler.filter((x) => /[ğĞşŞıİ]/.test(x) || yedek.includes(x)),
+      ...adlar.filter((x) => /[A-Za-z]{3}/.test(x) && !/[\u0600-\u06ff]/.test(x)),
+    ];
+  }, [...yedekler]);
+  if (bulunan.length) throw new Error(`${nerede}: çevrilmemiş hazır yazı: ${[...new Set(bulunan)].join(' | ')}`);
+};
 const turkceAra = async (nerede) => {
   const metin = await sayfa.textContent('#sayfa');
   for (const turkce of TURKCE) {
     if (metin.includes(turkce)) throw new Error(`${nerede}: çevrilmemiş Türkçe metin "${turkce}"`);
   }
+  await hazirYaziAra(nerede);
 };
 await turkceAra('panel');
 
@@ -862,20 +1000,64 @@ await sayfa.click('.liste__satir:has-text("فاطمه احمدی")');
 await sayfa.waitForSelector('.uyari');
 await turkceAra('hasta kartı (alerji şeridi)');
 
+for (const [yol, nerede] of [['#/ayarlar', 'ayarlar'], ['#/recete/kagit', 'reçete formu'], ['#/recete/bos', 'boş kâğıt'],
+  ['#/tanilar', 'tanılar'], ['#/laboratuvar', 'laboratuvar'], ['#/raporlar', 'raporlar']]) {
+  await sayfa.goto(KOK + yol, { waitUntil: 'networkidle' });
+  await sayfa.waitForSelector('#sayfa h1');
+  await hazirYaziAra(nerede);
+}
+// Kutunun kendi yazıları (kapat düğmesinin adı).
+await sayfa.click('#kenar-menu a[href="#/hastalar"]');
+await sayfa.click(`button:has-text("${T('hasta.ekle')}")`);
+await sayfa.waitForSelector('.modal');
+await hazirYaziAra('hasta ekleme kutusu');
+await sayfa.keyboard.press('Escape');
+await sayfa.waitForSelector('.modal', { state: 'detached' });
+
 await sayfa.click('#kenar-menu a[href="#/receteler"]');
 await sayfa.waitForSelector('.tablo tbody tr');
 await sayfa.click('.tablo tbody tr');
 await sayfa.waitForSelector(`h2:has-text("${T('nav.ilaclar')}")`);
 await turkceAra('reçete kartı');
-ok('arayüz tek dilli: Farsça, sağdan sola, dil seçici yok; uyarı ve tarih cümleleri dahil hiçbir yerde Türkçe kalmamış');
+ok(`arayüz tek dilli: Farsça, sağdan sola, dil seçici yok; uyarı ve tarih cümleleri, etiket, ipucu ve adlar dahil (${yedekler.size} Türkçe yedeğe karşı) hiçbir yerde Türkçe kalmamış`);
 await resim(sayfa, '10-farsca.png', { fullPage: true });
 
 // --- Karanlık tema + dar ekran
+// Tarayıcının adres/başlık çubuğu (theme-color) üst çubuğun renginde, iki
+// temada da: önce eski turkuazda (#0f766e) kalmıştı. Kutunun örtüsü de iki
+// temada sayfayı KARARTIYOR: çizgi rengindeydi ve karanlık temada koyu
+// sayfayı parlak bir mavi-griye çeviriyordu.
+const temaDenetimi = async () => {
+  await sayfa.click('#kenar-menu a[href="#/hastalar"]');
+  await sayfa.click(`button:has-text("${T('hasta.ekle')}")`);
+  await sayfa.waitForSelector('.ortu .modal');
+  const o = await sayfa.evaluate(() => {
+    const renk = (e) => getComputedStyle(e).backgroundColor.match(/[\d.]+/g).map(Number);
+    const hex = ([r, g, b]) => '#' + [r, g, b].map((x) => x.toString(16).padStart(2, '0')).join('');
+    const [r, g, b, a = 1] = renk(document.querySelector('.ortu'));
+    const zemin = renk(document.body);
+    return {
+      tema: document.documentElement.dataset.tema,
+      meta: document.querySelector('meta[name="theme-color"]').content, ust: hex(renk(document.querySelector('.ust'))),
+      // Örtünün altındaki sayfa zemini hangi renge dönüyor?
+      once: hex(zemin), sonra: hex([r, g, b].map((c, i) => Math.round(zemin[i] * (1 - a) + c * a))),
+      karartiyor: [r, g, b].every((c, i) => c <= zemin[i]) && a > 0.2,
+    };
+  });
+  await sayfa.keyboard.press('Escape');
+  await sayfa.waitForSelector('.ortu', { state: 'detached' });
+  return o;
+};
+const acikTema = await temaDenetimi();
 await sayfa.click('.ust__tema');
+const koyuTema = await temaDenetimi();
+if ([acikTema, koyuTema].some((o) => o.meta !== o.ust || !o.karartiyor) || acikTema.meta === koyuTema.meta || koyuTema.tema !== 'karanlik') {
+  throw new Error('tema rengi / örtü: ' + JSON.stringify({ acikTema, koyuTema }));
+}
 await sayfa.click('#kenar-menu a[href="#/panel"]');
 await sayfa.waitForSelector('.sayac');
 await resim(sayfa, '5-karanlik.png', { fullPage: true });
-ok('karanlık tema açıldı');
+ok(`karanlık tema açıldı; tarayıcı çubuğu iki temada üst çubuğun renginde (${acikTema.meta} / ${koyuTema.meta}), kutu örtüsü sayfayı karartıyor (${acikTema.once}→${acikTema.sonra}, ${koyuTema.once}→${koyuTema.sonra})`);
 
 await sayfa.setViewportSize({ width: 390, height: 780 });
 await sayfa.waitForSelector('.alt a');
@@ -904,6 +1086,16 @@ await sayfa.click('.ust__menu');
 await sayfa.waitForFunction(() => document.body.classList.contains('menu-acik'));
 await sayfa.waitForTimeout(400);
 if (!(await kenarGorunur())) throw new Error('☰ basıldı, çekmece açılmadı');
+// Üst çubuktaki marka çekmecedekiyle aynı çizim ve ad: önce eski ℞ karosu
+// ve «شفا» duruyordu, çekmece açılınca iki ayrı marka yan yana görünüyordu.
+const markalar = await sayfa.evaluate(() => {
+  const iz = (s) => [...document.querySelectorAll(s + ' svg path')].map((y) => y.getAttribute('d')).join('|');
+  const logo = document.querySelector('.ust__logo');
+  return { ust: iz('.ust__logo'), kenar: iz('.kenar__marka'), img: logo.querySelectorAll('img').length, ad: logo.textContent.trim(), gorunur: logo.checkVisibility() };
+});
+if (!markalar.ust || markalar.ust !== markalar.kenar || markalar.img || markalar.ad !== 'Shafa' || !markalar.gorunur) {
+  throw new Error('telefonda üst çubuğun markası çekmecedekinden farklı: ' + JSON.stringify(markalar));
+}
 const cekmeceOgeler = await sayfa.$$eval('.kenar .menu a', (as) => as.map((a) => a.getAttribute('href')));
 for (const gerekli of ['#/ayarlar', '#/raporlar', '#/panel']) {
   if (!cekmeceOgeler.includes(gerekli)) throw new Error(`çekmecede ${gerekli} yok: ` + cekmeceOgeler.join(' '));
@@ -922,7 +1114,30 @@ try {
 }
 await sayfa.waitForTimeout(400);
 if (await kenarGorunur()) throw new Error('gezinmeden sonra çekmece açık kaldı');
-ok(`telefonda ☰ çekmeceyi açıyor (${cekmeceOgeler.length} kalem, ayarlar/raporlar/panel içinde), kaleme basınca gidip kapanıyor`);
+ok(`telefonda ☰ çekmeceyi açıyor (${cekmeceOgeler.length} kalem, ayarlar/raporlar/panel içinde), kaleme basınca gidip kapanıyor; üst çubukta çekmecedeki marka`);
+
+// İlaç listesi telefonda: ad sütunu satırın çoğunu alıyor ve ad tek satır
+// (önce beş sütunda 80 px'e sıkışıyor, ad altı satıra bölünüyordu);
+// şekil ve rozet sütunları gizli, rozetler adın altında.
+await sayfa.goto(KOK + '#/ilaclar', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.tablo--ilac-listesi tbody tr');
+const telIlac = await sayfa.evaluate(() => {
+  const tr = document.querySelector('.tablo--ilac-listesi tbody tr');
+  const ad = tr.cells[0];
+  const aralik = document.createRange();
+  aralik.selectNodeContents(ad.querySelector('.liste__baslik'));
+  return {
+    oran: Math.round(ad.getBoundingClientRect().width / tr.getBoundingClientRect().width * 100),
+    satir: new Set([...aralik.getClientRects()].map((r) => Math.round(r.top))).size,
+    rozet: [...ad.querySelectorAll('.ilac-hucre__rozet .rozet')].filter((r) => r.checkVisibility()).length,
+    sutun: [...tr.cells].filter((c) => c.checkVisibility()).length,
+    tasma: document.documentElement.scrollWidth > innerWidth,
+  };
+});
+if (telIlac.oran < 70 || telIlac.satir !== 1 || !telIlac.rozet || telIlac.sutun !== 2 || telIlac.tasma) {
+  throw new Error('telefonda ilaç listesi: ' + JSON.stringify(telIlac));
+}
+ok(`telefonda ilaç listesi iki sütun: ad satırın %${telIlac.oran}'i ve tek satır, ${telIlac.rozet} rozet adın altında`);
 
 // Geniş ekrana dönülüyor: sonraki adımlar kenar çubuğuna tıklıyor.
 await sayfa.setViewportSize({ width: 1280, height: 900 });
@@ -939,6 +1154,10 @@ ok('sayfa yenilendi, 9 ilaç IndexedDB\'den geri geldi');
 // Satır saymak yerine sayfanın kendi yazdığı sayıyı okuyoruz: satırlar
 // belirirken saymak yarı çizilmiş listeyi ölçüyordu.
 const ilacSayisiniOku = async () => {
+  // Önce ilaçlar sayfasının kendisi: adres değişince yönlendirici yeni
+  // sayfayı bir an sonra çiziyor, bu arada Ayarlar'ın kart__alt'ı okunup
+  // denemeyi zamanlamaya bağlı olarak düşürüyordu.
+  await sayfa.waitForSelector(`#sayfa h1:text-is("${T('nav.ilaclar')}")`);
   await sayfa.waitForSelector('#sayfa p.kart__alt');
   const metin = await sayfa.textContent('#sayfa p.kart__alt');
   const n = Number((metin.match(/\d+/) || [])[0]);
@@ -989,16 +1208,22 @@ const beklenenMenu = ['#/recete/kagit', '#/hastalar', '#/ilaclar', '#/receteler'
 if (JSON.stringify(kenarOgeleri) !== JSON.stringify(beklenenMenu)) {
   throw new Error('menü sırası beklenenden farklı: ' + kenarOgeleri.join(' '));
 }
-// Marka, slogan ve sürüm şeridi kenar çubuğunda; üst çubuktaki marka kopyası
-// geniş ekranda GİZLİ olmalı — iki yerde birden yazınca ad tekrarlanıyordu.
+// Marka ve slogan kenar çubuğunda; üst çubuktaki marka kopyası geniş ekranda
+// GİZLİ olmalı — iki yerde birden yazınca ad tekrarlanıyordu. Sürüm geniş
+// ekranda alt şeritte ve uygulamanın gerçek sürümü (tasarımdaki sabit
+// "v1.0.0" yazısı değil).
 const marka = (await sayfa.textContent('.kenar__marka')).replace(/\s+/g, ' ').trim();
-const ayakMetni = (await sayfa.textContent('.kenar__ayak')).replace(/\s+/g, ' ').trim();
+const surum = await sayfa.evaluate(() => {
+  const e = document.querySelector('.alt-serit__surum');
+  return { metin: e?.textContent.trim(), gorunur: !!e?.checkVisibility(), beklenen: 'v' + globalThis.UYGULAMA_SURUMU };
+});
 const sloganVar = await sayfa.isVisible('.kenar__slogan-fa');
 const ustMarkaGorunur = await sayfa.isVisible('.ust__logo');
-if (!marka.includes('Shafa') || !ayakMetni.includes('v') || !sloganVar || ustMarkaGorunur) {
-  throw new Error(`kenar çubuğu eksik: marka="${marka}" ayak="${ayakMetni}" slogan=${sloganVar} üstMarka=${ustMarkaGorunur}`);
+if (!marka.includes('Shafa') || !/^v\d+\.\d+\.\d+$/.test(surum.metin || '') || surum.metin !== surum.beklenen
+    || !surum.gorunur || !sloganVar || ustMarkaGorunur) {
+  throw new Error(`kenar çubuğu eksik: marka="${marka}" sürüm=${JSON.stringify(surum)} slogan=${sloganVar} üstMarka=${ustMarkaGorunur}`);
 }
-ok(`kenar çubuğu tasarımdaki gibi: ${beklenenMenu.length} kalem, marka "${marka}", ayakta "${ayakMetni}", slogan yerinde`);
+ok(`kenar çubuğu tasarımdaki gibi: ${beklenenMenu.length} kalem, marka "${marka}", slogan yerinde; alt şeritte ${surum.metin}`);
 
 // Aktif kalem TEK olmalı: /recete/kagit'teyken "لیست نسخه‌ها" da işaretliyse
 // hekim hangi ekranda olduğunu göremiyor (bir kez öyle oldu).
@@ -1029,10 +1254,401 @@ ok('tek aktif menü kalemi, yönlendirme odağı başlıkta ama halka çizilmiyo
 const kutuIcinde = await sayfa.isVisible('.ara-kutu .ara-kutu__simge');
 const kisayol = (await sayfa.textContent('.ara-kutu__kisayol')).trim();
 const ustTarih = (await sayfa.textContent('.ust__tarih')).trim();
-if (!kutuIcinde || kisayol !== 'Ctrl K' || !/^\d{4}\/\d{2}\/\d{2}$/.test(ustTarih)) {
+if (!kutuIcinde || !/^Ctrl\s*\+?\s*K$/.test(kisayol) || !/^\d{4}\/\d{2}\/\d{2}$/.test(ustTarih)) {
   throw new Error(`üst çubuk beklendiği gibi değil: simge=${kutuIcinde} kısayol="${kisayol}" tarih="${ustTarih}"`);
 }
 ok(`üst çubukta büyüteç kutunun içinde, "${kisayol}" rozeti ayrı, şemsi tarih ${ustTarih}`);
+
+// --- Masaüstü kabuğu tasarımdaki yerde: kenar çubuğu solda ve tam boy, üst
+// çubuk onun yanından başlıyor, alt şerit görünür. Sayfa <html dir="rtl">
+// kalıyor; bu yerleşimi yalnız uygulama.css'in masaüstü bloğu veriyor —
+// blok bozulursa kenar çubuğu yine sağa ve üst çubuğun altına düşer.
+await sayfa.setViewportSize({ width: 1536, height: 1024 });
+await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.recete-duzen .kagit');
+const kabuk = await sayfa.evaluate(() => {
+  const k = (s) => document.querySelector(s)?.getBoundingClientRect();
+  const kenar = k('.kenar'), ust = k('.ust'), serit = k('.alt-serit');
+  return {
+    kenarX: Math.round(kenar.left), kenarY: Math.round(kenar.top), kenarH: Math.round(kenar.height), kenarW: Math.round(kenar.width),
+    ustX: Math.round(ust.left), ustH: Math.round(ust.height), yukseklik: innerHeight,
+    serit: !!document.querySelector('.alt-serit')?.checkVisibility() && Math.round(serit.height),
+    seritX: Math.round(serit.left),
+    surum: document.querySelector('.alt-serit__surum')?.textContent.trim(), beklenen: 'v' + globalThis.UYGULAMA_SURUMU,
+    dir: document.documentElement.dir,
+  };
+});
+if (kabuk.dir !== 'rtl' || kabuk.kenarX !== 0 || kabuk.kenarY !== 0 || Math.abs(kabuk.kenarH - kabuk.yukseklik) > 1
+    || kabuk.ustX !== kabuk.kenarW || kabuk.ustH !== 66 || kabuk.serit !== 48 || kabuk.seritX !== kabuk.kenarW
+    || kabuk.surum !== kabuk.beklenen) {
+  throw new Error('masaüstü kabuğu tasarımdaki yerde değil: ' + JSON.stringify(kabuk));
+}
+// Zil süs değil: bekleyen uyarı varsa noktası yanıyor, basınca uyarı kutusu
+// açılıyor, Escape kapatıyor.
+const zil = async () => sayfa.evaluate(() => ({
+  bant: document.getElementById('bantlar').childElementCount,
+  nokta: !!document.querySelector('.ust__zil-nokta')?.checkVisibility(),
+  kutu: !!document.getElementById('bantlar').checkVisibility(),
+  genislet: document.querySelector('.ust__zil')?.getAttribute('aria-expanded'),
+}));
+const zilOnce = await zil();
+await sayfa.click('.ust__zil');
+const zilAcik = await zil();
+await sayfa.keyboard.press('Escape');
+const zilKapali = await zil();
+if (zilOnce.nokta !== (zilOnce.bant > 0) || zilOnce.kutu || !zilAcik.kutu || zilAcik.genislet !== 'true'
+    || zilKapali.kutu || zilKapali.genislet !== 'false') {
+  throw new Error('zil çalışmıyor: ' + JSON.stringify({ zilOnce, zilAcik, zilKapali }));
+}
+// Telefonda şerit yok, zil yok; çekmece yine sağdan açılıyor.
+await sayfa.setViewportSize({ width: 390, height: 780 });
+await sayfa.waitForTimeout(100);
+const telSerit = await sayfa.evaluate(() => ({
+  serit: !!document.querySelector('.alt-serit')?.checkVisibility(),
+  zil: !!document.querySelector('.ust__zil')?.checkVisibility(),
+}));
+await sayfa.click('.ust__menu');
+await sayfa.waitForFunction(() => document.body.classList.contains('menu-acik'));
+await sayfa.waitForTimeout(400);
+const cekmeceSag = await sayfa.evaluate(() => Math.round(document.querySelector('.kenar').getBoundingClientRect().right) === innerWidth);
+await sayfa.keyboard.press('Escape');
+await sayfa.waitForTimeout(400);
+if (telSerit.serit || telSerit.zil || !cekmeceSag) {
+  throw new Error('telefon kabuğu değişmiş: ' + JSON.stringify({ ...telSerit, cekmeceSag }));
+}
+await sayfa.setViewportSize({ width: 1280, height: 900 });
+ok(`masaüstü kabuğu: kenar çubuğu x=0 tam boy (${kabuk.kenarH}px), üst çubuk x=${kabuk.ustX}, alt şerit ${kabuk.surum}; zil (${zilOnce.bant} uyarı) açılıp kapanıyor; telefonda şerit yok, çekmece sağdan`);
+
+// --- Kabuğun ince ayarları: gözle görülen ama DOM ölçüsünde görünmeyen
+// kusurlar ekran görüntüsünün piksellerinden denetleniyor (derleme yok,
+// bağımlılık yok: PNG'yi node:zlib açıyor).
+// Chromium 8 bit RGB/RGBA PNG veriyor; beş satır süzgecinin hepsi çözülüyor.
+const pngCoz = (b) => {
+  let i = 8, w = 0, h = 0, tur = 0;
+  const idat = [];
+  while (i < b.length) {
+    const n = b.readUInt32BE(i), ad = b.toString('latin1', i + 4, i + 8), v = b.subarray(i + 8, i + 8 + n);
+    if (ad === 'IHDR') { w = v.readUInt32BE(0); h = v.readUInt32BE(4); tur = v[9]; }
+    else if (ad === 'IDAT') idat.push(v);
+    i += 12 + n;
+  }
+  const bpp = tur === 6 ? 4 : 3, en = w * bpp, ham = inflateSync(Buffer.concat(idat)), px = Buffer.alloc(h * en);
+  for (let y = 0; y < h; y++) {
+    const f = ham[y * (en + 1)];
+    for (let x = 0; x < en; x++) {
+      const a = x >= bpp ? px[y * en + x - bpp] : 0, u = y ? px[(y - 1) * en + x] : 0;
+      const c = x >= bpp && y ? px[(y - 1) * en + x - bpp] : 0;
+      const p = a + u - c, pa = Math.abs(p - a), pb = Math.abs(p - u), pc = Math.abs(p - c);
+      const tahmin = [0, a, u, (a + u) >> 1, pa <= pb && pa <= pc ? a : pb <= pc ? u : c][f];
+      px[y * en + x] = (ham[y * (en + 1) + 1 + x] + tahmin) & 255;
+    }
+  }
+  return { w, h, rgb: (x, y) => [...px.subarray((y * w + x) * bpp, (y * w + x) * bpp + 3)] };
+};
+const goruntu = async (x, y, width = 1, height = 1) => pngCoz(await sayfa.screenshot({ clip: { x, y, width, height } }));
+const renkFarki = (a, b) => a.reduce((t, v, k) => t + Math.abs(v - b[k]), 0);
+// Kutudaki yazının mürekkebi (zeminden belirgin ayrılan satırlar) kutunun
+// dikey ortasında mı? Zemin, yazının hemen önündeki boş dolgudan okunuyor.
+const murekkepOrtasi = async (kutuSec, yaziSec) => {
+  const [k, y] = await sayfa.evaluate(([a, b]) => [a, b].map((s) => {
+    const r = document.querySelector(s).getBoundingClientRect();
+    return [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)];
+  }), [kutuSec, yaziSec]);
+  const g = await goruntu(y[0], k[1] + 2, y[2], k[3] - 4);
+  const zemin = (await goruntu(y[0] - 3, k[1] + Math.round(k[3] / 2))).rgb(0, 0);
+  const satirlar = [];
+  for (let sy = 0; sy < g.h; sy++) {
+    for (let sx = 0; sx < g.w; sx++) if (renkFarki(g.rgb(sx, sy), zemin) > 90) { satirlar.push(sy); break; }
+  }
+  return { fark: +((k[1] + 2 + (satirlar[0] + satirlar.at(-1) + 1) / 2) - (k[1] + k[3] / 2)).toFixed(1), satirlar: satirlar.length };
+};
+
+await sayfa.setViewportSize({ width: 1536, height: 1024 });
+await sayfa.goto(KOK + '#/hastalar', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('#sayfa h1');
+await sayfa.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {}))));
+// 1240 px'e sınırlı içerik sütunu ORTADA. Sağa yaslıyken kenar çubuğunun
+// yanında 107 px'lik (1920'de 491 px) ölü bir şerit kalıyordu.
+const sutun = await sayfa.evaluate(() => {
+  const i = document.querySelector('.icerik').getBoundingClientRect();
+  const k = document.querySelector('.kenar').getBoundingClientRect();
+  return { en: Math.round(i.width), sol: Math.round(i.left - k.right), sag: Math.round(innerWidth - i.right) };
+});
+if (sutun.en !== 1240 || Math.abs(sutun.sol - sutun.sag) > 1) {
+  throw new Error('içerik sütunu ortada değil: ' + JSON.stringify(sutun));
+}
+// Kenar çubuğuyla sayfa arasında 1 px çizgi (x=189), üst çubuğun yanında da;
+// iki komşusundan da ayrı bir renk (tema hangisiyse).
+const dikis = [];
+for (const y of [30, 500]) {
+  const g = await goruntu(186, y, 6, 1);
+  dikis.push({ y, kenar: g.rgb(2, 0), cizgi: g.rgb(3, 0), sayfa: g.rgb(5, 0) });
+}
+if (dikis.some((d) => renkFarki(d.cizgi, d.kenar) < 15 || renkFarki(d.cizgi, d.sayfa) < 15)) {
+  throw new Error('kenar çubuğuyla sayfa arasındaki çizgi yok: ' + JSON.stringify(dikis));
+}
+// Üst çubukta tarih ve Ctrl+K rozetinin yazısı kutunun ortasında (Latin
+// rakamlar Vazirmatn'ın derin alt payıyla ~4 px yukarıda duruyordu).
+const tarihOrta = await murekkepOrtasi('.ust__tarih', '.ust__tarih > span');
+const rozetOrta = await murekkepOrtasi('.ara-kutu__kisayol', '.ara-kutu__kisayol');
+if (Math.abs(tarihOrta.fark) > 1.5 || Math.abs(rozetOrta.fark) > 1.5 || tarihOrta.satirlar < 8 || rozetOrta.satirlar < 6) {
+  throw new Error('üst çubuk yazısı kutusunun ortasında değil: ' + JSON.stringify({ tarihOrta, rozetOrta }));
+}
+// Koyu kolonda klavye odağı görünür: halka zeminle en az 3:1 ve kutunun
+// İÇİNDE (dışa taşan halka kolonun kırpmasında ve komşu satırın altında
+// kayboluyordu). Seçili hapın üstünde de.
+const odakHalkasi = () => sayfa.evaluate(() => {
+  const isik = (c) => {
+    const [r, g, b] = c.match(/[\d.]+/g).slice(0, 3).map((v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const e = document.activeElement, cs = getComputedStyle(e);
+  const zemin = e.matches('[aria-current]') ? cs.backgroundColor : getComputedStyle(document.querySelector('.kenar')).backgroundColor;
+  const [a, b] = [isik(cs.outlineColor), isik(zemin)].sort((x, y) => y - x);
+  return { href: e.getAttribute('href'), gorunur: e.matches(':focus-visible') && cs.outlineStyle !== 'none',
+    karsitlik: +((a + 0.05) / (b + 0.05)).toFixed(2), kayma: parseFloat(cs.outlineOffset) };
+});
+await sayfa.focus('.kenar__marka');
+await sayfa.keyboard.press('Tab');
+const odakBos = await odakHalkasi();
+await sayfa.keyboard.press('Tab');
+const odakSecili = await odakHalkasi();
+await sayfa.keyboard.press('Escape');
+await sayfa.evaluate(() => document.activeElement?.blur());
+if ([odakBos, odakSecili].some((o) => !o.gorunur || o.karsitlik < 3 || o.kayma > 0) || odakSecili.href !== '#/hastalar') {
+  throw new Error('kenar çubuğunda odak halkası görünmüyor: ' + JSON.stringify({ odakBos, odakSecili }));
+}
+// Kısa dizüstü ekranında (1366×768; tarayıcı içinde ~650 px) kenar çubuğu
+// kaydırmasız sığıyor, ayak ekranda. Satırlar 52 px sabitken kolon 825 px
+// istiyordu; kolonda gri bir kaydırma çubuğu çıkıp ayak aşağıda kalıyordu.
+const kisaEkran = [];
+for (const [w, h] of [[1536, 1024], [1366, 768], [1280, 650]]) {
+  await sayfa.setViewportSize({ width: w, height: h });
+  await sayfa.waitForTimeout(100);
+  kisaEkran.push(await sayfa.evaluate(() => {
+    const k = document.querySelector('.kenar');
+    const satir = [...k.querySelectorAll('.menu a')].map((a) => a.getBoundingClientRect().height);
+    return { boy: innerHeight, tasma: k.scrollHeight - k.clientHeight,
+      ayak: Math.round(k.querySelector('.kenar__ayak').getBoundingClientRect().bottom),
+      satir: [Math.round(Math.min(...satir)), Math.round(Math.max(...satir))],
+      slogan: !!k.querySelector('.kenar__slogan')?.checkVisibility() };
+  }));
+}
+if (kisaEkran.some((d) => d.tasma > 0 || d.ayak > d.boy || d.satir[0] < 40)
+    || kisaEkran[0].satir.join() !== '52,52' || !kisaEkran[0].slogan) {
+  throw new Error('kenar çubuğu kısa ekrana sığmıyor ya da tam ekranda tasarımdan saptı: ' + JSON.stringify(kisaEkran));
+}
+// Telefonda kapalı çekmece görünmez: ekran dışına kaysa da gölgesi sayfanın
+// kenarında ~16 px gri bir şerit bırakıyordu.
+await sayfa.setViewportSize({ width: 390, height: 844 });
+await sayfa.goto(KOK + '#/panel', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('#sayfa h1');
+// Genişten dara geçişte çekmece (☰ daha önce açıldıysa) kayarak kapanıyor.
+await sayfa.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {}))));
+const kapaliCekmece = await sayfa.evaluate(() => ({
+  gorunur: document.querySelector('.kenar').checkVisibility({ visibilityProperty: true }),
+  zemin: getComputedStyle(document.body).backgroundColor.match(/\d+/g).map(Number),
+}));
+const kenarSeridi = await goruntu(376, 300, 14, 1);
+const seritFarki = Math.max(...Array.from({ length: 14 }, (_, x) => renkFarki(kenarSeridi.rgb(x, 0), kapaliCekmece.zemin)));
+if (kapaliCekmece.gorunur || seritFarki > 3) {
+  throw new Error(`kapalı çekmece ekranda iz bırakıyor: görünür=${kapaliCekmece.gorunur}, kenar şeridi zeminden ${seritFarki} farklı`);
+}
+// Sonraki adım reçete sayfasında, giriş animasyonu bitmiş hâlde başlıyor.
+await sayfa.setViewportSize({ width: 1280, height: 900 });
+await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.recete-duzen .kagit');
+await sayfa.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {}))));
+ok(`kabuk ince ayarı: içerik sütunu ortada (${sutun.sol}/${sutun.sag} px), kenar çizgisi yerinde, tarih ve Ctrl+K yazısı kutu ortasında (${tarihOrta.fark}/${rozetOrta.fark} px), odak halkası koyu kolonda ${odakBos.karsitlik}:1 / hapta ${odakSecili.karsitlik}:1, kenar çubuğu 768 ve 650 px'e kaydırmasız sığıyor (satır ${kisaEkran[2].satir[0]} px), kapalı çekmece iz bırakmıyor`);
+
+// --- Reçete formu tasarımdaki yerde (1536×1024): form paneli solda 683 px,
+// kâğıt sağda 609 px; panelin içi de tasarımdaki gibi soldan sağa (Clinical
+// ℞'nin solunda, ad alanı en solda). Bunu yalnız uygulama.css'in masaüstü
+// bloğu veriyor; telefonda aynı form sağdan sola kalmalı.
+await sayfa.setViewportSize({ width: 1536, height: 1024 });
+await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+await sayfa.waitForSelector('.recete-duzen .kagit');
+// Sayfa zaten açıksa yeniden çizilmiyor; kâğıdın ölçeği boyut gözcüsüyle
+// bir kare sonra geliyor. Beklenmezse kâğıt eski genişlikte ölçülüyordu.
+await sayfa.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+const formYeri = () => sayfa.evaluate(() => {
+  const k = (e) => { const r = (typeof e === 'string' ? document.querySelector(e) : e).getBoundingClientRect(); return { x: Math.round(r.left), sag: Math.round(r.right), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) }; };
+  const alanlar = [...document.querySelectorAll('.izgara--hasta > .alan')];
+  const onizleme = document.querySelector('.recete-onizleme');
+  const baslik = document.querySelector('.recete-onizleme__bas');
+  const tarih = document.querySelector('.recete-form .tarih-secici');
+  return {
+    yon: getComputedStyle(document.querySelector('.recete-form')).direction,
+    form: k('.recete-form'), kagit: k(onizleme), yapiskan: getComputedStyle(onizleme).top,
+    sayfaBasi: document.querySelectorAll('#sayfa .sayfa-bas').length,
+    h1: !!document.querySelector('.recete-panel__bas h1'),
+    onizlemeAdi: document.getElementById(onizleme.getAttribute('aria-labelledby') || '-')?.textContent.trim(),
+    onizlemeGorunur: baslik.getBoundingClientRect().width > 1,
+    klinik: k('.kart--klinik'), rx: k('.kart--rx'), ad: k(alanlar[0]), no: k(alanlar[3]),
+    takvimSolda: k(tarih.querySelector('.tarih-secici__dugme')).sag <= k(tarih.querySelector('input[type=text]')).x,
+    bp: k('input[name=olcum_bp]'), ates: k('input[name=olcum_temp]'), kan: k('input[name=olcum_kanGrubu]'),
+    tuval: k('.kagit-tuval'), panelBoy: Math.round(document.querySelector('.recete-form').getBoundingClientRect().height),
+    rxSatir: [...document.querySelectorAll('.rx-satir')].map(k),
+    rxIsaret: k('.kart--rx .rx-isaret__cizim'), liste: k('.kart--rx__ilac'),
+    listeBaslik: k('.ilac-bas h2'), ekle: k('.ilac-bas__ekle'),
+    thler: [...document.querySelectorAll('.tablo--ilac th')].map(k),
+    dugmeler: [...document.querySelectorAll('.recete-eylem .btn')].map(k),
+  };
+});
+const fm = await formYeri();
+if (fm.yon !== 'ltr' || Math.abs(fm.form.x - 203) > 1 || Math.abs(fm.form.w - 683) > 1 || fm.form.y !== 78
+    || Math.abs(fm.kagit.x - 902) > 1 || Math.abs(fm.kagit.w - 609) > 1 || fm.kagit.y !== 78 || fm.yapiskan !== '78px'
+    || fm.sayfaBasi !== 0 || !fm.h1 || fm.onizlemeAdi !== T('recete.onizleme') || fm.onizlemeGorunur
+    || fm.klinik.w !== 225 || fm.klinik.sag > fm.rx.x || fm.ad.sag > fm.no.x || !fm.takvimSolda
+    || fm.bp.w !== 105 || fm.ates.w !== 63 || fm.kan.w !== 63 || fm.bp.sag !== fm.ates.sag
+    || fm.tuval.x !== fm.kagit.x || fm.tuval.w !== fm.kagit.w) {
+  throw new Error('reçete formu tasarımdaki yerde değil: ' + JSON.stringify(fm));
+}
+// ℞ ve ilaç listesi tek kart (tasarım: 425×552, satırlar 409×43); panel
+// 886 px'te kalıyor. Rx çizimi solda, liste başlığı solda, ekle düğmesi sağda;
+// tablonun # sütunu sağda (sağdan sola); düğmeler 52 px, asıl düğme kâğıdın yanında.
+const rxHata = [];
+if (Math.abs(fm.panelBoy - 886) > 1) rxHata.push('panel ' + fm.panelBoy);
+if (fm.rx.w !== 425 || fm.klinik.y !== fm.rx.y) rxHata.push('kart ' + JSON.stringify(fm.rx));
+if (fm.rxSatir.length !== 5 || fm.rxSatir.some((r) => r.w !== 409 || r.h !== 43 || r.x !== fm.rxSatir[0].x)) rxHata.push('satırlar ' + JSON.stringify(fm.rxSatir));
+if (fm.rxSatir[0].y !== 383 || fm.rxSatir[4].y !== 585) rxHata.push(`satır tepeleri ${fm.rxSatir[0].y}/${fm.rxSatir[4].y}`);
+if (fm.rxIsaret.x > fm.rxSatir[0].x + 12 || fm.rxIsaret.sag > fm.rxSatir[0].x + 60) rxHata.push('Rx çizimi solda değil');
+if (fm.liste.y !== 666 || fm.listeBaslik.sag > fm.ekle.x || fm.ekle.sag < fm.rx.sag - 12) rxHata.push('liste başı ' + JSON.stringify([fm.liste, fm.listeBaslik, fm.ekle]));
+if (fm.thler[0].x < fm.thler[5].x || fm.thler.some((h) => h.y !== fm.thler[0].y)) rxHata.push('tablo yönü');
+if (fm.dugmeler.some((d) => Math.abs(d.w - fm.dugmeler[0].w) > 1) || fm.dugmeler[2].x < fm.dugmeler[1].sag
+    || fm.dugmeler[1].x < fm.dugmeler[0].sag) rxHata.push('düğmeler ' + JSON.stringify(fm.dugmeler));
+if (fm.dugmeler.some((d) => d.h !== 52)) rxHata.push('düğme boyu ' + fm.dugmeler.map((d) => d.h));
+if (rxHata.length) throw new Error('℞ kartı / düğmeler tasarımdaki gibi değil: ' + rxHata.join('; '));
+// Canlı kâğıt: tuval A4'ün basılabilir alanı (194 mm), payı yok, sütunun
+// tam genişliğinde. Antet dalgası yalnız sol yarıda; ad ve ihtisas rozeti
+// aynı başlangıç kenarına yaslı; hasta şeridinde boş değer tire değil çizgi.
+const kagitAntet = await sayfa.evaluate(() => {
+  const r = (s) => document.querySelector('.recete-onizleme ' + s).getBoundingClientRect();
+  const kagit = r('.kagit');
+  const svg = document.querySelector('.recete-onizleme .kagit__dalga--ust');
+  const dalgaSag = Math.max(...[...svg.querySelectorAll('path')].map((y) => { const b = y.getBBox(); return b.x + b.width; }));
+  const serit = document.querySelector('.recete-onizleme .kagit__serit');
+  return {
+    x: Math.round(kagit.left), w: Math.round(kagit.width), h: Math.round(kagit.height),
+    dalgaOran: Math.round(dalgaSag / svg.viewBox.baseVal.width * 100),
+    adSag: Math.round(r('.kagit__ad-blok').right), rozetSag: Math.round(r('.kagit__unvan span').right),
+    seritMetni: serit.textContent, seritCizgi: serit.querySelectorAll('.kagit__cizgi').length,
+    hucreTepe: [...serit.querySelectorAll('.kagit__alan')].map((h) => Math.round(h.getBoundingClientRect().top)),
+  };
+});
+if (Math.abs(kagitAntet.x - 902) > 1 || Math.abs(kagitAntet.w - 609) > 1 || kagitAntet.h < 870
+    || kagitAntet.dalgaOran > 75 || Math.abs(kagitAntet.adSag - kagitAntet.rozetSag) > 2
+    || kagitAntet.seritMetni.includes('—') || kagitAntet.seritCizgi < 2
+    || kagitAntet.hucreTepe.length !== 4 || new Set(kagitAntet.hucreTepe).size !== 1) {
+  throw new Error('canlı kâğıt tasarımdaki gibi değil: ' + JSON.stringify(kagitAntet));
+}
+// Dizüstü boylarında da kâğıdın tamamı görünüyor: önizleme yapışkan ama
+// kâğıt ekrandan uzundu; hekim düğmelere inince antet üst çubuğun altına
+// kayıyordu (1536×864'te 145 px). Sayfanın tepesinde ve dibinde ölçülüyor.
+const yapiskanKagit = [];
+for (const [width, height] of [[1536, 864], [1366, 768]]) {
+  await sayfa.setViewportSize({ width, height });
+  await sayfa.waitForTimeout(150);
+  for (const dip of [false, true]) {
+    yapiskanKagit.push(await sayfa.evaluate(async ([w, h, d]) => {
+      scrollTo(0, d ? document.documentElement.scrollHeight : 0);
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const k = document.querySelector('.recete-onizleme .kagit').getBoundingClientRect();
+      const ust = document.querySelector('.ust').getBoundingClientRect().bottom;
+      return { boy: `${w}x${h}${d ? ' dipte' : ''}`, kaydirma: scrollY, ust: Math.round(k.top - ust), alt: Math.round(innerHeight - k.bottom) };
+    }, [width, height, dip]));
+  }
+}
+await sayfa.evaluate(() => scrollTo(0, 0));
+await sayfa.setViewportSize({ width: 1536, height: 1024 });
+await sayfa.waitForTimeout(150);
+await sayfa.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+if (yapiskanKagit.some((o) => o.ust < 0 || o.alt < 0) || !yapiskanKagit.some((o) => o.kaydirma > 0)) {
+  throw new Error('kâğıt ekrana sığmıyor: ' + JSON.stringify(yapiskanKagit));
+}
+// Kâğıdın alt yarısı: Clinical sütunu 46,9 mm ve satırlar tek satır (boş
+// değer etiketin yanında noktalı çizgi); el yazısı resmin içinde değil
+// yanında, Kalam yüzüyle; filigran düz açık renk (saydam değil, basılınca
+// aynı çıksın); ayak rozetleri beyaz disk değil yarı saydam halka.
+const kagitGovde = await sayfa.evaluate(() => {
+  const k = document.querySelector('.recete-onizleme .kagit');
+  const q = (s) => k.querySelector(s);
+  const yazi = q('.kagit__sutun-yazi');
+  const filigran = getComputedStyle(q('.kagit__filigran'));
+  const alfa = (renk) => Number((renk.match(/rgba\([^)]*,\s*([\d.]+)\)/) || [0, 1])[1]);
+  return {
+    sutunOran: Math.round(q('.kagit__klinik-sutun').getBoundingClientRect().width / k.getBoundingClientRect().width * 1000) / 1000,
+    tekSatir: [...k.querySelectorAll('.kagit__olcum')].every((o) => Math.abs(o.querySelector('b').getBoundingClientRect().top
+      - o.lastElementChild.getBoundingClientRect().top) < 2),
+    yaziResimde: !!yazi.closest('.kagit__sutun-resim'), yaziYuzu: getComputedStyle(yazi).fontFamily.split(',')[0].replace(/["']/g, ''),
+    filigran: [filigran.color, filigran.opacity],
+    rozet: [...k.querySelectorAll('.kagit__rozet-daire')].map((d) => alfa(getComputedStyle(d).backgroundColor)),
+  };
+});
+if (Math.abs(kagitGovde.sutunOran - 46.9 / 194) > 0.004 || !kagitGovde.tekSatir || kagitGovde.yaziResimde
+    || kagitGovde.yaziYuzu !== 'Kalam' || kagitGovde.filigran.join() !== 'rgb(220, 235, 241),1'
+    || kagitGovde.rozet.length !== 7 || kagitGovde.rozet.some((a) => a > 0.3)) {
+  throw new Error('kâğıdın gövdesi / ayağı tasarımdaki gibi değil: ' + JSON.stringify(kagitGovde));
+}
+// Antedin ince işleri. Dalga düzgün geçişli katmanlar: bulanıklık filtresi
+// yok, her katman kendi (belgede tekil) geçişiyle boyanıyor; sol kenar ve
+// köşe tasarımdaki soluk turkuazla dolu, beyaz hale yok. Hizmet metninin
+// kutusu en uzun satırına yakın (metin iki satır, daire metnin yanında);
+// şeritte ayraçlı hücre köşesiz; kadüsenin ayracı koyu; halkalar aşağı
+// doğru inceliyor; «با ما» kalbin hemen yanında; kâğıttaki logo kenar
+// çubuğundaki logonun aynı çizimi.
+const antetInce = await sayfa.evaluate(async () => {
+  const k = document.querySelector('.recete-onizleme .kagit');
+  const q = (s) => k.querySelector(s);
+  const r = (e) => e.getBoundingClientRect();
+  const dalga = q('.kagit__dalga--ust');
+  const kimlikler = (svg) => [...svg.querySelectorAll('path')].map((y) => (y.getAttribute('fill').match(/^url\(#(.+)\)$/) || [])[1]);
+  // Sayfada ikinci bir kâğıt (önizleme, yazdırma kopyası) aynı kimlikleri almamalı.
+  const { kagitCiz } = await import('./js/kagit.js');
+  const ikinci = new Set(kimlikler(kagitCiz({}).querySelector('.kagit__dalga--ust')));
+  const kagit = r(k);
+  const oran = (x) => Math.round((x - kagit.left) / kagit.width * 1000) / 10;
+  const hizmet = [...k.querySelectorAll('.kagit__hizmet-oge')].map((o) => {
+    const metin = o.lastElementChild;
+    return { daire: oran(r(o.querySelector('.kagit__hizmet-daire')).left),
+      satir: Math.round(r(metin).height / parseFloat(getComputedStyle(metin).lineHeight) / (r(k).width / k.offsetWidth)) };
+  });
+  const amblem = r(q('.kagit__amblem'));
+  const kalinliklar = [...q('.kagit__amblem-cizim').querySelectorAll('g[stroke^="url"] path')].slice(0, 7).map((y) => Number(y.getAttribute('stroke-width')));
+  const yol = (s) => [...document.querySelectorAll(s + ' path')].map((y) => y.getAttribute('d'));
+  return {
+    filtre: dalga.querySelectorAll('filter').length,
+    gecis: kimlikler(dalga).every((id) => id && !ikinci.has(id) && document.querySelectorAll('#' + CSS.escape(id)).length === 1 && dalga.querySelector('#' + CSS.escape(id))),
+    kose: [Math.round(kagit.left + 3), Math.round(r(dalga).top + 10)],
+    hizmet,
+    koseli: [...k.querySelectorAll('.kagit__alan')].filter((h) => parseFloat(getComputedStyle(h).borderInlineStartWidth) > 0)
+      .every((h) => ['borderStartStartRadius', 'borderEndStartRadius', 'borderStartEndRadius', 'borderEndEndRadius'].every((c) => getComputedStyle(h)[c] === '0px')),
+    ayrac: [Math.round(amblem.left) - 1, Math.round(amblem.top + amblem.height / 2)],
+    incelen: kalinliklar.length === 7 && kalinliklar.every((v, i) => !i || v < kalinliklar[i - 1]),
+    babaMa: Math.round(r(q('.kagit__aile-cizim')).left - r(q('.kagit__cagri-ust')).right),
+    logo: JSON.stringify(yol('.kenar__marka-simge')) === JSON.stringify(yol('.recete-onizleme .kagit__slogan-cizim')),
+  };
+});
+const koseGoruntu = await goruntu(antetInce.kose[0], antetInce.kose[1], 1, 40);
+antetInce.kose = Math.max(...Array.from({ length: 40 }, (_, y) => koseGoruntu.rgb(0, y).reduce((a, b) => a + b) / 3));
+const ayracGoruntu = await goruntu(...antetInce.ayrac, 5, 1);
+antetInce.ayrac = Math.min(...Array.from({ length: 5 }, (_, x) => ayracGoruntu.rgb(x, 0).reduce((a, b) => a + b) / 3));
+if (antetInce.filtre || !antetInce.gecis || antetInce.kose > 246
+    || antetInce.hizmet.length !== 2 || antetInce.hizmet.some((h) => h.satir !== 2)
+    || antetInce.hizmet[0].daire < 36.8 || antetInce.hizmet[1].daire < 7
+    || !antetInce.koseli || antetInce.ayrac > 110 || !antetInce.incelen || antetInce.babaMa > 3 || !antetInce.logo) {
+  throw new Error('antedin ince işleri tasarımdaki gibi değil: ' + JSON.stringify(antetInce));
+}
+// Telefonda form sağdan sola: ad alanı sağda tam satır, ölçüm kutuları solda hizalı.
+await sayfa.setViewportSize({ width: 390, height: 844 });
+await sayfa.waitForTimeout(100);
+const fmTel = await formYeri();
+if (fmTel.yon !== 'rtl' || fmTel.ad.sag < fmTel.no.sag - 1 || fmTel.bp.x !== fmTel.ates.x || fmTel.bp.x !== fmTel.kan.x
+    || !fmTel.onizlemeGorunur) {
+  throw new Error('telefonda reçete formu bozuk: ' + JSON.stringify(fmTel));
+}
+await sayfa.setViewportSize({ width: 1280, height: 900 });
+ok(`reçete formu tasarımdaki yerde: kâğıt ${kagitAntet.w}×${kagitAntet.h}px (1536×864 ve 1366×768'de de dipte bile tamamı görünüyor), dalga sol %${kagitAntet.dalgaOran} (filtresiz, sol kenar ${Math.round(antetInce.kose)}), hizmet daireleri %${antetInce.hizmet.map((h) => h.daire).join('/%')}, kadüse ayracı ${Math.round(antetInce.ayrac)}, logo tek çizim; panel x=${fm.form.x} ${fm.form.w}×${fm.panelBoy}px, ℞ satırları ${fm.rxSatir[0].w}×${fm.rxSatir[0].h}, kâğıt tuvali sütunu dolduruyor, kâğıt x=${fm.kagit.x} ${fm.kagit.w}px (yapışkan ${fm.yapiskan}); başlık panelde; Clinical ${fm.klinik.w}px ℞'nin solunda; ölçüm kutuları ${fm.bp.w}/${fm.ates.w}; telefonda sağdan sola`);
 
 await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
 await sayfa.waitForSelector('.recete-duzen .kagit');
@@ -1046,13 +1662,479 @@ const rxKutulari = await sayfa.$$eval('.rx-satir', (ds) => ds.map((d) => ({
 if (rxKutulari.length !== 5 || rxKutulari.some((x) => x.cerceve === '0px' || !x.ayrac)) {
   throw new Error('℞ satırları kutulu değil: ' + JSON.stringify(rxKutulari));
 }
+// Satırın "+"sına basmak TEK kutu açmalı: "+" ayrı bir düğmeyken satırın
+// tıklamasıyla birlikte üst üste iki kutu açılıyordu.
+// Kartların giriş hareketi yalnız sayfaya gelişte: kutu kapanınca sayfa
+// baştan çiziliyor ve hareket orada tekrarlanmamalı.
+const girisIlk = await sayfa.locator('.recete-duzen--giris').count();
+await sayfa.click('.rx-satir >> nth=0 >> .rx-satir__arti');
+await sayfa.waitForSelector('.ortu');
+await sayfa.waitForTimeout(150);
+const artiKutusu = await sayfa.locator('.ortu').count();
+await sayfa.keyboard.press('Escape');
+await sayfa.waitForSelector('.ortu', { state: 'detached' });
+if (artiKutusu !== 1) throw new Error(`℞ satırının "+"sı ${artiKutusu} kutu açtı`);
+const girisSonra = await sayfa.locator('.recete-duzen--giris').count();
+if (girisIlk !== 1 || girisSonra !== 0) throw new Error(`giriş hareketi: ilk çizimde ${girisIlk}, yeniden çizimde ${girisSonra}`);
 // Tablo başlığı liste BOŞKEN de duruyor mu?
 const ilacBasliklari = await sayfa.$$eval('.tablo--ilac thead th', (ts) => ts.map((x) => x.textContent.trim()));
 const eylemSayisi = await sayfa.$$eval('.recete-eylem .btn', (bs) => bs.length);
 if (ilacBasliklari.length !== 6 || eylemSayisi !== 3) {
   throw new Error(`ilaç tablosu/düğmeler: ${ilacBasliklari.length} başlık, ${eylemSayisi} düğme`);
 }
-ok(`Clinical birimleri İngilizce (${bpYer}, ${prYer}), 5 ℞ satırı kutulu, ilaç tablosu boşken de ${ilacBasliklari.length} başlıklı, 3 eşit düğme`);
+ok(`Clinical birimleri İngilizce (${bpYer}, ${prYer}), 5 ℞ satırı kutulu ("+" tek kutu açıyor, giriş hareketi yeniden çizimde tekrarlanmıyor), ilaç tablosu boşken de ${ilacBasliklari.length} başlıklı, 3 eşit düğme`);
+
+// --- Dolu reçete formu: panel boyu sabit, hiçbir genişlikte kırpılma yok.
+// İki sütunda ℞ kartı tasarımın boyunda (552, panel 886) kalıyor; ilaçlar
+// tablonun içinde kayıyor, başlık yapışık. Önce ilk ilaçla panel 57 px
+// kısalıyor, dördüncüde düğmeler ekranın altına iniyordu. İki sütun ancak
+// form 620 px alabildiğinde (≥ 1280); 1101–1279 arasında tarih, hasta adı,
+// tablo başlıkları ve Clinical kutuları kırpılıyordu.
+{
+  const kareBekle = () => sayfa.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+  await sayfa.setViewportSize({ width: 1536, height: 1024 });
+  await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+  await sayfa.waitForSelector('.recete-duzen .kagit');
+  await kareBekle();
+  const panel = () => sayfa.evaluate(() => {
+    const r = (s) => document.querySelector(s).getBoundingClientRect();
+    const kap = document.querySelector('.kart--rx__ilac .tablo-kap');
+    const deger = document.querySelector('.rx-satir:nth-of-type(5) .rx-satir__deger:not(.sessiz)');
+    return {
+      alt: Math.round(r('.recete-form').bottom), eylem: Math.round(r('.recete-eylem').top), rx: Math.round(r('.kart--rx').height),
+      kap: [kap.scrollHeight, kap.clientHeight, Math.round(kap.scrollTop)],
+      kapPay: Math.round(r('.kart--rx').bottom - r('.kart--rx__ilac .tablo-kap').bottom),
+      baslik: Math.round(r('.tablo--ilac th').top - kap.getBoundingClientRect().top - kap.clientTop),
+      satirlar: [...document.querySelectorAll('.tablo--ilac tbody tr')].map((t) => Math.round(t.getBoundingClientRect().height)),
+      adlar: [...document.querySelectorAll('.tablo--ilac td.ilac-ad')].map((t) => [t.textContent, t.title]),
+      // Üç satırda kesilen not: kırpma kutusu tam üç satır boyunda (içinde
+      // dolgu kalırsa dördüncü satırın tepesi görünüyordu).
+      not: deger ? [deger.clientHeight, parseFloat(getComputedStyle(deger).lineHeight) * 3, deger.scrollHeight] : null,
+    };
+  });
+  // Hata kenarı: hasta seçmeden kaydet → seçici kırmızı; üzerine gelince de
+  // kırmızı kalmalı (hover kuralı griye çeviriyordu).
+  await sayfa.keyboard.press('Control+KeyS');
+  await sayfa.waitForSelector('.secim-alani--girdi.input--hata');
+  await sayfa.hover('.secim-alani--girdi');
+  await sayfa.waitForTimeout(250);
+  const hataKenari = await sayfa.evaluate(() => [getComputedStyle(document.querySelector('.secim-alani--girdi')).borderTopColor,
+    `rgb(${getComputedStyle(document.documentElement).getPropertyValue('--kirmizi').trim().split(/\s+/).join(', ')})`]);
+  if (hataKenari[0] !== hataKenari[1]) throw new Error('hatalı alanın kırmızı kenarı üzerine gelince kayboluyor: ' + hataKenari.join(' ≠ '));
+  // Hata şeridi panelde duruyor: ölçüm için sayfa baştan (giriş hareketi bitince).
+  await sayfa.goto(KOK + '#/panel', { waitUntil: 'networkidle' });
+  await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+  await sayfa.waitForSelector('.recete-duzen .kagit');
+  await sayfa.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {}))));
+  await kareBekle();
+  const bos = await panel();
+  await sayfa.click('.recete-form .secim-alani');
+  await sayfa.click('.ortu .liste__satir--tiklanir:has-text("فاطمه احمدی")');
+  await sayfa.waitForSelector('.ortu', { state: 'detached' });
+  // Dar kutulara sığması en zor değerler; BP boş: yer tutucusu ölçülüyor.
+  for (const [ad, deger] of [['temp', '38.5'], ['ht', '172.5'], ['kanGrubu', 'AB Rh+'], ['bw', '68.5']]) {
+    await sayfa.fill(`input[name=olcum_${ad}]`, deger);
+  }
+  // Etken maddeleri ayrı, hastanın alerjisine (penisilin) değmeyen ilaçlar:
+  // uyarı şeridi paneli uzatmasın.
+  const ilacEkle = async (ad) => {
+    await sayfa.click('.recete-form .ilac-bas__ekle');
+    await sayfa.fill('.modal input[name=ilacArama]', ad.split(' ')[0]);
+    await sayfa.click(`.modal .liste__satir--tiklanir:has-text("${ad}") >> nth=0`);
+    await sayfa.fill('.modal input[name=adet]', '1');
+    await sayfa.fill('.modal input[name=kullanim]', 'روزانه ۳ بار بعد از غذا');
+    await sayfa.fill('.modal input[name=sure]', '۱۰ روز');
+    await sayfa.click(`.modal button:has-text("${T('genel.ekle')}")`);
+    await sayfa.waitForSelector('.ortu', { state: 'detached' });
+    await kareBekle();
+  };
+  await ilacEkle('Glucophage');
+  const birIlac = await panel();
+  for (const ad of ['Flagyl', 'Ventolin', 'Brufen', 'Panadol 500']) await ilacEkle(ad);
+  const besIlac = await panel();
+  // Yapışkan başlık: tablo ortasına kaydırılınca başlık yine kabın tepesinde.
+  await sayfa.evaluate(() => { document.querySelector('.kart--rx__ilac .tablo-kap').scrollTop = 50; });
+  await kareBekle();
+  const kayik = await panel();
+  // Uzun not üç satırda kesiliyor; ℞ satırı uzasa da panel aynı boyda.
+  await sayfa.click('.rx-satir >> nth=4');
+  await sayfa.fill('.modal input[name=deger]', 'بعد از غذا مصرف شود. مایعات زیاد بنوشید و در صورت تب بالای ۳۹ درجه یا تنگی نفس فوراً مراجعه کنید. استراحت کافی داشته باشید و دوباره مراجعه کنید.');
+  await sayfa.click(`.modal button:has-text("${T('genel.kaydet')}")`);
+  await sayfa.waitForSelector('.ortu', { state: 'detached' });
+  await kareBekle();
+  const notlu = await panel();
+  const panelHata = [];
+  if (Math.abs(bos.alt - bos.eylem - 65) > 1 || bos.rx !== 552 || bos.alt !== 964) panelHata.push('boş panel ' + JSON.stringify(bos));
+  for (const [ad, d] of [['bir ilaç', birIlac], ['beş ilaç', besIlac], ['not', notlu]]) {
+    if (d.alt !== bos.alt || d.eylem !== bos.eylem || d.rx !== bos.rx) panelHata.push(`${ad}: panel ${d.alt}/${d.eylem}/${d.rx}`);
+  }
+  if (besIlac.kap[0] <= besIlac.kap[1] || besIlac.kap[2] + besIlac.kap[1] < besIlac.kap[0] - 1) panelHata.push('tablo kaymıyor ya da yeni ilaç görünmüyor ' + besIlac.kap);
+  if (kayik.baslik !== 0) panelHata.push('başlık yapışık değil: ' + kayik.baslik);
+  if (bos.kapPay < 8 || besIlac.kapPay < 8) panelHata.push('tablonun alt çizgisi kartın kenarına yapışık: ' + bos.kapPay);
+  if (besIlac.satirlar.some((h) => h !== 40)) panelHata.push('ilaç satırları ' + besIlac.satirlar);
+  // Tabloda ad şekilsiz («… Tablet» title'da), doz sayısına bölünmez boşlukla bağlı.
+  if (besIlac.adlar.some(([m, t]) => m === t || !t.startsWith(m.replace(/\u00a0/g, ' ')) || /\d \D/.test(m) || !/\d\u00a0\D/.test(m))) {
+    panelHata.push('ilaç adı: ' + JSON.stringify(besIlac.adlar));
+  }
+  if (!notlu.not || Math.abs(notlu.not[0] - notlu.not[1]) > 1 || notlu.not[2] <= notlu.not[0]) panelHata.push('not kırpması ' + notlu.not);
+  if (panelHata.length) throw new Error('dolu reçete formu: ' + panelHata.join('; '));
+  // Kesilen notun sonunda üç nokta görünmeli (G3). Değer `text-align: end`
+  // iken Chrome üç noktayı kutunun dışına koyuyordu: Latin notta hiç yoktu,
+  // Farsçada yarısı kırpılıyordu. Aynı kutu üç noktasız, elle üç satırda
+  // kırpılmış olarak da çekiliyor; iki görüntü aynıysa üç nokta çizilmemiştir.
+  await sayfa.click('.rx-satir >> nth=4');
+  await sayfa.fill('.modal input[name=deger]', 'Take with plenty of water after meals, avoid driving, return if fever persists beyond three days or a rash appears anywhere');
+  await sayfa.click(`.modal button:has-text("${T('genel.kaydet')}")`);
+  await sayfa.waitForSelector('.ortu', { state: 'detached' });
+  await kareBekle();
+  const notKutusu = sayfa.locator('.rx-satir >> nth=4').locator('.rx-satir__deger');
+  const ucNoktali = await notKutusu.screenshot();
+  await notKutusu.evaluate((e) => { e.style.cssText = `display: block; -webkit-line-clamp: none; max-block-size: ${e.clientHeight}px`; });
+  const ucNoktasiz = await notKutusu.screenshot();
+  await notKutusu.evaluate((e) => e.removeAttribute('style'));
+  if (ucNoktali.equals(ucNoktasiz)) throw new Error('üç satırda kesilen Latin notun sonunda üç nokta görünmüyor');
+
+  // Genişlikler: kutulardaki değer ve yer tutucular, tablo başlıkları, liste
+  // başlığı, kısa hasta adı tam okunuyor; iki sütun yalnız ≥ 1280.
+  const kirpilan = () => sayfa.evaluate(() => {
+    const form = document.querySelector('.recete-form');
+    const cv = document.createElement('canvas').getContext('2d');
+    const icGenislik = (e) => { const cs = getComputedStyle(e); return e.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight); };
+    const k = [];
+    for (const g of form.querySelectorAll('input:not([type=hidden])')) {
+      const metin = g.value || g.placeholder;
+      if (!metin || !g.checkVisibility()) continue;
+      const cs = g.value ? getComputedStyle(g) : getComputedStyle(g, '::placeholder');
+      cv.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      if (cv.measureText(metin).width > icGenislik(g) + 0.5) k.push(metin);
+      const liste = g.closest('.olcum-liste');
+      if (liste && g.getBoundingClientRect().right > liste.getBoundingClientRect().right - 1) k.push(metin + ' kartın dışında');
+    }
+    for (const e of form.querySelectorAll('.secim-alani__metin, .tablo--ilac th')) {
+      const r = document.createRange(); r.selectNodeContents(e);
+      if (r.getBoundingClientRect().width > icGenislik(e) + 0.01 || r.getClientRects().length > 1) k.push(e.textContent);
+    }
+    const h2 = form.querySelector('.ilac-bas h2');
+    if (h2.getBoundingClientRect().height > 30) k.push(h2.textContent);
+    const f = form.getBoundingClientRect(), o = document.querySelector('.recete-onizleme').getBoundingClientRect();
+    return { k, yanYana: o.left >= f.right, form: Math.round(f.width), alt: Math.round(f.bottom), tasma: document.documentElement.scrollWidth - innerWidth };
+  });
+  const genislikler = [];
+  for (const w of [1536, 1366, 1280, 1279, 1180, 1101, 960, 561]) {
+    await sayfa.setViewportSize({ width: w, height: 900 });
+    await kareBekle();
+    await sayfa.evaluate(() => scrollTo(0, 0));
+    const d = { w, ...await kirpilan() };
+    genislikler.push(d);
+    if (d.k.length || d.tasma > 0 || d.yanYana !== (w >= 1280) || (d.yanYana && (d.form < 620 || d.alt !== bos.alt))) {
+      throw new Error(`reçete formu ${w} px'te kırpılıyor ya da yanlış düzende: ` + JSON.stringify(d));
+    }
+  }
+  // Tablet dikeyde Clinical tam genişlik: kutu etiketin hemen yanında.
+  await sayfa.setViewportSize({ width: 700, height: 900 });
+  await kareBekle();
+  const olcumAraligi = await sayfa.evaluate(() => Math.max(...[...document.querySelectorAll('.olcum-satir')].map((s) =>
+    s.querySelector('.olcum-satir__ad').getBoundingClientRect().left - s.querySelector('.input').getBoundingClientRect().right)));
+  if (olcumAraligi > 12) throw new Error(`700 px'te ölçüm kutusu etiketinden ${Math.round(olcumAraligi)} px uzakta`);
+  await sayfa.setViewportSize({ width: 1280, height: 900 });
+  ok(`dolu reçete formu: panel ${bos.alt - 78} px'te sabit (boş, 1 ve 5 ilaç, uzun not), ilaçlar tabloda kayıyor ve başlık yapışık, satırlar 40 px, not üç satırda üç noktayla kesiliyor; hata kenarı üzerine gelince kırmızı; ${genislikler.map((d) => d.w).join('/')} px'te kırpılma yok (iki sütun ≥ 1280, form ≥ 620 px); 700 px'te ölçüm kutusu etiketin yanında`);
+}
+
+// --- Reçete kutuları: gezinme, klavye, hata şeridi, kan grubu, önizleme.
+// Her kutudan sonra ciz() sayfayı baştan kuruyor; kutunun dönüşü bu yüzden
+// kolay kayboluyor ya da yanlış yere düşüyor. Burada hekimin yaşadığı
+// sırayla deneniyor.
+{
+  await sayfa.setViewportSize({ width: 1536, height: 1024 });
+  await sayfa.goto(KOK + '#/hastalar', { waitUntil: 'networkidle' });
+  await sayfa.waitForSelector('#sayfa .liste__satir');
+  await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
+  await sayfa.waitForSelector('.recete-duzen .kagit');
+  const ortuSayisi = () => sayfa.locator('.ortu').count();
+  // Odaktaki öğenin kararlı adı (form düğmesi, ölçüm kutusu ya da kâğıt alanı).
+  const odakta = () => sayfa.evaluate(() => {
+    const a = document.activeElement;
+    return a.dataset.odakAdi || a.dataset.alan || a.name || a.tagName;
+  });
+  const hataSeridi = () => sayfa.$$eval('.recete-form .uyari--hata', (x) => x.map((e) => e.textContent.trim()));
+  // Numara tireli rakam dizisi: Farsça metnin içinde soldan sağa okunmalı
+  // (yıl solda, sıra numarası sağda). Yalıtılmazsa «01-24-09-2026» çıkıyor.
+  const numaraYonu = (secici, no) => sayfa.evaluate(([s, n]) => {
+    const kap = [...document.querySelectorAll(s)].at(-1);
+    const gezgin = document.createTreeWalker(kap, NodeFilter.SHOW_TEXT);
+    for (let d = gezgin.nextNode(); d; d = gezgin.nextNode()) {
+      const i = d.data.indexOf(n);
+      if (i < 0) continue;
+      const kutu = (a, b) => { const r = document.createRange(); r.setStart(d, a); r.setEnd(d, b); return r.getBoundingClientRect().left; };
+      return kutu(i, i + 4) < kutu(i + n.length - 2, i + n.length) ? 'dogru' : 'ters';
+    }
+    return 'yok: ' + kap?.textContent;
+  }, [secici, no]);
+
+  // Geri tuşu kutu açıkken: kutu da kapanmalı, kutunun geç dönüşü öbür
+  // sayfaya reçete formunu çizmemeli. Önce kutu hastalar sayfasında açık
+  // kalıyordu; içinden hasta seçilince form adres #/hastalar iken çiziliyordu.
+  await sayfa.click('.recete-form .secim-alani');
+  await sayfa.waitForSelector('.ortu .liste__satir--tiklanir');
+  await sayfa.evaluate(() => {
+    window.gecCizim = 0;
+    window.gecGozcu = new MutationObserver((kayitlar) => {
+      if (location.hash !== '#/hastalar') return;
+      for (const k of kayitlar) for (const n of k.addedNodes) if (n.nodeType === 1 && n.matches('.recete-duzen')) window.gecCizim++;
+    });
+    window.gecGozcu.observe(document.getElementById('sayfa'), { childList: true });
+  });
+  await sayfa.goBack();
+  await sayfa.waitForSelector('#sayfa .liste__satir');
+  await sayfa.waitForTimeout(300);
+  const geri = await sayfa.evaluate(() => {
+    window.gecGozcu.disconnect();
+    return { hash: location.hash, ortu: document.querySelectorAll('.ortu').length, form: document.querySelectorAll('.recete-form').length, gec: window.gecCizim };
+  });
+  if (geri.hash !== '#/hastalar' || geri.ortu || geri.form || geri.gec) throw new Error('kutu açıkken geri: ' + JSON.stringify(geri));
+  await sayfa.goForward();
+  await sayfa.waitForSelector('.recete-duzen .kagit');
+
+  // Hastasız kaydet: şerit ve kırmızı kenar. Hasta KLAVYEYLE seçiliyor:
+  // yaz, Enter (tek eşleşme seçiliyor), odak seçiciye dönüyor. Hasta
+  // seçilince onun hatası gidiyor, şeritte sıradaki (ilaç) kalıyor.
+  await sayfa.keyboard.press('Control+KeyS');
+  await sayfa.waitForSelector('.secim-alani--girdi.input--hata');
+  const ilkSerit = await hataSeridi();
+  if (ilkSerit.join() !== T('dogrula.hasta_gerekli')) throw new Error('hastasız kaydette şerit: ' + ilkSerit.join(' | '));
+  await sayfa.focus('.recete-form .secim-alani');
+  await sayfa.keyboard.press('Enter');
+  await sayfa.waitForSelector('.ortu input[name=kagitArama]');
+  // Boş kutuda Enter hiçbir şey seçmiyor: önce listenin ilk hastası
+  // (ve onun kan grubu) kâğıda yazılıyordu.
+  await sayfa.keyboard.press('Enter');
+  await sayfa.waitForTimeout(150);
+  const bosEnter = { ortu: await ortuSayisi(), ad: (await sayfa.textContent('.recete-form .secim-alani__metin')).trim() };
+  if (bosEnter.ortu !== 1 || bosEnter.ad !== T('recete.hasta_sec')) throw new Error('boş aramada Enter: ' + JSON.stringify(bosEnter));
+  await sayfa.keyboard.type('فاطمه');
+  await sayfa.keyboard.press('Enter');
+  await sayfa.waitForSelector('.ortu', { state: 'detached', timeout: 3000 }).catch(() => {
+    throw new Error('hasta kutusunda Enter tek eşleşmeyi seçmedi');
+  });
+  const secildi = {
+    ad: (await sayfa.textContent('.recete-form .secim-alani__metin')).trim(),
+    odak: await odakta(),
+    kirmizi: await sayfa.locator('.recete-form .input--hata').count(),
+    serit: await hataSeridi(),
+    kan: await sayfa.inputValue('input[name=olcum_kanGrubu]'),
+  };
+  if (secildi.ad !== 'فاطمه احمدی' || secildi.odak !== 'hasta' || secildi.kirmizi || secildi.serit.join() !== T('dogrula.ilac_gerekli') || secildi.kan !== 'A Rh+') {
+    throw new Error('klavyeyle hasta seçimi: ' + JSON.stringify(secildi));
+  }
+
+  // Kan grubu yeni hastanınki olmalı; önce ilk hastanınki kalıyor ve başka
+  // birinin kan grubu basılıyordu. Hekimin elle yazdığı ise korunuyor.
+  const hastaSec = async (ad) => {
+    await sayfa.click('.recete-form .secim-alani');
+    await sayfa.click(`.ortu .liste__satir--tiklanir:has-text("${ad}")`);
+    await sayfa.waitForSelector('.ortu', { state: 'detached' });
+  };
+  const kanGrubu = async () => [await sayfa.inputValue('input[name=olcum_kanGrubu]'),
+    (await sayfa.textContent('.kagit-tuval [data-alan="kanGrubu"]')).replace(/\s+/g, ' ').trim()];
+  await hastaSec('محمد نعیم رحیمی');
+  const kanDegisti = await kanGrubu();
+  await sayfa.fill('input[name=olcum_kanGrubu]', 'AB Rh−');
+  await hastaSec('فاطمه احمدی');
+  const kanElle = await kanGrubu();
+  if (kanDegisti[0] !== '0 Rh+' || !kanDegisti[1].includes('0 Rh+') || kanElle[0] !== 'AB Rh−') {
+    throw new Error(`hasta değişince kan grubu: ${kanDegisti.join(' / ')}; elle yazılan: ${kanElle.join(' / ')}`);
+  }
+  // Kan grubu kutusu: boş Enter bir şey seçmiyor (önce «A Rh+» yazılıyordu);
+  // adı tam yazılan grup, başka bir grubun içinde geçse de («B Rh+» ⊂
+  // «AB Rh+») Enter'la seçiliyor.
+  await sayfa.click('.kagit-tuval [data-alan="kanGrubu"]');
+  await sayfa.waitForSelector('.ortu input[name=kagitArama]');
+  await sayfa.keyboard.press('Enter');
+  await sayfa.waitForTimeout(150);
+  const kanBosEnter = await ortuSayisi();
+  await sayfa.keyboard.type('B Rh+');
+  await sayfa.keyboard.press('Enter');
+  await sayfa.waitForSelector('.ortu', { state: 'detached', timeout: 3000 }).catch(() => { throw new Error('kan grubu kutusunda «B Rh+» Enter\'la seçilmedi'); });
+  const kanEnter = await kanGrubu();
+  if (kanBosEnter !== 1 || kanEnter[0] !== 'B Rh+') throw new Error(`kan grubu kutusunda Enter: boşta ${kanBosEnter} kutu, seçilen ${kanEnter.join(' / ')}`);
+
+  // Çift tıklama seçiciyi açık bırakmalı (ikinci tık örtüye düşüp kutuyu
+  // kapatıyordu); kutunun içinde başlayıp örtüde biten sürükleme de. Örtüye
+  // düz tık kapatıyor; Escape'ten sonra odak seçicide.
+  await sayfa.dblclick('.recete-form .secim-alani');
+  await sayfa.waitForTimeout(250);
+  const ciftTik = await ortuSayisi();
+  if (ciftTik !== 1) throw new Error(`hasta alanına çift tıklayınca ${ciftTik} kutu açık kaldı`);
+  const kutuBasligi = await sayfa.locator('.ortu .modal__bas h2').boundingBox();
+  await sayfa.mouse.move(kutuBasligi.x + 20, kutuBasligi.y + 10);
+  await sayfa.mouse.down();
+  await sayfa.mouse.move(5, 500, { steps: 4 });
+  await sayfa.mouse.up();
+  const surukleme = await ortuSayisi();
+  if (surukleme !== 1) throw new Error('kutunun içinden örtüye sürükleyince kutu kapandı');
+  await sayfa.mouse.click(5, 500);
+  const duzTik = await ortuSayisi();
+  await sayfa.click('.recete-form .secim-alani');
+  await sayfa.waitForSelector('.ortu input[name=kagitArama]');
+  await sayfa.keyboard.press('Escape');
+  await sayfa.waitForSelector('.ortu', { state: 'detached' });
+  const escOdak = await odakta();
+  if (duzTik !== 0 || escOdak !== 'hasta') {
+    throw new Error(`örtüye düz tıkta ${duzTik} kutu açık; Escape'ten sonra odak ${escOdak}`);
+  }
+
+  // İlaç eklenince ilaç hatası da gidiyor; odak «ilaç ekle»de kalıyor.
+  await sayfa.click('.recete-form .ilac-bas__ekle');
+  await sayfa.fill('.modal input[name=ilacArama]', 'Glucophage');
+  await sayfa.click('.modal .liste__satir--tiklanir:has-text("Glucophage") >> nth=0');
+  await sayfa.fill('.modal input[name=adet]', '1');
+  await sayfa.click(`.modal button:has-text("${T('genel.ekle')}")`);
+  await sayfa.waitForSelector('.ortu', { state: 'detached' });
+  const eklendi = { serit: await hataSeridi(), odak: await odakta() };
+  if (eklendi.serit.length || eklendi.odak !== 'ilac-ekle') throw new Error('ilaç eklenince: ' + JSON.stringify(eklendi));
+
+  // İlaç satırı kutusunda Enter: arama kutusunda tek eşleşmeyi seçip adete
+  // geçiyor (boşken bir şey seçmiyor), adette kutuyu onaylıyor. Önce en çok
+  // kullanılan bu kutuda Enter hiçbir şey yapmıyordu.
+  await sayfa.click('.recete-form .ilac-bas__ekle');
+  await sayfa.waitForSelector('.modal input[name=ilacArama]');
+  await sayfa.focus('.modal input[name=ilacArama]');
+  await sayfa.keyboard.press('Enter');
+  await sayfa.waitForTimeout(150);
+  const aramaBos = { ortu: await ortuSayisi(), secili: await sayfa.locator('.modal .avatar').count() };
+  if (aramaBos.ortu !== 1 || aramaBos.secili) throw new Error('ilaç kutusunda boş aramada Enter: ' + JSON.stringify(aramaBos));
+  await sayfa.keyboard.type('Brufen');
+  await sayfa.keyboard.press('Enter');
+  const aramaTek = await sayfa.evaluate(() => ({ odak: document.activeElement?.name, secili: document.querySelector('.modal .avatar + .liste__govde .liste__baslik')?.textContent }));
+  await sayfa.keyboard.type('3');
+  await sayfa.keyboard.press('Enter');
+  await sayfa.waitForSelector('.ortu', { state: 'detached', timeout: 3000 }).catch(() => { throw new Error('ilaç kutusunda adette Enter onaylamadı'); });
+  const enterSatiri = await sayfa.$$eval('.tablo--ilac tbody tr', (tr) => tr.map((x) => [...x.cells].slice(1, 3).map((c) => c.textContent.trim())));
+  if (aramaTek.odak !== 'adet' || !aramaTek.secili?.includes('Brufen')
+      || enterSatiri.length !== 2 || !enterSatiri[1][0].includes('Brufen') || enterSatiri[1][1] !== '3') {
+    throw new Error('ilaç kutusunda Enter: ' + JSON.stringify({ aramaTek, enterSatiri }));
+  }
+  // Düzenlerken de: adet 4, Enter, tabloda 4. Sonra satır silinip ilaç
+  // listesi eski haline dönüyor.
+  await sayfa.click('.tablo--ilac tbody tr:nth-child(2) .ilac-duzenle');
+  await sayfa.fill('.modal input[name=adet]', '4');
+  await sayfa.focus('.modal input[name=adet]');
+  await sayfa.keyboard.press('Enter');
+  await sayfa.waitForSelector('.ortu', { state: 'detached', timeout: 3000 }).catch(() => { throw new Error('satır düzenlemede Enter onaylamadı'); });
+  const duzenlenenAdet = await sayfa.textContent('.tablo--ilac tbody tr:nth-child(2) td:nth-child(3)');
+  if (duzenlenenAdet.trim() !== '4') throw new Error('satır düzenlemede Enter: adet ' + duzenlenenAdet);
+  await sayfa.click('.tablo--ilac tbody tr:nth-child(2) .ilac-duzenle');
+  await sayfa.click(`.modal button:has-text("${T('genel.sil')}")`);
+  await sayfa.click('.ortu .modal__ayak :is(.btn--birincil, .btn--tehlike)');
+  await sayfa.waitForSelector('.ortu', { state: 'detached' });
+  if (await sayfa.locator('.tablo--ilac tbody tr').count() !== 1) throw new Error('Enter denemesinin satırı silinmedi');
+
+  // Tek satırlık kutuda Enter onaylıyor: not satırı ve kâğıttaki ölçüm.
+  // Odak açan yere dönüyor (formdaki satır, kâğıttaki alan).
+  await sayfa.focus('.rx-satir[data-odak-adi="notlar"]');
+  await sayfa.keyboard.press('Enter');
+  await sayfa.waitForSelector('.modal input[name=deger]');
+  await sayfa.keyboard.type('بعد از غذا');
+  await sayfa.keyboard.press('Enter');
+  await sayfa.waitForSelector('.ortu', { state: 'detached', timeout: 3000 }).catch(() => { throw new Error('not kutusunda Enter onaylamadı'); });
+  const notOdak = await odakta();
+  await sayfa.focus('.kagit-tuval [data-alan="olcum:pr"]');
+  await sayfa.keyboard.press('Enter');
+  await sayfa.waitForSelector('.modal input[name=deger]');
+  await sayfa.keyboard.type('72');
+  await sayfa.keyboard.press('Enter');
+  await sayfa.waitForSelector('.ortu', { state: 'detached', timeout: 3000 }).catch(() => { throw new Error('ölçüm kutusunda Enter onaylamadı'); });
+  const olcumOdak = await odakta();
+  const notMetni = await sayfa.textContent('.rx-satir[data-odak-adi="notlar"] .rx-satir__deger');
+  if (notOdak !== 'notlar' || olcumOdak !== 'olcum:pr' || notMetni !== 'بعد از غذا' || await sayfa.inputValue('input[name=olcum_pr]') !== '72') {
+    throw new Error(`Enter ile onay: not «${notMetni}», odak ${notOdak} / ${olcumOdak}`);
+  }
+  // Gizli ipuçları adın içine karışmıyor: No alanının ipucu etiketin dışında.
+  if (await sayfa.locator('.recete-form label #recete-no-ipucu').count()) throw new Error('No ipucu hâlâ etiketin içinde: ad iki kez okunuyor');
+
+  // Önizleme: kâğıdın tamamı kutuda (kaydırmadan), ayak düğmeleri simgeli ve
+  // asıl düğme formdaki gibi sağda. Ctrl+S kutu açıkken «ذخیره نسخه» gibi
+  // kaydediyor (önce tuş sessizce yutuluyordu).
+  await sayfa.click(`.recete-eylem button:has-text("${T('recete.onizle')}")`);
+  await sayfa.waitForSelector('.modal--onizleme .kagit');
+  await sayfa.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+  const onizlemeOlc = () => sayfa.evaluate(() => {
+    const m = document.querySelector('.modal--onizleme');
+    const g = m.querySelector('.modal__govde').getBoundingClientRect();
+    const k = m.querySelector('.kagit').getBoundingClientRect();
+    const d = (s) => m.querySelector('.modal__ayak ' + s).getBoundingClientRect();
+    return {
+      tasma: Math.round(Math.max(k.bottom - g.bottom, g.top - k.top, k.right - g.right, g.left - k.left)),
+      kaydirma: m.querySelector('.modal__govde').scrollHeight - m.querySelector('.modal__govde').clientHeight,
+      simgesiz: [...m.querySelectorAll('.modal__ayak .btn')].filter((b) => !b.querySelector('svg')).length,
+      asilSagda: d('.recete-btn--asil').left > d('.recete-btn--sade').right,
+      // Ayaktaki düğmeler kutunun içinde ve yazıları kırpılmadan.
+      tasanDugme: [...m.querySelectorAll('.modal__ayak .btn')].filter((x) => {
+        const r = x.getBoundingClientRect();
+        const kr = m.getBoundingClientRect();
+        return r.left < kr.left || r.right > kr.right || x.scrollWidth > x.clientWidth;
+      }).length,
+    };
+  });
+  const onizleme = await onizlemeOlc();
+  // Küsuratlı boyda (768 px'in %90'ı) da kaydırma çıkmamalı; ölçek pencereyle
+  // değişiyor. Telefonda asıl düğme önde ve tam satır (formdaki gibi).
+  const boyutta = async (width, height) => {
+    await sayfa.setViewportSize({ width, height });
+    await sayfa.waitForTimeout(200);
+    await sayfa.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    return onizlemeOlc();
+  };
+  const alcak = await boyutta(1366, 768);
+  const telefon = await boyutta(390, 844);
+  await sayfa.setViewportSize({ width: 1536, height: 1024 });
+  for (const o of [onizleme, alcak, telefon]) {
+    if (o.tasma > 0 || o.kaydirma > 0 || o.simgesiz || o.tasanDugme || (o !== telefon && !o.asilSagda)) {
+      throw new Error('önizleme kutusu: ' + JSON.stringify({ onizleme, alcak, telefon }));
+    }
+  }
+  await sayfa.keyboard.press('Control+KeyS');
+  await sayfa.waitForURL(/#\/recete\/rec_/, { timeout: 5000 }).catch(() => { throw new Error('önizleme açıkken Ctrl+S kaydetmedi'); });
+  await sayfa.waitForSelector(`.kart:has(h2:text-is("${T('nav.ilaclar')}")) .tablo tbody tr`);
+  const yeniNo = (await sayfa.textContent('h1')).trim();
+  const yeniId = new URL(sayfa.url()).hash.match(/#\/recete\/(rec_[^/?]+)/)[1];
+  // Kayıt bildirimi numarayı taşıyor (önce ham «{no}» yazıyordu), numara düz.
+  const bildirim = (await sayfa.locator('.bildirim--basari').last().textContent()).trim();
+  const bildirimYonu = await numaraYonu('.bildirim--basari', yeniNo);
+  if (!bildirim.includes(yeniNo) || /[{}]/.test(bildirim) || bildirimYonu !== 'dogru') throw new Error(`kayıt bildirimi «${bildirim}» (${bildirimYonu})`);
+
+  // Düzenleme başlığındaki numara ters dizilmiyor, tirelerden bölünmüyor;
+  // şablon düğmeleri varken de başlık bandın içinde kalıyor.
+  await sayfa.goto(KOK + `#/recete/${yeniId}/duzenle`);
+  await sayfa.waitForSelector('.recete-duzen .kagit');
+  // Masaüstünde başlık tek satır; telefonda numara ikinci satıra iniyor ve
+  // bant onunla uzuyor (yazı bandın dışına taşmıyor).
+  for (const genislik of [1536, 1280, 390]) {
+    await sayfa.setViewportSize({ width: genislik, height: genislik > 1280 ? 1024 : genislik > 860 ? 900 : 844 });
+    const baslikYonu = await numaraYonu('.recete-panel__bas h1', yeniNo);
+    const bant = await sayfa.evaluate(() => {
+      const b = document.querySelector('.recete-panel__bas');
+      const h1 = b.querySelector('h1');
+      const br = b.getBoundingClientRect();
+      const mr = b.querySelector('.recete-panel__metin').getBoundingClientRect();
+      return {
+        satir: Math.round(h1.getBoundingClientRect().height / parseFloat(getComputedStyle(h1).lineHeight)),
+        numara: h1.querySelector('bdi')?.getClientRects().length, sablon: b.querySelectorAll('.recete-panel__cam').length,
+        tasma: Math.round(Math.max(br.top - mr.top, mr.bottom - br.bottom)),
+      };
+    });
+    if (baslikYonu !== 'dogru' || bant.numara !== 1 || bant.tasma > 0 || (genislik > 860 && bant.satir !== 1)) {
+      throw new Error(`${genislik} px'te düzenleme başlığında numara ${baslikYonu} ${JSON.stringify(bant)}: ${await sayfa.textContent('.recete-panel__bas h1')}`);
+    }
+  }
+  await sayfa.setViewportSize({ width: 1280, height: 900 });
+  // Düzenlemede AYNI hasta yeniden seçilince reçetedeki (elle yazılmış)
+  // kan grubu kalıyor; önce hastanın kaydındakiyle eziliyordu.
+  await hastaSec('فاطمه احمدی');
+  const kanDuzenle = await kanGrubu();
+  if (kanDuzenle[0] !== 'B Rh+' || !kanDuzenle[1].includes('B Rh+')) throw new Error('düzenlemede aynı hasta seçilince kan grubu: ' + kanDuzenle.join(' / '));
+  ok(`reçete kutuları: Geri kutuyu kapatıyor (form öbür sayfaya çizilmiyor); hasta seçilince hatası gidiyor, kan grubu yeni hastanın (${kanDegisti[0]}), elle yazılan korunuyor; Enter seçiyor ve onaylıyor (ilaç kutusunda da), boşken seçmiyor, çift tık kutuyu kapatmıyor; odak açan yere dönüyor; önizleme kâğıdın tamamını gösteriyor, Ctrl+S orada da kaydediyor; bildirim ve başlıkta numara düz: ${yeniNo}`);
+}
 
 // Tanı ve laboratuvar sözlükleri
 for (const [yol, anahtar] of [['#/tanilar', 'sozluk.tanilar'], ['#/laboratuvar', 'sozluk.laboratuvar']]) {
@@ -1090,7 +2172,7 @@ await sayfa.waitForSelector('.kagit-tuval .kagit');
 const bosSayfaKagidi = await sayfa.$eval('.kagit-tuval .kagit', (k) => ({
   antet: !!k.querySelector('.kagit__doktor'),
   cizgi: k.querySelectorAll('.kagit__cizgi').length,
-  ilac: k.querySelectorAll('.kagit__ilac').length,
+  ilac: k.querySelectorAll('.kagit__ilaclar li').length,
 }));
 const adetSecenekleri = await sayfa.$$eval('select[name="adet"] option', (os) => os.length);
 if (!bosSayfaKagidi.antet || bosSayfaKagidi.ilac !== 0 || adetSecenekleri !== 5) {
@@ -1168,6 +2250,42 @@ await sayfa.waitForTimeout(260);
 const donen = await tarihOku();
 if (donen.yazi !== '1405/07/01' || donen.yazi !== donen.kagit) throw new Error('geri dönüş: ' + JSON.stringify(donen));
 ok(`Farsça rakamla yazıldı (۱۴۰۵/۰۷/۰۱ → ${farsca.iso}); olmayan gün (31 حوت) kırmızıya döndü, odaktan çıkınca son geçerli tarihe döndü`);
+
+// Tarih hatası şeridi geçerli tarih yazılınca hemen gitmeli. Kutu yalnız
+// kâğıdı tazeliyordu; şerit bir sonraki tam çizime kadar «تاریخ معتبر نیست»
+// diyordu. Şeridin tarihe ait olması için hasta ve ilaç önce dolu.
+await sayfa.click('#kenar-menu a[href="#/hastalar"]');
+await sayfa.click('.liste__satir:has-text("محمد نعیم رحیمی")');
+await sayfa.click(`button:has-text("${T('recete.yaz')}")`);
+await sayfa.waitForSelector('.kagit-tuval .kagit');
+await sayfa.click(`button:has-text("${T('sablon.doldur')}")`);
+await sayfa.click('.modal .liste__satir--tiklanir:has-text("ÜSYE denemesi")');
+await sayfa.click(`.modal button:has-text("${T('sablon.uygula')}")`);
+await sayfa.waitForSelector('.kagit__ilaclar li:has-text("Brufen")');
+const tarihKutusu = '.recete-form .tarih-secici input[type=text]';
+const tarihSeridi = () => sayfa.$$eval('.recete-form .uyari--hata', (a) => a.map((x) => x.textContent.trim()));
+await sayfa.fill(tarihKutusu, '');
+await sayfa.keyboard.press('Control+s');
+await sayfa.waitForSelector('.recete-form .uyari--hata');
+const tarihHatasi = await tarihSeridi();
+if (tarihHatasi[0] !== T('dogrula.tarih_gecersiz')) throw new Error('boş tarihte tarih şeridi yok: ' + tarihHatasi.join(' | '));
+// Gün İKİ haneli: «1405/07/1» yazıldığı anda tarih geçerli. Form o anda
+// yeniden kuruluyordu; kutu «1405/07/01»e dönüyor, son «5» «015» yapıyor ve
+// reçete sessizce ayın 1'iyle kaydediliyordu.
+await sayfa.type(tarihKutusu, '1405/07/15');
+await sayfa.waitForTimeout(260);
+const tarihSonra = {
+  serit: await tarihSeridi(), odak: await sayfa.evaluate(() => document.activeElement?.id),
+  yazi: await sayfa.inputValue(tarihKutusu),
+};
+await sayfa.click('.recete-form h2');
+await sayfa.waitForTimeout(260);
+Object.assign(tarihSonra, { sonra: await tarihOku() });
+if (tarihSonra.serit.length || tarihSonra.odak !== 'recete-tarih' || tarihSonra.yazi !== '1405/07/15'
+    || tarihSonra.sonra.iso !== '2026-10-07' || tarihSonra.sonra.kagit !== '1405/07/15') {
+  throw new Error('geçerli tarih yazılınca: ' + JSON.stringify(tarihSonra));
+}
+ok(`tarih hatası şeridi («${tarihHatasi[0]}») geçerli tarih yazılınca hemen gidiyor, odak tarih kutusunda kalıyor; iki haneli gün bozulmuyor (1405/07/15 → ${tarihSonra.sonra.iso}, kâğıtta da)`);
 
 // Hastanın doğum tarihi de şemsi: hekim doğum gününü şemsi biliyor.
 await sayfa.goto(KOK + '#/hastalar', { waitUntil: 'networkidle' });
@@ -1352,6 +2470,10 @@ const buyukPng = await sayfa.evaluate(() => {
   return c.toDataURL('image/png');
 });
 const hamPng = Buffer.from(buyukPng.split(',')[1], 'base64');
+// Önceki adımlardan kalan bildirimler kaldırılıyor: aşağıdaki bekleme eski
+// bir hata bildirimini (tarih adımının «تاریخ معتبر نیست»i) yeni sanıp
+// zamanlamaya bağlı olarak düşüyordu.
+await sayfa.evaluate(() => document.querySelectorAll('.bildirim').forEach((b) => b.remove()));
 await sayfa.setInputFiles('.gorsel-secim input[type=file]', { name: 'stetoskop.png', mimeType: 'image/png', buffer: hamPng });
 // Ya önizleme ya hata bildirimi bekleniyor: küçültme bozulursa görsel boyut
 // sınırını aşıp reddediliyor ve önizleme HİÇ gelmiyor. Yalnız önizlemeyi
@@ -1401,6 +2523,47 @@ if (/[çğıöşüÇĞİÖŞÜ]|degil|değil|Görsel|Dosya/.test(gorselUyarisi))
 }
 ok(`görsel olmayan dosya Farsça uyarı verdi: ${gorselUyarisi}`);
 
+/* --- Ctrl+P: tarayıcının kendi yazdırması ---
+   Reçete yazma ve boş kâğıt sayfalarında kâğıt önizleme tuvalinin içinde.
+   Yazdırma kuralı onu saran bölümle birlikte gizliyordu: Ctrl+P ya da
+   menüden «Yazdır» bembeyaz bir A4 basıyordu. page.pdf() beforeprint ve
+   afterprint olaylarını tetikliyor, yani gerçek yoldan geçiyor. Kâğıt
+   yazdırma başında #sayfa'ya ekleniyor, sonunda kaldırılıyor; ekleyen yol
+   kaçarsa (olaysız basım) boş yaprak değil sayfanın kendisi basılıyor. */
+await sayfa.emulateMedia({ media: null });
+const ctrlP = [];
+for (const yol of ['#/recete/kagit', '#/recete/bos']) {
+  await sayfa.goto(KOK + yol, { waitUntil: 'networkidle' });
+  await sayfa.waitForSelector('.kagit-tuval .kagit');
+  // Giriş hareketi bitmeden basılırsa sayfa yarı saydam çıkıyor.
+  await sayfa.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {}))));
+  await sayfa.evaluate(() => {
+    const say = () => window.__baski.push(document.querySelectorAll('#sayfa > .yazdir-alan').length);
+    window.__baski = [];
+    addEventListener('beforeprint', say, { once: true });
+    addEventListener('afterprint', say, { once: true });
+  });
+  const pdf = Buffer.from(await sayfa.pdf({ format: 'A4', printBackground: true })).toString('latin1');
+  await sayfa.emulateMedia({ media: 'print' });
+  const olaysiz = await sayfa.evaluate(() => ({
+    gorunen: [...document.getElementById('sayfa').children].filter((c) => getComputedStyle(c).display !== 'none').length,
+    // Karanlık temada da kök beyaz ve açık şemada: yoksa arka plan
+    // grafikleriyle basılan sayfanın payları #121212 çıkıyordu.
+    kok: [document.documentElement.dataset.tema, getComputedStyle(document.documentElement).colorScheme, getComputedStyle(document.documentElement).backgroundColor].join(' '),
+  }));
+  await sayfa.emulateMedia({ media: null });
+  ctrlP.push({
+    yol, olaylar: (await sayfa.evaluate(() => window.__baski)).join('→'),
+    sayfa: Number(pdf.match(/\/Type\s*\/Pages[\s\S]{0,200}?\/Count\s+(\d+)/)?.[1] || 0),
+    // Yazı basılmışsa yazı yüzü gömülü (Vazirmatn Type 3); boş yaprakta yok.
+    yazi: (pdf.match(/\/ToUnicode/g) || []).length, olaysiz: olaysiz.gorunen, kok: olaysiz.kok,
+  });
+}
+if (ctrlP.some((c) => c.olaylar !== '1→0' || c.sayfa !== 1 || !c.yazi || !c.olaysiz || c.kok !== 'karanlik light rgb(255, 255, 255)')) {
+  throw new Error('Ctrl+P: ' + JSON.stringify(ctrlP));
+}
+ok(`Ctrl+P reçete ve boş kâğıt sayfasında kâğıdı basıyor (tek sayfa, yazılı; basım sırasında eklenip sonra kaldırılıyor); olaysız basımda sayfa boş yaprak değil; karanlık temada kök beyaz basılıyor`);
+
 /* --- Kâğıt A4'e sığıyor mu? --- */
 /* page.pdf() gerçek yazdırma yolundan geçiyor: mm toplamı değil, BASILAN
    sayfa sayısı ölçülüyor. Kâğıt bir dönem A4'e sığmıyordu (345mm) ve her
@@ -1415,7 +2578,7 @@ const sayfaSayisi = async () => {
   const metin = Buffer.from(pdf).toString('latin1');
   return Number(([...metin.matchAll(/\/Type\s*\/Pages[\s\S]{0,200}?\/Count\s+(\d+)/g)][0] || [])[1] || 0);
 };
-const kagitKur = (stil, ilacSayisi) => sayfa.evaluate(async ({ stil, ilacSayisi }) => {
+const kagitKur = (stil, ilacSayisi, kod = 'XQ24-WSP9') => sayfa.evaluate(async ({ stil, ilacSayisi, kod }) => {
   document.querySelectorAll('#sayfa > .yazdir-alan').forEach((e) => e.remove());
   const { kagitCiz } = await import('./js/kagit.js');
   const { yerelDepoAc } = await import('./js/depo/idb.js');
@@ -1434,32 +2597,161 @@ const kagitKur = (stil, ilacSayisi) => sayfa.evaluate(async ({ stil, ilacSayisi 
       belirtiler: 'تب، سرفه', tani: 'عفونت مجرای تنفسی فوقانی', taniKodu: 'J06.9',
       laboratuvar: 'CBC — شمارش کامل خون', notlar: 'استراحت کافی', kanGrubu: 'A Rh+',
       olcumler: { bp: '120/80', pr: '78', rr: '16', bw: '72', temp: '37.2', spo2: '98', ht: '174' },
-      dogrulamaKodu: 'XQ24-WSP9',
+      dogrulamaKodu: kod,
     } : {},
   }));
-}, { stil, ilacSayisi });
+}, { stil, ilacSayisi, kod });
 
 const tasanlar = [];
 const boylar = [];
-for (const [stil, ilac] of [['modern', 0], ['modern', 8], ['klasik', 0], ['sade', 0]]) {
+// On ve on iki ilaç: sık düzen (kagit--sik) olmadan on ilaçlı kâğıt ikinci
+// sayfaya taşıyor, ayak iki sayfaya bölünüyordu.
+for (const [stil, ilac] of [['modern', 0], ['modern', 8], ['modern', 10], ['modern', 12], ['klasik', 0], ['klasik', 12], ['sade', 0]]) {
   await kagitKur(stil, ilac);
   await sayfa.waitForTimeout(350);
   const n = await sayfaSayisi();
+  // Boy basılan genişlikte ölçülüyor: A4 eksi iki 8 mm pay = 194 mm (733 px).
+  // Pencere genişliğinde (1280) satırlar daha geç kırılıyor ve kâğıt
+  // olduğundan kısa ölçülüyordu.
+  await sayfa.setViewportSize({ width: 733, height: 900 });
   await sayfa.emulateMedia({ media: 'print' });
   const boyMm = await sayfa.evaluate(() => {
     const k = document.querySelector('#sayfa > .yazdir-alan');
     return k ? Math.round(k.offsetHeight / 96 * 25.4) : 0;
   });
   await sayfa.emulateMedia({ media: null });
+  await sayfa.setViewportSize({ width: 1280, height: 900 });
   boylar.push(`${stil}/${ilac ? ilac + ' ilaç' : 'boş'} ${boyMm}mm`);
   // Yalnız "tek sayfa" yetmez: sınıra 1mm kala da tek sayfa çıkar ve hekimin
   // anteti birkaç satır uzayınca kâğıt sessizce ikiye bölünür. Sınır ölçülerek
   // bulundu: ≈275mm'de ikiye bölünüyor, eşik payla birlikte 272mm.
   if (n !== 1 || boyMm > 272) tasanlar.push(`${stil}/${ilac ? ilac + ' ilaç' : 'boş'}=${n} sayfa (${boyMm}mm)`);
+  // Modern A4 kâğıt sayfanın dibine kadar iniyor: içerik boyunda ≈ 260 mm
+  // kalıyor, ayağın altında 17 mm boş kâğıt kalıyordu.
+  if (stil === 'modern' && boyMm < 269) tasanlar.push(`${stil}/${ilac ? ilac + ' ilaç' : 'boş'} kısa: ${boyMm}mm (en az 270)`);
 }
 await sayfa.evaluate(() => { document.querySelectorAll('#sayfa > .yazdir-alan').forEach((e) => e.remove()); });
 if (tasanlar.length) throw new Error('kâğıt A4\'e sığmıyor: ' + tasanlar.join(', '));
-ok(`kâğıt A4'e sığıyor, hepsi tek sayfa ve payı var: ${boylar.join(' · ')} (sınır ≈275mm)`);
+ok(`kâğıt A4'e sığıyor, hepsi tek sayfa ve payı var, modern kâğıt sayfanın dibine iniyor: ${boylar.join(' · ')} (sınır ≈275mm)`);
+
+// --- Kâğıdın alt yarısı, basılan hâliyle (194 mm = 733 px genişlikte).
+// Hat yazısı ve imza ℞ alanının dibinde AKIŞIN İÇİNDE: içeriğin altında
+// kalıyorlar, dolu reçetede laboratuvar ve notun üstüne basılmıyorlar. Boş
+// yer azsa hat küçülüyor ya da hiç basılmıyor, imza her zaman bitiş (sol)
+// köşesinde. Her Clinical satırı (değeri yazılmış «Temperature :» ve
+// «BP : 120/80 mmHg» dahil) ve Name/Age/Date/No şeridi her stilde, boş
+// kâğıtta da tek satır: klasik ve sade kâğıtta BP değeri, boş Temperature
+// çizgisi ve boş şeritteki «No:» alta kırılıyordu. Reçete numarası modern
+// şeritte «2026-0…» diye kesiliyordu. Sade stil sağlık çizimini
+// renksiz, ince siyah çizgiyle basıyor.
+const altYari = [];
+const altOzet = [];
+for (const [stil, ilac] of [['modern', 0], ['modern', 3], ['modern', 8], ['klasik', 0], ['klasik', 8], ['sade', 0], ['sade', 8]]) {
+  // En geniş doğrulama kodu (KOD_ALFABE'nin en geniş harfleri).
+  await kagitKur(stil, ilac, 'MWMW-WMWM');
+  await sayfa.setViewportSize({ width: 733, height: 900 });
+  await sayfa.emulateMedia({ media: 'print' });
+  const o = await sayfa.evaluate(() => {
+    const k = document.querySelector('#sayfa > .yazdir-alan');
+    const r = (e) => e.getBoundingClientRect();
+    const mm = (px) => Math.round(px / 96 * 25.4 * 10) / 10;
+    const gorunur = (e) => !!e && e.getClientRects().length > 0;
+    const icerikAlt = Math.max(0, ...[...k.querySelectorAll('.kagit__rx-govde > *')].filter(gorunur).map((e) => r(e).bottom));
+    const rx = r(k.querySelector('.kagit__rx'));
+    const hat = k.querySelector('.kagit__hat-cizim'), imza = k.querySelector('.kagit__imza');
+    const serit = k.querySelector('.kagit__serit');
+    return {
+      boy: mm(k.offsetHeight),
+      hat: gorunur(hat) ? { ust: mm(r(hat).top - icerikAlt), boy: mm(r(hat).height), sag: mm(rx.right - r(hat).right), alt: mm(rx.bottom - r(hat).bottom), sol: r(hat).left } : null,
+      imza: { ust: mm(r(imza).top - icerikAlt), sol: mm(r(imza).left - rx.left), alt: mm(rx.bottom - r(imza).bottom), sag: r(imza).right },
+      // Değer ya da yazı çizgisi etiketin altından başlıyorsa satır kırılmış.
+      kirilan: [...k.querySelectorAll('.kagit__olcum')].filter((o) => r(o.lastElementChild).top >= r(o.querySelector('b')).bottom - 1)
+        .map((o) => o.querySelector('b').textContent),
+      seritTek: new Set([...serit.querySelectorAll('.kagit__alan')].map((a) => Math.round(r(a).top))).size === 1
+        && serit.scrollWidth <= serit.clientWidth,
+      // Yaş, tarih ve numara kesilmeden basılmalı (uzun ad üç noktayla kısalabilir).
+      kesilen: [...serit.querySelectorAll('.kagit__alan:not(:first-child) .kagit__alan-deger')]
+        .filter((e) => e.scrollWidth > e.clientWidth).map((e) => e.textContent),
+      // Doğrulama kodu tirede bölünmüyor, sütundan taşmıyor; modern kâğıtta
+      // etiketin yanında (önce kodların %41'inde alta inip çizime biniyordu).
+      kod: (() => {
+        const kk = k.querySelector('.kagit__kod');
+        if (!kk) return null;
+        const kod = kk.querySelector('.kagit__kod-deger'), sut = r(kk.parentElement);
+        return {
+          parca: kod.getClientRects().length, yanda: Math.abs(r(kod).top - r(kk.querySelector('b')).top) < 3,
+          tasma: Math.round(Math.max(r(kod).right - sut.right, sut.left - r(kod).left)),
+        };
+      })(),
+    };
+  });
+  await sayfa.emulateMedia({ media: null });
+  await sayfa.setViewportSize({ width: 1280, height: 900 });
+  const ad = `${stil}/${ilac}`;
+  altOzet.push(`${ad} ${o.boy}mm hat ${o.hat ? o.hat.boy + 'mm' : 'yok'}`);
+  if (o.imza.ust < -0.3 || o.imza.sol > 6 || o.imza.alt < 0) altYari.push(`${ad} imza ${JSON.stringify(o.imza)}`);
+  if (o.hat && (o.hat.ust < -0.3 || o.hat.sag > 6 || o.hat.alt < 0 || o.hat.boy < 12 || o.hat.sol < o.imza.sag)) altYari.push(`${ad} hat ${JSON.stringify(o.hat)}`);
+  // Boş kâğıtta ve kısa reçetede hat tam boyunda (21,6 mm) basılıyor.
+  if (ilac <= 3 && (!o.hat || Math.abs(o.hat.boy - 21.6) > 0.3)) altYari.push(`${ad} hat tam boyda değil ${JSON.stringify(o.hat)}`);
+  if (o.kirilan.length) altYari.push(`${ad} Clinical satırı iki satır: ${o.kirilan.join(' ')}`);
+  if (!o.seritTek) altYari.push(`${ad} Name/Age/Date/No şeridi tek satır değil`);
+  if (o.kesilen.length) altYari.push(`${ad} şeritte kesilen değer: ${o.kesilen.join(' ')}`);
+  if (ilac && (!o.kod || o.kod.parca !== 1 || o.kod.tasma > 0 || (stil === 'modern' && !o.kod.yanda))) altYari.push(`${ad} doğrulama kodu ${JSON.stringify(o.kod)}`);
+  if (o.boy > 272) altYari.push(`${ad} ${o.boy}mm`);
+}
+await sayfa.evaluate(() => { document.querySelectorAll('#sayfa > .yazdir-alan').forEach((e) => e.remove()); });
+// Clinical altındaki el yazısı çizime binmiyor: yazı ve çizim ayrı ayrı
+// gizlenip çekilen görüntülerde ikisinin mürekkebi aynı pikselde buluşmuyor.
+// Kâğıt ayarsız (hekimin fotoğrafı yok, çizim var), ölçeksiz ve ekranın
+// en üstünde kuruluyor; pencere onu tamamen gösterecek boyda.
+await sayfa.setViewportSize({ width: 1280, height: 1100 });
+const sutunAyak = await sayfa.evaluate(async () => {
+  const { kagitCiz } = await import('./js/kagit.js');
+  const tuval = document.createElement('div');
+  tuval.className = 'kagit-tuval deneme-tuval';
+  tuval.style.cssText = 'position:fixed;inset:0 auto auto 0;z-index:999;background:#fff';
+  tuval.append(kagitCiz({ bos: true }));
+  // Sade kâğıt da ayarsız: hekimin fotoğrafı yokken basılan çizim.
+  const sade = document.createElement('div');
+  sade.className = 'kagit-tuval deneme-tuval';
+  sade.style.cssText = 'position:fixed;inset:0 auto auto 0;z-index:998';
+  sade.append(kagitCiz({ ayar: { kagitStili: 'sade' }, bos: true }));
+  document.body.append(sade, tuval);
+  const sekiller = [...sade.querySelectorAll('.kagit--sade .kagit__saglik-cizim :is(path, circle, rect, ellipse)')].filter((e) => e.getClientRects().length);
+  const renkli = sekiller.filter((e) => { const c = getComputedStyle(e); return c.fill !== 'none' || !['none', 'rgb(0, 0, 0)'].includes(c.stroke); }).length;
+  sade.remove();
+  const b = tuval.querySelector('.kagit--modern .kagit__sutun-ayak').getBoundingClientRect();
+  return { kutu: [Math.floor(b.left), Math.floor(b.top), Math.ceil(b.width), Math.ceil(b.height)], sadeSekil: sekiller.length, renkli };
+});
+if (sutunAyak.sadeSekil < 8 || sutunAyak.renkli) altYari.push(`sade çizimde ${sutunAyak.renkli}/${sutunAyak.sadeSekil} renkli parça`);
+const ayakGoruntu = async (yaziGizli, cizimGizli) => {
+  await sayfa.evaluate(([y, c]) => {
+    document.querySelector('.deneme-tuval .kagit__sutun-yazi').style.visibility = y ? 'hidden' : '';
+    document.querySelector('.deneme-tuval .kagit__saglik-cizim').style.visibility = c ? 'hidden' : '';
+  }, [yaziGizli, cizimGizli]);
+  return goruntu(...sutunAyak.kutu);
+};
+await sayfa.evaluate(() => document.fonts.ready);
+const zeminG = await ayakGoruntu(true, true), cizimG = await ayakGoruntu(true, false), yaziG = await ayakGoruntu(false, true);
+await sayfa.evaluate(() => document.querySelector('.deneme-tuval').remove());
+await sayfa.setViewportSize({ width: 1280, height: 900 });
+let yaziCizimde = 0, yaziMurekkebi = 0;
+for (let y = 0; y < zeminG.h; y++) {
+  for (let x = 0; x < zeminG.w; x++) {
+    const z = zeminG.rgb(x, y);
+    const yazi = renkFarki(yaziG.rgb(x, y), z) > 90;
+    if (yazi) yaziMurekkebi++;
+    if (yazi && renkFarki(cizimG.rgb(x, y), z) > 90) yaziCizimde++;
+  }
+}
+if (yaziMurekkebi < 200 || yaziCizimde > 0) altYari.push(`el yazısı çizimin üstünde: ${yaziCizimde}/${yaziMurekkebi} piksel`);
+// Ayaktaki telefon satırında etiket ve numara tek metin: iki noktanın iki
+// yanında birer boşluk (numara ayrı öğeyken araya satırın boşluğu da giriyordu).
+const telefonSatiri = await sayfa.evaluate(() => [...document.querySelectorAll('.kagit-tuval .kagit__iletisim-satir')]
+  .filter((s) => s.querySelector('bdi')).map((s) => [s.children.length, /\S : $/.test(s.lastElementChild.firstChild.textContent)]));
+if (!telefonSatiri.length || telefonSatiri.some(([n, bosluk]) => n !== 2 || !bosluk)) altYari.push('telefon satırı ' + JSON.stringify(telefonSatiri));
+if (altYari.length) throw new Error('kâğıdın alt yarısı bozuk: ' + altYari.join('; '));
+ok(`kâğıdın alt yarısı: hat ve imza içeriğin altında (${altOzet.join(' · ')}), Clinical satırları ve hasta şeridi her stilde tek satır, numara kesilmiyor, en geniş doğrulama kodu bölünmüyor (modernde etiketin yanında), sade çizim renksiz (${sutunAyak.sadeSekil} parça), el yazısı çizime binmiyor (${yaziMurekkebi} px), telefon satırı tek metin`);
 
 // --- Eşitleme: gerçek tarayıcıda, gerçek IndexedDB ve gerçek WebCrypto ile.
 // Google'ın kendi uç noktaları burada denenemiyor (istemci kimliği hekimde),
