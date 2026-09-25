@@ -1419,6 +1419,55 @@ if (Math.abs(kagitGovde.sutunOran - 46.9 / 194) > 0.004 || !kagitGovde.tekSatir 
     || kagitGovde.rozet.length !== 7 || kagitGovde.rozet.some((a) => a > 0.3)) {
   throw new Error('kâğıdın gövdesi / ayağı tasarımdaki gibi değil: ' + JSON.stringify(kagitGovde));
 }
+// Antedin ince işleri. Dalga düzgün geçişli katmanlar: bulanıklık filtresi
+// yok, her katman kendi (belgede tekil) geçişiyle boyanıyor; sol kenar ve
+// köşe tasarımdaki soluk turkuazla dolu, beyaz hale yok. Hizmet metninin
+// kutusu en uzun satırına yakın (metin iki satır, daire metnin yanında);
+// şeritte ayraçlı hücre köşesiz; kadüsenin ayracı koyu; halkalar aşağı
+// doğru inceliyor; «با ما» kalbin hemen yanında; kâğıttaki logo kenar
+// çubuğundaki logonun aynı çizimi.
+const antetInce = await sayfa.evaluate(async () => {
+  const k = document.querySelector('.recete-onizleme .kagit');
+  const q = (s) => k.querySelector(s);
+  const r = (e) => e.getBoundingClientRect();
+  const dalga = q('.kagit__dalga--ust');
+  const kimlikler = (svg) => [...svg.querySelectorAll('path')].map((y) => (y.getAttribute('fill').match(/^url\(#(.+)\)$/) || [])[1]);
+  // Sayfada ikinci bir kâğıt (önizleme, yazdırma kopyası) aynı kimlikleri almamalı.
+  const { kagitCiz } = await import('./js/kagit.js');
+  const ikinci = new Set(kimlikler(kagitCiz({}).querySelector('.kagit__dalga--ust')));
+  const kagit = r(k);
+  const oran = (x) => Math.round((x - kagit.left) / kagit.width * 1000) / 10;
+  const hizmet = [...k.querySelectorAll('.kagit__hizmet-oge')].map((o) => {
+    const metin = o.lastElementChild;
+    return { daire: oran(r(o.querySelector('.kagit__hizmet-daire')).left),
+      satir: Math.round(r(metin).height / parseFloat(getComputedStyle(metin).lineHeight) / (r(k).width / k.offsetWidth)) };
+  });
+  const amblem = r(q('.kagit__amblem'));
+  const kalinliklar = [...q('.kagit__amblem-cizim').querySelectorAll('g[stroke^="url"] path')].slice(0, 7).map((y) => Number(y.getAttribute('stroke-width')));
+  const yol = (s) => [...document.querySelectorAll(s + ' path')].map((y) => y.getAttribute('d'));
+  return {
+    filtre: dalga.querySelectorAll('filter').length,
+    gecis: kimlikler(dalga).every((id) => id && !ikinci.has(id) && document.querySelectorAll('#' + CSS.escape(id)).length === 1 && dalga.querySelector('#' + CSS.escape(id))),
+    kose: [Math.round(kagit.left + 3), Math.round(r(dalga).top + 10)],
+    hizmet,
+    koseli: [...k.querySelectorAll('.kagit__alan')].filter((h) => parseFloat(getComputedStyle(h).borderInlineStartWidth) > 0)
+      .every((h) => ['borderStartStartRadius', 'borderEndStartRadius', 'borderStartEndRadius', 'borderEndEndRadius'].every((c) => getComputedStyle(h)[c] === '0px')),
+    ayrac: [Math.round(amblem.left) - 1, Math.round(amblem.top + amblem.height / 2)],
+    incelen: kalinliklar.length === 7 && kalinliklar.every((v, i) => !i || v < kalinliklar[i - 1]),
+    babaMa: Math.round(r(q('.kagit__aile-cizim')).left - r(q('.kagit__cagri-ust')).right),
+    logo: JSON.stringify(yol('.kenar__marka-simge')) === JSON.stringify(yol('.recete-onizleme .kagit__slogan-cizim')),
+  };
+});
+const koseGoruntu = await goruntu(antetInce.kose[0], antetInce.kose[1], 1, 40);
+antetInce.kose = Math.max(...Array.from({ length: 40 }, (_, y) => koseGoruntu.rgb(0, y).reduce((a, b) => a + b) / 3));
+const ayracGoruntu = await goruntu(...antetInce.ayrac, 5, 1);
+antetInce.ayrac = Math.min(...Array.from({ length: 5 }, (_, x) => ayracGoruntu.rgb(x, 0).reduce((a, b) => a + b) / 3));
+if (antetInce.filtre || !antetInce.gecis || antetInce.kose > 246
+    || antetInce.hizmet.length !== 2 || antetInce.hizmet.some((h) => h.satir !== 2)
+    || antetInce.hizmet[0].daire < 36.8 || antetInce.hizmet[1].daire < 7
+    || !antetInce.koseli || antetInce.ayrac > 110 || !antetInce.incelen || antetInce.babaMa > 3 || !antetInce.logo) {
+  throw new Error('antedin ince işleri tasarımdaki gibi değil: ' + JSON.stringify(antetInce));
+}
 // Telefonda form sağdan sola: ad alanı sağda tam satır, ölçüm kutuları solda hizalı.
 await sayfa.setViewportSize({ width: 390, height: 844 });
 await sayfa.waitForTimeout(100);
@@ -1428,7 +1477,7 @@ if (fmTel.yon !== 'rtl' || fmTel.ad.sag < fmTel.no.sag - 1 || fmTel.bp.x !== fmT
   throw new Error('telefonda reçete formu bozuk: ' + JSON.stringify(fmTel));
 }
 await sayfa.setViewportSize({ width: 1280, height: 900 });
-ok(`reçete formu tasarımdaki yerde: kâğıt ${kagitAntet.w}×${kagitAntet.h}px, dalga sol %${kagitAntet.dalgaOran}; panel x=${fm.form.x} ${fm.form.w}×${fm.panelBoy}px, ℞ satırları ${fm.rxSatir[0].w}×${fm.rxSatir[0].h}, kâğıt tuvali sütunu dolduruyor, kâğıt x=${fm.kagit.x} ${fm.kagit.w}px (yapışkan ${fm.yapiskan}); başlık panelde; Clinical ${fm.klinik.w}px ℞'nin solunda; ölçüm kutuları ${fm.bp.w}/${fm.ates.w}; telefonda sağdan sola`);
+ok(`reçete formu tasarımdaki yerde: kâğıt ${kagitAntet.w}×${kagitAntet.h}px, dalga sol %${kagitAntet.dalgaOran} (filtresiz, sol kenar ${Math.round(antetInce.kose)}), hizmet daireleri %${antetInce.hizmet.map((h) => h.daire).join('/%')}, kadüse ayracı ${Math.round(antetInce.ayrac)}, logo tek çizim; panel x=${fm.form.x} ${fm.form.w}×${fm.panelBoy}px, ℞ satırları ${fm.rxSatir[0].w}×${fm.rxSatir[0].h}, kâğıt tuvali sütunu dolduruyor, kâğıt x=${fm.kagit.x} ${fm.kagit.w}px (yapışkan ${fm.yapiskan}); başlık panelde; Clinical ${fm.klinik.w}px ℞'nin solunda; ölçüm kutuları ${fm.bp.w}/${fm.ates.w}; telefonda sağdan sola`);
 
 await sayfa.goto(KOK + '#/recete/kagit', { waitUntil: 'networkidle' });
 await sayfa.waitForSelector('.recete-duzen .kagit');

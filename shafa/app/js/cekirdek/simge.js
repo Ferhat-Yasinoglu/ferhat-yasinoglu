@@ -179,12 +179,23 @@ const AYAKTA_INSAN = 'M8 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M6 6.75v8.5a.75.75
 // köşesine küçültülüp bindiriliyor; ucu yine sol altta.
 const KALEM_YERI = 'translate(7.7 7.7) scale(.52)';
 
+/* Marka logosu: kontur kalp ve içinden geçen nabız; nabız kalbin sağ
+   kenarındaki boşluktan çıkıyor. Tasarımda kenar çubuğundaki ve kâğıdın
+   slogan bloğundaki logo aynı çizim: ikisi de bu yolları kullanıyor, kâğıt
+   (kagit.js sloganAmblemi) yalnız kalınlığı ve görünen kutuyu kendi veriyor.
+   `kutu` çizimin sıkı çerçevesi (viewBox), 24'lük kutunun içinde. */
+export const LOGO = {
+  kalp: 'M20.27 13.87C18.38 16.57 15.42 18.75 12 20.65 7.8 18.29 3.67 15.02 3.6 10.26 3.54 7.21 5.78 5.16 8.11 5.16c1.74 0 3.11.93 3.89 2.36C12.78 6.09 14.15 5.16 15.89 5.16 18.22 5.16 20.46 7.21 20.4 10.26c0 .56-.09 1.09-.22 1.55',
+  nabiz: 'M6.25 12.78h2.92l.59-1.93 1.06 4.17 1.74-6.59 1.12 8.33.96-4.6.68.62h5.16',
+  kutu: '2.67 4.29 18.66 17.1',
+};
+
 const SIMGELER_DOLU = {
   /* ---- Kenar çubuğu ---- */
-  // Marka: kalbin içinde kalan nabız çizgisi (bi:heart-pulse'ta çizgi kalpten taşıyor).
+  // Marka: kontur kalp ve nabız (bkz. LOGO).
   logo: { vb: 24, yollar: [
-    ['path', { ...CIZGI(1.3), d: 'M12 20.6s-8.4-5.3-8.4-11.3A4.6 4.6 0 0 1 12 6.6a4.6 4.6 0 0 1 8.4 2.7c0 6-8.4 11.3-8.4 11.3z' }],
-    ['path', { ...CIZGI(1), d: 'M6.6 12.4h2.8l.8-1.6 1 2.8 1.2-4.6 1.4 6.2 1.1-4 .8 1.2h4.2' }],
+    ['path', { ...CIZGI(1.3), d: LOGO.kalp }],
+    ['path', { ...CIZGI(1), d: LOGO.nabiz }],
   ] },
   // bi: grid-fill
   panel: { vb: 16, yollar: [['path', { d: 'M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5z' }]] },

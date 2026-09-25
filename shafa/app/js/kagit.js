@@ -8,7 +8,7 @@
 // yalnız alanlar çizgi olarak basılır.
 import { el, svgEl, qrGorsel } from './cekirdek/dom.js';
 import { gorselMi } from './cekirdek/gorsel.js';
-import { simge } from './cekirdek/simge.js';
+import { simge, LOGO } from './cekirdek/simge.js';
 import { rxIsareti, hatCizimi } from './cekirdek/cizimler.js';
 import { t } from './i18n.js';
 import { tamAd, hastaYasi } from './paylasilan/hasta.js';
@@ -26,59 +26,86 @@ import { telefonNormalize } from './paylasilan/metin.js';
  *  onun basılı reçetesinde bu amblem var — kâğıdın kimliği, bizim tercihimiz
  *  değil. Asklepios çizimi denendi ve "bizimki bu değil" diye geri alındı.
  *
- *  viewBox tasarımdaki çizimin piksel kutusu (69×83): kanat uçları hafif
- *  yukarı kalkık, iki yılan asanın etrafında aşağı doğru daralan beş
- *  halkayla sarılıp sivri bir kuyrukta bitiyor, başları dışa kıvrık.
- *  Eski çizimde üç kalın halka vardı ve 17 mm'de "yılan" okunmuyordu.
- *  Tüy araları beyaz çizgi: kâğıt her zaman beyaz, oyuk gibi okunuyor. */
+ *  viewBox tasarımdaki çizimin piksel kutusu (69×83). Kanatlar omuzda
+ *  kabarıp uca doğru hafifçe iniyor, alt kenarları üç kat tüy; iki yılanın
+ *  başı tepede dışa kıvrılıyor, gövdeleri asanın çevresinde beş kez
+ *  kesişerek daralıyor ve incelen bir kuyrukta bitiyor. Yılan her halkada
+ *  biraz daha ince: tek kalınlıkta çizilince halkalar aşağıda kalın
+ *  ilmeklere dönüyordu. Tüy araları beyaz çizgi: kâğıt her zaman beyaz,
+ *  oyuk gibi okunuyor.
+ *
+ *  Renk yukarıdan aşağı koyulaşan bir geçiş; kuyruğa doğru yine açılıyor.
+ *  Durakların rengi kendiliğinden currentColor (klasik antette beyaz, sade
+ *  kâğıtta siyah, düz); tonları yalnız modern stil CSS'ten veriyor. */
+const YILAN_PARCALARI = [
+  // [kalınlık, yol]: baş kıvrımı, beş halka, kuyruk. Öteki yılan bunun aynası.
+  [3.4, 'M28.2 30.4C29.2 28 27.6 25.6 25 25.9 22 26.3 20.8 30.2 22.8 33 24.8 35.6 29.5 36 34.5 35.5'],
+  [3, 'M34.5 35.5C39.5 35.6 42.7 38.2 42.7 41.5S39.5 47.4 34.5 47.6'],
+  [2.6, 'M34.5 47.6C31.2 47.8 29 49.6 29 51.8S31.2 55.8 34.5 56'],
+  [2.2, 'M34.5 56C36.8 56.1 38.3 57.6 38.3 59.6S36.8 63.1 34.5 63.2'],
+  [1.8, 'M34.5 63.2C32.9 63.3 31.9 64.5 31.9 65.9S32.9 68.5 34.5 68.6'],
+  [1.4, 'M34.5 68.6C35.6 68.7 36.2 69.6 36.2 70.7S35.6 72.7 34.5 72.8'],
+  [1, 'M34.5 72.8C33.6 73.8 33.7 75.4 34.5 77.2'],
+];
+const KANAT = 'M31.6 9.6C31.2 6.6 28.6 5.4 25.6 6 16.5 6.2 6.5 8.6.2 12.8 3.5 14 7 14.4 10.5 14.3 7.5 15.2 5 16.2 4.2 16.8 8.5 17.8 13 18.3 17.6 18.2 15.4 19.2 13.6 20.2 13 20.8 19 22.6 26 22.9 31.6 22Z';
+const KANAT_TUY = 'M6.5 14.9C10.5 15.4 14.5 15.4 18 14.8M12.5 18.8C15.5 19.4 18.5 19.5 21.5 19';
 function amblemCiz() {
-  const yilan = (d) => svgEl('path', {
-    d, fill: 'none', stroke: 'currentColor', 'stroke-width': 3.2, 'stroke-linecap': 'round',
-  });
+  const renk = tekilKimlik('kagit-kaduse');
+  const ayna = 'matrix(-1 0 0 1 69 0)';
+  const yilan = (donus) => svgEl('g', { fill: 'none', stroke: `url(#${renk})`, 'stroke-linecap': 'round', transform: donus },
+    YILAN_PARCALARI.map(([kalinlik, d]) => svgEl('path', { d, 'stroke-width': kalinlik })));
   return svgEl('svg', { class: 'kagit__amblem-cizim', viewBox: '0 0 69 83', 'aria-hidden': 'true' },
-    svgEl('g', { fill: 'currentColor' },
+    svgEl('defs', {},
+      svgEl('linearGradient', { id: renk, gradientUnits: 'userSpaceOnUse', x1: 0, y1: 0, x2: 0, y2: 83 },
+        ['ust', 'orta', 'alt', 'uc'].map((ad, i) => svgEl('stop', {
+          class: `kagit__amblem-${ad}`, offset: [0, 0.45, 0.8, 1][i], 'stop-color': 'currentColor',
+        })))),
+    svgEl('g', { fill: `url(#${renk})` },
       // Asa, tepesinde topuz; alt ucu sivri
-      svgEl('circle', { cx: 34.5, cy: 3.8, r: 3.6 }),
-      svgEl('path', { d: 'M33 6.5h3v71.5l-1.5 4.5-1.5-4.5z' }),
-      // Kanatlar: üst kenar yukarı kalkıyor, alt kenar üç tüy katmanı
-      svgEl('path', { d: 'M33 9.5C27 5 12 3 .5 7.5 4.5 11 8.5 12.5 12.5 13 11.5 14.5 15 16.5 21.5 17 20.5 18.5 25 20.5 33 21.5z' }),
-      svgEl('path', { d: 'M36 9.5C42 5 57 3 68.5 7.5 64.5 11 60.5 12.5 56.5 13 57.5 14.5 54 16.5 47.5 17 48.5 18.5 44 20.5 36 21.5z' })),
-    svgEl('path', {
-      d: 'M6 9.6C14 8.8 22 10.2 30 13.6M15 13.9C20 14.2 25 15.4 30 17.6M63 9.6C55 8.8 47 10.2 39 13.6M54 13.9C49 14.2 44 15.4 39 17.6',
-      fill: 'none', stroke: '#fff', 'stroke-width': 0.7, 'stroke-linecap': 'round',
-    }),
-    // İki yılan x=34.5 ekseninde birbirinin aynası
-    yilan('M27.5 31.2C24 32.5 21 29.5 22.5 26.5 24 23.8 29.5 24 34.5 33 40.8 33.6 46 35 46 38.8S40.8 43.9 34.5 44.5C29.3 45 25 46.3 25 49.5S29.3 54 34.5 54.5C38.2 54.9 41.3 55.9 41.3 58.5S38.2 62.1 34.5 62.5C31.6 62.9 29.3 63.7 29.3 66S31.6 69.2 34.5 69.5C36.7 69.8 38.5 70.6 38.5 72.5S36.7 75.2 34.5 75.5C31.5 77.5 32.7 79 34.5 81'),
-    yilan('M41.5 31.2C45 32.5 48 29.5 46.5 26.5 45 23.8 39.5 24 34.5 33 28.2 33.6 23 35 23 38.8S28.2 43.9 34.5 44.5C39.7 45 44 46.3 44 49.5S39.7 54 34.5 54.5C30.8 54.9 27.7 55.9 27.7 58.5S30.8 62.1 34.5 62.5C37.4 62.9 39.7 63.7 39.7 66S37.4 69.2 34.5 69.5C32.3 69.8 30.5 70.6 30.5 72.5S32.3 75.2 34.5 75.5C37.5 77.5 36.3 79 34.5 81'));
+      svgEl('circle', { cx: 34.5, cy: 3.6, r: 3.4 }),
+      svgEl('path', { d: 'M33.3 6.5h2.4v67l-1.2 4-1.2-4z' }),
+      svgEl('path', { d: KANAT }),
+      svgEl('path', { d: KANAT, transform: ayna })),
+    svgEl('g', { fill: 'none', stroke: '#fff', 'stroke-width': 0.7, 'stroke-linecap': 'round' },
+      svgEl('path', { d: KANAT_TUY }),
+      svgEl('path', { d: KANAT_TUY, transform: ayna })),
+    yilan(null), yilan(ayna));
 }
 
-/** Slogan bloğundaki logo: içinden kalp atışı geçen KONTUR kalp. Atış
- *  çizgisi kalbin sağ kenarındaki boşluktan dışarı çıkıyor — tasarımda da
- *  öyle. Önce dolu bir dairenin içinde beyaz kalpti; basılı kâğıttaki
- *  logo bu değil. viewBox tasarımdaki çizimin piksel kutusu (60×55). */
+/** Slogan bloğundaki logo: kenar çubuğundaki marka logosunun AYNI çizimi
+ *  (simge.js LOGO), kâğıtta biraz daha kalın. Kutu çizimin sıkı çerçevesi:
+ *  60×55 px'lik yuvayı (19 × 17,5 mm) kalp dolduruyor. Kalınlıklar
+ *  tasarımda ölçüldü: kalp ≈ 3,5 px, nabız ≈ 2,6 px. */
 function sloganAmblemi() {
-  return svgEl('svg', { class: 'kagit__slogan-cizim', viewBox: '0 0 60 55', fill: 'none', stroke: 'currentColor', 'aria-hidden': 'true' },
-    svgEl('path', {
-      d: 'M56.6 30.8C50.5 39.5 41 46.5 30 52.6 16.5 45 3.2 34.5 3 19.2 2.8 9.4 10 2.8 17.5 2.8c5.6 0 10 3 12.5 7.6C32.5 5.8 36.9 2.8 42.5 2.8 50 2.8 57.2 9.4 57 19.2c0 1.8-.3 3.5-.7 5',
-      'stroke-width': 3.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
-    }),
-    svgEl('path', {
-      d: 'M11.5 27.3h9.4l1.9-6.2 3.4 13.4 5.6-21.2 3.6 26.8 3.1-14.8 2.2 2h19',
-      'stroke-width': 2.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
-    }));
+  const cizgi = (d, kalinlik) => svgEl('path', {
+    d, 'stroke-width': kalinlik, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+  });
+  return svgEl('svg', { class: 'kagit__slogan-cizim', viewBox: LOGO.kutu, fill: 'none', stroke: 'currentColor', 'aria-hidden': 'true' },
+    cizgi(LOGO.kalp, 1.1), cizgi(LOGO.nabiz, 0.8));
 }
 
 /** Antetin sağında, kadüsenin altındaki ikinci amblem: kontur bir kalbin
  *  içinde kollarını açmış TEK bir insan. Tasarımdaki figür artıyla
  *  kaynaşmış bir insan (üretim hatası); aynı silueti temiz bir anlamla
  *  veriyor. Eskiden dolu kalpte üç beyaz figürdü.
+ *  Kalbin konturu tek kalınlıkta bir çizgi değil, iki kalp arasındaki
+ *  halka (evenodd): tepede ince, yanlarda ve sivri uçta kalın, tasarımdaki
+ *  kalem izi gibi. Rengi yukarıdan aşağı koyulaşıyor; duraklar kendiliğinden
+ *  currentColor, tonları modern stil CSS'ten veriyor (bkz. amblemCiz).
  *  Figür ayrı parçalar (baş, omuz, iki kol, gövde): deneme amblemin
  *  gerçekten çizildiğini parça sayısından anlıyor. */
 function aileAmblemi() {
+  const renk = tekilKimlik('kagit-aile');
   return svgEl('svg', { class: 'kagit__aile-cizim', viewBox: '0 0 100 100', fill: 'currentColor', 'aria-hidden': 'true' },
+    svgEl('defs', {},
+      svgEl('linearGradient', { id: renk, gradientUnits: 'userSpaceOnUse', x1: 0, y1: 0, x2: 0, y2: 100 },
+        ['ust', 'orta', 'alt'].map((ad, i) => svgEl('stop', {
+          class: `kagit__aile-${ad}`, offset: i / 2, 'stop-color': 'currentColor',
+        })))),
     svgEl('path', {
-      d: 'M50 93C22 74 5.5 56 5.5 34.5 5.5 18.5 16.5 7.5 30 7.5c9 0 16 5 20 12.5 4-7.5 11-12.5 20-12.5 13.5 0 24.5 11 24.5 27 0 21.5-16.5 39.5-44.5 58.5z',
-      fill: 'none', stroke: 'currentColor', 'stroke-width': 9, 'stroke-linejoin': 'round',
+      fill: `url(#${renk})`, 'fill-rule': 'evenodd',
+      d: 'M50 97C20 77 1 58 1 34.5 1 16 13.5 3.5 30 3.5c8.5 0 15.5 4 20 10.5C54.5 7.5 61.5 3.5 70 3.5 86.5 3.5 99 16 99 34.5 99 58 80 77 50 97Z'
+        + 'M50 84C26 68 11 52.5 11 34.5 11 20 19 9.5 30.5 9.5c8 0 13.8 4.6 17.2 11.5h4.6C55.7 14.1 61.5 9.5 69.5 9.5 81 9.5 89 20 89 34.5 89 52.5 74 68 50 84Z',
     }),
     svgEl('circle', { cx: 50, cy: 33, r: 7.5 }),
     svgEl('path', { d: 'M44.8 42.5h10.4l-1.4 8h-7.6z' }),
@@ -196,20 +223,52 @@ export const OLCUM_SIMGELERI = {
    hatası), Date dolu belge, No kontur belge. */
 const SERIT_SIMGELERI = ['hasta', 'kum-saati', 'recete', 'belge'];
 
-/* Antet dalgasının katmanları: [renk, yol]. Birim tasarımdaki kâğıdın
-   pikseli (609×193); en alttaki en soluk katman. Yollar tasarımın
-   parlaklık eşiklerinden izlendi (242 → 90), delikler evenodd. */
+/* Antet dalgasının katmanları, arkadan öne: [yol, dolgu]. Birim tasarımdaki
+   kâğıdın pikseli (608×191, sol üst köşe 0,0); kenarlar tasarımda sütun
+   sütun ölçüldü. Her katman tek bir düzgün Bézier yolu ve kendi geçişiyle
+   boyanıyor: eşikten izlenen düz renkli lekeler (poster görünümü) ve
+   bulanıklık filtresi yok. Kâğıt kenarına değen yollar viewBox'ın 4 birim
+   dışına taşıyor; kenarda beyaz hale kalmıyor.
+   Dolgu: ['d', x1, y1, x2, y2, duraklar] doğrusal geçiş (kullanıcı birimi),
+   ['r', cx, cy, rx, ry, duraklar] eliptik ışıma; durak [konum, renk, opaklık?]. */
 const ANTET_DALGASI = [
-  ['#d7f3f9', 'M-8 96Q-8 -8 216 -8Q440 -8 438 -2Q436 3 386 3Q334 3 324 6Q314 10 294 20Q274 30 265 30Q256 30 252 32Q248 33 242 33Q238 33 236 34Q235 34 233 46Q231 58 229 60Q226 63 216 70Q206 77 203 76Q200 74 184 85Q167 96 169 97Q170 98 178 96Q186 94 184 98Q180 102 176 105Q170 108 164 110Q158 111 150 112Q140 113 120 112Q100 112 98 119Q97 126 94 127Q90 128 92 138Q94 146 89 154Q84 161 76 162Q68 163 66 162Q64 162 60 159Q56 156 55 156Q54 157 32 172Q10 186 9 188Q8 190 10 190Q12 191 16 190Q20 189 34 194Q48 200 20 200Q-8 200 -8 96ZM64 8Q60 7 59 10Q58 12 48 14Q38 16 31 20Q24 24 23 28Q22 30 24 33Q26 36 20 38Q13 40 14 44Q14 48 20 50Q26 54 24 58Q21 64 24 66Q28 69 31 69Q34 68 34 72Q33 76 34 77Q36 79 38 80Q40 81 45 80Q50 79 52 82Q54 85 62 84Q70 83 74 80Q76 77 82 74Q88 71 96 72Q104 72 106 70Q107 68 106 62Q105 56 109 56Q114 57 116 55Q118 54 118 51Q117 48 114 44Q110 40 116 42Q122 44 125 41Q127 38 118 33Q110 27 88 18Q68 8 64 8ZM100 42Q102 41 103 47Q104 53 100 51Q97 50 97 46Q97 44 100 42ZM85 112Q76 112 71 113Q66 114 54 119Q44 124 34 132Q25 140 20 148Q14 156 21 149Q28 143 36 138Q44 134 51 132Q58 131 64 126Q72 121 82 118Q92 114 93 113Q94 112 85 112Z'],
-  ['#bae8f1', 'M10 -3Q10 -8 172 -8Q333 -8 315 3Q298 14 284 21Q270 28 264 28Q258 27 252 30Q246 32 242 32Q236 32 233 39Q230 46 219 56Q208 66 191 78Q174 90 160 96Q144 103 143 104Q142 106 144 107Q146 109 132 110Q118 111 91 110Q64 110 50 114Q36 117 34 119Q32 120 34 122Q37 124 30 130Q24 136 8 153Q-8 169 -8 118Q-8 66 -1 66Q6 67 10 72Q14 78 21 83Q28 88 40 91Q52 94 64 94Q76 94 99 88Q122 82 124 78Q128 73 134 71Q140 69 146 64Q151 60 151 50Q151 40 148 37Q144 34 133 30Q122 26 112 24Q104 23 80 12Q58 1 35 2Q12 4 11 3Q10 2 10 -3ZM46 138Q50 136 51 136Q52 136 51 139Q50 141 46 142Q44 142 40 146Q36 149 34 149Q31 148 33 146Q34 144 39 142Q44 141 46 138Z'],
-  ['#8dd7e3', 'M70 0Q64 -8 194 -8Q324 -8 316 0Q308 8 298 10Q288 12 268 21Q250 30 242 31Q234 32 233 38Q231 44 218 55Q206 66 190 77Q176 88 164 94Q154 99 135 104Q116 109 88 109Q60 109 46 112Q34 115 26 119Q18 123 13 129Q7 136 7 137Q8 138 11 138Q14 139 15 141Q16 142 10 150Q4 158 -2 148Q-8 138 -8 112Q-8 84 -3 83Q2 82 8 82Q12 83 18 88Q24 93 56 95Q86 97 93 94Q100 92 115 90Q130 87 134 83Q138 79 146 75Q152 71 158 65Q163 60 164 52Q165 44 164 41Q163 38 160 37Q158 35 148 32Q138 30 132 26Q124 21 113 20Q102 20 89 14Q76 9 70 0Z'],
-  ['#62c5d3', 'M98 -2Q98 -8 207 -8Q317 -8 316 -2Q314 3 297 8Q280 13 264 22Q248 30 241 30Q234 31 233 36Q232 40 217 54Q202 67 191 76Q180 84 168 90Q158 96 139 102Q120 107 90 108Q60 108 49 110Q38 112 30 116Q22 119 14 127Q4 135 -2 136Q-8 136 -8 119Q-8 102 -3 96Q2 90 3 88Q4 87 8 88Q10 88 14 92Q16 96 28 96Q40 95 58 97Q76 99 88 98Q102 98 118 95Q134 92 138 88Q144 83 153 80Q162 76 166 72Q170 68 172 60Q175 52 175 47Q175 42 173 36Q170 31 168 30Q166 29 161 30Q156 31 147 29Q138 27 134 24Q130 20 116 14Q102 7 100 5Q98 4 98 -2ZM218 30Q218 29 210 36Q202 44 209 38Q216 33 218 32Q219 30 218 30Z'],
-  ['#21a8b7', 'M102 -1Q100 -8 205 -8Q310 -8 294 2Q278 12 263 20Q248 29 240 30Q234 30 232 36Q230 42 218 52Q206 62 196 70Q184 79 172 86Q158 94 138 100Q118 106 88 106Q58 107 48 109Q38 111 30 115Q20 119 12 126Q4 133 -2 134Q-8 134 -8 120Q-8 106 -1 103Q6 100 16 98Q26 97 64 98Q102 100 120 97Q138 94 142 91Q146 88 152 87Q156 86 162 83Q168 80 193 57Q218 34 228 26Q238 19 247 15Q255 10 251 10Q248 10 236 15Q226 20 208 34Q190 49 188 43Q187 38 183 33Q180 28 160 26Q140 25 122 16Q104 6 102 -1Z'],
-  ['#028496', 'M104 -2Q104 -8 186 -8Q270 -8 270 -2Q270 5 281 3Q292 1 295 2Q299 2 287 7Q276 12 260 20Q244 29 239 29Q234 29 232 31Q230 34 230 36Q230 40 228 41Q226 43 214 54Q200 64 196 66Q192 67 193 65Q193 62 198 56Q204 50 213 41Q222 32 244 19Q266 6 258 6Q252 7 244 10Q238 12 230 16Q222 20 213 28Q204 35 202 35Q200 35 197 32Q194 30 194 27Q194 25 178 25Q164 25 151 24Q138 22 123 14Q108 6 106 5Q104 4 104 -2ZM130 99Q132 98 134 98Q136 99 126 102Q114 105 80 106Q46 108 34 112Q22 117 12 124Q4 132 -2 131Q-8 130 -4 119Q1 108 6 104Q12 101 34 100Q56 99 76 100Q96 102 112 101Q128 100 130 99Z'],
-  ['#026479', 'M109 3Q110 2 144 3Q180 4 182 4Q184 5 185 7Q186 8 184 10Q182 12 181 17Q180 21 171 22Q162 22 150 20Q138 19 124 12Q110 6 109 5Q108 4 109 3ZM236 4Q250 2 254 2Q258 2 258 3Q258 4 242 10Q226 15 224 14Q221 12 222 9Q222 5 236 4ZM274 6Q284 4 287 4Q290 4 290 5Q290 6 274 12Q258 19 252 23Q246 27 240 27Q234 26 237 24Q240 21 253 15Q266 9 274 6ZM223 35Q228 31 228 35Q228 38 224 41Q220 43 220 41Q219 38 223 35ZM42 104Q50 102 70 102Q92 103 91 104Q90 105 76 104Q62 104 50 106Q40 108 30 112Q20 117 12 123Q6 129 4 129Q2 128 2 121Q2 114 4 109Q6 105 10 104Q14 103 24 104Q36 105 42 104Z'],
+  // Soluk zemin: sol üst köşe, slogan logosunun arkasında beyaz bir ışıma.
+  ['M-4-4H308C290 8 262 18 240 32 210 51.1 186 82 160 90 140 96.2 120 105 90 106 60 107 40 108 25 114 12 119.2 4 128-4 134Z',
+    ['r', 72, 46, 128, 70, [[0, '#fff'], [0.3, '#f6fbfd'], [0.55, '#e4f3f7'], [0.8, '#d2eef4'], [1, '#c6ebf2']]]],
+  // Sol alt köşedeki soluk yıkama (kurdelenin arkasında): kutunun kenarına
+  // varmadan sönüyor, sınırı görünmüyor.
+  ['M-4 96H132V195H-4Z', ['r', -6, 162, 118, 48, [[0, '#c9e9f0'], [0.55, '#dff3f7', 0.7], [1, '#eef9fb', 0]]]],
+  // Cam bant, üç parça: kurdelenin üstünde soldan gelen ince bant, sağda
+  // çanağın altını dolduran ve çanağa doğru koyulaşan kama, sol üstten
+  // çanağın altına inen açık kol. İç kenarları saydamlaşarak zemine
+  // karışıyor; keskin bir leke sınırı kalmıyor.
+  ['M-4 74C30 78 62 86 100 86 124 86 144 83 160 74V88C140 97 110 99 70 101 40 102 20 103-4 107Z',
+    ['d', 0, 74, 0, 100, [[0, '#8fd7e2', 0], [0.5, '#76cfdb', 0.9], [1, '#5cc4d5']]]],
+  ['M134 24C142 40 140 70 138 98 160 88 170 78 180 69 200 52 222 32 245 19 265 9 283 4 300-2L304-4H134Z',
+    ['d', 138, 0, 222, 0, [[0, '#b5e4ec', 0], [0.3, '#8cd6e1', 0.8], [0.47, '#6cc9d6'], [0.62, '#3cb4c4'], [0.78, '#119fb1'], [1, '#0b8fa2']]]],
+  ['M57-4C66 2 76 7 86 12 106 22 132 28 158 31L172 33V-4Z',
+    ['d', 57, 0, 172, 0, [[0, '#c6ebf2', 0.3], [0.3, '#a9e0e9', 0.9], [0.7, '#88d6e2'], [1, '#7bd1dd']]]],
+  // Çanağın sağ altından inen koyu turkuaz iç kurdele.
+  ['M166 20C184 26 194 36 203 43 215 34 228 22 246 6V-4H166Z',
+    ['d', 196, 44, 214, 16, [[0, '#2aacbc'], [0.45, '#0795a8'], [1, '#037d91']]]],
+  // Tepeden sarkan koyu çanak; ortası daha açık petrol.
+  ['M94-4C110 6 136 20 166 24 198 28 228 18 264-4Z',
+    ['d', 100, 0, 262, 0, [[0, '#03586d'], [0.3, '#016b80'], [0.62, '#02889a'], [0.78, '#027d90'], [1, '#035b6e']]]],
+  // Kurdelenin üst kenarındaki açık parıltı (sağ yarıda).
+  ['M170 76C184 62 195 49 205 37 220 22 240 10 262 3 273 0 283-2 293-4H302L298-2C283 4 265 9 245 19 222 32 200 52 180 69Z',
+    ['d', 176, 0, 292, 0, [[0, '#a6dde6'], [0.4, '#88d1dc'], [0.66, '#6fc8d5'], [0.82, '#3db2c1'], [1, '#1fa6b5']]]],
+  // Koyu S-kurdele: sol kenarda kalın, ortada incelip açılıyor, tepede yine koyu.
+  ['M-4 105C20 99 70 99 110 97 140 95 160 84 180 67 200 50 222 30 245 17 265 7 283 2 298-4H308C290 8 262 18 240 32 210 51.1 186 82 160 90 140 96.2 120 105 90 106 60 107 40 108 25 114 12 119.2 4 128-4 134Z',
+    ['d', 0, 0, 304, 0, [[0, '#06566a'], [0.08, '#046a7f'], [0.22, '#067f93'], [0.42, '#0790a4'], [0.55, '#0898ab'], [0.64, '#05889c'], [0.71, '#03697d'], [0.79, '#024f63'], [1, '#033f50']]]],
+  // Kurdelenin sol ucunun alt yarısı gölgede: kenarda koyu, sağa doğru siliniyor.
+  ['M-4 116C12 113 28 109 50 107 32 110 16 118-4 134Z',
+    ['d', -4, 0, 50, 0, [[0, '#073a48', 0.9], [1, '#073a48', 0]]]],
+  // Kurdelenin altındaki açık kuyruk: sol kenardan çıkıp incelerek bitiyor.
+  ['M-4 134C4 128 12 120 25 114 40 108 60 107 84 107 58 112 30 124-4 150Z',
+    ['d', -4, 0, 84, 0, [[0, '#8fd6e2'], [0.5, '#b4e3eb', 0.9], [1, '#d6f1f6', 0]]]],
+  // Kurdele tepesinin sağında ince açık tepe.
+  ['M296-4C314 3 336 4 362-4Z', ['d', 296, 0, 362, 0, [[0, '#a8e2eb'], [1, '#e2f6f9', 0]]]],
 ];
-/** Bulanıklaştırılan (en açık) katman sayısı. */
-const YUMUSAK_KATMAN = 4;
 
 /* SVG içindeki kimlikler (filtre, gradyan) belgede tekil olmalı: sayfada
    aynı anda birden çok kâğıt olabiliyor (önizleme kutusu, yazdırma
@@ -229,6 +288,15 @@ const AYAK_KOYU = 'M0 26C4.2 24.2 16.7 17.8 25 15 33.3 12.2 41.7 10.7 50 9 58.3 
 /** Koyu tabanı çapraz kesen açık turkuaz iz (iletişim bloğunun solunda). */
 const AYAK_IZ = 'M372 40C392 52 424 72 452 94H420C408 76 392 58 372 40Z';
 
+/** Antet katmanının geçişi: doğrusal ya da eliptik ışıma (kullanıcı
+ *  biriminde; elips gradientTransform ile birim daireden çiziliyor). */
+function gecis(id, [tur, a, b, c, d, duraklar]) {
+  const stoplar = duraklar.map(([offset, renk, opaklik]) => svgEl('stop', { offset, 'stop-color': renk, 'stop-opacity': opaklik }));
+  return tur === 'r'
+    ? svgEl('radialGradient', { id, gradientUnits: 'userSpaceOnUse', cx: 0, cy: 0, r: 1, gradientTransform: `translate(${a} ${b}) scale(${c} ${d})` }, stoplar)
+    : svgEl('linearGradient', { id, gradientUnits: 'userSpaceOnUse', x1: a, y1: b, x2: c, y2: d }, stoplar);
+}
+
 /** Köşe süsü ve ayak bandı için akan dalga çizimleri.
  *
  *  CSS zemini değil SVG ÖĞESİ: zemin dolguları yazdırmada tarayıcının
@@ -237,25 +305,16 @@ const AYAK_IZ = 'M372 40C392 52 424 72 452 94H420C408 76 392 58 372 40Z';
 function dalga(yer) {
   if (yer === 'ust') {
     // Tasarımda dalgalar antedin yalnız SOL yarısında (≈ %54): koyu petrol
-    // bir S-kurdele, tepeden sarkan koyu bir çanak ve üstlerinde açık
-    // turkuaz katmanlar; sağ yarı beyaz. Önceki çizimde soluk kurdeleler
-    // bütün genişliği kaplıyordu ve koyu kütle hiç yoktu — tasarımla en
-    // büyük fark buydu. Katmanlar tasarımın parlaklık eşiklerinden izlendi
-    // (en açıktan en koyuya, her biri bir öncekinin üstüne çiziliyor).
-    // Açık katmanlar tasarımda yumuşak geçişli; keskin kenarla basamak
-    // basamak (poster gibi) duruyordu. Onlar hafifçe bulanıklaştırılıyor,
-    // koyu kurdele ve çanak keskin kalıyor. Filtre kimliği her kâğıtta
-    // tekil: sayfada birden çok kâğıt olabiliyor (önizleme, yazdırma kopyası).
-    const kimlik = tekilKimlik('kagit-dalga');
+    // bir S-kurdele, tepeden sarkan koyu bir çanak, aralarında açık turkuaz
+    // bir cam bant; sağ yarı beyaz. Geçiş kimlikleri her kâğıtta tekil:
+    // sayfada birden çok kâğıt olabiliyor (önizleme, yazdırma kopyası).
+    const kimlikler = ANTET_DALGASI.map(() => tekilKimlik('kagit-dalga'));
     return svgEl('svg', {
-      class: 'kagit__dalga kagit__dalga--ust', viewBox: '0 0 609 193',
+      class: 'kagit__dalga kagit__dalga--ust', viewBox: '0 0 608 191',
       preserveAspectRatio: 'none', 'aria-hidden': 'true',
     },
-    svgEl('filter', { id: kimlik, x: '-5%', y: '-5%', width: '110%', height: '110%' },
-      svgEl('feGaussianBlur', { stdDeviation: 1.6 })),
-    ...ANTET_DALGASI.map(([renk, d], i) => svgEl('path', {
-      d, fill: renk, 'fill-rule': 'evenodd', filter: i < YUMUSAK_KATMAN ? `url(#${kimlik})` : null,
-    })));
+    svgEl('defs', {}, ANTET_DALGASI.map(([, dolgu], i) => gecis(kimlikler[i], dolgu))),
+    ANTET_DALGASI.map(([d], i) => svgEl('path', { d, fill: `url(#${kimlikler[i]})` })));
   }
   // Ayak bandı: dört katman. Soluk turkuaz hale, parlak turkuaz kurdele,
   // koyu petrol taban ve tabanı kesen açık iz. Zemin rengi CSS'te değil
