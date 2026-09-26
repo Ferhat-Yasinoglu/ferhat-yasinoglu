@@ -133,6 +133,13 @@ export function brifingSec(brifingler = [], kanal) {
   return aktifler.find((b) => kanalli(b) && b.kanallar.includes(kanal)) || aktifler.find((b) => !kanalli(b)) || null;
 }
 
+/** Dile göre hazır metin: tek metin ya da { fa, en, … }; o dil yoksa ilki. */
+export function dileGore(metinler, dil) {
+  if (!metinler) return null;
+  if (typeof metinler === 'string') return metinler;
+  return metinler[dil] || Object.values(metinler)[0] || null;
+}
+
 /** Brifingin `yasakDesenleri` (RegExp kaynakları) cevapta geçiyorsa eşleşen desen. İstem
  *  bir ricadır; küçük bir model (Workers AI) "doz söyleme" kuralını çiğneyebilir. Bu
  *  denetim modelden bağımsızdır: yasak içerik hiçbir sağlayıcıdan dışarı çıkmaz. */
@@ -168,8 +175,7 @@ export async function ajanCevap(env, db, { brifing, mesaj, gecmis = [], kanal, d
     rapor.engellendi = desen;
     console.warn(`ajan ${brifing.id}: cevap yasak desene uydu, gönderilmedi (${desen})`);
     // Hazır ret cümlesi (dile göre) varsa o gider; yoksa <skip> gibi susulur.
-    const ret = brifing.yasakCevabi;
-    const hazir = typeof ret === 'string' ? ret : ret && (ret[dil] || Object.values(ret)[0]);
+    const hazir = dileGore(brifing.yasakCevabi, dil);
     return hazir ? String(hazir).slice(0, brifing.maxKarakter || 400) : null;
   }
   return metin.slice(0, brifing.maxKarakter || 400);

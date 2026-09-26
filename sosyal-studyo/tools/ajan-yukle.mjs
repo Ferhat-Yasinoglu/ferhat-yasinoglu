@@ -192,7 +192,7 @@ export function ozetMetni(r) {
     s.push('', '### Örnek sorular (deneme; dışarı mesaj gitmez)', '');
     for (const o of r.ornekler) {
       s.push(`**Soru${o.tur === 'tibbi' ? ' (tıbbi, reddetmeli)' : ''}:** ${o.soru}${o.model ? ` _(${o.saglayici} · ${o.model})_` : ''}`, '');
-      s.push(o.hata ? blok('HATA: ' + o.hata) : o.cevap ? blok(o.cevap) : blok('(sustu: <skip> — soru cevapsızlar listesine düşer)'));
+      s.push(o.hata ? blok('HATA: ' + o.hata) : o.cevap ? blok(o.cevap) : blok(r.brifing?.bilinmeyenCevabi ? '(<skip> — kullanıcıya hazır "bulamadım" cevabı gider; soru cevapsızlar listesine düşer)' : '(sustu: <skip> — soru cevapsızlar listesine düşer)'));
       if (o.uyarilar.length) s.push('', '⚠ ' + o.uyarilar.join(' · '));
       s.push('');
     }
@@ -262,7 +262,7 @@ export async function calistir({ env = process.env, fetchFn = fetch, yaz = (s) =
   cikti('--- örnek sorular (deneme: dışarı mesaj gitmez) ---');
   for (const o of rapor.ornekler) {
     cikti(`? ${o.soru}${o.model ? ` [${o.saglayici} · ${o.model}]` : ''}`);
-    cikti(o.hata ? `  HATA: ${o.hata}` : o.cevap ? '  ' + o.cevap.replace(/\n/g, ' ') : '  <skip> (sustu)');
+    cikti(o.hata ? `  HATA: ${o.hata}` : o.cevap ? '  ' + o.cevap.replace(/\n/g, ' ') : brifing.bilinmeyenCevabi ? '  <skip> → hazır "bulamadım" cevabı gider' : '  <skip> (sustu)');
     for (const u of o.uyarilar) cikti(`::warning::"${o.soru.slice(0, 40)}": ${u}`);
   }
   const yedek = rapor.ornekler.find((o) => o.anthropicHatasi);
