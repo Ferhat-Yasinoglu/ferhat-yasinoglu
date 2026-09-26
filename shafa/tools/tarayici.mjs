@@ -126,6 +126,17 @@ await sayfa.click(`button:has-text("${T('ayar.ornek_yukle')}")`);
 await sayfa.waitForSelector('.bildirim--basari');
 ok('örnek veriler yüklendi: ' + (await sayfa.textContent('.bildirim--basari')).trim());
 
+// Yardım: «درباره» kartında Telegram destek botu. Yalnız hekimin tıkladığı bir bağlantı;
+// uygulamanın kendisi Telegram'a hiçbir istek atmaz (sayfa açılırken ağa çıkılmadı).
+{
+  const bag = sayfa.locator('[data-rol="telegram-yardim"]');
+  const [href, hedef, rel] = await Promise.all([bag.getAttribute('href'), bag.getAttribute('target'), bag.getAttribute('rel')]);
+  if (href !== 'https://t.me/rabatshafa_bot') throw new Error('Telegram yardım bağlantısı yanlış: ' + href);
+  if (hedef !== '_blank' || !/noopener/.test(rel || '')) throw new Error(`Telegram bağlantısı yeni sekmede ve noopener ile açılmalı: target=${hedef} rel=${rel}`);
+  if (!(await bag.textContent()).includes(T('ayar.telegram_dugme'))) throw new Error('Telegram düğmesinin yazısı sözlükten gelmiyor');
+  ok('ayarlar: «درباره» kartında Telegram yardım bağlantısı (@rabatshafa_bot, yeni sekme, noopener)');
+}
+
 // --- İlaç listesi
 await sayfa.click('#kenar-menu a[href="#/ilaclar"]');
 await sayfa.waitForSelector('.tablo tbody tr');

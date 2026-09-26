@@ -25,6 +25,9 @@ import { metniDogrula } from '../depo/dogrulama.js';
    Farsça sütunun ortasında "sablonlar" yazıyordu). Denetim bunu göremiyor,
    anahtar `KOL_ANAHTARI[ad] || ad` ile dinamik kuruluyor — tarayıcı denemesi
    kartta Latin harfli etiket kalmadığını doğruluyor. */
+// Shafa destek botu (Sosyal Stüdyo Worker'ı cevaplar; bkz. sosyal-studyo/worker/hazir/shafa-ajan.json).
+const TELEGRAM_BOT = 'https://t.me/rabatshafa_bot';
+
 const KOL_ANAHTARI = {
   ilaclar: 'nav.ilaclar', hastalar: 'nav.hastalar', receteler: 'nav.receteler',
   sablonlar: 'sablon.kisa', ayarlar: 'nav.ayarlar',
@@ -449,7 +452,13 @@ export default {
       kok.appendChild(kart({},
         el('div', { class: 'kart__bas' }, el('h2', {}, t('ayar.hakkinda', 'Hakkında'))),
         el('p', { class: 'kart__alt' }, `${t('uygulama.tam_ad', 'Shafa — Reçete')} · ${t('ayar.surum', 'sürüm')} ${ctx.uygulamaSurumu}`),
-        el('p', { class: 'kart__alt' }, t('ayar.hakkinda_alt', 'Çerçevesiz, derleme adımsız bir PWA. İnternet olmadan da tam çalışır. Hesap yoksa hiçbir veri sunucuya gitmez; hesapla yalnız şifreli bir kopya.'))));
+        el('p', { class: 'kart__alt' }, t('ayar.hakkinda_alt', 'Çerçevesiz, derleme adımsız bir PWA. İnternet olmadan da tam çalışır. Hesap yoksa hiçbir veri sunucuya gitmez; hesapla yalnız şifreli bir kopya.')),
+        // Yardım: Telegram'daki Shafa destek botu. Uygulama ağa bir şey göndermez; bu yalnız
+        // hekimin kendi tıkladığı bir bağlantı (Telegram uygulaması ya da tarayıcı açılır).
+        el('p', { class: 'kart__alt' }, t('ayar.telegram', 'Sorunuz mu var? Shafa yardımcısı Telegram\'da cevaplıyor.')),
+        el('div', { class: 'satir' },
+          el('a', { class: 'btn', href: TELEGRAM_BOT, target: '_blank', rel: 'noopener noreferrer', dataset: { rol: 'telegram-yardim' } },
+            t('ayar.telegram_dugme', 'Telegram\'da sor'), el('span', { dir: 'ltr' }, ' @rabatshafa_bot')))));
     }
 
     if (ctx.sorgu?.hesap) hesapKipi('giris');
