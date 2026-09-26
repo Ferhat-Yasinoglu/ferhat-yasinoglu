@@ -126,8 +126,9 @@ ya da sayfa yüklenirken zıplardı.
 - **Fiyat yazmıyor.** İkinci sürüm paralı olacak ama rakam belli değil; belli
   olmadan sayfaya sayı yazılmıyor. Tarife kartı "به زودی" diyor.
 - **Hesap reklam edilmiyor.** Sunucunun adresi uygulamaya yazılana kadar
-  (`VARSAYILAN_SUNUCU` boş) hesap kartı dürüstçe «henüz açık değil» diyor;
-  sitenin söz vermesi erken olurdu. Google döneminde aynı hata yapılmıştı:
+  (`VARSAYILAN_SUNUCU` boştu) hesap kartı dürüstçe «henüz açık değil» diyordu;
+  adres artık yazılı, ama hesap davet koduyla açıldığı için site onu bir "imkân"
+  olarak öne çıkarmıyor; sitenin herkese söz vermesi yanlış olurdu. Google döneminde aynı hata yapılmıştı:
   sayfa, çoğu hekimin kullanamadığı bir özelliği "imkân" diye saydı. Bu yüzden
   "iki cihazı nasıl birleştiririm" sorusunun cevabı bugün **herkeste** çalışan
   yol olarak kalıyor: dosya yedeğini öbür cihaza taşımak.
@@ -584,8 +585,10 @@ yalnız cihazda şifrelenmiş kasa gider. Kodun yerleri:
 **Ayarlar → «حساب»** (dosya yedeği kartının hemen altında; ikisi aynı sorunun iki cevabı):
 
 - **Sunucu yok** (`VARSAYILAN_SUNUCU` boş, sayfa localhost değil): kart
-  «حساب‌ها هنوز فعال نشده‌اند…» der, tek kutu yok. Bu sürüm böyle çıkıyor;
-  adres dağıtımdan sonra ayrı bir değişiklikle yazılır.
+  «حساب‌ها هنوز فعال نشده‌اند…» der, tek kutu yok. Yayındaki sürümde adres yazılı
+  (`https://shafa-sunucu.ferhatyasinoglu.workers.dev`, CSP `connect-src`'de aynısı);
+  bu durum yalnız adres boşaltılırsa görülür. localhost/127.0.0.1'de API yine aynı
+  kökendedir ve yayındaki adresten önce gelir: testler gerçek sunucuya dokunmaz.
 - **Çıkışlı**: «ورود» / «ساختن حساب» sekmeleri, «رمز را فراموش کرده‌اید؟» ile
   kurtarma formu. Kullanıcı adı kutusu `autocapitalize=none autocorrect=off
   spellcheck=false dir=ltr inputmode=email autocomplete=username`; yazılırken
@@ -783,7 +786,7 @@ açılışta Google döneminin ayarlarını (kasa kodu dahil) bir kez siliyor.
 - [x] Reçete kâğıdı: antet, klinik ölçüm sütunu, QR, boş kâğıt
 - [x] WhatsApp / e-posta ile gönderme
 - [x] Kullanıcı adı + parolalı hesap: şifreli kopya, iki cihaz aynı kayıtları kullanır (yukarıya bak)
-- [ ] Hesap sunucusunun adresi: dağıtımdan sonra `VARSAYILAN_SUNUCU` ve CSP'deki tam adres
+- [x] Hesap sunucusunun adresi: `VARSAYILAN_SUNUCU` ve CSP'deki tam adres (`https://shafa-sunucu.ferhatyasinoglu.workers.dev`)
 - [ ] Reçete başlık alanlarının gözden geçirilmesi (aşağıya bak)
 - [ ] Reçeteyi dosya (PDF/görsel) olarak gönderme — şu an metin olarak gidiyor,
       kâğıt görünümü için "Yazdır → PDF" kullanılıyor

@@ -46,11 +46,14 @@ describe('Shafa ajan dosyası', () => {
     for (const k of ['رایگان', 'Add to Home Screen', 'بدون انترنت', 'به هیچ سروری', 'دانلود پشتیبان', 'بازگردانی از پشتیبان', 'ذخیره و چاپ', 'ذخیره PDF', 'A4', 'سربرگ نسخه', 'کد تأیید', 'بررسی نسخه', 'حالت شب', 'روی تیلفون', 'همین‌جا']) expect(bilgi).toContain(k);
   });
 
-  it('hesaplar dürüstçe "hazırlanıyor" diye anlatılır, var diye değil', () => {
+  it('hesap: uygulamadaki gerçek adımlar, davet kodu sahipten, kod asla uydurulmaz', () => {
     const hesap = brifing.bilgi_tabani.find((b) => b.baslik.includes('حساب کاربری'));
-    expect(hesap.metin).toMatch(/در حال آماده شدن/);
-    expect(hesap.metin).toMatch(/هنوز فعال نیست/);
-    expect(bilgi).toMatch(/being prepared and will be announced; they are not available yet/);
+    for (const etiket of ['«ساختن حساب»', '«کد دعوت»', '«کد بازیابی حساب»', '«ورود»', '«رمز را فراموش کرده‌اید؟»']) expect(hesap.metin).toContain(etiket);
+    expect(hesap.metin).toMatch(/صاحب برنامه می‌دهد/);
+    expect(hesap.metin).toMatch(/اختیاری/);
+    expect(brifing.kimlik).toMatch(/کد دعوت حساب را هرگز خودتان نگویید/);
+    expect(bilgi).not.toMatch(/در حال آماده شدن|being prepared/);
+    expect(bilgi).toMatch(/invite code/);
   });
 
   it('telefon numarası, fiyat rakamı, e-posta ya da kişi adı yok', () => {

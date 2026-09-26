@@ -203,14 +203,24 @@ describe('zaman aşımları', () => {
 });
 
 describe('sunucu adresi', () => {
-  it('yayında adres henüz yok: hesaplar kapalı', () => {
-    expect(VARSAYILAN_SUNUCU).toBe('');
-    expect(sunucuAdresi({ hostname: 'ferhat-yasinoglu.github.io', origin: 'https://ferhat-yasinoglu.github.io' })).toBe('');
-    expect(sunucuAdresi(undefined)).toBe('');
+  const YAYIN = { hostname: 'ferhat-yasinoglu.github.io', origin: 'https://ferhat-yasinoglu.github.io' };
+  it('yayında: sabit workers.dev adresi, https, CSP connect-src ile aynı (joker yok)', async () => {
+    expect(VARSAYILAN_SUNUCU).toBe('https://shafa-sunucu.ferhatyasinoglu.workers.dev');
+    expect(sunucuAdresi(YAYIN)).toBe(VARSAYILAN_SUNUCU);
+    expect(sunucuAdresi(undefined)).toBe(VARSAYILAN_SUNUCU);
+    const { readFile } = await import('node:fs/promises');
+    const html = await readFile(new URL('../app/index.html', import.meta.url), 'utf8');
+    const connect = html.match(/connect-src ([^;]+);/)[1].trim().split(/\s+/);
+    expect(connect).toEqual(["'self'", VARSAYILAN_SUNUCU]);
   });
-  it('yerelde (localhost, 127.0.0.1) API aynı kökenden', () => {
+  it('adres boşsa hesaplar kapalı', () => {
+    expect(sunucuAdresi(YAYIN, '')).toBe('');
+    expect(sunucuAdresi(undefined, '')).toBe('');
+  });
+  it('yerelde (localhost, 127.0.0.1) API aynı kökenden ve yayındaki adresten önce', () => {
     expect(sunucuAdresi({ hostname: 'localhost', origin: 'http://localhost:8788' })).toBe('http://localhost:8788');
     expect(sunucuAdresi({ hostname: '127.0.0.1', origin: 'http://127.0.0.1:9' })).toBe('http://127.0.0.1:9');
-    expect(sunucuAdresi({ hostname: 'localhost.evil.test', origin: 'http://localhost.evil.test' })).toBe('');
+    expect(sunucuAdresi({ hostname: 'localhost.evil.test', origin: 'http://localhost.evil.test' })).toBe(VARSAYILAN_SUNUCU);
+    expect(sunucuAdresi({ hostname: 'localhost.evil.test', origin: 'http://localhost.evil.test' }, '')).toBe('');
   });
 });

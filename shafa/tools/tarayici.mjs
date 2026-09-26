@@ -5017,32 +5017,42 @@ await hesapKart.locator(`button:has-text("${T('hesap.girise_don')}")`).click();
 if (kutuSorunlari.length) throw new Error('hesap kutuları: ' + kutuSorunlari.join(' · '));
 ok(`hesap kartı Google kartının yerinde: giriş / hesap aç / kurtarma formları, kutularda doğru autocomplete, dir=ltr ve telefon ayarları; kullanıcı adı yazılırken düzeliyor (Dr.Ahmad۱۲ → ${normalAd})`);
 
-// --- Sunucu adresi yokken (yayındaki bugünkü durum, VARSAYILAN_SUNUCU boş):
-// kart dürüstçe «henüz açık değil» diyor, tek kutu yok, karşılamada giriş
-// düğmesi yok, ağa çıkılmıyor. localhost ve 127.0.0.1 yerel geliştirme
-// sayılıyor (API aynı kökende); 127.0.0.2 de bu makine ama o listede değil —
-// sayfa github.io'daki gibi davranıyor.
-const sunucusuzBaglam = await tarayici.newContext({ viewport: { width: 1280, height: 900 } });
-const sunucusuzIstek = [];
-sunucusuzBaglam.on('request', (r) => sunucusuzIstek.push(new URL(r.url()).pathname));
-const sunucusuz = await sunucusuzBaglam.newPage();
-sunucusuz.on('console', (m) => { if (m.type() === 'error') hatalar.push('sunucusuz console: ' + m.text()); });
-sunucusuz.on('pageerror', (e) => hatalar.push('sunucusuz pageerror: ' + e.message));
-const sunucusuzKok = `http://127.0.0.2:${PORT}/?nosw=1`;
-await sunucusuz.goto(sunucusuzKok + '#/recete/kagit', { waitUntil: 'load' });
-await sunucusuz.waitForSelector(`text=${T('kagit.ilk_baslik')}`);
-const sunucusuzKarsilama = await sunucusuz.$$eval('#sayfa .btn', (a) => a.map((x) => x.textContent.trim()));
-if (sunucusuzKarsilama.some((x) => x.includes(T('hesap.var_mi')))) throw new Error('sunucu yokken karşılamada giriş düğmesi var');
-await sunucusuz.click('#kenar-menu a[href="#/ayarlar"]');
-await sunucusuz.waitForSelector('#hesap-karti');
-const kapaliKart = await sunucusuz.$eval('#hesap-karti', (k) => ({ metin: k.textContent, kutu: k.querySelectorAll('input, form').length }));
-if (!kapaliKart.metin.includes(T('hesap.kapali')) || kapaliKart.kutu) {
-  throw new Error('sunucu yokken hesap kartı: ' + JSON.stringify({ ...kapaliKart, metin: kapaliKart.metin.slice(0, 80) }));
+// --- Yayındaki gibi (github.io'da açılan sayfa): localhost ve 127.0.0.1 yerel
+// geliştirme sayılıyor (API aynı kökende); 127.0.0.2 de bu makine ama o listede
+// değil, sayfa yayındaki adresi (VARSAYILAN_SUNUCU) kullanıyor. Gerçek sunucuya
+// hiçbir istek gitmez: o adres bu bağlamda yakalanıyor. Denenen: hesapsız açılışta
+// ve kart çizilirken sunucuya tek istek yok; kart formlarla geliyor; CSP tam o
+// adrese izin veriyor (başka workers.dev adresine vermiyor).
+const YAYIN_SUNUCU = 'https://shafa-sunucu.ferhatyasinoglu.workers.dev';
+const yayinBaglam = await tarayici.newContext({ viewport: { width: 1280, height: 900 } });
+const yayinIstek = [];
+await yayinBaglam.route('https://*.workers.dev/**', (r) => {
+  yayinIstek.push(r.request().url());
+  return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: '{"ok":true}' });
+});
+const yayin = await yayinBaglam.newPage();
+yayin.on('console', (m) => { if (m.type() === 'error' && !/Content Security Policy|Refused to connect/.test(m.text())) hatalar.push('yayın console: ' + m.text()); });
+yayin.on('pageerror', (e) => hatalar.push('yayın pageerror: ' + e.message));
+const yayinKok = `http://127.0.0.2:${PORT}/?nosw=1`;
+await yayin.goto(yayinKok + '#/recete/kagit', { waitUntil: 'load' });
+await yayin.waitForSelector(`text=${T('kagit.ilk_baslik')}`);
+await yayin.click('#kenar-menu a[href="#/ayarlar"]');
+await yayin.waitForSelector('#hesap-karti form');
+const yayinKart = await yayin.$eval('#hesap-karti', (k) => ({ metin: k.textContent, kutu: k.querySelectorAll('input').length }));
+if (yayinKart.metin.includes(T('hesap.kapali')) || !yayinKart.kutu) {
+  throw new Error('yayındaki gibi açılışta hesap kartı formsuz: ' + JSON.stringify({ ...yayinKart, metin: yayinKart.metin.slice(0, 80) }));
 }
-await sunucusuz.waitForTimeout(2000);
-if (sunucusuzIstek.some((y) => y.startsWith('/v1/'))) throw new Error('sunucu yokken /v1/ isteği: ' + sunucusuzIstek.join(' '));
-await sunucusuzBaglam.close();
-ok(`sunucu adresi yokken kart «${T('hesap.kapali').slice(0, 40)}…» diyor: kutu yok, karşılamada giriş düğmesi yok, /v1/ isteği yok`);
+await yayin.waitForTimeout(2000);
+if (yayinIstek.length) throw new Error('hesapsız açılışta sunucuya istek gitti: ' + yayinIstek.join(' '));
+const csp = await yayin.evaluate(async (adres) => {
+  const dene = async (u) => { try { return (await fetch(u)).status; } catch { return 'engellendi'; } };
+  return { dogru: await dene(adres + '/v1/durum'), baska: await dene('https://baska-sunucu.ferhatyasinoglu.workers.dev/v1/durum') };
+}, YAYIN_SUNUCU);
+if (csp.dogru !== 200 || csp.baska !== 'engellendi' || yayinIstek.length !== 1 || !yayinIstek[0].startsWith(YAYIN_SUNUCU + '/v1/durum')) {
+  throw new Error('CSP connect-src: ' + JSON.stringify({ csp, yayinIstek }));
+}
+await yayinBaglam.close();
+ok(`yayındaki gibi açılış: hesap kartı formlarla (${yayinKart.kutu} kutu), hesapsız açılışta ve kart çizilirken sunucuya istek yok; CSP yalnız ${YAYIN_SUNUCU}'ya izin veriyor`);
 
 // --- Eşitleme: gerçek tarayıcıda, gerçek IndexedDB ve gerçek WebCrypto ile.
 // Taşıyıcı olarak bellek taşıyıcısı: denenen şey iki deponun aynı veriye

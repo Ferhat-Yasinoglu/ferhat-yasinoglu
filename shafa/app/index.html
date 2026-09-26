@@ -3,10 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Uygulama yalnız kendi dosyalarına ve kendi kökenine bağlanır. Hesap
-     sunucusunun adresi belli olunca (senkron/sunucu-adresi.js) connect-src'ye
-     TAM adresiyle eklenir; joker yok. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<!-- Uygulama yalnız kendi dosyalarına, kendi kökenine ve hesap sunucusuna
+     (senkron/sunucu-adresi.js) bağlanır. Sunucu TAM adresiyle yazılı; joker yok. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://shafa-sunucu.ferhatyasinoglu.workers.dev; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="theme-color" content="#f6fafd">
 <meta name="description" content="شفا — نسخه‌نویسی و ثبت مریضان برای داکتر. معلومات در همین دستگاه می‌ماند؛ با حساب اختیاری تنها یک کاپی رمزگذاری‌شده به سرور می‌رود.">
 <title data-i18n="uygulama.tam_ad">شفا — نسخه‌نویسی</title>
