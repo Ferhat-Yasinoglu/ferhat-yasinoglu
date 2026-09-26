@@ -6,33 +6,82 @@
 // ikinci bir kopyada unutulması güvenlik sorunu olurdu.
 import { el, temizle, btn, girdi, alan } from './cekirdek/dom.js';
 import { simge } from './cekirdek/simge.js';
-import { KULLANIM_ONERILERI, SURE_ONERILERI, YOLLAR, bosSatir } from './paylasilan/recete.js';
+import { KULLANIM_ONERILERI, SURE_ONERILERI, YOLLAR, bosSatir, sonKullanim } from './paylasilan/recete.js';
+import { secenekListesi } from './paylasilan/klinik.js';
 import { FORMLAR, formAdi, ilacAra, ilacEtiketi } from './paylasilan/ilac.js';
 import { alerjiCakismasi } from './paylasilan/hasta.js';
 import { cip } from './klinik-arayuz.js';
 import { enterleOnayla } from './cekirdek/modal.js';
 import { t, secenekAdi } from './i18n.js';
-import { uyariMetni } from './hatalar.js';
+import { uyariMetni, hataMetni } from './hatalar.js';
 
 /** Ekranda gösterilen ilaç adı: şekil adı sözlükten ("Parol 500 mg تابلیت").
  *  Reçete satırına giden ilacAdi yine ilacEtiketi(): kâğıt o Türkçe şekil
  *  adını tanıyıp düşürüyor (ilacAdiFormsuz). */
 export const ilacGorunenAd = (ilac) => ilacEtiketi(ilac, (k) => (formAdi(k) ? secenekAdi(FORMLAR, k, 'form') : ''));
 
-/** İlaç satırı kutusu: ilaç ara/seç, adet, kullanım, süre. */
-export async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = []) {
+/** Sözlükteki eski kısa öneri listesi (kullanim.0…, sure.0…, yol.0…): klinik
+ *  belge okunamadıysa satır kutusunun yedek çipleri. */
+const eskiListe = (liste, onek) => liste.map((k, i) => t(`${onek}.${i}`, k));
+
+/**
+ * İlaç satırı kutusu: ilaç ara/seç, adet, güç, kullanım, zaman, süre, yol.
+ * @param {object} [sec]
+ * @param {object} [sec.ilac]  önceden seçili ilaç (formdaki aramadan gelen):
+ *   ad kutusu dolu açılıyor, alerji uyarısı hemen çıkıyor, odak adette.
+ * @param {(q: string) => object[]} [sec.ara]  arama; sayfa hekimin ilaçlarını
+ *   ve hazır listeyi birlikte arıyor (paylasilan/ilac-listesi.js ilacSuz).
+ * @param {(ilac: object) => Promise<object>} [sec.kayda]  hazır listeden
+ *   seçilen satırı onayda depoya yazıp kimlikli kaydı döndürür. Vazgeçilirse
+ *   hiçbir şey yazılmıyor.
+ * @param {object} [sec.klinik]  klinik belge: kullanım/zaman/süre/yol çipleri
+ *   onun `secenekler`inden (ilaca bağlı olmayan genel ifadeler).
+ * @param {Map} [sec.hafiza]  paylasilan/recete.js sonKullanimlar() çıktısı.
+ */
+export async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = [], {
+  ilac: onceSecilen = null, ara = (q) => ilacAra(ilaclar, q), kayda = async (x) => x, klinik = null, hafiza = null,
+} = {}) {
   const { modal } = ctx;
-  let ilac = mevcut?.ilacId ? ilaclar.find((x) => x.id === mevcut.ilacId) : null;
+  let ilac = onceSecilen || (mevcut?.ilacId ? ilaclar.find((x) => x.id === mevcut.ilacId) : null);
 
   const kutu = girdi({ type: 'search', name: 'ilacArama', placeholder: t('recete.ilac_ara', 'İlaç adı, barkod, etken madde…'), value: ilac ? ilacGorunenAd(ilac) : '' });
   const sonuclar = el('div', { class: 'liste', style: { maxBlockSize: '220px', overflowY: 'auto' } });
   const secilenKutusu = el('div', {});
   const adet = girdi({ type: 'number', name: 'adet', min: 1, step: 1, value: mevcut?.adet ?? 1 });
+  // Güç (doz) satıra seçildiği andaki hâliyle yazılıyor: tablo ve kâğıt
+  // «20 mg (Cap)» basıyor, ilaç kaydı sonradan değişse de reçete değişmesin.
+  const doz = girdi({ name: 'doz', dir: 'ltr', value: mevcut?.doz ?? ilac?.doz ?? '', placeholder: t('recete.doz_yer', '500 mg') });
   const kullanim = girdi({ name: 'kullanim', value: mevcut?.kullanim ?? '', list: 'kullanim-onerileri', placeholder: t('recete.kullanim_yer', 'Günde 2×1') });
+  const zaman = girdi({ name: 'zaman', value: mevcut?.zaman ?? '', placeholder: t('recete.zaman_yer', 'Yemekten sonra') });
   const sure = girdi({ name: 'sure', value: mevcut?.sure ?? '', placeholder: t('recete.sure_yer', '10 gün') });
   const yol = girdi({ name: 'yol', value: mevcut?.yol ?? '', placeholder: t('recete.yol_yer', 'Ağızdan') });
   const not = girdi({ name: 'satirNotu', value: mevcut?.not ?? '', placeholder: t('recete.not_yer', 'Tok karnına…') });
-  const oneriler = el('datalist', { id: 'kullanim-onerileri' }, ...KULLANIM_ONERILERI.map((k, i) => el('option', { value: t(`kullanim.${i}`, k) })));
+  // Çipler klinik belgenin genel ifadelerinden (veri/klinik.json
+  // `secenekler`); belge okunamadıysa sözlükteki eski kısa liste.
+  const secenek = (tur, eski, onek) => (klinik?.secenekler?.[tur]?.length
+    ? secenekListesi(klinik, tur, ilac?.form) : eski ? eskiListe(eski, onek) : []);
+  const kullanimlar = secenek('tariqa', KULLANIM_ONERILERI, 'kullanim');
+  const oneriler = el('datalist', { id: 'kullanim-onerileri' }, ...kullanimlar.map((k) => el('option', { value: k })));
+
+  /* Hekimin bu ilaca en son yazdığı kullanım (kendi reçetelerinden): tek
+     dokunuşla dört alanı dolduran bir çip. Kendiliğinden doldurulmuyor —
+     her hasta ayrı karar; öneri yalnız teklif. Düzenlemede yok: alanlar zaten
+     satırın kendi değerleriyle dolu. */
+  function hafizaCipi() {
+    const son = !mevcut && hafiza && ilac ? sonKullanim(hafiza, ilac) : null;
+    if (!son) return null;
+    const metin = [son.kullanim, son.zaman, son.sure, son.yol].filter(Boolean).join(' · ');
+    return el('button', {
+      type: 'button', class: 'cip cip--secilir cip--hafiza', 'data-odak-adi': 'son-kullanim',
+      title: t('recete.son_kullanim_ipucu', 'Bu ilaca son yazdığın kullanım; dokununca alanlara yazılır.'),
+      onclick: () => {
+        for (const [g, v] of [[kullanim, son.kullanim], [zaman, son.zaman], [sure, son.sure], [yol, son.yol]]) {
+          g.value = v;
+          g.dispatchEvent(new Event('input'));
+        }
+      },
+    }, simge('saat', { boy: 14 }), el('span', { dir: 'auto' }, t('recete.son_kullanim', 'Son kez: {metin}', { metin })));
+  }
 
   function secileniCiz() {
     temizle(secilenKutusu);
@@ -47,24 +96,40 @@ export async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = []) 
           el('div', { class: 'liste__govde' },
             el('div', { class: 'liste__baslik' }, ilacGorunenAd(ilac)),
             el('div', { class: 'liste__alt' }, ilac.etkenMadde || '—')))),
+      hafizaCipi() || [],
       ...uyarilar.map((u) => el('div', { class: `uyari uyari--${u.tur}`, style: { marginBlockStart: 'var(--b-2)' } }, simge(u.tur === 'hata' ? 'hata' : 'uyari', { boy: 16 }), el('span', {}, u.metin))));
   }
 
   const ilacSatiri = (i) => el('button', {
     class: 'liste__satir liste__satir--tiklanir', type: 'button',
     style: { border: 'none', background: 'none', textAlign: 'start', font: 'inherit', cursor: 'pointer', inlineSize: '100%' },
-    onclick: () => { ilac = i; kutu.value = ilacGorunenAd(i); aramaCiz(); secileniCiz(); },
+    onclick: () => sec(i),
   },
     el('div', { class: 'liste__govde' },
       el('div', { class: 'liste__baslik' }, ilacGorunenAd(i)),
       el('div', { class: 'liste__alt' }, i.etkenMadde || '—')));
 
+  /** İlacı seçer; güç kutusu yeni ilacın gücüyle doluyor. */
+  function sec(i) {
+    ilac = i;
+    kutu.value = ilacGorunenAd(i);
+    doz.value = i.doz || '';
+    aramaCiz(); secileniCiz();
+  }
+
   function aramaCiz() {
     temizle(sonuclar);
     const q = kutu.value.trim();
+    const secili = ilac && q === ilacGorunenAd(ilac);
+    // İlaç seçiliyken (formdaki aramadan, satırı düzenlerken ya da listeden
+    // seçince) gezinme listesi kapalı: 220 px'lik başka ilaç listesi adet,
+    // kullanım ve süre alanlarını kutunun altına itiyordu. Hekim ilacı
+    // değiştirmek isterse kutuya dokunuyor, liste o zaman açılıyor.
+    sonuclar.hidden = secili && document.activeElement !== kutu;
+    if (sonuclar.hidden) return;
     // Kutu boşken de liste gösteriyoruz: hekim yazmadan gezinebilsin.
     // Önce kendi çok yazdıkları, sonra alfabetik baş taraf.
-    if (!q || (ilac && q === ilacGorunenAd(ilac))) {
+    if (!q || secili) {
       const gecmisId = new Set(sik.map((x) => x.id));
       const kalan = ilaclar.filter((x) => !gecmisId.has(x.id)).slice(0, 10);
       if (sik.length) {
@@ -78,7 +143,7 @@ export async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = []) 
       if (!sik.length && !kalan.length) sonuclar.appendChild(el('div', { class: 'liste__satir sessiz' }, t('ilac.kayit_yok', 'Kayıtlı ilaç yok.')));
       return;
     }
-    const bulunan = ilacAra(ilaclar, q).slice(0, 12);
+    const bulunan = ara(q).slice(0, 12);
     if (!bulunan.length) { sonuclar.appendChild(el('div', { class: 'liste__satir sessiz' }, t('ilac.eslesme_yok', 'Eşleşen ilaç yok'))); return; }
     for (const i of bulunan) sonuclar.appendChild(ilacSatiri(i));
   }
@@ -101,6 +166,7 @@ export async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = []) 
     return kap;
   }
   kutu.oninput = aramaCiz;
+  kutu.addEventListener('focus', aramaCiz);
   /* Enter: arama kutusunda TEK eşleşme kalınca (ya da adı tam yazılınca)
      onu seçip adete geçiyor; boş kutuda ya da birden çok eşleşmede bir şey
      seçmiyor, yanlış dava kâğıda girmesin (hasta seçicideki gibi). Öbür
@@ -113,56 +179,70 @@ export async function satirKutusu(ctx, ilaclar, hasta, mevcut = null, sik = []) 
     e.preventDefault();
     const q = kutu.value.trim();
     if (!q) return;
-    const bulunan = ilacAra(ilaclar, q);
+    const bulunan = ara(q);
     const tam = bulunan.filter((i) => ilacGorunenAd(i).toLowerCase() === q.toLowerCase());
     const tek = bulunan.length === 1 ? bulunan : tam;
     if (tek.length !== 1) return;
-    [ilac] = tek;
-    kutu.value = ilacGorunenAd(ilac); aramaCiz(); secileniCiz();
+    sec(tek[0]);
     adet.focus(); adet.select();
   });
-  for (const g of [adet, sure, yol, not]) enterleOnayla(g);
+  for (const g of [adet, doz, zaman, sure, yol, not]) enterleOnayla(g);
   // Açılışta da çiziyoruz: liste yalnız yazınca doluyordu, yani hekim
   // gezinmek için önce klavyeye gitmek zorundaydı.
   aramaCiz();
   secileniCiz();
 
-  const sonuc = await modal({
+  const acik = modal({
     baslik: mevcut ? t('recete.satir_duzenle', 'Satırı düzenle') : t('recete.ilac_ekle', 'İlaç ekle'),
     genis: true,
     govde: el('div', {}, oneriler,
       alan(t('nav.ilac', 'İlaç'), kutu, { gerekli: true, ipucu: t('recete.ilac_ipucu', 'Stoktan seç; listede yoksa önce İlaçlar\'a ekle.') }),
       sonuclar, secilenKutusu,
       el('div', { class: 'izgara izgara--form', style: { marginBlockStart: 'var(--b-3)' } },
-        alan(t('recete.adet', 'Adet (kutu)'), adet, { gerekli: true })),
+        alan(t('recete.adet', 'Adet (kutu)'), adet, { gerekli: true }),
+        alan(t('recete.doz', 'Güç'), doz)),
       alan(t('recete.kullanim', 'Kullanım'), kullanim),
-      oneriCipleri(kullanim, KULLANIM_ONERILERI.map((k, i) => t(`kullanim.${i}`, k))),
+      oneriCipleri(kullanim, kullanimlar),
+      alan(t('recete.zaman', 'Yemekle'), zaman),
+      oneriCipleri(zaman, secenek('zaman')),
       alan(t('recete.sure', 'Süre'), sure),
-      oneriCipleri(sure, SURE_ONERILERI.map((k, i) => t(`sure.${i}`, k))),
+      oneriCipleri(sure, secenek('sure', SURE_ONERILERI, 'sure')),
       alan(t('recete.yol', 'Veriliş yolu'), yol),
-      oneriCipleri(yol, YOLLAR.map((k, i) => t(`yol.${i}`, k))),
+      oneriCipleri(yol, secenek('yol', YOLLAR, 'yol')),
       alan(t('genel.not', 'Not'), not)),
     dugmeler: [
-      // Düzenlerken silme de buradan: kâğıtta satırı çıkarmanın başka yolu
-      // yok, eski formdaki çöp kutusu düğmesi kâğıda sığmıyor.
+      // Düzenlerken silme de buradan: kâğıttaki satırı çıkarmanın bir yolu
+      // da bu (formdaki tabloda ayrıca çöp kutusu var).
       ...(mevcut ? [{ metin: t('genel.sil', 'Sil'), deger: 'sil' }] : []),
       { metin: t('genel.vazgec', 'Vazgeç'), deger: null },
-      { metin: mevcut ? t('genel.kaydet', 'Kaydet') : t('genel.ekle', 'Ekle'), sinif: 'btn--birincil', cb: () => {
+      { metin: mevcut ? t('genel.kaydet', 'Kaydet') : t('genel.ekle', 'Ekle'), sinif: 'btn--birincil', cb: async () => {
         const n = Math.floor(Number(adet.value));
         if (!ilac) { kutu.classList.add('input--hata'); kutu.focus(); return false; }
         if (!(n > 0)) { adet.classList.add('input--hata'); adet.focus(); return false; }
+        // Hazır listeden seçilen satır ancak ŞİMDİ kayda dönüşüyor: kimliği
+        // olsun ki alerji, çift etken ve «son kullanım» onu tanısın.
+        if (ilac.katalog) {
+          try { ilac = await kayda(ilac); } catch (e) { ctx.hata?.(hataMetni(e)); return false; }
+        }
+        const guc = doz.value.trim();
         return {
           ...bosSatir(), ...(mevcut || {}),
-          ilacId: ilac.id, ilacAdi: ilacEtiketi(ilac), etkenMadde: ilac.etkenMadde || '',
+          // Ad güçle birlikte yazılıyor: hekim gücü değiştirdiyse kâğıttaki ad da.
+          ilacId: ilac.id, ilacAdi: ilacEtiketi({ ...ilac, doz: guc }), etkenMadde: ilac.etkenMadde || '',
           // Şekli de saklıyoruz: kâğıt "Cap:" önekini bundan basıyor ve
           // ilaç sonradan silinse bile eski reçete doğru basılsın.
-          form: ilac.form || '',
-          adet: n, kullanim: kullanim.value.trim(), sure: sure.value.trim(),
+          form: ilac.form || '', doz: guc,
+          adet: n, kullanim: kullanim.value.trim(), zaman: zaman.value.trim(), sure: sure.value.trim(),
           yol: yol.value.trim(), not: not.value.trim(),
         };
       } },
     ],
   });
+  // Formdaki aramadan gelindiyse ya da satır düzenleniyorsa ilaç zaten
+  // seçili: hekim doğrudan adedi yazsın. Kutu açılırken ilk girdiye (ilaç
+  // kutusu) odaklanıp gezinme listesini açmıştı: odak gidince kapanıyor.
+  if (onceSecilen || mevcut) { adet.focus(); adet.select(); aramaCiz(); }
+  const sonuc = await acik;
   if (sonuc === 'sil') return 'sil';
   return sonuc && typeof sonuc === 'object' ? sonuc : null;
 }

@@ -6,6 +6,7 @@
   "description": "Eczane yönetimi: ilaç stoğu, hasta kayıtları, reçete yazma ve karşılama. Çerçevesiz, derleme adımsız PWA; veriler yalnız cihazda.",
   "scripts": {
     "sun": "node tools/sun.mjs app 8788",
+    "yerel": "node sunucu/yerel.mjs 8788",
     "test": "vitest run",
     "test:izle": "vitest",
     "kontrol": "node tools/kontrol.mjs",

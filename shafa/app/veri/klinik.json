@@ -1,2682 +1,595 @@
 {
- "surum": 2,
- "aciklama": "Yaygın belirti, tanı ve laboratuvar adları. Bu bir YAZIM kolaylığıdır, teşhis ya da tetkik önerisi değil: hastada neyin olduğuna ve hangi tetkikin gerektiğine muayene sonrası hekim karar verir. Liste tedavi, ilaç ya da doz içermez.",
+ "surum": 3,
+ "aciklama": "Yaygın belirti, tanı ve laboratuvar adları. Bu bir YAZIM kolaylığıdır, teşhis ya da tetkik önerisi değil: hastada neyin olduğuna ve hangi tetkikin gerektiğine muayene sonrası hekim karar verir. Liste tedavi, ilaç ya da doz içermez. 3. sürüm: her kayda İngilizce ad (en, kâğıda basılan) ve arama eş anlamlıları (es) eklendi; nuskha listesindeki belirti, tetkik ve tanılar birleştirildi. `secenekler` yalnız yazım kısayoludur, ilaçla eşleştirilmemiştir.",
  "gruplar": [
-  {
-   "anahtar": "umumi",
-   "ad": "عمومی",
-   "tr": "Genel"
-  },
-  {
-   "anahtar": "sinir",
-   "ad": "سر و اعصاب",
-   "tr": "Baş ve sinir"
-  },
-  {
-   "anahtar": "ravani",
-   "ad": "روانی",
-   "tr": "Ruhsal"
-  },
-  {
-   "anahtar": "dandan",
-   "ad": "دهان و دندان",
-   "tr": "Ağız ve diş"
-  },
-  {
-   "anahtar": "gulu",
-   "ad": "چشم، گوش، بینی، گلو",
-   "tr": "Göz, kulak, burun, boğaz"
-  },
-  {
-   "anahtar": "tanaffus",
-   "ad": "تنفسی",
-   "tr": "Solunum"
-  },
-  {
-   "anahtar": "qalb",
-   "ad": "قلب و عروق",
-   "tr": "Kalp ve damar"
-  },
-  {
-   "anahtar": "khun_g",
-   "ad": "خون",
-   "tr": "Kan"
-  },
-  {
-   "anahtar": "guwarish",
-   "ad": "گوارشی",
-   "tr": "Sindirim"
-  },
-  {
-   "anahtar": "idrar",
-   "ad": "ادراری و تناسلی",
-   "tr": "İdrar ve üreme"
-  },
-  {
-   "anahtar": "jildi",
-   "ad": "جلدی",
-   "tr": "Deri"
-  },
-  {
-   "anahtar": "ustukhan",
-   "ad": "عضلات و استخوان",
-   "tr": "Kas ve kemik"
-  },
-  {
-   "anahtar": "ghudad",
-   "ad": "غدد و متابولیزم",
-   "tr": "Hormon ve metabolizma"
-  },
-  {
-   "anahtar": "ufunat",
-   "ad": "عفونی",
-   "tr": "Enfeksiyon"
-  },
-  {
-   "anahtar": "zanan",
-   "ad": "زنان و حاملگی",
-   "tr": "Kadın ve gebelik"
-  },
-  {
-   "anahtar": "atfal",
-   "ad": "اطفال",
-   "tr": "Çocuk"
-  },
-  {
-   "anahtar": "hadisa",
-   "ad": "حادثه و مسمومیت",
-   "tr": "Kaza ve zehirlenme"
-  }
+  {"anahtar":"umumi","ad":"عمومی","tr":"Genel","en":"General"},
+  {"anahtar":"sinir","ad":"سر و اعصاب","tr":"Baş ve sinir","en":"Head & nerves"},
+  {"anahtar":"ravani","ad":"روانی","tr":"Ruhsal","en":"Mental health"},
+  {"anahtar":"dandan","ad":"دهان و دندان","tr":"Ağız ve diş","en":"Mouth & teeth"},
+  {"anahtar":"gulu","ad":"چشم، گوش، بینی، گلو","tr":"Göz, kulak, burun, boğaz","en":"Eye, ear, nose & throat"},
+  {"anahtar":"tanaffus","ad":"تنفسی","tr":"Solunum","en":"Respiratory"},
+  {"anahtar":"qalb","ad":"قلب و عروق","tr":"Kalp ve damar","en":"Heart & vessels"},
+  {"anahtar":"khun_g","ad":"خون","tr":"Kan","en":"Blood"},
+  {"anahtar":"guwarish","ad":"گوارشی","tr":"Sindirim","en":"Digestive"},
+  {"anahtar":"idrar","ad":"ادراری و تناسلی","tr":"İdrar ve üreme","en":"Urinary & genital"},
+  {"anahtar":"jildi","ad":"جلدی","tr":"Deri","en":"Skin"},
+  {"anahtar":"ustukhan","ad":"عضلات و استخوان","tr":"Kas ve kemik","en":"Muscles & bones"},
+  {"anahtar":"ghudad","ad":"غدد و متابولیزم","tr":"Hormon ve metabolizma","en":"Endocrine & metabolic"},
+  {"anahtar":"ufunat","ad":"عفونی","tr":"Enfeksiyon","en":"Infectious"},
+  {"anahtar":"zanan","ad":"زنان و حاملگی","tr":"Kadın ve gebelik","en":"Women's health & pregnancy"},
+  {"anahtar":"atfal","ad":"اطفال","tr":"Çocuk","en":"Children"},
+  {"anahtar":"hadisa","ad":"حادثه و مسمومیت","tr":"Kaza ve zehirlenme","en":"Injury & poisoning"}
  ],
  "labGruplari": [
-  {
-   "anahtar": "hema",
-   "ad": "هماتولوژی",
-   "tr": "Hematoloji"
-  },
-  {
-   "anahtar": "biokim",
-   "ad": "بیوشیمی",
-   "tr": "Biyokimya"
-  },
-  {
-   "anahtar": "hormon",
-   "ad": "هورمون و ویتامین",
-   "tr": "Hormon ve vitamin"
-  },
-  {
-   "anahtar": "serolojy",
-   "ad": "سیرولوژی",
-   "tr": "Seroloji"
-  },
-  {
-   "anahtar": "mikrob",
-   "ad": "میکروبیولوژی",
-   "tr": "Mikrobiyoloji"
-  },
-  {
-   "anahtar": "idrar_mad",
-   "ad": "ادرار و مدفوع",
-   "tr": "İdrar ve dışkı"
-  },
-  {
-   "anahtar": "tasvir",
-   "ad": "عکس و تصویربرداری",
-   "tr": "Görüntüleme"
-  }
+  {"anahtar":"hema","ad":"هماتولوژی","tr":"Hematoloji","en":"Hematology"},
+  {"anahtar":"qand","ad":"قند خون","tr":"Kan şekeri","en":"Diabetes"},
+  {"anahtar":"gurda","ad":"وظایف گرده","tr":"Böbrek fonksiyonu","en":"Renal function"},
+  {"anahtar":"jigar","ad":"جگر و پانقراس","tr":"Karaciğer ve pankreas","en":"Liver & pancreas"},
+  {"anahtar":"charbi","ad":"چربی خون","tr":"Kan yağları","en":"Lipid profile"},
+  {"anahtar":"elektrolit","ad":"الکترولیت و منرال","tr":"Elektrolit ve mineral","en":"Electrolytes & minerals"},
+  {"anahtar":"tiroid","ad":"تایرایید","tr":"Tiroid","en":"Thyroid"},
+  {"anahtar":"hormon","ad":"هورمون و حاملگی","tr":"Hormon ve gebelik","en":"Hormones & pregnancy"},
+  {"anahtar":"vitamin","ad":"آهن و ویتامین","tr":"Demir ve vitamin","en":"Iron & vitamins"},
+  {"anahtar":"qalb","ad":"نشانگرهای قلبی","tr":"Kalp belirteçleri","en":"Cardiac markers"},
+  {"anahtar":"serolojy","ad":"سیرولوژی","tr":"Seroloji","en":"Serology"},
+  {"anahtar":"mikrob","ad":"میکروبیولوژی و سل","tr":"Mikrobiyoloji ve verem","en":"Microbiology & TB"},
+  {"anahtar":"idrar_mad","ad":"ادرار و مدفوع","tr":"İdrar ve dışkı","en":"Urine & stool"},
+  {"anahtar":"tasvir","ad":"عکس، التراسوند و معاینات","tr":"Görüntüleme ve işlemler","en":"Imaging & procedures"}
  ],
  "tanilar": [
-  {
-   "ad": "تب",
-   "tr": "Ateş",
-   "kod": "R50.9",
-   "grup": "umumi",
-   "sik": 1
-  },
-  {
-   "ad": "تب با منشای نامعلوم",
-   "tr": "Nedeni bilinmeyen ateş",
-   "kod": "R50.8",
-   "grup": "umumi"
-  },
-  {
-   "ad": "ضعف و بی‌حالی",
-   "tr": "Halsizlik",
-   "kod": "R53",
-   "grup": "umumi"
-  },
-  {
-   "ad": "بی‌اشتهایی",
-   "tr": "İştahsızlık",
-   "kod": "R63.0",
-   "grup": "umumi"
-  },
-  {
-   "ad": "کاهش وزن بدون دلیل",
-   "tr": "Nedensiz kilo kaybı",
-   "kod": "R63.4",
-   "grup": "umumi"
-  },
-  {
-   "ad": "تعریق شبانه",
-   "tr": "Gece terlemesi",
-   "kod": "R61",
-   "grup": "umumi"
-  },
-  {
-   "ad": "ورم (ادیم)",
-   "tr": "Ödem",
-   "kod": "R60.9",
-   "grup": "umumi"
-  },
-  {
-   "ad": "معاینه عمومی",
-   "tr": "Genel muayene",
-   "kod": "Z00.0",
-   "grup": "umumi"
-  },
-  {
-   "ad": "کم‌آبی بدن",
-   "tr": "Dehidratasyon",
-   "kod": "E86",
-   "grup": "umumi"
-  },
-  {
-   "ad": "سوء تغذیه",
-   "tr": "Beslenme yetersizliği",
-   "kod": "E46",
-   "grup": "umumi"
-  },
-  {
-   "ad": "سردردی",
-   "tr": "Baş ağrısı",
-   "kod": "R51",
-   "grup": "sinir",
-   "sik": 1
-  },
-  {
-   "ad": "سردردی تنشی",
-   "tr": "Gerilim tipi baş ağrısı",
-   "kod": "G44.2",
-   "grup": "sinir"
-  },
-  {
-   "ad": "میگرن",
-   "tr": "Migren",
-   "kod": "G43.9",
-   "grup": "sinir"
-  },
-  {
-   "ad": "سرگیچی",
-   "tr": "Baş dönmesi",
-   "kod": "R42",
-   "grup": "sinir",
-   "sik": 1
-  },
-  {
-   "ad": "ورتیگوی محیطی",
-   "tr": "Periferik vertigo",
-   "kod": "H81.3",
-   "grup": "sinir"
-  },
-  {
-   "ad": "بی‌خوابی",
-   "tr": "Uykusuzluk",
-   "kod": "G47.0",
-   "grup": "sinir"
-  },
-  {
-   "ad": "غش (بی‌هوشی گذرا)",
-   "tr": "Bayılma",
-   "kod": "R55",
-   "grup": "sinir"
-  },
-  {
-   "ad": "لرزش دست",
-   "tr": "El titremesi",
-   "kod": "R25.1",
-   "grup": "sinir"
-  },
-  {
-   "ad": "فلج صورت",
-   "tr": "Yüz felci",
-   "kod": "G51.0",
-   "grup": "sinir"
-  },
-  {
-   "ad": "صرع",
-   "tr": "Sara",
-   "kod": "G40.9",
-   "grup": "sinir"
-  },
-  {
-   "ad": "تشنج تب‌دار اطفال",
-   "tr": "Ateşli havale",
-   "kod": "R56.0",
-   "grup": "sinir"
-  },
-  {
-   "ad": "درد عصب سیاتیک",
-   "tr": "Siyatik",
-   "kod": "M54.3",
-   "grup": "sinir"
-  },
-  {
-   "ad": "سکته مغزی",
-   "tr": "İnme",
-   "kod": "I64",
-   "grup": "sinir"
-  },
-  {
-   "ad": "حمله گذرای مغزی (TIA)",
-   "tr": "Geçici iskemik atak",
-   "kod": "G45.9",
-   "grup": "sinir"
-  },
-  {
-   "ad": "نوروپاتی محیطی",
-   "tr": "Periferik nöropati",
-   "kod": "G62.9",
-   "grup": "sinir"
-  },
-  {
-   "ad": "سندروم تونل کارپال",
-   "tr": "Karpal tünel sendromu",
-   "kod": "G56.0",
-   "grup": "sinir"
-  },
-  {
-   "ad": "التهاب پرده مغز (مننژیت)",
-   "tr": "Menenjit",
-   "kod": "G03.9",
-   "grup": "sinir"
-  },
-  {
-   "ad": "پارکینسون",
-   "tr": "Parkinson",
-   "kod": "G20",
-   "grup": "sinir"
-  },
-  {
-   "ad": "اضطراب",
-   "tr": "Kaygı bozukluğu",
-   "kod": "F41.9",
-   "grup": "ravani"
-  },
-  {
-   "ad": "افسردگی",
-   "tr": "Depresyon",
-   "kod": "F32.9",
-   "grup": "ravani"
-  },
-  {
-   "ad": "استرس",
-   "tr": "Stres tepkisi",
-   "kod": "F43.9",
-   "grup": "ravani"
-  },
-  {
-   "ad": "حمله هراس (پانیک)",
-   "tr": "Panik atak",
-   "kod": "F41.0",
-   "grup": "ravani"
-  },
-  {
-   "ad": "اختلال جسمانی‌سازی",
-   "tr": "Somatizasyon",
-   "kod": "F45.0",
-   "grup": "ravani"
-  },
-  {
-   "ad": "وابستگی به مواد",
-   "tr": "Madde bağımlılığı",
-   "kod": "F19.2",
-   "grup": "ravani"
-  },
-  {
-   "ad": "اختلال خواب",
-   "tr": "Uyku bozukluğu",
-   "kod": "F51.0",
-   "grup": "ravani"
-  },
-  {
-   "ad": "دندان‌دردی",
-   "tr": "Diş ağrısı",
-   "kod": "K08.8",
-   "grup": "dandan",
-   "sik": 1
-  },
-  {
-   "ad": "پوسیدگی دندان",
-   "tr": "Diş çürüğü",
-   "kod": "K02.9",
-   "grup": "dandan"
-  },
-  {
-   "ad": "التهاب لثه",
-   "tr": "Diş eti iltihabı",
-   "kod": "K05.1",
-   "grup": "dandan"
-  },
-  {
-   "ad": "آبسه دندان",
-   "tr": "Diş apsesi",
-   "kod": "K04.7",
-   "grup": "dandan"
-  },
-  {
-   "ad": "زخم دهان (آفت)",
-   "tr": "Aft",
-   "kod": "K12.0",
-   "grup": "dandan"
-  },
-  {
-   "ad": "برفک دهان (کاندیدا)",
-   "tr": "Pamukçuk",
-   "kod": "B37.0",
-   "grup": "dandan"
-  },
-  {
-   "ad": "خشکی دهان",
-   "tr": "Ağız kuruluğu",
-   "kod": "R68.2",
-   "grup": "dandan"
-  },
-  {
-   "ad": "گلودردی",
-   "tr": "Boğaz ağrısı",
-   "kod": "J02.9",
-   "grup": "gulu",
-   "sik": 1
-  },
-  {
-   "ad": "التهاب حلق چرکی",
-   "tr": "Streptokok farenjiti",
-   "kod": "J02.0",
-   "grup": "gulu"
-  },
-  {
-   "ad": "التهاب لوزه",
-   "tr": "Bademcik iltihabı",
-   "kod": "J03.9",
-   "grup": "gulu"
-  },
-  {
-   "ad": "گوش‌دردی",
-   "tr": "Kulak ağrısı",
-   "kod": "H92.0",
-   "grup": "gulu",
-   "sik": 1
-  },
-  {
-   "ad": "التهاب گوش میانی",
-   "tr": "Orta kulak iltihabı",
-   "kod": "H66.9",
-   "grup": "gulu"
-  },
-  {
-   "ad": "التهاب گوش خارجی",
-   "tr": "Dış kulak iltihabı",
-   "kod": "H60.9",
-   "grup": "gulu"
-  },
-  {
-   "ad": "جرم گوش",
-   "tr": "Kulak kiri tıkacı",
-   "kod": "H61.2",
-   "grup": "gulu"
-  },
-  {
-   "ad": "سینوزیت",
-   "tr": "Sinüzit",
-   "kod": "J01.9",
-   "grup": "gulu"
-  },
-  {
-   "ad": "رینیت الرژیک",
-   "tr": "Alerjik nezle",
-   "kod": "J30.4",
-   "grup": "gulu"
-  },
-  {
-   "ad": "گرفتگی بینی",
-   "tr": "Burun tıkanıklığı",
-   "kod": "J34.8",
-   "grup": "gulu"
-  },
-  {
-   "ad": "خون‌ریزی بینی",
-   "tr": "Burun kanaması",
-   "kod": "R04.0",
-   "grup": "gulu"
-  },
-  {
-   "ad": "انحراف تیغه بینی",
-   "tr": "Septum deviasyonu",
-   "kod": "J34.2",
-   "grup": "gulu"
-  },
-  {
-   "ad": "التهاب ملتحمه چشم",
-   "tr": "Konjonktivit",
-   "kod": "H10.9",
-   "grup": "gulu",
-   "sik": 1
-  },
-  {
-   "ad": "گل‌مژه",
-   "tr": "Arpacık",
-   "kod": "H00.0",
-   "grup": "gulu"
-  },
-  {
-   "ad": "خشکی چشم",
-   "tr": "Göz kuruluğu",
-   "kod": "H04.1",
-   "grup": "gulu"
-  },
-  {
-   "ad": "آب مروارید",
-   "tr": "Katarakt",
-   "kod": "H25.9",
-   "grup": "gulu"
-  },
-  {
-   "ad": "گلوکوم (آب سیاه)",
-   "tr": "Glokom",
-   "kod": "H40.9",
-   "grup": "gulu"
-  },
-  {
-   "ad": "کاهش بینایی",
-   "tr": "Görme azalması",
-   "kod": "H54.7",
-   "grup": "gulu"
-  },
-  {
-   "ad": "کاهش شنوایی",
-   "tr": "İşitme kaybı",
-   "kod": "H91.9",
-   "grup": "gulu"
-  },
-  {
-   "ad": "زنگ زدن گوش",
-   "tr": "Kulak çınlaması",
-   "kod": "H93.1",
-   "grup": "gulu"
-  },
-  {
-   "ad": "زکام (سرماخوردگی)",
-   "tr": "Nezle",
-   "kod": "J00",
-   "grup": "tanaffus",
-   "sik": 1
-  },
-  {
-   "ad": "سرفه",
-   "tr": "Öksürük",
-   "kod": "R05",
-   "grup": "tanaffus",
-   "sik": 1
-  },
-  {
-   "ad": "انفلونزا",
-   "tr": "Grip",
-   "kod": "J11.1",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "عفونت مجرای تنفسی فوقانی",
-   "tr": "Üst solunum yolu enfeksiyonu",
-   "kod": "J06.9",
-   "grup": "tanaffus",
-   "sik": 1
-  },
-  {
-   "ad": "عفونت مجرای تنفسی تحتانی",
-   "tr": "Alt solunum yolu enfeksiyonu",
-   "kod": "J22",
-   "grup": "tanaffus",
-   "sik": 1
-  },
-  {
-   "ad": "برونشیت حاد",
-   "tr": "Akut bronşit",
-   "kod": "J20.9",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "برونشیت مزمن",
-   "tr": "Kronik bronşit",
-   "kod": "J42",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "برونشیولیت",
-   "tr": "Bronşiyolit",
-   "kod": "J21.9",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "ذات‌الریه (نمونیا)",
-   "tr": "Zatürre",
-   "kod": "J18.9",
-   "grup": "tanaffus",
-   "sik": 1
-  },
-  {
-   "ad": "آسم",
-   "tr": "Astım",
-   "kod": "J45.9",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "مرض انسدادی مزمن ریه (COPD)",
-   "tr": "KOAH",
-   "kod": "J44.9",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "خروسک (کروپ)",
-   "tr": "Krup",
-   "kod": "J05.0",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "سیاه‌سرفه",
-   "tr": "Boğmaca",
-   "kod": "A37.9",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "تجمع مایع در پرده ریه",
-   "tr": "Plevral efüzyon",
-   "kod": "J90",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "تنگی نفس",
-   "tr": "Nefes darlığı",
-   "kod": "R06.0",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "التهاب حنجره",
-   "tr": "Larenjit",
-   "kod": "J04.0",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "فشار خون بلند",
-   "tr": "Yüksek tansiyon",
-   "kod": "I10",
-   "grup": "qalb",
-   "sik": 1
-  },
-  {
-   "ad": "فشار خون پایین",
-   "tr": "Düşük tansiyon",
-   "kod": "I95.9",
-   "grup": "qalb"
-  },
-  {
-   "ad": "درد سینه",
-   "tr": "Göğüs ağrısı",
-   "kod": "R07.4",
-   "grup": "qalb"
-  },
-  {
-   "ad": "آنژین صدری",
-   "tr": "Anjina",
-   "kod": "I20.9",
-   "grup": "qalb"
-  },
-  {
-   "ad": "سکته قلبی",
-   "tr": "Kalp krizi",
-   "kod": "I21.9",
-   "grup": "qalb"
-  },
-  {
-   "ad": "تنگی شریان قلب",
-   "tr": "Koroner arter hastalığı",
-   "kod": "I25.1",
-   "grup": "qalb"
-  },
-  {
-   "ad": "نارسایی قلب",
-   "tr": "Kalp yetmezliği",
-   "kod": "I50.9",
-   "grup": "qalb"
-  },
-  {
-   "ad": "تپش قلب",
-   "tr": "Çarpıntı",
-   "kod": "R00.2",
-   "grup": "qalb"
-  },
-  {
-   "ad": "بی‌نظمی ضربان (فیبریلاسیون)",
-   "tr": "Atriyal fibrilasyon",
-   "kod": "I48.9",
-   "grup": "qalb"
-  },
-  {
-   "ad": "مرض دریچه قلب (روماتیزمی)",
-   "tr": "Romatizmal kalp kapağı",
-   "kod": "I09.9",
-   "grup": "qalb"
-  },
-  {
-   "ad": "واریس",
-   "tr": "Varis",
-   "kod": "I83.9",
-   "grup": "qalb"
-  },
-  {
-   "ad": "ترومبوز ورید عمقی",
-   "tr": "Derin ven trombozu",
-   "kod": "I80.2",
-   "grup": "qalb"
-  },
-  {
-   "ad": "کم‌خونی",
-   "tr": "Kansızlık",
-   "kod": "D64.9",
-   "grup": "khun_g",
-   "sik": 1
-  },
-  {
-   "ad": "کم‌خونی فقر آهن",
-   "tr": "Demir eksikliği anemisi",
-   "kod": "D50.9",
-   "grup": "khun_g",
-   "sik": 1
-  },
-  {
-   "ad": "کم‌خونی کمبود ویتامین B12",
-   "tr": "B12 eksikliği anemisi",
-   "kod": "D51.9",
-   "grup": "khun_g"
-  },
-  {
-   "ad": "تالاسمی",
-   "tr": "Talasemi",
-   "kod": "D56.9",
-   "grup": "khun_g"
-  },
-  {
-   "ad": "کمبود پلاکت",
-   "tr": "Trombositopeni",
-   "kod": "D69.6",
-   "grup": "khun_g"
-  },
-  {
-   "ad": "افزایش گلبول سفید",
-   "tr": "Lökositoz",
-   "kod": "D72.8",
-   "grup": "khun_g"
-  },
-  {
-   "ad": "بزرگی غدد لنفاوی",
-   "tr": "Lenf bezi büyümesi",
-   "kod": "R59.1",
-   "grup": "khun_g"
-  },
-  {
-   "ad": "دل‌دردی (درد شکم)",
-   "tr": "Karın ağrısı",
-   "kod": "R10.4",
-   "grup": "guwarish",
-   "sik": 1
-  },
-  {
-   "ad": "سوزش معده (گاستریت)",
-   "tr": "Gastrit",
-   "kod": "K29.7",
-   "grup": "guwarish",
-   "sik": 1
-  },
-  {
-   "ad": "ریفلاکس معده",
-   "tr": "Reflü",
-   "kod": "K21.9",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "زخم معده",
-   "tr": "Mide ülseri",
-   "kod": "K25.9",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "زخم اثنی‌عشر",
-   "tr": "Duodenum ülseri",
-   "kod": "K26.9",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "عفونت هلیکوباکتر پیلوری",
-   "tr": "H. pylori enfeksiyonu",
-   "kod": "K29.0",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "اسهال",
-   "tr": "İshal",
-   "kod": "A09",
-   "grup": "guwarish",
-   "sik": 1
-  },
-  {
-   "ad": "گاستروانتریت حاد",
-   "tr": "Akut gastroenterit",
-   "kod": "K52.9",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "اسهال خونی (شیگلا)",
-   "tr": "Kanlı ishal",
-   "kod": "A03.9",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "کولرا",
-   "tr": "Kolera",
-   "kod": "A00.9",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "امیبیازیس",
-   "tr": "Amipli dizanteri",
-   "kod": "A06.0",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "ژیاردیا",
-   "tr": "Giardiyaz",
-   "kod": "A07.1",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "کرم‌های روده",
-   "tr": "Bağırsak solucanı",
-   "kod": "B82.9",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "قبضیت (یبوست)",
-   "tr": "Kabızlık",
-   "kod": "K59.0",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "دل‌بدی و استفراغ",
-   "tr": "Bulantı ve kusma",
-   "kod": "R11.2",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "نفخ شکم",
-   "tr": "Şişkinlik",
-   "kod": "R14",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "سندروم روده تحریک‌پذیر",
-   "tr": "Huzursuz bağırsak",
-   "kod": "K58.9",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "بواسیر",
-   "tr": "Basur",
-   "kod": "K64.9",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "شقاق مقعد",
-   "tr": "Anal fissür",
-   "kod": "K60.2",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "التهاب کبد (هپاتیت)",
-   "tr": "Hepatit",
-   "kod": "B19.9",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "هپاتیت B",
-   "tr": "Hepatit B",
-   "kod": "B16.9",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "هپاتیت C",
-   "tr": "Hepatit C",
-   "kod": "B17.1",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "تشمع کبد (سیروز)",
-   "tr": "Siroz",
-   "kod": "K74.6",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "کبد چرب",
-   "tr": "Yağlı karaciğer",
-   "kod": "K76.0",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "سنگ کیسه صفرا",
-   "tr": "Safra taşı",
-   "kod": "K80.2",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "التهاب کیسه صفرا",
-   "tr": "Safra kesesi iltihabı",
-   "kod": "K81.9",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "التهاب اپاندیس",
-   "tr": "Apandisit",
-   "kod": "K37",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "التهاب پانقراس",
-   "tr": "Pankreatit",
-   "kod": "K85.9",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "فتق مغبنی",
-   "tr": "Kasık fıtığı",
-   "kod": "K40.9",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "مسمومیت غذایی",
-   "tr": "Gıda zehirlenmesi",
-   "kod": "A05.9",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "سوزش ادرار",
-   "tr": "İdrar yanması",
-   "kod": "R30.0",
-   "grup": "idrar",
-   "sik": 1
-  },
-  {
-   "ad": "عفونت مجاری ادرار",
-   "tr": "İdrar yolu enfeksiyonu",
-   "kod": "N39.0",
-   "grup": "idrar",
-   "sik": 1
-  },
-  {
-   "ad": "التهاب مثانه",
-   "tr": "Sistit",
-   "kod": "N30.9",
-   "grup": "idrar"
-  },
-  {
-   "ad": "التهاب گرده (پیلونفریت)",
-   "tr": "Piyelonefrit",
-   "kod": "N10",
-   "grup": "idrar"
-  },
-  {
-   "ad": "سنگ گرده",
-   "tr": "Böbrek taşı",
-   "kod": "N20.0",
-   "grup": "idrar"
-  },
-  {
-   "ad": "سنگ مثانه",
-   "tr": "Mesane taşı",
-   "kod": "N21.0",
-   "grup": "idrar"
-  },
-  {
-   "ad": "درد گرده (کولیک)",
-   "tr": "Böbrek koliği",
-   "kod": "N23",
-   "grup": "idrar"
-  },
-  {
-   "ad": "نارسایی مزمن گرده",
-   "tr": "Kronik böbrek yetmezliği",
-   "kod": "N18.9",
-   "grup": "idrar"
-  },
-  {
-   "ad": "بزرگی پروستات",
-   "tr": "Prostat büyümesi",
-   "kod": "N40",
-   "grup": "idrar"
-  },
-  {
-   "ad": "التهاب پروستات",
-   "tr": "Prostatit",
-   "kod": "N41.9",
-   "grup": "idrar"
-  },
-  {
-   "ad": "پروتئین در ادرار",
-   "tr": "Proteinüri",
-   "kod": "R80",
-   "grup": "idrar"
-  },
-  {
-   "ad": "ناتوانی جنسی",
-   "tr": "Erektil disfonksiyon",
-   "kod": "N52.9",
-   "grup": "idrar"
-  },
-  {
-   "ad": "نازایی",
-   "tr": "Kısırlık",
-   "kod": "N97.9",
-   "grup": "idrar"
-  },
-  {
-   "ad": "خارش پوست",
-   "tr": "Kaşıntı",
-   "kod": "L29.9",
-   "grup": "jildi",
-   "sik": 1
-  },
-  {
-   "ad": "حساسیت پوستی",
-   "tr": "Deri alerjisi",
-   "kod": "L23.9",
-   "grup": "jildi"
-  },
-  {
-   "ad": "اگزما",
-   "tr": "Egzama",
-   "kod": "L30.9",
-   "grup": "jildi"
-  },
-  {
-   "ad": "درماتیت اتوپیک",
-   "tr": "Atopik dermatit",
-   "kod": "L20.9",
-   "grup": "jildi"
-  },
-  {
-   "ad": "کهیر",
-   "tr": "Ürtiker",
-   "kod": "L50.9",
-   "grup": "jildi"
-  },
-  {
-   "ad": "زخم جلدی",
-   "tr": "Deri yarası",
-   "kod": "L98.9",
-   "grup": "jildi"
-  },
-  {
-   "ad": "عفونت چرکی پوست",
-   "tr": "Deri apsesi",
-   "kod": "L02.9",
-   "grup": "jildi"
-  },
-  {
-   "ad": "سلولیت",
-   "tr": "Selülit",
-   "kod": "L03.9",
-   "grup": "jildi"
-  },
-  {
-   "ad": "زرد زخم (ایمپتیگو)",
-   "tr": "İmpetigo",
-   "kod": "L01.0",
-   "grup": "jildi"
-  },
-  {
-   "ad": "قارچ پوست",
-   "tr": "Deri mantarı",
-   "kod": "B35.9",
-   "grup": "jildi"
-  },
-  {
-   "ad": "قارچ ناخن",
-   "tr": "Tırnak mantarı",
-   "kod": "B35.1",
-   "grup": "jildi"
-  },
-  {
-   "ad": "جرب (گال)",
-   "tr": "Uyuz",
-   "kod": "B86",
-   "grup": "jildi"
-  },
-  {
-   "ad": "شپش",
-   "tr": "Bit",
-   "kod": "B85.0",
-   "grup": "jildi"
-  },
-  {
-   "ad": "آکنه (جوش)",
-   "tr": "Akne",
-   "kod": "L70.0",
-   "grup": "jildi"
-  },
-  {
-   "ad": "پسوریازیس",
-   "tr": "Sedef",
-   "kod": "L40.9",
-   "grup": "jildi"
-  },
-  {
-   "ad": "ویتیلیگو (پیسی)",
-   "tr": "Vitiligo",
-   "kod": "L80",
-   "grup": "jildi"
-  },
-  {
-   "ad": "ریزش مو",
-   "tr": "Saç dökülmesi",
-   "kod": "L65.9",
-   "grup": "jildi"
-  },
-  {
-   "ad": "زگیل",
-   "tr": "Siğil",
-   "kod": "B07",
-   "grup": "jildi"
-  },
-  {
-   "ad": "تبخال",
-   "tr": "Uçuk",
-   "kod": "B00.1",
-   "grup": "jildi"
-  },
-  {
-   "ad": "سوختگی",
-   "tr": "Yanık",
-   "kod": "T30.0",
-   "grup": "jildi"
-  },
-  {
-   "ad": "کمردردی",
-   "tr": "Bel ağrısı",
-   "kod": "M54.5",
-   "grup": "ustukhan",
-   "sik": 1
-  },
-  {
-   "ad": "گردن‌دردی",
-   "tr": "Boyun ağrısı",
-   "kod": "M54.2",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "درد مفاصل",
-   "tr": "Eklem ağrısı",
-   "kod": "M25.5",
-   "grup": "ustukhan",
-   "sik": 1
-  },
-  {
-   "ad": "استیوآرتریت (ساییدگی)",
-   "tr": "Kireçlenme",
-   "kod": "M19.9",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "روماتیزم مفصلی",
-   "tr": "Romatoid artrit",
-   "kod": "M06.9",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "درد زانو",
-   "tr": "Diz ağrısı",
-   "kod": "M25.56",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "درد شانه",
-   "tr": "Omuz ağrısı",
-   "kod": "M25.51",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "دیسک کمر",
-   "tr": "Bel fıtığı",
-   "kod": "M51.2",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "پوکی استخوان",
-   "tr": "Kemik erimesi",
-   "kod": "M81.9",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "درد عضلات",
-   "tr": "Kas ağrısı",
-   "kod": "M79.1",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "فیبرومیالژی",
-   "tr": "Fibromiyalji",
-   "kod": "M79.7",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "نقرس",
-   "tr": "Gut",
-   "kod": "M10.9",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "التهاب تاندون",
-   "tr": "Tendinit",
-   "kod": "M77.9",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "شکستگی استخوان",
-   "tr": "Kemik kırığı",
-   "kod": "T14.2",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "رگ به رگ شدن",
-   "tr": "Burkulma",
-   "kod": "T14.3",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "عفونت استخوان",
-   "tr": "Kemik iltihabı",
-   "kod": "M86.9",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "مرض شکر (دیابت)",
-   "tr": "Şeker hastalığı",
-   "kod": "E11.9",
-   "grup": "ghudad",
-   "sik": 1
-  },
-  {
-   "ad": "دیابت نوع ۱",
-   "tr": "Tip 1 diyabet",
-   "kod": "E10.9",
-   "grup": "ghudad"
-  },
-  {
-   "ad": "دیابت حاملگی",
-   "tr": "Gebelik diyabeti",
-   "kod": "O24.4",
-   "grup": "ghudad"
-  },
-  {
-   "ad": "قند خون پایین",
-   "tr": "Hipoglisemi",
-   "kod": "E16.2",
-   "grup": "ghudad"
-  },
-  {
-   "ad": "کم‌کاری غده تایرایید",
-   "tr": "Hipotiroidi",
-   "kod": "E03.9",
-   "grup": "ghudad"
-  },
-  {
-   "ad": "پرکاری غده تایرایید",
-   "tr": "Hipertiroidi",
-   "kod": "E05.9",
-   "grup": "ghudad"
-  },
-  {
-   "ad": "گواتر",
-   "tr": "Guatr",
-   "kod": "E04.9",
-   "grup": "ghudad"
-  },
-  {
-   "ad": "چربی خون بلند",
-   "tr": "Yüksek kolesterol",
-   "kod": "E78.5",
-   "grup": "ghudad"
-  },
-  {
-   "ad": "چاقی",
-   "tr": "Obezite",
-   "kod": "E66.9",
-   "grup": "ghudad"
-  },
-  {
-   "ad": "کمبود ویتامین D",
-   "tr": "D vitamini eksikliği",
-   "kod": "E55.9",
-   "grup": "ghudad"
-  },
-  {
-   "ad": "کمبود ویتامین B12",
-   "tr": "B12 eksikliği",
-   "kod": "E53.8",
-   "grup": "ghudad"
-  },
-  {
-   "ad": "کمبود ید",
-   "tr": "İyot eksikliği",
-   "kod": "E61.8",
-   "grup": "ghudad"
-  },
-  {
-   "ad": "کمبود کلسیم",
-   "tr": "Kalsiyum eksikliği",
-   "kod": "E58",
-   "grup": "ghudad"
-  },
-  {
-   "ad": "عفونت عمومی",
-   "tr": "Enfeksiyon",
-   "kod": "A49.9",
-   "grup": "ufunat"
-  },
-  {
-   "ad": "ملاریا",
-   "tr": "Sıtma",
-   "kod": "B54",
-   "grup": "ufunat"
-  },
-  {
-   "ad": "تایفویید",
-   "tr": "Tifo",
-   "kod": "A01.0",
-   "grup": "ufunat"
-  },
-  {
-   "ad": "توبرکلوز (سل)",
-   "tr": "Verem",
-   "kod": "A15.9",
-   "grup": "ufunat"
-  },
-  {
-   "ad": "لیشمانیا (سالک)",
-   "tr": "Şark çıbanı",
-   "kod": "B55.1",
-   "grup": "ufunat"
-  },
-  {
-   "ad": "بروسلوز (تب مالت)",
-   "tr": "Bruselloz",
-   "kod": "A23.9",
-   "grup": "ufunat"
-  },
-  {
-   "ad": "سرخکان",
-   "tr": "Kızamık",
-   "kod": "B05.9",
-   "grup": "ufunat"
-  },
-  {
-   "ad": "مرغانه (آبله‌مرغان)",
-   "tr": "Su çiçeği",
-   "kod": "B01.9",
-   "grup": "ufunat"
-  },
-  {
-   "ad": "اوریون",
-   "tr": "Kabakulak",
-   "kod": "B26.9",
-   "grup": "ufunat"
-  },
-  {
-   "ad": "کچالو (کزاز)",
-   "tr": "Tetanoz",
-   "kod": "A35",
-   "grup": "ufunat"
-  },
-  {
-   "ad": "هاری (سگ‌گزیدگی)",
-   "tr": "Kuduz riski",
-   "kod": "Z20.3",
-   "grup": "ufunat"
-  },
-  {
-   "ad": "کووید-۱۹",
-   "tr": "COVID-19",
-   "kod": "U07.1",
-   "grup": "ufunat"
-  },
-  {
-   "ad": "قاعدگی دردناک",
-   "tr": "Ağrılı adet",
-   "kod": "N94.6",
-   "grup": "zanan"
-  },
-  {
-   "ad": "بی‌نظمی قاعدگی",
-   "tr": "Adet düzensizliği",
-   "kod": "N92.6",
-   "grup": "zanan"
-  },
-  {
-   "ad": "خون‌ریزی شدید قاعدگی",
-   "tr": "Aşırı adet kanaması",
-   "kod": "N92.0",
-   "grup": "zanan"
-  },
-  {
-   "ad": "حاملگی",
-   "tr": "Gebelik",
-   "kod": "Z34.9",
-   "grup": "zanan"
-  },
-  {
-   "ad": "کم‌خونی دوران حاملگی",
-   "tr": "Gebelik anemisi",
-   "kod": "O99.0",
-   "grup": "zanan"
-  },
-  {
-   "ad": "فشار خون حاملگی",
-   "tr": "Gebelik hipertansiyonu",
-   "kod": "O13",
-   "grup": "zanan"
-  },
-  {
-   "ad": "تهوع حاملگی",
-   "tr": "Gebelik bulantısı",
-   "kod": "O21.0",
-   "grup": "zanan"
-  },
-  {
-   "ad": "سقط تهدیدآمیز",
-   "tr": "Düşük tehdidi",
-   "kod": "O20.0",
-   "grup": "zanan"
-  },
-  {
-   "ad": "عفونت واژن",
-   "tr": "Vajinit",
-   "kod": "N76.0",
-   "grup": "zanan"
-  },
-  {
-   "ad": "کاندیدیازیس واژن",
-   "tr": "Vajinal mantar",
-   "kod": "B37.3",
-   "grup": "zanan"
-  },
-  {
-   "ad": "کیست تخمدان",
-   "tr": "Yumurtalık kisti",
-   "kod": "N83.2",
-   "grup": "zanan"
-  },
-  {
-   "ad": "تخمدان پلی‌کیستیک",
-   "tr": "Polikistik over",
-   "kod": "E28.2",
-   "grup": "zanan"
-  },
-  {
-   "ad": "یایسگی",
-   "tr": "Menopoz",
-   "kod": "N95.1",
-   "grup": "zanan"
-  },
-  {
-   "ad": "التهاب پستان",
-   "tr": "Meme iltihabı",
-   "kod": "N61",
-   "grup": "zanan"
-  },
-  {
-   "ad": "سوء تغذیه اطفال",
-   "tr": "Çocuk beslenme bozukluğu",
-   "kod": "E44.0",
-   "grup": "atfal"
-  },
-  {
-   "ad": "سوء تغذیه شدید",
-   "tr": "Ağır malnütrisyon",
-   "kod": "E43",
-   "grup": "atfal"
-  },
-  {
-   "ad": "کمبود وزن طفل",
-   "tr": "Düşük kilo",
-   "kod": "R62.8",
-   "grup": "atfal"
-  },
-  {
-   "ad": "راشیتیزم",
-   "tr": "Raşitizm",
-   "kod": "E55.0",
-   "grup": "atfal"
-  },
-  {
-   "ad": "زردی نوزاد",
-   "tr": "Yenidoğan sarılığı",
-   "kod": "P59.9",
-   "grup": "atfal"
-  },
-  {
-   "ad": "قولنج نوزاد",
-   "tr": "Bebek koliği",
-   "kod": "R10.83",
-   "grup": "atfal"
-  },
-  {
-   "ad": "بثورات کهنه (دیاپر)",
-   "tr": "Pişik",
-   "kod": "L22",
-   "grup": "atfal"
-  },
-  {
-   "ad": "واکسین",
-   "tr": "Aşı",
-   "kod": "Z23",
-   "grup": "atfal"
-  },
-  {
-   "ad": "تأخیر رشد",
-   "tr": "Gelişme geriliği",
-   "kod": "R62.5",
-   "grup": "atfal"
-  },
-  {
-   "ad": "زخم و جراحت",
-   "tr": "Yaralanma",
-   "kod": "T14.1",
-   "grup": "hadisa"
-  },
-  {
-   "ad": "ضربه سر",
-   "tr": "Kafa travması",
-   "kod": "S09.9",
-   "grup": "hadisa"
-  },
-  {
-   "ad": "گزیدگی حشره",
-   "tr": "Böcek sokması",
-   "kod": "T63.4",
-   "grup": "hadisa"
-  },
-  {
-   "ad": "مارگزیدگی",
-   "tr": "Yılan sokması",
-   "kod": "T63.0",
-   "grup": "hadisa"
-  },
-  {
-   "ad": "مسمومیت دوایی",
-   "tr": "İlaç zehirlenmesi",
-   "kod": "T50.9",
-   "grup": "hadisa"
-  },
-  {
-   "ad": "گرمازدگی",
-   "tr": "Sıcak çarpması",
-   "kod": "T67.0",
-   "grup": "hadisa"
-  },
-  {
-   "ad": "سرمازدگی",
-   "tr": "Donma",
-   "kod": "T33.9",
-   "grup": "hadisa"
-  }
+  {"ad":"تب","en":"Fever","tr":"Ateş","kod":"R50.9","grup":"umumi","sik":1,"es":["Acute febrile illness"]},
+  {"ad":"تب با منشای نامعلوم","en":"Fever of unknown origin","tr":"Nedeni bilinmeyen ateş","kod":"R50.8","grup":"umumi"},
+  {"ad":"ضعف و بی‌حالی","en":"Malaise and fatigue","tr":"Halsizlik","kod":"R53","grup":"umumi"},
+  {"ad":"بی‌اشتهایی","en":"Loss of appetite (anorexia)","tr":"İştahsızlık","kod":"R63.0","grup":"umumi"},
+  {"ad":"کاهش وزن بدون دلیل","en":"Abnormal weight loss","tr":"Nedensiz kilo kaybı","kod":"R63.4","grup":"umumi"},
+  {"ad":"تعریق شبانه","en":"Night sweats","tr":"Gece terlemesi","kod":"R61","grup":"umumi"},
+  {"ad":"ورم (ادیم)","en":"Edema","tr":"Ödem","kod":"R60.9","grup":"umumi"},
+  {"ad":"معاینه عمومی","en":"General medical examination","tr":"Genel muayene","kod":"Z00.0","grup":"umumi"},
+  {"ad":"کم‌آبی بدن","en":"Dehydration","tr":"Dehidratasyon","kod":"E86","grup":"umumi"},
+  {"ad":"سوء تغذیه","en":"Malnutrition","tr":"Beslenme yetersizliği","kod":"E46","grup":"umumi"},
+  {"ad":"سردردی","en":"Headache","tr":"Baş ağrısı","kod":"R51","grup":"sinir","sik":1},
+  {"ad":"سردردی تنشی","en":"Tension-type headache","tr":"Gerilim tipi baş ağrısı","kod":"G44.2","grup":"sinir"},
+  {"ad":"میگرن","en":"Migraine","tr":"Migren","kod":"G43.9","grup":"sinir"},
+  {"ad":"سرگیچی","en":"Dizziness","tr":"Baş dönmesi","kod":"R42","grup":"sinir","sik":1},
+  {"ad":"ورتیگوی محیطی","en":"Peripheral vertigo","tr":"Periferik vertigo","kod":"H81.3","grup":"sinir"},
+  {"ad":"بی‌خوابی","en":"Insomnia","tr":"Uykusuzluk","kod":"G47.0","grup":"sinir"},
+  {"ad":"غش (بی‌هوشی گذرا)","en":"Syncope","tr":"Bayılma","kod":"R55","grup":"sinir"},
+  {"ad":"لرزش دست","en":"Tremor","tr":"El titremesi","kod":"R25.1","grup":"sinir"},
+  {"ad":"فلج صورت","en":"Bell's palsy","tr":"Yüz felci","kod":"G51.0","grup":"sinir"},
+  {"ad":"صرع","en":"Epilepsy","tr":"Sara","kod":"G40.9","grup":"sinir"},
+  {"ad":"تشنج تب‌دار اطفال","en":"Febrile seizure","tr":"Ateşli havale","kod":"R56.0","grup":"sinir"},
+  {"ad":"درد عصب سیاتیک","en":"Sciatica","tr":"Siyatik","kod":"M54.3","grup":"sinir"},
+  {"ad":"سکته مغزی","en":"Stroke","tr":"İnme","kod":"I64","grup":"sinir"},
+  {"ad":"حمله گذرای مغزی (TIA)","en":"Transient ischemic attack (TIA)","tr":"Geçici iskemik atak","kod":"G45.9","grup":"sinir"},
+  {"ad":"نوروپاتی محیطی","en":"Peripheral neuropathy","tr":"Periferik nöropati","kod":"G62.9","grup":"sinir"},
+  {"ad":"سندروم تونل کارپال","en":"Carpal tunnel syndrome","tr":"Karpal tünel sendromu","kod":"G56.0","grup":"sinir"},
+  {"ad":"التهاب پرده مغز (مننژیت)","en":"Meningitis","tr":"Menenjit","kod":"G03.9","grup":"sinir"},
+  {"ad":"پارکینسون","en":"Parkinson's disease","tr":"Parkinson","kod":"G20","grup":"sinir"},
+  {"ad":"اضطراب","en":"Anxiety disorder","tr":"Kaygı bozukluğu","kod":"F41.9","grup":"ravani"},
+  {"ad":"افسردگی","en":"Depression","tr":"Depresyon","kod":"F32.9","grup":"ravani"},
+  {"ad":"استرس","en":"Stress reaction","tr":"Stres tepkisi","kod":"F43.9","grup":"ravani"},
+  {"ad":"حمله هراس (پانیک)","en":"Panic disorder","tr":"Panik atak","kod":"F41.0","grup":"ravani"},
+  {"ad":"اختلال جسمانی‌سازی","en":"Somatization disorder","tr":"Somatizasyon","kod":"F45.0","grup":"ravani"},
+  {"ad":"وابستگی به مواد","en":"Substance dependence","tr":"Madde bağımlılığı","kod":"F19.2","grup":"ravani"},
+  {"ad":"اختلال خواب","en":"Sleep disorder (non-organic)","tr":"Uyku bozukluğu","kod":"F51.0","grup":"ravani"},
+  {"ad":"دندان‌دردی","en":"Toothache","tr":"Diş ağrısı","kod":"K08.8","grup":"dandan","sik":1},
+  {"ad":"پوسیدگی دندان","en":"Dental caries","tr":"Diş çürüğü","kod":"K02.9","grup":"dandan"},
+  {"ad":"التهاب لثه","en":"Gingivitis","tr":"Diş eti iltihabı","kod":"K05.1","grup":"dandan"},
+  {"ad":"آبسه دندان","en":"Dental abscess","tr":"Diş apsesi","kod":"K04.7","grup":"dandan"},
+  {"ad":"زخم دهان (آفت)","en":"Aphthous stomatitis","tr":"Aft","kod":"K12.0","grup":"dandan"},
+  {"ad":"برفک دهان (کاندیدا)","en":"Oral candidiasis","tr":"Pamukçuk","kod":"B37.0","grup":"dandan"},
+  {"ad":"خشکی دهان","en":"Dry mouth","tr":"Ağız kuruluğu","kod":"R68.2","grup":"dandan"},
+  {"ad":"گلودردی","en":"Acute pharyngitis","tr":"Boğaz ağrısı","kod":"J02.9","grup":"gulu","sik":1},
+  {"ad":"التهاب حلق چرکی","en":"Streptococcal pharyngitis","tr":"Streptokok farenjiti","kod":"J02.0","grup":"gulu"},
+  {"ad":"التهاب لوزه","en":"Acute tonsillitis","tr":"Bademcik iltihabı","kod":"J03.9","grup":"gulu"},
+  {"ad":"گوش‌دردی","en":"Ear pain (otalgia)","tr":"Kulak ağrısı","kod":"H92.0","grup":"gulu","sik":1},
+  {"ad":"التهاب گوش میانی","en":"Otitis media","tr":"Orta kulak iltihabı","kod":"H66.9","grup":"gulu","es":["Acute otitis media"]},
+  {"ad":"التهاب گوش خارجی","en":"Otitis externa","tr":"Dış kulak iltihabı","kod":"H60.9","grup":"gulu"},
+  {"ad":"جرم گوش","en":"Impacted cerumen","tr":"Kulak kiri tıkacı","kod":"H61.2","grup":"gulu"},
+  {"ad":"سینوزیت","en":"Acute sinusitis","tr":"Sinüzit","kod":"J01.9","grup":"gulu"},
+  {"ad":"رینیت الرژیک","en":"Allergic rhinitis","tr":"Alerjik nezle","kod":"J30.4","grup":"gulu"},
+  {"ad":"گرفتگی بینی","en":"Nasal obstruction","tr":"Burun tıkanıklığı","kod":"J34.8","grup":"gulu"},
+  {"ad":"خون‌ریزی بینی","en":"Epistaxis","tr":"Burun kanaması","kod":"R04.0","grup":"gulu"},
+  {"ad":"انحراف تیغه بینی","en":"Deviated nasal septum","tr":"Septum deviasyonu","kod":"J34.2","grup":"gulu"},
+  {"ad":"التهاب ملتحمه چشم","en":"Conjunctivitis","tr":"Konjonktivit","kod":"H10.9","grup":"gulu","sik":1},
+  {"ad":"گل‌مژه","en":"Hordeolum (stye)","tr":"Arpacık","kod":"H00.0","grup":"gulu"},
+  {"ad":"خشکی چشم","en":"Dry eye","tr":"Göz kuruluğu","kod":"H04.1","grup":"gulu"},
+  {"ad":"آب مروارید","en":"Cataract","tr":"Katarakt","kod":"H25.9","grup":"gulu"},
+  {"ad":"گلوکوم (آب سیاه)","en":"Glaucoma","tr":"Glokom","kod":"H40.9","grup":"gulu"},
+  {"ad":"کاهش بینایی","en":"Reduced vision","tr":"Görme azalması","kod":"H54.7","grup":"gulu"},
+  {"ad":"کاهش شنوایی","en":"Hearing loss","tr":"İşitme kaybı","kod":"H91.9","grup":"gulu"},
+  {"ad":"زنگ زدن گوش","en":"Tinnitus","tr":"Kulak çınlaması","kod":"H93.1","grup":"gulu"},
+  {"ad":"زکام (سرماخوردگی)","en":"Common cold","tr":"Nezle","kod":"J00","grup":"tanaffus","sik":1},
+  {"ad":"سرفه","en":"Cough","tr":"Öksürük","kod":"R05","grup":"tanaffus","sik":1},
+  {"ad":"انفلونزا","en":"Influenza","tr":"Grip","kod":"J11.1","grup":"tanaffus"},
+  {"ad":"عفونت مجرای تنفسی فوقانی","en":"Acute upper respiratory tract infection","tr":"Üst solunum yolu enfeksiyonu","kod":"J06.9","grup":"tanaffus","sik":1},
+  {"ad":"عفونت مجرای تنفسی تحتانی","en":"Acute lower respiratory tract infection","tr":"Alt solunum yolu enfeksiyonu","kod":"J22","grup":"tanaffus","sik":1},
+  {"ad":"برونشیت حاد","en":"Acute bronchitis","tr":"Akut bronşit","kod":"J20.9","grup":"tanaffus"},
+  {"ad":"برونشیت مزمن","en":"Chronic bronchitis","tr":"Kronik bronşit","kod":"J42","grup":"tanaffus"},
+  {"ad":"برونشیولیت","en":"Bronchiolitis","tr":"Bronşiyolit","kod":"J21.9","grup":"tanaffus"},
+  {"ad":"ذات‌الریه (نمونیا)","en":"Pneumonia","tr":"Zatürre","kod":"J18.9","grup":"tanaffus","sik":1},
+  {"ad":"آسم","en":"Bronchial asthma","tr":"Astım","kod":"J45.9","grup":"tanaffus"},
+  {"ad":"مرض انسدادی مزمن ریه (COPD)","en":"COPD","tr":"KOAH","kod":"J44.9","grup":"tanaffus"},
+  {"ad":"خروسک (کروپ)","en":"Croup","tr":"Krup","kod":"J05.0","grup":"tanaffus"},
+  {"ad":"سیاه‌سرفه","en":"Whooping cough (pertussis)","tr":"Boğmaca","kod":"A37.9","grup":"tanaffus"},
+  {"ad":"تجمع مایع در پرده ریه","en":"Pleural effusion","tr":"Plevral efüzyon","kod":"J90","grup":"tanaffus"},
+  {"ad":"تنگی نفس","en":"Dyspnea","tr":"Nefes darlığı","kod":"R06.0","grup":"tanaffus"},
+  {"ad":"التهاب حنجره","en":"Acute laryngitis","tr":"Larenjit","kod":"J04.0","grup":"tanaffus"},
+  {"ad":"فشار خون بلند","en":"Hypertension","tr":"Yüksek tansiyon","kod":"I10","grup":"qalb","sik":1},
+  {"ad":"فشار خون پایین","en":"Hypotension","tr":"Düşük tansiyon","kod":"I95.9","grup":"qalb"},
+  {"ad":"درد سینه","en":"Chest pain","tr":"Göğüs ağrısı","kod":"R07.4","grup":"qalb"},
+  {"ad":"آنژین صدری","en":"Angina pectoris","tr":"Anjina","kod":"I20.9","grup":"qalb","es":["Stable angina"]},
+  {"ad":"سکته قلبی","en":"Acute myocardial infarction","tr":"Kalp krizi","kod":"I21.9","grup":"qalb"},
+  {"ad":"تنگی شریان قلب","en":"Coronary artery disease","tr":"Koroner arter hastalığı","kod":"I25.1","grup":"qalb","es":["Ischemic heart disease"]},
+  {"ad":"نارسایی قلب","en":"Heart failure","tr":"Kalp yetmezliği","kod":"I50.9","grup":"qalb"},
+  {"ad":"تپش قلب","en":"Palpitations","tr":"Çarpıntı","kod":"R00.2","grup":"qalb"},
+  {"ad":"بی‌نظمی ضربان (فیبریلاسیون)","en":"Atrial fibrillation","tr":"Atriyal fibrilasyon","kod":"I48.9","grup":"qalb"},
+  {"ad":"مرض دریچه قلب (روماتیزمی)","en":"Rheumatic heart disease","tr":"Romatizmal kalp kapağı","kod":"I09.9","grup":"qalb"},
+  {"ad":"واریس","en":"Varicose veins","tr":"Varis","kod":"I83.9","grup":"qalb"},
+  {"ad":"ترومبوز ورید عمقی","en":"Deep vein thrombosis","tr":"Derin ven trombozu","kod":"I80.2","grup":"qalb"},
+  {"ad":"کم‌خونی","en":"Anemia","tr":"Kansızlık","kod":"D64.9","grup":"khun_g","sik":1},
+  {"ad":"کم‌خونی فقر آهن","en":"Iron deficiency anemia","tr":"Demir eksikliği anemisi","kod":"D50.9","grup":"khun_g","sik":1},
+  {"ad":"کم‌خونی کمبود ویتامین B12","en":"Vitamin B12 deficiency anemia","tr":"B12 eksikliği anemisi","kod":"D51.9","grup":"khun_g"},
+  {"ad":"تالاسمی","en":"Thalassemia","tr":"Talasemi","kod":"D56.9","grup":"khun_g"},
+  {"ad":"کمبود پلاکت","en":"Thrombocytopenia","tr":"Trombositopeni","kod":"D69.6","grup":"khun_g"},
+  {"ad":"افزایش گلبول سفید","en":"Leukocytosis","tr":"Lökositoz","kod":"D72.8","grup":"khun_g"},
+  {"ad":"بزرگی غدد لنفاوی","en":"Generalized lymphadenopathy","tr":"Lenf bezi büyümesi","kod":"R59.1","grup":"khun_g"},
+  {"ad":"دل‌دردی (درد شکم)","en":"Abdominal pain","tr":"Karın ağrısı","kod":"R10.4","grup":"guwarish","sik":1},
+  {"ad":"سوزش معده (گاستریت)","en":"Gastritis","tr":"Gastrit","kod":"K29.7","grup":"guwarish","sik":1},
+  {"ad":"ریفلاکس معده","en":"Gastroesophageal reflux disease (GERD)","tr":"Reflü","kod":"K21.9","grup":"guwarish"},
+  {"ad":"زخم معده","en":"Gastric ulcer","tr":"Mide ülseri","kod":"K25.9","grup":"guwarish"},
+  {"ad":"زخم اثنی‌عشر","en":"Duodenal ulcer","tr":"Duodenum ülseri","kod":"K26.9","grup":"guwarish"},
+  {"ad":"عفونت هلیکوباکتر پیلوری","en":"H. pylori infection","tr":"H. pylori enfeksiyonu","kod":"B98.0","grup":"guwarish","eskiKod":"K29.0"},
+  {"ad":"اسهال","en":"Diarrhea (infectious)","tr":"İshal","kod":"A09","grup":"guwarish","sik":1,"es":["Acute watery diarrhea"]},
+  {"ad":"گاستروانتریت حاد","en":"Acute gastroenteritis","tr":"Akut gastroenterit","kod":"K52.9","grup":"guwarish"},
+  {"ad":"اسهال خونی (شیگلا)","en":"Dysentery (shigellosis)","tr":"Kanlı ishal","kod":"A03.9","grup":"guwarish","es":["Dysentery"]},
+  {"ad":"کولرا","en":"Cholera","tr":"Kolera","kod":"A00.9","grup":"guwarish"},
+  {"ad":"امیبیازیس","en":"Amoebic dysentery","tr":"Amipli dizanteri","kod":"A06.0","grup":"guwarish","es":["Amoebiasis"]},
+  {"ad":"ژیاردیا","en":"Giardiasis","tr":"Giardiyaz","kod":"A07.1","grup":"guwarish"},
+  {"ad":"کرم‌های روده","en":"Intestinal worms","tr":"Bağırsak solucanı","kod":"B82.9","grup":"guwarish","es":["Intestinal helminthiasis"]},
+  {"ad":"قبضیت (یبوست)","en":"Constipation","tr":"Kabızlık","kod":"K59.0","grup":"guwarish","es":["Functional constipation"]},
+  {"ad":"دل‌بدی و استفراغ","en":"Nausea and vomiting","tr":"Bulantı ve kusma","kod":"R11.2","grup":"guwarish"},
+  {"ad":"نفخ شکم","en":"Bloating","tr":"Şişkinlik","kod":"R14","grup":"guwarish"},
+  {"ad":"سندروم روده تحریک‌پذیر","en":"Irritable bowel syndrome","tr":"Huzursuz bağırsak","kod":"K58.9","grup":"guwarish"},
+  {"ad":"بواسیر","en":"Hemorrhoids","tr":"Basur","kod":"K64.9","grup":"guwarish"},
+  {"ad":"شقاق مقعد","en":"Anal fissure","tr":"Anal fissür","kod":"K60.2","grup":"guwarish"},
+  {"ad":"التهاب کبد (هپاتیت)","en":"Viral hepatitis","tr":"Hepatit","kod":"B19.9","grup":"guwarish","es":["Acute viral hepatitis"]},
+  {"ad":"هپاتیت B","en":"Acute hepatitis B","tr":"Hepatit B","kod":"B16.9","grup":"guwarish"},
+  {"ad":"هپاتیت C","en":"Acute hepatitis C","tr":"Hepatit C","kod":"B17.1","grup":"guwarish"},
+  {"ad":"تشمع کبد (سیروز)","en":"Liver cirrhosis","tr":"Siroz","kod":"K74.6","grup":"guwarish"},
+  {"ad":"کبد چرب","en":"Fatty liver disease (NAFLD)","tr":"Yağlı karaciğer","kod":"K76.0","grup":"guwarish"},
+  {"ad":"سنگ کیسه صفرا","en":"Gallstones (cholelithiasis)","tr":"Safra taşı","kod":"K80.2","grup":"guwarish","es":["Cholelithiasis"]},
+  {"ad":"التهاب کیسه صفرا","en":"Cholecystitis","tr":"Safra kesesi iltihabı","kod":"K81.9","grup":"guwarish","es":["Acute cholecystitis"]},
+  {"ad":"التهاب اپاندیس","en":"Appendicitis","tr":"Apandisit","kod":"K37","grup":"guwarish","es":["Acute appendicitis"]},
+  {"ad":"التهاب پانقراس","en":"Acute pancreatitis","tr":"Pankreatit","kod":"K85.9","grup":"guwarish"},
+  {"ad":"فتق مغبنی","en":"Inguinal hernia","tr":"Kasık fıtığı","kod":"K40.9","grup":"guwarish"},
+  {"ad":"مسمومیت غذایی","en":"Food poisoning","tr":"Gıda zehirlenmesi","kod":"A05.9","grup":"guwarish"},
+  {"ad":"سوزش ادرار","en":"Dysuria","tr":"İdrar yanması","kod":"R30.0","grup":"idrar","sik":1},
+  {"ad":"عفونت مجاری ادرار","en":"Urinary tract infection","tr":"İdrar yolu enfeksiyonu","kod":"N39.0","grup":"idrar","sik":1},
+  {"ad":"التهاب مثانه","en":"Cystitis","tr":"Sistit","kod":"N30.9","grup":"idrar"},
+  {"ad":"التهاب گرده (پیلونفریت)","en":"Acute pyelonephritis","tr":"Piyelonefrit","kod":"N10","grup":"idrar"},
+  {"ad":"سنگ گرده","en":"Kidney stone","tr":"Böbrek taşı","kod":"N20.0","grup":"idrar","es":["Urolithiasis"]},
+  {"ad":"سنگ مثانه","en":"Bladder stone","tr":"Mesane taşı","kod":"N21.0","grup":"idrar"},
+  {"ad":"درد گرده (کولیک)","en":"Renal colic","tr":"Böbrek koliği","kod":"N23","grup":"idrar"},
+  {"ad":"نارسایی مزمن گرده","en":"Chronic kidney disease","tr":"Kronik böbrek yetmezliği","kod":"N18.9","grup":"idrar"},
+  {"ad":"بزرگی پروستات","en":"Benign prostatic hyperplasia","tr":"Prostat büyümesi","kod":"N40","grup":"idrar"},
+  {"ad":"التهاب پروستات","en":"Prostatitis","tr":"Prostatit","kod":"N41.9","grup":"idrar"},
+  {"ad":"پروتئین در ادرار","en":"Proteinuria","tr":"Proteinüri","kod":"R80","grup":"idrar"},
+  {"ad":"ناتوانی جنسی","en":"Erectile dysfunction","tr":"Erektil disfonksiyon","kod":"N52.9","grup":"idrar"},
+  {"ad":"نازایی","en":"Infertility","tr":"Kısırlık","kod":"N97.9","grup":"idrar"},
+  {"ad":"خارش پوست","en":"Pruritus","tr":"Kaşıntı","kod":"L29.9","grup":"jildi","sik":1},
+  {"ad":"حساسیت پوستی","en":"Allergic contact dermatitis","tr":"Deri alerjisi","kod":"L23.9","grup":"jildi","es":["Contact dermatitis"]},
+  {"ad":"اگزما","en":"Eczema","tr":"Egzama","kod":"L30.9","grup":"jildi"},
+  {"ad":"درماتیت اتوپیک","en":"Atopic dermatitis","tr":"Atopik dermatit","kod":"L20.9","grup":"jildi"},
+  {"ad":"کهیر","en":"Urticaria","tr":"Ürtiker","kod":"L50.9","grup":"jildi"},
+  {"ad":"زخم جلدی","en":"Skin ulcer","tr":"Deri yarası","kod":"L98.9","grup":"jildi"},
+  {"ad":"عفونت چرکی پوست","en":"Skin abscess","tr":"Deri apsesi","kod":"L02.9","grup":"jildi"},
+  {"ad":"سلولیت","en":"Cellulitis","tr":"Selülit","kod":"L03.9","grup":"jildi"},
+  {"ad":"زرد زخم (ایمپتیگو)","en":"Impetigo","tr":"İmpetigo","kod":"L01.0","grup":"jildi"},
+  {"ad":"قارچ پوست","en":"Tinea (dermatophytosis)","tr":"Deri mantarı","kod":"B35.9","grup":"jildi"},
+  {"ad":"قارچ ناخن","en":"Onychomycosis","tr":"Tırnak mantarı","kod":"B35.1","grup":"jildi"},
+  {"ad":"جرب (گال)","en":"Scabies","tr":"Uyuz","kod":"B86","grup":"jildi"},
+  {"ad":"شپش","en":"Head lice","tr":"Bit","kod":"B85.0","grup":"jildi","es":["Pediculosis capitis"]},
+  {"ad":"آکنه (جوش)","en":"Acne vulgaris","tr":"Akne","kod":"L70.0","grup":"jildi"},
+  {"ad":"پسوریازیس","en":"Psoriasis","tr":"Sedef","kod":"L40.9","grup":"jildi"},
+  {"ad":"ویتیلیگو (پیسی)","en":"Vitiligo","tr":"Vitiligo","kod":"L80","grup":"jildi"},
+  {"ad":"ریزش مو","en":"Hair loss (alopecia)","tr":"Saç dökülmesi","kod":"L65.9","grup":"jildi"},
+  {"ad":"زگیل","en":"Warts","tr":"Siğil","kod":"B07","grup":"jildi"},
+  {"ad":"تبخال","en":"Herpes labialis","tr":"Uçuk","kod":"B00.1","grup":"jildi"},
+  {"ad":"سوختگی","en":"Burn","tr":"Yanık","kod":"T30.0","grup":"jildi"},
+  {"ad":"کمردردی","en":"Low back pain","tr":"Bel ağrısı","kod":"M54.5","grup":"ustukhan","sik":1,"es":["Mechanical low back pain"]},
+  {"ad":"گردن‌دردی","en":"Neck pain","tr":"Boyun ağrısı","kod":"M54.2","grup":"ustukhan"},
+  {"ad":"درد مفاصل","en":"Joint pain (arthralgia)","tr":"Eklem ağrısı","kod":"M25.5","grup":"ustukhan","sik":1},
+  {"ad":"استیوآرتریت (ساییدگی)","en":"Osteoarthritis","tr":"Kireçlenme","kod":"M19.9","grup":"ustukhan"},
+  {"ad":"روماتیزم مفصلی","en":"Rheumatoid arthritis","tr":"Romatoid artrit","kod":"M06.9","grup":"ustukhan"},
+  {"ad":"درد زانو","en":"Knee pain","tr":"Diz ağrısı","kod":"M25.56","grup":"ustukhan"},
+  {"ad":"درد شانه","en":"Shoulder pain","tr":"Omuz ağrısı","kod":"M25.51","grup":"ustukhan"},
+  {"ad":"دیسک کمر","en":"Lumbar disc prolapse","tr":"Bel fıtığı","kod":"M51.2","grup":"ustukhan"},
+  {"ad":"پوکی استخوان","en":"Osteoporosis","tr":"Kemik erimesi","kod":"M81.9","grup":"ustukhan"},
+  {"ad":"درد عضلات","en":"Myalgia","tr":"Kas ağrısı","kod":"M79.1","grup":"ustukhan"},
+  {"ad":"فیبرومیالژی","en":"Fibromyalgia","tr":"Fibromiyalji","kod":"M79.7","grup":"ustukhan"},
+  {"ad":"نقرس","en":"Gout","tr":"Gut","kod":"M10.9","grup":"ustukhan"},
+  {"ad":"التهاب تاندون","en":"Tendinitis","tr":"Tendinit","kod":"M77.9","grup":"ustukhan"},
+  {"ad":"شکستگی استخوان","en":"Fracture","tr":"Kemik kırığı","kod":"T14.2","grup":"ustukhan"},
+  {"ad":"رگ به رگ شدن","en":"Sprain","tr":"Burkulma","kod":"T14.3","grup":"ustukhan"},
+  {"ad":"عفونت استخوان","en":"Osteomyelitis","tr":"Kemik iltihabı","kod":"M86.9","grup":"ustukhan"},
+  {"ad":"مرض شکر (دیابت)","en":"Type 2 diabetes mellitus","tr":"Şeker hastalığı","kod":"E11.9","grup":"ghudad","sik":1},
+  {"ad":"دیابت نوع ۱","en":"Type 1 diabetes mellitus","tr":"Tip 1 diyabet","kod":"E10.9","grup":"ghudad"},
+  {"ad":"دیابت حاملگی","en":"Gestational diabetes","tr":"Gebelik diyabeti","kod":"O24.4","grup":"ghudad"},
+  {"ad":"قند خون پایین","en":"Hypoglycemia","tr":"Hipoglisemi","kod":"E16.2","grup":"ghudad"},
+  {"ad":"کم‌کاری غده تایرایید","en":"Hypothyroidism","tr":"Hipotiroidi","kod":"E03.9","grup":"ghudad"},
+  {"ad":"پرکاری غده تایرایید","en":"Hyperthyroidism","tr":"Hipertiroidi","kod":"E05.9","grup":"ghudad"},
+  {"ad":"گواتر","en":"Goiter","tr":"Guatr","kod":"E04.9","grup":"ghudad"},
+  {"ad":"چربی خون بلند","en":"Dyslipidemia","tr":"Yüksek kolesterol","kod":"E78.5","grup":"ghudad"},
+  {"ad":"چاقی","en":"Obesity","tr":"Obezite","kod":"E66.9","grup":"ghudad"},
+  {"ad":"کمبود ویتامین D","en":"Vitamin D deficiency","tr":"D vitamini eksikliği","kod":"E55.9","grup":"ghudad"},
+  {"ad":"کمبود ویتامین B12","en":"Vitamin B12 deficiency","tr":"B12 eksikliği","kod":"E53.8","grup":"ghudad"},
+  {"ad":"کمبود ید","en":"Iodine deficiency","tr":"İyot eksikliği","kod":"E01.8","grup":"ghudad","eskiKod":"E61.8"},
+  {"ad":"کمبود کلسیم","en":"Calcium deficiency","tr":"Kalsiyum eksikliği","kod":"E58","grup":"ghudad"},
+  {"ad":"عفونت عمومی","en":"Bacterial infection","tr":"Enfeksiyon","kod":"A49.9","grup":"ufunat"},
+  {"ad":"ملاریا","en":"Malaria","tr":"Sıtma","kod":"B54","grup":"ufunat"},
+  {"ad":"تایفویید","en":"Typhoid fever","tr":"Tifo","kod":"A01.0","grup":"ufunat"},
+  {"ad":"توبرکلوز (سل)","en":"Tuberculosis","tr":"Verem","kod":"A15.9","grup":"ufunat","es":["Pulmonary tuberculosis"]},
+  {"ad":"لیشمانیا (سالک)","en":"Cutaneous leishmaniasis","tr":"Şark çıbanı","kod":"B55.1","grup":"ufunat"},
+  {"ad":"بروسلوز (تب مالت)","en":"Brucellosis","tr":"Bruselloz","kod":"A23.9","grup":"ufunat"},
+  {"ad":"سرخکان","en":"Measles","tr":"Kızamık","kod":"B05.9","grup":"ufunat"},
+  {"ad":"مرغانه (آبله‌مرغان)","en":"Chickenpox","tr":"Su çiçeği","kod":"B01.9","grup":"ufunat"},
+  {"ad":"اوریون","en":"Mumps","tr":"Kabakulak","kod":"B26.9","grup":"ufunat"},
+  {"ad":"کچالو (کزاز)","en":"Tetanus","tr":"Tetanoz","kod":"A35","grup":"ufunat"},
+  {"ad":"هاری (سگ‌گزیدگی)","en":"Animal bite (rabies exposure)","tr":"Kuduz riski","kod":"Z20.3","grup":"ufunat"},
+  {"ad":"کووید-۱۹","en":"COVID-19","tr":"COVID-19","kod":"U07.1","grup":"ufunat"},
+  {"ad":"قاعدگی دردناک","en":"Dysmenorrhea","tr":"Ağrılı adet","kod":"N94.6","grup":"zanan","es":["Primary dysmenorrhea"]},
+  {"ad":"بی‌نظمی قاعدگی","en":"Irregular menstruation","tr":"Adet düzensizliği","kod":"N92.6","grup":"zanan"},
+  {"ad":"خون‌ریزی شدید قاعدگی","en":"Heavy menstrual bleeding","tr":"Aşırı adet kanaması","kod":"N92.0","grup":"zanan"},
+  {"ad":"حاملگی","en":"Normal pregnancy (antenatal care)","tr":"Gebelik","kod":"Z34.9","grup":"zanan"},
+  {"ad":"کم‌خونی دوران حاملگی","en":"Anemia in pregnancy","tr":"Gebelik anemisi","kod":"O99.0","grup":"zanan"},
+  {"ad":"فشار خون حاملگی","en":"Gestational hypertension","tr":"Gebelik hipertansiyonu","kod":"O13","grup":"zanan"},
+  {"ad":"تهوع حاملگی","en":"Hyperemesis gravidarum","tr":"Gebelik bulantısı","kod":"O21.0","grup":"zanan"},
+  {"ad":"سقط تهدیدآمیز","en":"Threatened abortion","tr":"Düşük tehdidi","kod":"O20.0","grup":"zanan"},
+  {"ad":"عفونت واژن","en":"Vaginitis","tr":"Vajinit","kod":"N76.0","grup":"zanan","es":["Bacterial vaginosis"]},
+  {"ad":"کاندیدیازیس واژن","en":"Vulvovaginal candidiasis","tr":"Vajinal mantar","kod":"B37.3","grup":"zanan"},
+  {"ad":"کیست تخمدان","en":"Ovarian cyst","tr":"Yumurtalık kisti","kod":"N83.2","grup":"zanan"},
+  {"ad":"تخمدان پلی‌کیستیک","en":"Polycystic ovary syndrome","tr":"Polikistik over","kod":"E28.2","grup":"zanan"},
+  {"ad":"یایسگی","en":"Menopausal syndrome","tr":"Menopoz","kod":"N95.1","grup":"zanan"},
+  {"ad":"التهاب پستان","en":"Mastitis","tr":"Meme iltihabı","kod":"N61","grup":"zanan"},
+  {"ad":"سوء تغذیه اطفال","en":"Moderate acute malnutrition","tr":"Çocuk beslenme bozukluğu","kod":"E44.0","grup":"atfal"},
+  {"ad":"سوء تغذیه شدید","en":"Severe acute malnutrition","tr":"Ağır malnütrisyon","kod":"E43","grup":"atfal"},
+  {"ad":"کمبود وزن طفل","en":"Underweight child","tr":"Düşük kilo","kod":"R62.8","grup":"atfal"},
+  {"ad":"راشیتیزم","en":"Nutritional rickets","tr":"Raşitizm","kod":"E55.0","grup":"atfal"},
+  {"ad":"زردی نوزاد","en":"Neonatal jaundice","tr":"Yenidoğan sarılığı","kod":"P59.9","grup":"atfal"},
+  {"ad":"قولنج نوزاد","en":"Infantile colic","tr":"Bebek koliği","kod":"R10.83","grup":"atfal"},
+  {"ad":"بثورات کهنه (دیاپر)","en":"Diaper dermatitis","tr":"Pişik","kod":"L22","grup":"atfal"},
+  {"ad":"واکسین","en":"Vaccination","tr":"Aşı","kod":"Z23","grup":"atfal"},
+  {"ad":"تأخیر رشد","en":"Failure to thrive","tr":"Gelişme geriliği","kod":"R62.5","grup":"atfal"},
+  {"ad":"زخم و جراحت","en":"Open wound","tr":"Yaralanma","kod":"T14.1","grup":"hadisa"},
+  {"ad":"ضربه سر","en":"Head injury","tr":"Kafa travması","kod":"S09.9","grup":"hadisa"},
+  {"ad":"گزیدگی حشره","en":"Insect bite or sting","tr":"Böcek sokması","kod":"T63.4","grup":"hadisa"},
+  {"ad":"مارگزیدگی","en":"Snake bite","tr":"Yılan sokması","kod":"T63.0","grup":"hadisa"},
+  {"ad":"مسمومیت دوایی","en":"Drug poisoning","tr":"İlaç zehirlenmesi","kod":"T50.9","grup":"hadisa"},
+  {"ad":"گرمازدگی","en":"Heat stroke","tr":"Sıcak çarpması","kod":"T67.0","grup":"hadisa"},
+  {"ad":"سرمازدگی","en":"Frostbite","tr":"Donma","kod":"T33.9","grup":"hadisa"},
+  {"ad":"التهاب مزمن چرکی گوش میانی","en":"Chronic suppurative otitis media","tr":"Kronik süpüratif orta kulak iltihabı","kod":"H66.3","grup":"gulu"},
+  {"ad":"توبرکلوز غدد لنفاوی","en":"Tuberculous lymphadenitis","tr":"Tüberküloz lenfadenit","kod":"A18.2","grup":"ufunat"},
+  {"ad":"زخم پپتیک","en":"Peptic ulcer disease","tr":"Peptik ülser","kod":"K27.9","grup":"guwarish"},
+  {"ad":"بدهضمی (سوء هاضمه)","en":"Functional dyspepsia","tr":"Fonksiyonel dispepsi","kod":"K30","grup":"guwarish"},
+  {"ad":"هپاتیت B مزمن","en":"Chronic hepatitis B","tr":"Kronik hepatit B","kod":"B18.1","grup":"guwarish"},
+  {"ad":"هپاتیت C مزمن","en":"Chronic hepatitis C","tr":"Kronik hepatit C","kod":"B18.2","grup":"guwarish"},
+  {"ad":"ملاریای ویواکس","en":"Malaria (P. vivax)","tr":"Sıtma (P. vivax)","kod":"B51.9","grup":"ufunat"},
+  {"ad":"ملاریای فالسیپارم","en":"Malaria (P. falciparum)","tr":"Sıtma (P. falciparum)","kod":"B50.9","grup":"ufunat"},
+  {"ad":"تب کانگو (CCHF)","en":"Crimean-Congo hemorrhagic fever (CCHF)","tr":"Kırım-Kongo kanamalı ateşi","kod":"A98.0","grup":"ufunat"},
+  {"ad":"شب‌ادراری","en":"Nocturnal enuresis","tr":"Gece altını ıslatma","kod":"F98.0","grup":"atfal"},
+  {"ad":"تب روماتیزمی حاد","en":"Acute rheumatic fever","tr":"Akut romatizmal ateş","kod":"I00","grup":"qalb"},
+  {"ad":"ساییدگی مهره‌های گردن","en":"Cervical spondylosis","tr":"Servikal spondiloz","kod":"M47.8","grup":"ustukhan"},
+  {"ad":"کوفتگی نسج نرم","en":"Soft tissue injury","tr":"Yumuşak doku yaralanması","kod":"T14.0","grup":"hadisa"},
+  {"ad":"سرگیچی وضعیتی (BPPV)","en":"Benign paroxysmal positional vertigo (BPPV)","tr":"Benign paroksismal pozisyonel vertigo","kod":"H81.1","grup":"sinir"},
+  {"ad":"اختلال اضطراب عمومی","en":"Generalized anxiety disorder","tr":"Yaygın anksiyete bozukluğu","kod":"F41.1","grup":"ravani"},
+  {"ad":"اختلال استرس پس از حادثه (PTSD)","en":"Post-traumatic stress disorder (PTSD)","tr":"Travma sonrası stres bozukluğu","kod":"F43.1","grup":"ravani"},
+  {"ad":"التهاب حوصله (PID)","en":"Pelvic inflammatory disease","tr":"Pelvik inflamatuar hastalık","kod":"N73.9","grup":"zanan"},
+  {"ad":"تریکوموناس","en":"Trichomoniasis","tr":"Trikomoniyaz","kod":"A59.0","grup":"zanan"},
+  {"ad":"خون‌ریزی غیرعادی رحم","en":"Abnormal uterine bleeding","tr":"Anormal uterin kanama","kod":"N93.9","grup":"zanan"},
+  {"ad":"قطع ثانوی قاعدگی","en":"Secondary amenorrhea","tr":"Sekonder amenore","kod":"N91.1","grup":"zanan"},
+  {"ad":"پره‌اکلامپسی","en":"Pre-eclampsia","tr":"Preeklampsi","kod":"O14.9","grup":"zanan"},
+  {"ad":"قارچ بدن (تینیا کورپوریس)","en":"Tinea corporis","tr":"Tinea korporis","kod":"B35.4","grup":"jildi"},
+  {"ad":"قارچ کشاله ران","en":"Tinea cruris","tr":"Tinea kruris","kod":"B35.6","grup":"jildi"},
+  {"ad":"قارچ سر","en":"Tinea capitis","tr":"Tinea kapitis","kod":"B35.0","grup":"jildi"},
+  {"ad":"لکه‌های قارچی پوست (ورسیکالر)","en":"Pityriasis versicolor","tr":"Pitiriyazis versikolor","kod":"B36.0","grup":"jildi"},
+  {"ad":"لکه‌های قهوه‌ای صورت (ملاسما)","en":"Melasma","tr":"Melazma","kod":"L81.1","grup":"jildi"},
+  {"ad":"التهاب حساسیتی ملتحمه","en":"Allergic conjunctivitis","tr":"Alerjik konjonktivit","kod":"H10.1","grup":"gulu"},
+  {"ad":"التهاب چرکی ملتحمه","en":"Bacterial conjunctivitis","tr":"Bakteriyel konjonktivit","kod":"H10.0","grup":"gulu"},
+  {"ad":"عیب انکساری چشم","en":"Refractive error","tr":"Kırma kusuru","kod":"H52.7","grup":"gulu"},
+  {"ad":"حساسیت دوایی","en":"Drug allergy","tr":"İlaç alerjisi","kod":"T88.7","grup":"hadisa"}
  ],
  "belirtiler": [
-  {
-   "ad": "تب",
-   "tr": "Ateş",
-   "grup": "umumi",
-   "sik": 1
-  },
-  {
-   "ad": "لرزه",
-   "tr": "Titreme",
-   "grup": "umumi"
-  },
-  {
-   "ad": "ضعف عمومی",
-   "tr": "Halsizlik",
-   "grup": "umumi",
-   "sik": 1
-  },
-  {
-   "ad": "خستگی",
-   "tr": "Yorgunluk",
-   "grup": "umumi"
-  },
-  {
-   "ad": "تعریق شبانه",
-   "tr": "Gece terlemesi",
-   "grup": "umumi"
-  },
-  {
-   "ad": "بی‌اشتهایی",
-   "tr": "İştahsızlık",
-   "grup": "umumi"
-  },
-  {
-   "ad": "کاهش وزن",
-   "tr": "Kilo kaybı",
-   "grup": "umumi"
-  },
-  {
-   "ad": "افزایش وزن",
-   "tr": "Kilo artışı",
-   "grup": "umumi"
-  },
-  {
-   "ad": "تشنگی زیاد",
-   "tr": "Aşırı susama",
-   "grup": "umumi"
-  },
-  {
-   "ad": "زردی",
-   "tr": "Sarılık",
-   "grup": "umumi"
-  },
-  {
-   "ad": "ورم پاها",
-   "tr": "Bacak şişmesi",
-   "grup": "umumi"
-  },
-  {
-   "ad": "ورم صورت",
-   "tr": "Yüz şişmesi",
-   "grup": "umumi"
-  },
-  {
-   "ad": "رنگ‌پریدگی",
-   "tr": "Solukluk",
-   "grup": "umumi"
-  },
-  {
-   "ad": "خارش عمومی بدن",
-   "tr": "Yaygın kaşıntı",
-   "grup": "umumi"
-  },
-  {
-   "ad": "سردردی",
-   "tr": "Baş ağrısı",
-   "grup": "sinir",
-   "sik": 1
-  },
-  {
-   "ad": "سرگیچی",
-   "tr": "Baş dönmesi",
-   "grup": "sinir",
-   "sik": 1
-  },
-  {
-   "ad": "بی‌خوابی",
-   "tr": "Uykusuzluk",
-   "grup": "sinir"
-  },
-  {
-   "ad": "خواب‌آلودگی",
-   "tr": "Uyku hali",
-   "grup": "sinir"
-  },
-  {
-   "ad": "تشنج",
-   "tr": "Havale",
-   "grup": "sinir"
-  },
-  {
-   "ad": "بی‌هوشی",
-   "tr": "Bilinç kaybı",
-   "grup": "sinir"
-  },
-  {
-   "ad": "بی‌حسی دست و پا",
-   "tr": "El ve ayakta uyuşma",
-   "grup": "sinir"
-  },
-  {
-   "ad": "سوزش دست و پا",
-   "tr": "El ve ayakta yanma",
-   "grup": "sinir"
-  },
-  {
-   "ad": "لرزش دست",
-   "tr": "El titremesi",
-   "grup": "sinir"
-  },
-  {
-   "ad": "ضعف یک طرف بدن",
-   "tr": "Tek taraflı güçsüzlük",
-   "grup": "sinir"
-  },
-  {
-   "ad": "اختلال تکلم",
-   "tr": "Konuşma bozukluğu",
-   "grup": "sinir"
-  },
-  {
-   "ad": "سفتی گردن",
-   "tr": "Ense sertliği",
-   "grup": "sinir"
-  },
-  {
-   "ad": "فراموشی",
-   "tr": "Unutkanlık",
-   "grup": "sinir"
-  },
-  {
-   "ad": "اضطراب",
-   "tr": "Kaygı",
-   "grup": "ravani"
-  },
-  {
-   "ad": "بی‌قراری",
-   "tr": "Huzursuzluk",
-   "grup": "ravani"
-  },
-  {
-   "ad": "غمگینی",
-   "tr": "Üzgünlük",
-   "grup": "ravani"
-  },
-  {
-   "ad": "بی‌علاقگی",
-   "tr": "İlgisizlik",
-   "grup": "ravani"
-  },
-  {
-   "ad": "تپش قلب با اضطراب",
-   "tr": "Kaygıyla çarpıntı",
-   "grup": "ravani"
-  },
-  {
-   "ad": "دندان‌دردی",
-   "tr": "Diş ağrısı",
-   "grup": "dandan",
-   "sik": 1
-  },
-  {
-   "ad": "زخم دهان",
-   "tr": "Ağız yarası",
-   "grup": "dandan"
-  },
-  {
-   "ad": "خون‌ریزی لثه",
-   "tr": "Diş eti kanaması",
-   "grup": "dandan"
-  },
-  {
-   "ad": "بوی بد دهان",
-   "tr": "Ağız kokusu",
-   "grup": "dandan"
-  },
-  {
-   "ad": "خشکی دهان",
-   "tr": "Ağız kuruluğu",
-   "grup": "dandan"
-  },
-  {
-   "ad": "درد گلو",
-   "tr": "Boğaz ağrısı",
-   "grup": "gulu",
-   "sik": 1
-  },
-  {
-   "ad": "بلع دردناک",
-   "tr": "Yutma güçlüğü",
-   "grup": "gulu"
-  },
-  {
-   "ad": "گرفتگی صدا",
-   "tr": "Ses kısıklığı",
-   "grup": "gulu"
-  },
-  {
-   "ad": "آبریزش بینی",
-   "tr": "Burun akıntısı",
-   "grup": "gulu",
-   "sik": 1
-  },
-  {
-   "ad": "گرفتگی بینی",
-   "tr": "Burun tıkanıklığı",
-   "grup": "gulu"
-  },
-  {
-   "ad": "عطسه",
-   "tr": "Hapşırma",
-   "grup": "gulu"
-  },
-  {
-   "ad": "خون‌ریزی بینی",
-   "tr": "Burun kanaması",
-   "grup": "gulu"
-  },
-  {
-   "ad": "گوش‌دردی",
-   "tr": "Kulak ağrısı",
-   "grup": "gulu"
-  },
-  {
-   "ad": "ترشح گوش",
-   "tr": "Kulak akıntısı",
-   "grup": "gulu"
-  },
-  {
-   "ad": "کاهش شنوایی",
-   "tr": "İşitme azalması",
-   "grup": "gulu"
-  },
-  {
-   "ad": "زنگ گوش",
-   "tr": "Kulak çınlaması",
-   "grup": "gulu"
-  },
-  {
-   "ad": "سرخی چشم",
-   "tr": "Göz kızarıklığı",
-   "grup": "gulu"
-  },
-  {
-   "ad": "خارش چشم",
-   "tr": "Göz kaşıntısı",
-   "grup": "gulu"
-  },
-  {
-   "ad": "اشک‌ریزش",
-   "tr": "Gözyaşı akması",
-   "grup": "gulu"
-  },
-  {
-   "ad": "ترشح چشم",
-   "tr": "Göz çapaklanması",
-   "grup": "gulu"
-  },
-  {
-   "ad": "تاری دید",
-   "tr": "Bulanık görme",
-   "grup": "gulu"
-  },
-  {
-   "ad": "دوبینی",
-   "tr": "Çift görme",
-   "grup": "gulu"
-  },
-  {
-   "ad": "سرفه",
-   "tr": "Öksürük",
-   "grup": "tanaffus",
-   "sik": 1
-  },
-  {
-   "ad": "سرفه خشک",
-   "tr": "Kuru öksürük",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "سرفه بلغم‌دار",
-   "tr": "Balgamlı öksürük",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "خون در بلغم",
-   "tr": "Balgamda kan",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "تنگی نفس",
-   "tr": "Nefes darlığı",
-   "grup": "tanaffus",
-   "sik": 1
-  },
-  {
-   "ad": "تنفس تند",
-   "tr": "Hızlı soluma",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "خس‌خس سینه",
-   "tr": "Hırıltı",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "فرورفتگی قفسه سینه",
-   "tr": "Göğüs çekilmesi",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "کبودی لب و ناخن",
-   "tr": "Morarma",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "خرخر شبانه",
-   "tr": "Horlama",
-   "grup": "tanaffus"
-  },
-  {
-   "ad": "درد سینه",
-   "tr": "Göğüs ağrısı",
-   "grup": "qalb"
-  },
-  {
-   "ad": "تپش قلب",
-   "tr": "Çarpıntı",
-   "grup": "qalb"
-  },
-  {
-   "ad": "تنگی نفس هنگام فعالیت",
-   "tr": "Eforla nefes darlığı",
-   "grup": "qalb"
-  },
-  {
-   "ad": "تنگی نفس شبانه",
-   "tr": "Gece nefes darlığı",
-   "grup": "qalb"
-  },
-  {
-   "ad": "خون‌ریزی آسان",
-   "tr": "Kolay kanama",
-   "grup": "khun_g"
-  },
-  {
-   "ad": "کبودی خودبه‌خودی",
-   "tr": "Kendiliğinden morarma",
-   "grup": "khun_g"
-  },
-  {
-   "ad": "بزرگی غدد گردن",
-   "tr": "Boyunda bez şişliği",
-   "grup": "khun_g"
-  },
-  {
-   "ad": "درد شکم",
-   "tr": "Karın ağrısı",
-   "grup": "guwarish",
-   "sik": 1
-  },
-  {
-   "ad": "سوزش معده",
-   "tr": "Mide yanması",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "ترش کردن",
-   "tr": "Ekşime",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "دل‌بدی",
-   "tr": "Bulantı",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "استفراغ",
-   "tr": "Kusma",
-   "grup": "guwarish",
-   "sik": 1
-  },
-  {
-   "ad": "استفراغ خونی",
-   "tr": "Kanlı kusma",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "اسهال",
-   "tr": "İshal",
-   "grup": "guwarish",
-   "sik": 1
-  },
-  {
-   "ad": "اسهال خونی",
-   "tr": "Kanlı ishal",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "قبضیت",
-   "tr": "Kabızlık",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "نفخ شکم",
-   "tr": "Şişkinlik",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "خون در مدفوع",
-   "tr": "Dışkıda kan",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "مدفوع سیاه",
-   "tr": "Siyah dışkı",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "خارش مقعد",
-   "tr": "Makat kaşıntısı",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "درد هنگام تخلیه",
-   "tr": "Dışkılarken ağrı",
-   "grup": "guwarish"
-  },
-  {
-   "ad": "سوزش ادرار",
-   "tr": "İdrar yanması",
-   "grup": "idrar",
-   "sik": 1
-  },
-  {
-   "ad": "تکرر ادرار",
-   "tr": "Sık idrara çıkma",
-   "grup": "idrar"
-  },
-  {
-   "ad": "ادرار شبانه",
-   "tr": "Gece idrara çıkma",
-   "grup": "idrar"
-  },
-  {
-   "ad": "خون در ادرار",
-   "tr": "İdrarda kan",
-   "grup": "idrar"
-  },
-  {
-   "ad": "کم‌ادراری",
-   "tr": "İdrar azlığı",
-   "grup": "idrar"
-  },
-  {
-   "ad": "احتباس ادرار",
-   "tr": "İdrar yapamama",
-   "grup": "idrar"
-  },
-  {
-   "ad": "بی‌اختیاری ادرار",
-   "tr": "İdrar kaçırma",
-   "grup": "idrar"
-  },
-  {
-   "ad": "ترشح تناسلی",
-   "tr": "Genital akıntı",
-   "grup": "idrar"
-  },
-  {
-   "ad": "خارش پوست",
-   "tr": "Kaşıntı",
-   "grup": "jildi",
-   "sik": 1
-  },
-  {
-   "ad": "دانه‌های پوستی",
-   "tr": "Deri döküntüsü",
-   "grup": "jildi"
-  },
-  {
-   "ad": "کهیر",
-   "tr": "Kurdeşen",
-   "grup": "jildi"
-  },
-  {
-   "ad": "زخم پوست",
-   "tr": "Deri yarası",
-   "grup": "jildi"
-  },
-  {
-   "ad": "تاول",
-   "tr": "Kabarcık",
-   "grup": "jildi"
-  },
-  {
-   "ad": "خشکی پوست",
-   "tr": "Deri kuruluğu",
-   "grup": "jildi"
-  },
-  {
-   "ad": "ریزش مو",
-   "tr": "Saç dökülmesi",
-   "grup": "jildi"
-  },
-  {
-   "ad": "تغییر رنگ ناخن",
-   "tr": "Tırnak renk değişimi",
-   "grup": "jildi"
-  },
-  {
-   "ad": "کمردردی",
-   "tr": "Bel ağrısı",
-   "grup": "ustukhan",
-   "sik": 1
-  },
-  {
-   "ad": "گردن‌دردی",
-   "tr": "Boyun ağrısı",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "درد مفاصل",
-   "tr": "Eklem ağrısı",
-   "grup": "ustukhan",
-   "sik": 1
-  },
-  {
-   "ad": "ورم مفاصل",
-   "tr": "Eklem şişmesi",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "خشکی صبحگاهی مفاصل",
-   "tr": "Sabah tutukluğu",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "درد عضلات",
-   "tr": "Kas ağrısı",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "محدودیت حرکت",
-   "tr": "Hareket kısıtlılığı",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "لنگیدن",
-   "tr": "Aksama",
-   "grup": "ustukhan"
-  },
-  {
-   "ad": "قاعدگی دردناک",
-   "tr": "Ağrılı adet",
-   "grup": "zanan"
-  },
-  {
-   "ad": "خون‌ریزی غیرعادی",
-   "tr": "Anormal kanama",
-   "grup": "zanan"
-  },
-  {
-   "ad": "قطع قاعدگی",
-   "tr": "Adet kesilmesi",
-   "grup": "zanan"
-  },
-  {
-   "ad": "درد پستان",
-   "tr": "Meme ağrısı",
-   "grup": "zanan"
-  },
-  {
-   "ad": "شیر نخوردن طفل",
-   "tr": "Bebeğin ememesi",
-   "grup": "atfal"
-  },
-  {
-   "ad": "گریه دایمی طفل",
-   "tr": "Sürekli ağlama",
-   "grup": "atfal"
-  },
-  {
-   "ad": "بی‌حالی طفل",
-   "tr": "Çocukta halsizlik",
-   "grup": "atfal"
-  },
-  {
-   "ad": "کم شدن ادرار طفل",
-   "tr": "Çocukta idrar azlığı",
-   "grup": "atfal"
-  },
-  {
-   "ad": "کم‌وزنی طفل",
-   "tr": "Çocukta kilo alamama",
-   "grup": "atfal"
-  }
+  {"ad":"تب","en":"Fever","tr":"Ateş","grup":"umumi","sik":1},
+  {"ad":"لرزه","en":"Chills","tr":"Titreme","grup":"umumi","sik":1},
+  {"ad":"ضعف عمومی","en":"Weakness","tr":"Halsizlik","grup":"umumi","sik":1},
+  {"ad":"خستگی","en":"Fatigue","tr":"Yorgunluk","grup":"umumi"},
+  {"ad":"تعریق شبانه","en":"Night Sweats","tr":"Gece terlemesi","grup":"umumi"},
+  {"ad":"بی‌اشتهایی","en":"Loss of Appetite","tr":"İştahsızlık","grup":"umumi"},
+  {"ad":"کاهش وزن","en":"Weight Loss","tr":"Kilo kaybı","grup":"umumi"},
+  {"ad":"افزایش وزن","en":"Weight Gain","tr":"Kilo artışı","grup":"umumi"},
+  {"ad":"تشنگی زیاد","en":"Polydipsia","tr":"Aşırı susama","grup":"umumi"},
+  {"ad":"زردی","en":"Jaundice","tr":"Sarılık","grup":"umumi"},
+  {"ad":"ورم پاها","en":"Pedal Edema","tr":"Bacak şişmesi","grup":"umumi"},
+  {"ad":"ورم صورت","en":"Facial Swelling","tr":"Yüz şişmesi","grup":"umumi"},
+  {"ad":"رنگ‌پریدگی","en":"Pallor","tr":"Solukluk","grup":"umumi"},
+  {"ad":"خارش عمومی بدن","en":"Generalized Itching","tr":"Yaygın kaşıntı","grup":"umumi"},
+  {"ad":"سردردی","en":"Headache","tr":"Baş ağrısı","grup":"sinir","sik":1},
+  {"ad":"سرگیچی","en":"Dizziness","tr":"Baş dönmesi","grup":"sinir","sik":1},
+  {"ad":"بی‌خوابی","en":"Insomnia","tr":"Uykusuzluk","grup":"sinir"},
+  {"ad":"خواب‌آلودگی","en":"Drowsiness","tr":"Uyku hali","grup":"sinir"},
+  {"ad":"تشنج","en":"Convulsions","tr":"Havale","grup":"sinir"},
+  {"ad":"بی‌هوشی","en":"Loss of Consciousness","tr":"Bilinç kaybı","grup":"sinir"},
+  {"ad":"بی‌حسی دست و پا","en":"Numbness","tr":"El ve ayakta uyuşma","grup":"sinir"},
+  {"ad":"سوزش دست و پا","en":"Burning Hands and Feet","tr":"El ve ayakta yanma","grup":"sinir"},
+  {"ad":"لرزش دست","en":"Tremor","tr":"El titremesi","grup":"sinir"},
+  {"ad":"ضعف یک طرف بدن","en":"One-sided Weakness","tr":"Tek taraflı güçsüzlük","grup":"sinir"},
+  {"ad":"اختلال تکلم","en":"Speech Difficulty","tr":"Konuşma bozukluğu","grup":"sinir"},
+  {"ad":"سفتی گردن","en":"Neck Stiffness","tr":"Ense sertliği","grup":"sinir"},
+  {"ad":"فراموشی","en":"Forgetfulness","tr":"Unutkanlık","grup":"sinir"},
+  {"ad":"اضطراب","en":"Anxiety","tr":"Kaygı","grup":"ravani"},
+  {"ad":"بی‌قراری","en":"Restlessness","tr":"Huzursuzluk","grup":"ravani"},
+  {"ad":"غمگینی","en":"Depressed Mood","tr":"Üzgünlük","grup":"ravani"},
+  {"ad":"بی‌علاقگی","en":"Loss of Interest","tr":"İlgisizlik","grup":"ravani"},
+  {"ad":"تپش قلب با اضطراب","en":"Palpitations with Anxiety","tr":"Kaygıyla çarpıntı","grup":"ravani"},
+  {"ad":"دندان‌دردی","en":"Toothache","tr":"Diş ağrısı","grup":"dandan","sik":1},
+  {"ad":"زخم دهان","en":"Mouth Ulcers","tr":"Ağız yarası","grup":"dandan"},
+  {"ad":"خون‌ریزی لثه","en":"Bleeding Gums","tr":"Diş eti kanaması","grup":"dandan"},
+  {"ad":"بوی بد دهان","en":"Bad Breath","tr":"Ağız kokusu","grup":"dandan"},
+  {"ad":"خشکی دهان","en":"Dry Mouth","tr":"Ağız kuruluğu","grup":"dandan"},
+  {"ad":"درد گلو","en":"Sore Throat","tr":"Boğaz ağrısı","grup":"gulu","sik":1},
+  {"ad":"بلع دردناک","en":"Painful Swallowing","tr":"Yutma güçlüğü","grup":"gulu"},
+  {"ad":"گرفتگی صدا","en":"Hoarseness","tr":"Ses kısıklığı","grup":"gulu"},
+  {"ad":"آبریزش بینی","en":"Runny Nose","tr":"Burun akıntısı","grup":"gulu","sik":1},
+  {"ad":"گرفتگی بینی","en":"Nasal Congestion","tr":"Burun tıkanıklığı","grup":"gulu"},
+  {"ad":"عطسه","en":"Sneezing","tr":"Hapşırma","grup":"gulu"},
+  {"ad":"خون‌ریزی بینی","en":"Nosebleed","tr":"Burun kanaması","grup":"gulu"},
+  {"ad":"گوش‌دردی","en":"Ear Pain","tr":"Kulak ağrısı","grup":"gulu"},
+  {"ad":"ترشح گوش","en":"Ear Discharge","tr":"Kulak akıntısı","grup":"gulu"},
+  {"ad":"کاهش شنوایی","en":"Hearing Loss","tr":"İşitme azalması","grup":"gulu"},
+  {"ad":"زنگ گوش","en":"Tinnitus","tr":"Kulak çınlaması","grup":"gulu"},
+  {"ad":"سرخی چشم","en":"Red Eye","tr":"Göz kızarıklığı","grup":"gulu"},
+  {"ad":"خارش چشم","en":"Itchy Eyes","tr":"Göz kaşıntısı","grup":"gulu"},
+  {"ad":"اشک‌ریزش","en":"Watery Eyes","tr":"Gözyaşı akması","grup":"gulu"},
+  {"ad":"ترشح چشم","en":"Eye Discharge","tr":"Göz çapaklanması","grup":"gulu"},
+  {"ad":"تاری دید","en":"Blurred Vision","tr":"Bulanık görme","grup":"gulu"},
+  {"ad":"دوبینی","en":"Double Vision","tr":"Çift görme","grup":"gulu"},
+  {"ad":"سرفه","en":"Cough","tr":"Öksürük","grup":"tanaffus","sik":1},
+  {"ad":"سرفه خشک","en":"Dry Cough","tr":"Kuru öksürük","grup":"tanaffus"},
+  {"ad":"سرفه بلغم‌دار","en":"Productive Cough","tr":"Balgamlı öksürük","grup":"tanaffus"},
+  {"ad":"خون در بلغم","en":"Hemoptysis","tr":"Balgamda kan","grup":"tanaffus"},
+  {"ad":"تنگی نفس","en":"Shortness of Breath","tr":"Nefes darlığı","grup":"tanaffus","sik":1},
+  {"ad":"تنفس تند","en":"Fast Breathing","tr":"Hızlı soluma","grup":"tanaffus"},
+  {"ad":"خس‌خس سینه","en":"Wheezing","tr":"Hırıltı","grup":"tanaffus"},
+  {"ad":"فرورفتگی قفسه سینه","en":"Chest Indrawing","tr":"Göğüs çekilmesi","grup":"tanaffus"},
+  {"ad":"کبودی لب و ناخن","en":"Cyanosis","tr":"Morarma","grup":"tanaffus"},
+  {"ad":"خرخر شبانه","en":"Snoring","tr":"Horlama","grup":"tanaffus"},
+  {"ad":"درد سینه","en":"Chest Pain","tr":"Göğüs ağrısı","grup":"qalb"},
+  {"ad":"تپش قلب","en":"Palpitations","tr":"Çarpıntı","grup":"qalb"},
+  {"ad":"تنگی نفس هنگام فعالیت","en":"Exertional Dyspnea","tr":"Eforla nefes darlığı","grup":"qalb"},
+  {"ad":"تنگی نفس شبانه","en":"Nocturnal Dyspnea","tr":"Gece nefes darlığı","grup":"qalb"},
+  {"ad":"خون‌ریزی آسان","en":"Easy Bleeding","tr":"Kolay kanama","grup":"khun_g"},
+  {"ad":"کبودی خودبه‌خودی","en":"Easy Bruising","tr":"Kendiliğinden morarma","grup":"khun_g"},
+  {"ad":"بزرگی غدد گردن","en":"Cervical Lymphadenopathy","tr":"Boyunda bez şişliği","grup":"khun_g"},
+  {"ad":"درد شکم","en":"Abdominal Pain","tr":"Karın ağrısı","grup":"guwarish","sik":1},
+  {"ad":"سوزش معده","en":"Heartburn","tr":"Mide yanması","grup":"guwarish"},
+  {"ad":"ترش کردن","en":"Acid Regurgitation","tr":"Ekşime","grup":"guwarish"},
+  {"ad":"دل‌بدی","en":"Nausea","tr":"Bulantı","grup":"guwarish"},
+  {"ad":"استفراغ","en":"Vomiting","tr":"Kusma","grup":"guwarish","sik":1},
+  {"ad":"استفراغ خونی","en":"Hematemesis","tr":"Kanlı kusma","grup":"guwarish"},
+  {"ad":"اسهال","en":"Diarrhea","tr":"İshal","grup":"guwarish","sik":1},
+  {"ad":"اسهال خونی","en":"Bloody Diarrhea","tr":"Kanlı ishal","grup":"guwarish"},
+  {"ad":"قبضیت","en":"Constipation","tr":"Kabızlık","grup":"guwarish"},
+  {"ad":"نفخ شکم","en":"Bloating","tr":"Şişkinlik","grup":"guwarish"},
+  {"ad":"خون در مدفوع","en":"Rectal Bleeding","tr":"Dışkıda kan","grup":"guwarish"},
+  {"ad":"مدفوع سیاه","en":"Melena","tr":"Siyah dışkı","grup":"guwarish"},
+  {"ad":"خارش مقعد","en":"Anal Itching","tr":"Makat kaşıntısı","grup":"guwarish"},
+  {"ad":"درد هنگام تخلیه","en":"Painful Defecation","tr":"Dışkılarken ağrı","grup":"guwarish"},
+  {"ad":"سوزش ادرار","en":"Dysuria","tr":"İdrar yanması","grup":"idrar","sik":1},
+  {"ad":"تکرر ادرار","en":"Urinary Frequency","tr":"Sık idrara çıkma","grup":"idrar"},
+  {"ad":"ادرار شبانه","en":"Nocturia","tr":"Gece idrara çıkma","grup":"idrar"},
+  {"ad":"خون در ادرار","en":"Hematuria","tr":"İdrarda kan","grup":"idrar"},
+  {"ad":"کم‌ادراری","en":"Decreased Urine Output","tr":"İdrar azlığı","grup":"idrar"},
+  {"ad":"احتباس ادرار","en":"Urinary Retention","tr":"İdrar yapamama","grup":"idrar"},
+  {"ad":"بی‌اختیاری ادرار","en":"Urinary Incontinence","tr":"İdrar kaçırma","grup":"idrar"},
+  {"ad":"ترشح تناسلی","en":"Genital Discharge","tr":"Genital akıntı","grup":"idrar"},
+  {"ad":"خارش پوست","en":"Itching","tr":"Kaşıntı","grup":"jildi","sik":1},
+  {"ad":"دانه‌های پوستی","en":"Rash","tr":"Deri döküntüsü","grup":"jildi"},
+  {"ad":"کهیر","en":"Hives","tr":"Kurdeşen","grup":"jildi"},
+  {"ad":"زخم پوست","en":"Skin Ulcer","tr":"Deri yarası","grup":"jildi"},
+  {"ad":"تاول","en":"Blisters","tr":"Kabarcık","grup":"jildi"},
+  {"ad":"خشکی پوست","en":"Dry Skin","tr":"Deri kuruluğu","grup":"jildi"},
+  {"ad":"ریزش مو","en":"Hair Loss","tr":"Saç dökülmesi","grup":"jildi"},
+  {"ad":"تغییر رنگ ناخن","en":"Nail Discoloration","tr":"Tırnak renk değişimi","grup":"jildi"},
+  {"ad":"کمردردی","en":"Back Pain","tr":"Bel ağrısı","grup":"ustukhan","sik":1},
+  {"ad":"گردن‌دردی","en":"Neck Pain","tr":"Boyun ağrısı","grup":"ustukhan"},
+  {"ad":"درد مفاصل","en":"Joint Pain","tr":"Eklem ağrısı","grup":"ustukhan","sik":1},
+  {"ad":"ورم مفاصل","en":"Joint Swelling","tr":"Eklem şişmesi","grup":"ustukhan"},
+  {"ad":"خشکی صبحگاهی مفاصل","en":"Morning Stiffness","tr":"Sabah tutukluğu","grup":"ustukhan"},
+  {"ad":"درد عضلات","en":"Muscle Pain","tr":"Kas ağrısı","grup":"ustukhan"},
+  {"ad":"محدودیت حرکت","en":"Limited Movement","tr":"Hareket kısıtlılığı","grup":"ustukhan"},
+  {"ad":"لنگیدن","en":"Limping","tr":"Aksama","grup":"ustukhan"},
+  {"ad":"قاعدگی دردناک","en":"Painful Menstruation","tr":"Ağrılı adet","grup":"zanan"},
+  {"ad":"خون‌ریزی غیرعادی","en":"Abnormal Vaginal Bleeding","tr":"Anormal kanama","grup":"zanan"},
+  {"ad":"قطع قاعدگی","en":"Amenorrhea","tr":"Adet kesilmesi","grup":"zanan"},
+  {"ad":"درد پستان","en":"Breast Pain","tr":"Meme ağrısı","grup":"zanan"},
+  {"ad":"شیر نخوردن طفل","en":"Unable to Drink or Breastfeed","tr":"Bebeğin ememesi","grup":"atfal"},
+  {"ad":"گریه دایمی طفل","en":"Excessive Crying","tr":"Sürekli ağlama","grup":"atfal"},
+  {"ad":"بی‌حالی طفل","en":"Lethargy","tr":"Çocukta halsizlik","grup":"atfal"},
+  {"ad":"کم شدن ادرار طفل","en":"Decreased Urine in Child","tr":"Çocukta idrar azlığı","grup":"atfal"},
+  {"ad":"کم‌وزنی طفل","en":"Failure to Thrive","tr":"Çocukta kilo alamama","grup":"atfal"},
+  {"ad":"درد عمومی بدن","en":"Generalized Body Pain","tr":"Yaygın vücut ağrısı","grup":"umumi"},
+  {"ad":"ورم دور چشم","en":"Periorbital Edema","tr":"Göz çevresinde şişlik","grup":"umumi"},
+  {"ad":"کم‌آبی بدن","en":"Dehydration","tr":"Susuzluk (dehidratasyon)","grup":"umumi"},
+  {"ad":"عدم تحمل گرما","en":"Heat Intolerance","tr":"Sıcağa dayanamama","grup":"umumi"},
+  {"ad":"عدم تحمل سردی","en":"Cold Intolerance","tr":"Soğuğa dayanamama","grup":"umumi"},
+  {"ad":"چرخیدن سر (ورتیگو)","en":"Vertigo","tr":"Vertigo","grup":"sinir"},
+  {"ad":"غش کردن","en":"Syncope","tr":"Bayılma","grup":"sinir"},
+  {"ad":"مورمور شدن دست و پا","en":"Tingling","tr":"Karıncalanma","grup":"sinir"},
+  {"ad":"کاهش سطح هوشیاری","en":"Altered Level of Consciousness","tr":"Bilinç bulanıklığı","grup":"sinir"},
+  {"ad":"پریشانی ذهن (گیجی)","en":"Confusion","tr":"Konfüzyon","grup":"sinir"},
+  {"ad":"مشکل در بلع","en":"Dysphagia","tr":"Yutma güçlüğü","grup":"gulu"},
+  {"ad":"باز و بسته شدن پره‌های بینی","en":"Nasal Flaring","tr":"Burun kanadı solunumu","grup":"tanaffus"},
+  {"ad":"ناله هنگام تنفس","en":"Grunting","tr":"İnleyerek soluma","grup":"tanaffus"},
+  {"ad":"ضربان تند قلب","en":"Tachycardia","tr":"Taşikardi","grup":"qalb"},
+  {"ad":"فشار خون بلند","en":"High Blood Pressure","tr":"Yüksek tansiyon","grup":"qalb"},
+  {"ad":"فشار خون پایین","en":"Low Blood Pressure","tr":"Düşük tansiyon","grup":"qalb"},
+  {"ad":"بزرگی غدد لنفاوی","en":"Lymphadenopathy","tr":"Lenf bezi büyümesi","grup":"khun_g"},
+  {"ad":"بزرگی طحال","en":"Splenomegaly","tr":"Dalak büyümesi","grup":"khun_g"},
+  {"ad":"درد بالای معده","en":"Epigastric Pain","tr":"Mide ağzı ağrısı","grup":"guwarish"},
+  {"ad":"درد زیر ناف","en":"Lower Abdominal Pain","tr":"Alt karın ağrısı","grup":"guwarish"},
+  {"ad":"بزرگی جگر","en":"Hepatomegaly","tr":"Karaciğer büyümesi","grup":"guwarish"},
+  {"ad":"فوریت ادرار","en":"Urinary Urgency","tr":"Sıkışma hissi (idrar)","grup":"idrar"},
+  {"ad":"درد پهلو","en":"Flank Pain","tr":"Böğür ağrısı","grup":"idrar"},
+  {"ad":"پرادراری","en":"Polyuria","tr":"Çok idrara çıkma","grup":"idrar"},
+  {"ad":"ترشح مهبلی","en":"Vaginal Discharge","tr":"Vajinal akıntı","grup":"zanan"},
+  {"ad":"بی‌نظمی قاعدگی","en":"Irregular Menstruation","tr":"Adet düzensizliği","grup":"zanan"},
+  {"ad":"خون‌ریزی زیاد قاعدگی","en":"Heavy Menstrual Bleeding","tr":"Aşırı adet kanaması","grup":"zanan"},
+  {"ad":"فرورفتگی چشم‌ها","en":"Sunken Eyes","tr":"Gözlerde çökme","grup":"atfal"},
+  {"ad":"کم خوردن طفل","en":"Poor Feeding","tr":"Çocukta az beslenme","grup":"atfal"},
+  {"ad":"تحریک‌پذیری طفل","en":"Irritability","tr":"Huzursuzluk (çocuk)","grup":"atfal"},
+  {"ad":"برآمدگی ملاج","en":"Bulging Fontanelle","tr":"Bıngıldak kabarıklığı","grup":"atfal"}
  ],
  "laboratuvar": [
-  {
-   "ad": "CBC — شمارش کامل خون",
-   "tr": "Tam kan sayımı",
-   "grup": "hema",
-   "sik": 1
-  },
-  {
-   "ad": "HB — هیموگلوبین",
-   "tr": "Hemoglobin",
-   "grup": "hema"
-  },
-  {
-   "ad": "R.B.C",
-   "tr": "Eritrosit sayısı",
-   "grup": "hema"
-  },
-  {
-   "ad": "H.C.T — هیماتوکریت",
-   "tr": "Hematokrit",
-   "grup": "hema"
-  },
-  {
-   "ad": "MCV / MCH / MCHC",
-   "tr": "Eritrosit indeksleri",
-   "grup": "hema"
-  },
-  {
-   "ad": "Platelet Count — پلاکت",
-   "tr": "Trombosit sayısı",
-   "grup": "hema"
-  },
-  {
-   "ad": "T.L.C — شمارش کل گلبول سفید",
-   "tr": "Lökosit sayısı",
-   "grup": "hema"
-  },
-  {
-   "ad": "D.L.C — شمارش افتراقی",
-   "tr": "Lökosit formülü",
-   "grup": "hema"
-  },
-  {
-   "ad": "E.S.R",
-   "tr": "Sedimantasyon",
-   "grup": "hema",
-   "sik": 1
-  },
-  {
-   "ad": "Reticulocyte Count",
-   "tr": "Retikülosit",
-   "grup": "hema"
-  },
-  {
-   "ad": "Peripheral Blood Smear",
-   "tr": "Periferik yayma",
-   "grup": "hema"
-  },
-  {
-   "ad": "گروپ خون و Rh",
-   "tr": "Kan grubu ve Rh",
-   "grup": "hema"
-  },
-  {
-   "ad": "PT / INR",
-   "tr": "Protrombin zamanı",
-   "grup": "hema"
-  },
-  {
-   "ad": "PTT",
-   "tr": "Parsiyel tromboplastin",
-   "grup": "hema"
-  },
-  {
-   "ad": "وقت خون‌ریزی و انعقاد (BT/CT)",
-   "tr": "Kanama ve pıhtılaşma zamanı",
-   "grup": "hema"
-  },
-  {
-   "ad": "Sickling Test",
-   "tr": "Orak hücre testi",
-   "grup": "hema"
-  },
-  {
-   "ad": "G6PD",
-   "tr": "G6PD",
-   "grup": "hema"
-  },
-  {
-   "ad": "الکتروفورز هیموگلوبین",
-   "tr": "Hemoglobin elektroforezi",
-   "grup": "hema"
-  },
-  {
-   "ad": "قند خون ناشتا (FBS)",
-   "tr": "Açlık kan şekeri",
-   "grup": "biokim",
-   "sik": 1
-  },
-  {
-   "ad": "قند خون تصادفی (RBS)",
-   "tr": "Rastgele kan şekeri",
-   "grup": "biokim"
-  },
-  {
-   "ad": "قند ۲ ساعت بعد از غذا",
-   "tr": "Tokluk kan şekeri",
-   "grup": "biokim"
-  },
-  {
-   "ad": "HbA1c",
-   "tr": "HbA1c",
-   "grup": "biokim"
-  },
-  {
-   "ad": "اوریا (Urea)",
-   "tr": "Üre",
-   "grup": "biokim"
-  },
-  {
-   "ad": "کریاتینین",
-   "tr": "Kreatinin",
-   "grup": "biokim",
-   "sik": 1
-  },
-  {
-   "ad": "اسید یوریک",
-   "tr": "Ürik asit",
-   "grup": "biokim"
-  },
-  {
-   "ad": "کولسترول توتال",
-   "tr": "Total kolesterol",
-   "grup": "biokim"
-  },
-  {
-   "ad": "تری‌گلیسیرید",
-   "tr": "Trigliserit",
-   "grup": "biokim"
-  },
-  {
-   "ad": "HDL / LDL",
-   "tr": "HDL / LDL",
-   "grup": "biokim"
-  },
-  {
-   "ad": "SGPT (ALT)",
-   "tr": "ALT",
-   "grup": "biokim",
-   "sik": 1
-  },
-  {
-   "ad": "SGOT (AST)",
-   "tr": "AST",
-   "grup": "biokim"
-  },
-  {
-   "ad": "الکالین فاسفاتاز (ALP)",
-   "tr": "ALP",
-   "grup": "biokim"
-  },
-  {
-   "ad": "بیلی‌روبین توتال و مستقیم",
-   "tr": "Total ve direkt bilirubin",
-   "grup": "biokim"
-  },
-  {
-   "ad": "پروتین توتال و البومین",
-   "tr": "Total protein ve albümin",
-   "grup": "biokim"
-  },
-  {
-   "ad": "امیلاز",
-   "tr": "Amilaz",
-   "grup": "biokim"
-  },
-  {
-   "ad": "لیپاز",
-   "tr": "Lipaz",
-   "grup": "biokim"
-  },
-  {
-   "ad": "CPK",
-   "tr": "CPK",
-   "grup": "biokim"
-  },
-  {
-   "ad": "LDH",
-   "tr": "LDH",
-   "grup": "biokim"
-  },
-  {
-   "ad": "تروپونین",
-   "tr": "Troponin",
-   "grup": "biokim"
-  },
-  {
-   "ad": "کلسیم",
-   "tr": "Kalsiyum",
-   "grup": "biokim"
-  },
-  {
-   "ad": "سودیم و پوتاشیم",
-   "tr": "Sodyum ve potasyum",
-   "grup": "biokim"
-  },
-  {
-   "ad": "کلورید",
-   "tr": "Klorür",
-   "grup": "biokim"
-  },
-  {
-   "ad": "منیزیم",
-   "tr": "Magnezyum",
-   "grup": "biokim"
-  },
-  {
-   "ad": "فاسفورس",
-   "tr": "Fosfor",
-   "grup": "biokim"
-  },
-  {
-   "ad": "آهن سرم و TIBC",
-   "tr": "Serum demiri ve TIBC",
-   "grup": "biokim"
-  },
-  {
-   "ad": "فریتین",
-   "tr": "Ferritin",
-   "grup": "biokim"
-  },
-  {
-   "ad": "TSH",
-   "tr": "TSH",
-   "grup": "hormon"
-  },
-  {
-   "ad": "T3",
-   "tr": "T3",
-   "grup": "hormon"
-  },
-  {
-   "ad": "T4 / FT4",
-   "tr": "T4 / serbest T4",
-   "grup": "hormon"
-  },
-  {
-   "ad": "پرولاکتین",
-   "tr": "Prolaktin",
-   "grup": "hormon"
-  },
-  {
-   "ad": "LH / FSH",
-   "tr": "LH / FSH",
-   "grup": "hormon"
-  },
-  {
-   "ad": "تستوسترون",
-   "tr": "Testosteron",
-   "grup": "hormon"
-  },
-  {
-   "ad": "استرادیول",
-   "tr": "Östradiol",
-   "grup": "hormon"
-  },
-  {
-   "ad": "Beta-HCG خون",
-   "tr": "Beta-HCG",
-   "grup": "hormon"
-  },
-  {
-   "ad": "کورتیزول",
-   "tr": "Kortizol",
-   "grup": "hormon"
-  },
-  {
-   "ad": "PSA",
-   "tr": "PSA",
-   "grup": "hormon"
-  },
-  {
-   "ad": "ویتامین D",
-   "tr": "D vitamini",
-   "grup": "hormon"
-  },
-  {
-   "ad": "ویتامین B12",
-   "tr": "B12 vitamini",
-   "grup": "hormon"
-  },
-  {
-   "ad": "اسید فولیک",
-   "tr": "Folik asit",
-   "grup": "hormon"
-  },
-  {
-   "ad": "CRP",
-   "tr": "CRP",
-   "grup": "serolojy",
-   "sik": 1
-  },
-  {
-   "ad": "RA Factor",
-   "tr": "Romatoid faktör",
-   "grup": "serolojy"
-  },
-  {
-   "ad": "ASO Titre",
-   "tr": "ASO",
-   "grup": "serolojy"
-  },
-  {
-   "ad": "تست ویدال (تایفویید)",
-   "tr": "Widal testi",
-   "grup": "serolojy"
-  },
-  {
-   "ad": "HBsAg",
-   "tr": "Hepatit B yüzey antijeni",
-   "grup": "serolojy"
-  },
-  {
-   "ad": "Anti-HCV",
-   "tr": "Hepatit C antikoru",
-   "grup": "serolojy"
-  },
-  {
-   "ad": "HIV",
-   "tr": "HIV",
-   "grup": "serolojy"
-  },
-  {
-   "ad": "VDRL / RPR",
-   "tr": "Sifiliz testi",
-   "grup": "serolojy"
-  },
-  {
-   "ad": "رایت (بروسلا)",
-   "tr": "Brusella (Wright)",
-   "grup": "serolojy"
-  },
-  {
-   "ad": "H. Pylori Ab",
-   "tr": "H. pylori antikoru",
-   "grup": "serolojy"
-  },
-  {
-   "ad": "H. Pylori Stool Antigen",
-   "tr": "H. pylori dışkı antijeni",
-   "grup": "serolojy"
-  },
-  {
-   "ad": "توکسوپلاسما",
-   "tr": "Toksoplazma",
-   "grup": "serolojy"
-  },
-  {
-   "ad": "سرخکان (Measles IgM)",
-   "tr": "Kızamık IgM",
-   "grup": "serolojy"
-  },
-  {
-   "ad": "کووید-۱۹ (PCR/Antigen)",
-   "tr": "COVID-19 testi",
-   "grup": "serolojy"
-  },
-  {
-   "ad": "کشت ادرار",
-   "tr": "İdrar kültürü",
-   "grup": "mikrob"
-  },
-  {
-   "ad": "کشت خون",
-   "tr": "Kan kültürü",
-   "grup": "mikrob"
-  },
-  {
-   "ad": "کشت مدفوع",
-   "tr": "Dışkı kültürü",
-   "grup": "mikrob"
-  },
-  {
-   "ad": "کشت گلو",
-   "tr": "Boğaz kültürü",
-   "grup": "mikrob"
-  },
-  {
-   "ad": "کشت زخم",
-   "tr": "Yara kültürü",
-   "grup": "mikrob"
-  },
-  {
-   "ad": "بلغم برای سل (AFB)",
-   "tr": "Balgamda ARB",
-   "grup": "mikrob"
-  },
-  {
-   "ad": "GeneXpert برای سل",
-   "tr": "Verem GeneXpert",
-   "grup": "mikrob"
-  },
-  {
-   "ad": "تست ملاریا (Smear/RDT)",
-   "tr": "Sıtma testi",
-   "grup": "mikrob",
-   "sik": 1
-  },
-  {
-   "ad": "سمیر لیشمانیا",
-   "tr": "Leishmania yayması",
-   "grup": "mikrob"
-  },
-  {
-   "ad": "تست قارچ (KOH)",
-   "tr": "Mantar KOH",
-   "grup": "mikrob"
-  },
-  {
-   "ad": "تحلیل ادرار (Urine R/E)",
-   "tr": "İdrar tahlili",
-   "grup": "idrar_mad",
-   "sik": 1
-  },
-  {
-   "ad": "پروتین ادرار ۲۴ ساعته",
-   "tr": "24 saatlik idrar proteini",
-   "grup": "idrar_mad"
-  },
-  {
-   "ad": "تست حاملگی ادرار",
-   "tr": "İdrarda gebelik testi",
-   "grup": "idrar_mad"
-  },
-  {
-   "ad": "تحلیل مدفوع (Stool R/E)",
-   "tr": "Dışkı tahlili",
-   "grup": "idrar_mad",
-   "sik": 1
-  },
-  {
-   "ad": "خون مخفی در مدفوع",
-   "tr": "Gizli kan",
-   "grup": "idrar_mad"
-  },
-  {
-   "ad": "مدفوع برای تخم انگل",
-   "tr": "Dışkıda parazit yumurtası",
-   "grup": "idrar_mad"
-  },
-  {
-   "ad": "عکس سینه (CXR)",
-   "tr": "Akciğer röntgeni",
-   "grup": "tasvir",
-   "sik": 1
-  },
-  {
-   "ad": "عکس ساده شکم",
-   "tr": "Direkt karın grafisi",
-   "grup": "tasvir"
-  },
-  {
-   "ad": "عکس اندام",
-   "tr": "Ekstremite röntgeni",
-   "grup": "tasvir"
-  },
-  {
-   "ad": "عکس ستون فقرات",
-   "tr": "Omurga röntgeni",
-   "grup": "tasvir"
-  },
-  {
-   "ad": "التراسوند شکم",
-   "tr": "Karın ultrasonu",
-   "grup": "tasvir",
-   "sik": 1
-  },
-  {
-   "ad": "التراسوند حوصله",
-   "tr": "Pelvik ultrason",
-   "grup": "tasvir"
-  },
-  {
-   "ad": "التراسوند حاملگی",
-   "tr": "Gebelik ultrasonu",
-   "grup": "tasvir"
-  },
-  {
-   "ad": "التراسوند تایرایید",
-   "tr": "Tiroid ultrasonu",
-   "grup": "tasvir"
-  },
-  {
-   "ad": "التراسوند گرده",
-   "tr": "Böbrek ultrasonu",
-   "grup": "tasvir"
-  },
-  {
-   "ad": "ECG — گراف برقی قلب",
-   "tr": "EKG",
-   "grup": "tasvir",
-   "sik": 1
-  },
-  {
-   "ad": "ایکوی قلب",
-   "tr": "Ekokardiyografi",
-   "grup": "tasvir"
-  },
-  {
-   "ad": "CT سکن",
-   "tr": "Bilgisayarlı tomografi",
-   "grup": "tasvir"
-  },
-  {
-   "ad": "MRI",
-   "tr": "Manyetik rezonans",
-   "grup": "tasvir"
-  },
-  {
-   "ad": "ماموگرافی",
-   "tr": "Mamografi",
-   "grup": "tasvir"
-  },
-  {
-   "ad": "اندوسکوپی معده",
-   "tr": "Mide endoskopisi",
-   "grup": "tasvir"
-  },
-  {
-   "ad": "کولونوسکوپی",
-   "tr": "Kolonoskopi",
-   "grup": "tasvir"
-  }
- ]
+  {"ad":"CBC — شمارش کامل خون","en":"CBC","tr":"Tam kan sayımı","grup":"hema","sik":1},
+  {"ad":"HB — هیموگلوبین","en":"Hb","tr":"Hemoglobin","grup":"hema","sik":1},
+  {"ad":"R.B.C","en":"RBC Count","tr":"Eritrosit sayısı","grup":"hema"},
+  {"ad":"H.C.T — هیماتوکریت","en":"Hct","tr":"Hematokrit","grup":"hema"},
+  {"ad":"MCV / MCH / MCHC","en":"MCV / MCH / MCHC","tr":"Eritrosit indeksleri","grup":"hema"},
+  {"ad":"Platelet Count — پلاکت","en":"Platelet Count","tr":"Trombosit sayısı","grup":"hema"},
+  {"ad":"T.L.C — شمارش کل گلبول سفید","en":"TLC","tr":"Lökosit sayısı","grup":"hema"},
+  {"ad":"D.L.C — شمارش افتراقی","en":"DLC","tr":"Lökosit formülü","grup":"hema"},
+  {"ad":"E.S.R","en":"ESR","tr":"Sedimantasyon","grup":"hema","sik":1},
+  {"ad":"Reticulocyte Count","en":"Reticulocyte Count","tr":"Retikülosit","grup":"hema"},
+  {"ad":"Peripheral Blood Smear","en":"Peripheral Blood Smear","tr":"Periferik yayma","grup":"hema"},
+  {"ad":"گروپ خون و Rh","en":"Blood Group & Rh","tr":"Kan grubu ve Rh","grup":"hema"},
+  {"ad":"PT / INR","en":"PT & INR","tr":"Protrombin zamanı","grup":"hema","sik":1},
+  {"ad":"PTT","en":"aPTT","tr":"Parsiyel tromboplastin","grup":"hema"},
+  {"ad":"وقت خون‌ریزی و انعقاد (BT/CT)","en":"BT & CT","tr":"Kanama ve pıhtılaşma zamanı","grup":"hema"},
+  {"ad":"Sickling Test","en":"Sickling Test","tr":"Orak hücre testi","grup":"hema"},
+  {"ad":"G6PD","en":"G6PD","tr":"G6PD","grup":"hema"},
+  {"ad":"الکتروفورز هیموگلوبین","en":"Hb Electrophoresis","tr":"Hemoglobin elektroforezi","grup":"hema"},
+  {"ad":"TLC & DLC — شمارش کل و افتراقی گلبول سفید","en":"TLC & DLC","tr":"Lökosit sayısı ve formülü","grup":"hema","sik":1},
+  {"ad":"قند خون ناشتا (FBS)","en":"FBS","tr":"Açlık kan şekeri","grup":"qand","sik":1},
+  {"ad":"قند خون تصادفی (RBS)","en":"RBS","tr":"Rastgele kan şekeri","grup":"qand"},
+  {"ad":"قند ۲ ساعت بعد از غذا","en":"2-hr PPBS","tr":"Tokluk kan şekeri","grup":"qand"},
+  {"ad":"HbA1c","en":"HbA1c","tr":"HbA1c","grup":"qand"},
+  {"ad":"تست تحمل گلوکوز (OGTT)","en":"OGTT","tr":"Oral glukoz tolerans testi","grup":"qand"},
+  {"ad":"قند ادرار","en":"Urine Sugar","tr":"İdrarda şeker","grup":"qand"},
+  {"ad":"اوریا (Urea)","en":"Blood Urea","tr":"Üre","grup":"gurda"},
+  {"ad":"کریاتینین","en":"Serum Creatinine","tr":"Kreatinin","grup":"gurda","sik":1},
+  {"ad":"اسید یوریک","en":"Serum Uric Acid","tr":"Ürik asit","grup":"gurda"},
+  {"ad":"پروتین ادرار ۲۴ ساعته","en":"24-Hour Urine Protein","tr":"24 saatlik idrar proteini","grup":"gurda"},
+  {"ad":"eGFR — میزان فیلتراسیون گرده","en":"eGFR","tr":"eGFR","grup":"gurda"},
+  {"ad":"مایکروالبومین ادرار","en":"Urine Microalbumin","tr":"İdrarda mikroalbumin","grup":"gurda"},
+  {"ad":"SGPT (ALT)","en":"ALT (SGPT)","tr":"ALT","grup":"jigar","sik":1},
+  {"ad":"SGOT (AST)","en":"AST (SGOT)","tr":"AST","grup":"jigar"},
+  {"ad":"الکالین فاسفاتاز (ALP)","en":"Alkaline Phosphatase (ALP)","tr":"ALP","grup":"jigar"},
+  {"ad":"بیلی‌روبین توتال و مستقیم","en":"Total & Direct Bilirubin","tr":"Total ve direkt bilirubin","grup":"jigar","es":["Total Bilirubin","Direct Bilirubin"]},
+  {"ad":"پروتین توتال و البومین","en":"Total Protein & Albumin","tr":"Total protein ve albümin","grup":"jigar","es":["Total Protein","Serum Albumin"]},
+  {"ad":"امیلاز","en":"Serum Amylase","tr":"Amilaz","grup":"jigar"},
+  {"ad":"لیپاز","en":"Serum Lipase","tr":"Lipaz","grup":"jigar"},
+  {"ad":"GGT","en":"GGT","tr":"GGT","grup":"jigar"},
+  {"ad":"کولسترول توتال","en":"Total Cholesterol","tr":"Total kolesterol","grup":"charbi"},
+  {"ad":"تری‌گلیسیرید","en":"Triglycerides","tr":"Trigliserit","grup":"charbi"},
+  {"ad":"HDL / LDL","en":"HDL / LDL Cholesterol","tr":"HDL / LDL","grup":"charbi","es":["HDL Cholesterol","LDL Cholesterol"]},
+  {"ad":"VLDL","en":"VLDL Cholesterol","tr":"VLDL kolesterol","grup":"charbi"},
+  {"ad":"کلسیم","en":"Serum Calcium","tr":"Kalsiyum","grup":"elektrolit"},
+  {"ad":"سودیم و پوتاشیم","en":"Sodium & Potassium (Na+ K+)","tr":"Sodyum ve potasyum","grup":"elektrolit","es":["Sodium (Na+)","Potassium (K+)"]},
+  {"ad":"کلورید","en":"Chloride (Cl-)","tr":"Klorür","grup":"elektrolit"},
+  {"ad":"منیزیم","en":"Serum Magnesium","tr":"Magnezyum","grup":"elektrolit"},
+  {"ad":"فاسفورس","en":"Serum Phosphorus","tr":"Fosfor","grup":"elektrolit"},
+  {"ad":"بیکاربونات (HCO3-)","en":"Bicarbonate (HCO3-)","tr":"Bikarbonat","grup":"elektrolit"},
+  {"ad":"TSH","en":"TSH","tr":"TSH","grup":"tiroid"},
+  {"ad":"T3","en":"T3","tr":"T3","grup":"tiroid","es":["Total T3"]},
+  {"ad":"T4 / FT4","en":"T4 / FT4","tr":"T4 / serbest T4","grup":"tiroid","es":["Free T4 (FT4)","Total T4"]},
+  {"ad":"FT3 — T3 آزاد","en":"Free T3 (FT3)","tr":"Serbest T3","grup":"tiroid"},
+  {"ad":"Anti-TPO","en":"Anti-TPO Antibody","tr":"Anti-TPO antikoru","grup":"tiroid"},
+  {"ad":"پرولاکتین","en":"Prolactin","tr":"Prolaktin","grup":"hormon"},
+  {"ad":"LH / FSH","en":"LH / FSH","tr":"LH / FSH","grup":"hormon","es":["FSH","LH"]},
+  {"ad":"تستوسترون","en":"Testosterone","tr":"Testosteron","grup":"hormon"},
+  {"ad":"استرادیول","en":"Estradiol (E2)","tr":"Östradiol","grup":"hormon"},
+  {"ad":"Beta-HCG خون","en":"Serum Beta-hCG","tr":"Beta-HCG","grup":"hormon"},
+  {"ad":"کورتیزول","en":"Serum Cortisol","tr":"Kortizol","grup":"hormon"},
+  {"ad":"PSA","en":"Total PSA","tr":"PSA","grup":"hormon"},
+  {"ad":"تست حاملگی ادرار","en":"Urine Pregnancy Test","tr":"İdrarda gebelik testi","grup":"hormon"},
+  {"ad":"پروجسترون","en":"Progesterone","tr":"Progesteron","grup":"hormon"},
+  {"ad":"AMH — ذخیره تخمدان","en":"AMH","tr":"AMH","grup":"hormon"},
+  {"ad":"آهن سرم و TIBC","en":"Serum Iron & TIBC","tr":"Serum demiri ve TIBC","grup":"vitamin","es":["Serum Iron","TIBC"]},
+  {"ad":"فریتین","en":"Serum Ferritin","tr":"Ferritin","grup":"vitamin"},
+  {"ad":"ویتامین D","en":"25-OH Vitamin D","tr":"D vitamini","grup":"vitamin"},
+  {"ad":"ویتامین B12","en":"Vitamin B12","tr":"B12 vitamini","grup":"vitamin"},
+  {"ad":"اسید فولیک","en":"Serum Folate","tr":"Folik asit","grup":"vitamin"},
+  {"ad":"CPK","en":"CPK","tr":"CPK","grup":"qalb"},
+  {"ad":"LDH","en":"LDH","tr":"LDH","grup":"qalb"},
+  {"ad":"تروپونین","en":"Troponin I","tr":"Troponin","grup":"qalb"},
+  {"ad":"CK-MB","en":"CK-MB","tr":"CK-MB","grup":"qalb"},
+  {"ad":"D-Dimer","en":"D-Dimer","tr":"D-dimer","grup":"qalb"},
+  {"ad":"NT-proBNP","en":"NT-proBNP","tr":"NT-proBNP","grup":"qalb"},
+  {"ad":"CRP","en":"CRP","tr":"CRP","grup":"serolojy","sik":1},
+  {"ad":"RA Factor","en":"RA Factor","tr":"Romatoid faktör","grup":"serolojy"},
+  {"ad":"ASO Titre","en":"ASO Titer","tr":"ASO","grup":"serolojy"},
+  {"ad":"تست ویدال (تایفویید)","en":"Widal Test","tr":"Widal testi","grup":"serolojy"},
+  {"ad":"HBsAg","en":"HBsAg","tr":"Hepatit B yüzey antijeni","grup":"serolojy"},
+  {"ad":"Anti-HCV","en":"Anti-HCV","tr":"Hepatit C antikoru","grup":"serolojy"},
+  {"ad":"HIV","en":"HIV 1 & 2","tr":"HIV","grup":"serolojy"},
+  {"ad":"VDRL / RPR","en":"VDRL / RPR","tr":"Sifiliz testi","grup":"serolojy","es":["VDRL"]},
+  {"ad":"رایت (بروسلا)","en":"Brucella Agglutination (Wright)","tr":"Brusella (Wright)","grup":"serolojy"},
+  {"ad":"H. Pylori Ab","en":"H. pylori Antibody","tr":"H. pylori antikoru","grup":"serolojy"},
+  {"ad":"توکسوپلاسما","en":"Toxoplasma IgG/IgM","tr":"Toksoplazma","grup":"serolojy"},
+  {"ad":"سرخکان (Measles IgM)","en":"Measles IgM","tr":"Kızamık IgM","grup":"serolojy"},
+  {"ad":"کووید-۱۹ (PCR/Antigen)","en":"COVID-19 PCR/Antigen","tr":"COVID-19 testi","grup":"serolojy"},
+  {"ad":"Typhidot IgM/IgG","en":"Typhidot IgM/IgG","tr":"Typhidot","grup":"serolojy"},
+  {"ad":"Anti-HAV IgM — هپاتیت A","en":"Anti-HAV IgM","tr":"Hepatit A IgM","grup":"serolojy"},
+  {"ad":"Anti-HEV IgM — هپاتیت E","en":"Anti-HEV IgM","tr":"Hepatit E IgM","grup":"serolojy"},
+  {"ad":"کشت ادرار","en":"Urine Culture & Sensitivity","tr":"İdrar kültürü","grup":"mikrob"},
+  {"ad":"کشت خون","en":"Blood Culture & Sensitivity","tr":"Kan kültürü","grup":"mikrob"},
+  {"ad":"کشت مدفوع","en":"Stool Culture & Sensitivity","tr":"Dışkı kültürü","grup":"mikrob"},
+  {"ad":"کشت گلو","en":"Throat Swab Culture & Sensitivity","tr":"Boğaz kültürü","grup":"mikrob"},
+  {"ad":"کشت زخم","en":"Pus / Wound Culture & Sensitivity","tr":"Yara kültürü","grup":"mikrob","es":["Pus Culture & Sensitivity"]},
+  {"ad":"بلغم برای سل (AFB)","en":"Sputum for AFB (x2)","tr":"Balgamda ARB","grup":"mikrob"},
+  {"ad":"GeneXpert برای سل","en":"GeneXpert MTB/RIF","tr":"Verem GeneXpert","grup":"mikrob"},
+  {"ad":"تست ملاریا (Smear/RDT)","en":"Malaria Smear / RDT","tr":"Sıtma testi","grup":"mikrob","sik":1,"es":["Malaria Parasite (MP)","Malaria RDT"]},
+  {"ad":"سمیر لیشمانیا","en":"Skin Smear for LD Bodies","tr":"Leishmania yayması","grup":"mikrob"},
+  {"ad":"تست قارچ (KOH)","en":"KOH Mount (Skin Scraping)","tr":"Mantar KOH","grup":"mikrob"},
+  {"ad":"تست توبرکولین (Mantoux)","en":"Mantoux Test (PPD)","tr":"Tüberkülin deri testi","grup":"mikrob"},
+  {"ad":"کشت ترشح مهبل (HVS)","en":"High Vaginal Swab (HVS) Culture","tr":"Vajinal sürüntü kültürü","grup":"mikrob"},
+  {"ad":"معاینه مایع نخاع (CSF)","en":"CSF Routine Examination","tr":"BOS incelemesi","grup":"mikrob"},
+  {"ad":"H. Pylori Stool Antigen","en":"Stool H. pylori Antigen","tr":"H. pylori dışkı antijeni","grup":"idrar_mad"},
+  {"ad":"تحلیل ادرار (Urine R/E)","en":"Urine R/E","tr":"İdrar tahlili","grup":"idrar_mad","sik":1},
+  {"ad":"تحلیل مدفوع (Stool R/E)","en":"Stool R/E","tr":"Dışkı tahlili","grup":"idrar_mad","sik":1},
+  {"ad":"خون مخفی در مدفوع","en":"Stool Occult Blood","tr":"Gizli kan","grup":"idrar_mad"},
+  {"ad":"مدفوع برای تخم انگل","en":"Stool for Ova & Parasites","tr":"Dışkıda parazit yumurtası","grup":"idrar_mad"},
+  {"ad":"کیتون ادرار","en":"Urine Ketones","tr":"İdrarda keton","grup":"idrar_mad"},
+  {"ad":"رنگدانه‌های صفراوی ادرار","en":"Urine Bile Pigments","tr":"İdrarda safra pigmenti","grup":"idrar_mad"},
+  {"ad":"عکس سینه (CXR)","en":"X-Ray Chest PA View","tr":"Akciğer röntgeni","grup":"tasvir","sik":1},
+  {"ad":"عکس ساده شکم","en":"X-Ray Abdomen (Erect)","tr":"Direkt karın grafisi","grup":"tasvir"},
+  {"ad":"عکس اندام","en":"X-Ray Limb","tr":"Ekstremite röntgeni","grup":"tasvir"},
+  {"ad":"عکس ستون فقرات","en":"X-Ray Spine","tr":"Omurga röntgeni","grup":"tasvir"},
+  {"ad":"التراسوند شکم","en":"Ultrasound Abdomen","tr":"Karın ultrasonu","grup":"tasvir","sik":1,"es":["Ultrasound Abdomen & Pelvis"]},
+  {"ad":"التراسوند حوصله","en":"Ultrasound Pelvis","tr":"Pelvik ultrason","grup":"tasvir"},
+  {"ad":"التراسوند حاملگی","en":"Ultrasound Obstetric","tr":"Gebelik ultrasonu","grup":"tasvir"},
+  {"ad":"التراسوند تایرایید","en":"Ultrasound Thyroid","tr":"Tiroid ultrasonu","grup":"tasvir"},
+  {"ad":"التراسوند گرده","en":"Ultrasound KUB","tr":"Böbrek ultrasonu","grup":"tasvir"},
+  {"ad":"ECG — گراف برقی قلب","en":"ECG","tr":"EKG","grup":"tasvir","sik":1},
+  {"ad":"ایکوی قلب","en":"Echocardiography","tr":"Ekokardiyografi","grup":"tasvir"},
+  {"ad":"CT سکن","en":"CT Scan","tr":"Bilgisayarlı tomografi","grup":"tasvir"},
+  {"ad":"MRI","en":"MRI","tr":"Manyetik rezonans","grup":"tasvir"},
+  {"ad":"ماموگرافی","en":"Mammography","tr":"Mamografi","grup":"tasvir"},
+  {"ad":"اندوسکوپی معده","en":"Upper GI Endoscopy","tr":"Mide endoskopisi","grup":"tasvir"},
+  {"ad":"کولونوسکوپی","en":"Colonoscopy","tr":"Kolonoskopi","grup":"tasvir"},
+  {"ad":"عکس سینوس‌ها (Waters View)","en":"X-Ray PNS (Waters View)","tr":"Sinüs grafisi","grup":"tasvir"},
+  {"ad":"عکس فقرات گردن","en":"X-Ray Cervical Spine AP/Lateral","tr":"Servikal grafi","grup":"tasvir"},
+  {"ad":"عکس فقرات کمر","en":"X-Ray LS Spine AP/Lateral","tr":"Lomber grafi","grup":"tasvir"},
+  {"ad":"عکس زانو","en":"X-Ray Knee AP/Lateral","tr":"Diz grafisi","grup":"tasvir"},
+  {"ad":"CT سکن مغز","en":"CT Scan Brain","tr":"Beyin tomografisi","grup":"tasvir"},
+  {"ad":"MRI فقرات کمر","en":"MRI Lumbar Spine","tr":"Lomber MR","grup":"tasvir"}
+ ],
+ "secenekler": {
+  "miktar": [{"ad":"1 دانه","formlar":["tablet","kapsul","fitil"]},{"ad":"نیم دانه","formlar":["tablet"]},{"ad":"ربع دانه","formlar":["tablet"]},{"ad":"1 و نیم دانه","formlar":["tablet"]},{"ad":"2 دانه","formlar":["tablet","kapsul"]},{"ad":"نیم قاشق چای‌خوری","formlar":["surup"]},{"ad":"1 قاشق چای‌خوری","formlar":["surup"]},{"ad":"2 قاشق چای‌خوری","formlar":["surup"]},{"ad":"1 قاشق نان‌خوری","formlar":["surup"]},{"ad":"1 ملی‌لیتر","formlar":["surup","damla","ampul"]},{"ad":"1 قطره","formlar":["damla"]},{"ad":"2 قطره","formlar":["damla"]},{"ad":"3 قطره","formlar":["damla"]},{"ad":"5 قطره","formlar":["damla"]},{"ad":"1 پُف","formlar":["sprey"]},{"ad":"2 پُف","formlar":["sprey"]},{"ad":"1 امپول","formlar":["ampul"]},{"ad":"1 پاکت","formlar":["posetl"]},{"ad":"1 شیاف","formlar":["fitil"]},{"ad":"به اندازه کافی","formlar":["krem"]},{"ad":"طبق هدایت"}],
+  "zaman": [{"ad":"قبل از غذا"},{"ad":"بعد از غذا"},{"ad":"همراه غذا"},{"ad":"ناشتا"},{"ad":"هنگام خواب"},{"ad":"صبح"},{"ad":"شب"},{"ad":"صبح و شام"}],
+  "tariqa": [{"ad":"روزانه 1 بار"},{"ad":"روزانه 2 بار"},{"ad":"روزانه 3 بار"},{"ad":"روزانه 4 بار"},{"ad":"هر 6 ساعت"},{"ad":"هر 8 ساعت"},{"ad":"هر 12 ساعت"},{"ad":"هفته 1 بار"},{"ad":"در صورت ضرورت"},{"ad":"در صورت تب"},{"ad":"در صورت درد"}],
+  "yol": [{"ad":"خوراکی"},{"ad":"عضلی"},{"ad":"وریدی"},{"ad":"وریدی آهسته"},{"ad":"زیر جلدی"},{"ad":"زیر زبان"},{"ad":"بالای جای مریضی مالیده شود"},{"ad":"در هر چشم"},{"ad":"در گوش"},{"ad":"در بینی"},{"ad":"استنشاقی"},{"ad":"از راه مقعد"},{"ad":"مهبلی"},{"ad":"غرغره شود"},{"ad":"در آب حل شود"}],
+  "sure": [{"ad":"1 روز"},{"ad":"3 روز"},{"ad":"5 روز"},{"ad":"7 روز"},{"ad":"10 روز"},{"ad":"14 روز"},{"ad":"15 روز"},{"ad":"1 ماه"},{"ad":"2 ماه"},{"ad":"3 ماه"},{"ad":"یک دوز"},{"ad":"دوامدار"}]
+ }
 }

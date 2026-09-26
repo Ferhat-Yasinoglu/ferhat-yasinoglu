@@ -33,6 +33,22 @@
   unicode-range: U+0020-007E, U+00A0, U+2019;
 }
 
+/* Cinzel 500–700: yalnız lacivert reçete kâğıdında (Latin hekim adı, Latin
+   ihtisas satırı, mühür halkasının yazısı) — lisans yazi/OFL-Cinzel.txt.
+   Dosya Temel Latin'e ve iki kalınlık arasına indirildi (15,6 KB).
+   Küçük harfleri zaten küçük büyük harf: «Dr. Nemuna Ahmadi» tasarımdaki
+   gibi uzun baş harfli büyük harflerle çıkıyor, CSS'te büyütülmüyor.
+   font-display: block — kâğıt yedek yazıyla basılmasın; yazdırmadan önce
+   kagidiYazdir yüzün inmesini ayrıca bekliyor. */
+@font-face {
+  font-family: 'Cinzel';
+  src: url('../yazi/cinzel-kagit.woff2') format('woff2');
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+0020-007E, U+00A0, U+00B7, U+2013-2014, U+2018-2019, U+201C-201D;
+}
+
 :root {
   /* Renkler reçete sayfası tasarımından ölçüldü (hedef görüntüden piksel
      örneği). Zemin mavi-gri, vurgu petrol (#015277). Eski yeşil-turkuaz
@@ -130,27 +146,29 @@
      yazılmıyor ki karanlık tema yarım kalmasın. Yalnız kâğıt (her zaman
      beyaz, basılı sayfa) kendi sabit renklerini kullanıyor. */
   --panel-cizgi: 235 245 249;
-  --panel-bas-1: 201 239 246; --panel-bas-2: 220 245 250; --panel-bas-3: 243 252 254;
-  --kart-cizgi: 214 234 240;
+  /* Reçete formu (yeni/hedef tasarımı; açık tema aynı rollerin mevcut açık
+     tonları). Başlık bandının köşesindeki parıltı --panel-bas-1. */
+  --form-panel: 255 255 255;
+  --panel-bas-1: 201 239 246;
+  --kart-cizgi: 214 234 240; --kart-govde: 255 255 255;
   --kart-bas: 241 247 247; --kart-bas-cizgi: 232 242 244;
-  --klinik-bas: 236 249 253; --klinik-cizgi: 180 226 236;
-  --klinik-govde-1: 251 254 254; --klinik-govde-2: 244 252 254;
   --yuzey-olcum: 244 249 252; --olcum-cizgi: 220 233 240;
   --yuzey-salt: 246 249 252; --salt-cizgi: 219 230 238;
-  --rx-cizgi: 211 235 240; --rx-ayrac-bolum: 234 247 250;
-  --rx-satir-cizgi: 205 223 232; --rx-ayrac: 218 230 238;
-  --rx-isaret: 4 48 90;        /* formdaki Rx çizimi: kâğıttaki lacivertle aynı (#04305a) */
-  --arti-zemin: 251 252 253; --arti-cizgi: 238 247 250; --arti-renk: 12 74 110;
-  --tablo-cizgi: 226 236 242; --tablo-ayrac: 235 243 247; --tablo-bas-metin: 27 46 72;
+  --tablo-bas: 242 248 251; --tablo-govde: 255 255 255;
+  --tablo-cizgi: 226 236 242; --tablo-ayrac: 235 243 247;
+  --form-baslik: 11 35 80; --form-alt: 52 79 101;
+  --etiket: 11 28 57; --birim: 52 79 101;
+  --ara-zemin: 1 82 119;
+  --asil-zemin: 1 82 119; --asil-metin: 255 255 255; --asil-zemin-2: 2 71 109;
   --btn-3-zemin: 243 247 248; --btn-3-cizgi: 230 241 245; --btn-3-metin: 9 32 82;
   --btn-2-zemin: 238 245 249; --btn-2-cizgi: 211 228 236; --btn-2-metin: 8 25 54;
-  --ekle-1: 17 109 142; --ekle-2: 2 87 123;   /* ilaç ekle düğmesinin gradyanı */
+  /* Küçük ekle düğmeleri, kesik çizgili satır, «+». Kesik çizgi vurgunun
+     beyaz üstündeki %45'i (saydam yazılırsa üst üste binen yerde koyulaşır). */
+  --ekle-metin: 1 82 119; --kesik-cizgi: 141 177 194;
+  /* İşaret kutusu: açık temada vurgu, karanlıkta tasarımın mavisi. */
+  --isaret: 1 82 119;
   --ust-golge: 0 2px 10px rgb(20 60 100 / .06);
   --baslik-simge: 4 49 72;
-  /* Form başlığındaki dalganın katmanları (çizim sırasıyla, 2–7; 1. katman
-     bandın kendi açık tonu, 8. katman 3'ün rengi). */
-  --dalga-2: 168 224 235; --dalga-3: 85 192 208; --dalga-4: 19 158 181;
-  --dalga-5: 179 229 238; --dalga-6: 4 137 163; --dalga-7: 82 192 204;
   --ust-cizgi: 225 233 240;
   --alt-serit-metin: 115 134 155;
 
@@ -166,7 +184,8 @@
 :root[data-tema="karanlik"] {
   /* Aynı ton aileleri, koyu zeminde: sayfa ~210° mavi-gri, vurgu petrolün
      açılmış hali. Kenar çubuğu açık temanın değerlerini koruyor. */
-  --bg: 9 20 30;
+  /* Sayfa zemini reçete tasarımının çerçevesinden (her sayfada aynı). */
+  --bg: 4 17 28;
   --bg-alt: 13 27 39;
   --yuzey: 15 30 43;
   --yuzey-2: 21 40 56;
@@ -178,7 +197,7 @@
   --metin-2: 160 186 204;
   --metin-3: 116 140 160;
   --metin-4: 140 162 180;
-  --simge: 150 214 232;
+  --simge: 160 234 252;
   --simge-sessiz: 110 140 162;
 
   --vurgu: 56 182 214;
@@ -194,27 +213,27 @@
   --turkuaz-acik: 20 70 88;
   --yildiz: 251 113 133;
 
-  --panel-cizgi: 38 70 92;
-  --panel-bas-1: 16 44 58; --panel-bas-2: 15 38 52; --panel-bas-3: 15 30 43;
-  --kart-cizgi: 38 70 92;
-  --kart-bas: 20 38 52; --kart-bas-cizgi: 30 56 74;
-  --klinik-bas: 16 44 58; --klinik-cizgi: 30 92 112;
-  --klinik-govde-1: 15 30 43; --klinik-govde-2: 17 36 50;
-  --yuzey-olcum: 19 38 53; --olcum-cizgi: 40 70 90;
-  --yuzey-salt: 19 36 51; --salt-cizgi: 40 66 86;
-  --rx-cizgi: 38 70 92; --rx-ayrac-bolum: 30 56 74;
-  --rx-satir-cizgi: 45 78 100; --rx-ayrac: 45 78 100;
-  --rx-isaret: 150 214 232;
-  --arti-zemin: 21 40 56; --arti-cizgi: 38 70 92; --arti-renk: 150 214 232;
-  --tablo-cizgi: 38 70 92; --tablo-ayrac: 30 56 74; --tablo-bas-metin: 200 220 232;
-  --btn-3-zemin: 21 40 56; --btn-3-cizgi: 38 70 92; --btn-3-metin: 226 238 245;
-  --btn-2-zemin: 29 53 72; --btn-2-cizgi: 45 78 100; --btn-2-metin: 226 238 245;
-  /* Ekle düğmesi asıl düğme gibi açık vurguda, yazısı koyu (--vurgu-yz). */
-  --ekle-1: 56 182 214; --ekle-2: 40 160 196;
+  /* Reçete formu: renkler tasarımdan ölçüldü (medyan mürekkep ya da
+     dolgu; yeni/form.md §2a). */
+  --panel-cizgi: 20 52 72;
+  --form-panel: 7 27 41;
+  --panel-bas-1: 1 80 112;
+  --kart-cizgi: 22 60 84; --kart-govde: 8 29 43;
+  --kart-bas: 8 34 51; --kart-bas-cizgi: 20 53 73;
+  --yuzey-olcum: 9 31 47; --olcum-cizgi: 25 62 87;
+  --yuzey-salt: 9 31 47; --salt-cizgi: 25 62 87;
+  --tablo-bas: 8 36 52; --tablo-govde: 5 24 37;
+  --tablo-cizgi: 21 54 73; --tablo-ayrac: 19 55 80;
+  --form-baslik: 201 247 252; --form-alt: 147 205 225;
+  --etiket: 188 211 223; --birim: 138 192 217;
+  --ara-zemin: 24 191 233;
+  --asil-zemin: 66 219 254; --asil-metin: 4 40 52; --asil-zemin-2: 40 200 240;
+  --btn-3-zemin: 12 36 55; --btn-3-cizgi: 28 64 87; --btn-3-metin: 238 242 245;
+  --btn-2-zemin: 12 40 61; --btn-2-cizgi: 28 64 87; --btn-2-metin: 238 242 245;
+  --ekle-metin: 45 200 228; --kesik-cizgi: 36 92 118;
+  --isaret: 4 108 248;
   --ust-golge: 0 2px 10px rgb(0 0 0 / .35);
-  --baslik-simge: 150 214 232;
-  --dalga-2: 20 58 74; --dalga-3: 18 82 100; --dalga-4: 14 104 124;
-  --dalga-5: 22 70 88; --dalga-6: 10 92 114; --dalga-7: 20 116 136;
+  --baslik-simge: 140 232 252;
   --ust-cizgi: 30 50 66;
   --alt-serit-metin: 140 162 180;
 

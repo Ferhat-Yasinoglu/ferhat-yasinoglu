@@ -31,7 +31,11 @@ export function ozetMetni(recete, hastaAdi = '') {
   const tani = [temiz(recete?.tani), temiz(recete?.taniKodu)].filter(Boolean).join(' · ');
   if (tani) satirlar.push(`تشخیص: ${tani}`);
   (recete?.satirlar || []).forEach((s, i) => {
-    const parcalar = [temiz(s.kullanim), temiz(s.sure)].filter(Boolean).join(' — ');
+    // `zaman` yalnız doluysa: eski reçetelerin özeti bayt bayt aynı kalsın
+    // (basılmış kodları doğrulanmaya devam etsin), yeni reçetede de kâğıttaki
+    // «بعد از غذا» değiştirilirse kod tutmasın. `doz` eklenmiyor: güç zaten
+    // ilacAdi'nin içinde.
+    const parcalar = [temiz(s.kullanim), temiz(s.zaman), temiz(s.sure)].filter(Boolean).join(' — ');
     satirlar.push(`${i + 1}) ${temiz(s.ilacAdi)} × ${Number(s.adet) || 0}${parcalar ? ' — ' + parcalar : ''}`);
   });
   return satirlar.join('\n');

@@ -67,17 +67,50 @@ const TR_KELIME = new RegExp(S1 + '(ve|ile|için|bir|bu|şu|ne|nasıl|neden|merh
 const DE_HARF = /[äöüß]/;
 const TR_HARF = /[çğışÇĞİŞ]/;   // ö/ü ortak: Almanca ile karışmasın diye dışarıda
 
+// İngilizce için yalnız "metin bir dil kanıtı taşıyor mu" sorusunda bakılır; dilSez'in
+// kararını değiştirmez (orada kanıtsız metin zaten İngilizce sayılır).
+const EN_KELIME = new RegExp(S1 + '(the|is|are|how|what|why|where|when|can|could|do|does|did|you|your|my|it|this|that|and|not|please|thanks|thank|hello|hi|free|with|for|to|of)' + S2);
+const ARAP_YAZISI = /[\u0600-\u06FF]/;
+
+function kanitlar(m) {
+  return {
+    de: (m.match(DE_KELIME) || []).length + (DE_HARF.test(m) ? 1 : 0),
+    tr: (m.match(TR_KELIME) || []).length + (TR_HARF.test(m) ? 1 : 0),
+  };
+}
+
 export function dilSez(metin = '') {
   const m = String(metin).toLowerCase();
-  if (/[\u0600-\u06FF]/.test(m)) return 'fa';                 // Arap alfabesi → Farsça
-  const de = (m.match(DE_KELIME) || []).length + (DE_HARF.test(m) ? 1 : 0);
-  const tr = (m.match(TR_KELIME) || []).length + (TR_HARF.test(m) ? 1 : 0);
+  if (ARAP_YAZISI.test(m)) return 'fa';                       // Arap alfabesi → Farsça
+  const { de, tr } = kanitlar(m);
   if (de > tr) return 'de';
   if (tr > de) return 'tr';
   return tr ? 'tr' : 'en';                                     // beraberlikte: kanıt varsa ana dil
 }
 
 const DIL_ADI = { tr: 'Türkçe', de: 'Almanca (Deutsch)', en: 'İngilizce (English)', fa: 'Farsça (فارسی)' };
+
+/** Gelen mesaja hangi dilde cevap verilir. Metin dil kanıtı taşıyorsa (Arap yazısı,
+ *  Türkçe/Almanca/İngilizce kelimeler) metin kazanır: Telegram arayüzü İngilizce olan
+ *  bir Afgan hekim Dari yazınca Dari cevap alsın. Kanıt yoksa ("ok", "PDF", Latin
+ *  harfli Dari) kullanıcının arayüz dili (Telegram language_code) kullanılır. */
+export function cevapDili(metin = '', arayuzDili) {
+  const m = String(metin || '').toLowerCase();
+  const { de, tr } = kanitlar(m);
+  const kanit = ARAP_YAZISI.test(m) || de > 0 || tr > 0 || EN_KELIME.test(m);
+  if (kanit || !DIL_ADI[arayuzDili]) return dilSez(m);
+  return arayuzDili;
+}
+
+/** Kanala göre aktif brifing. `kanallar` listesi dolu olan brifing yalnız o kanallarda
+ *  konuşur ve orada genel brifingden (kanallar boş) önce gelir. Böylece Telegram botu
+ *  kendi brifingiyle (ör. Shafa desteği) konuşurken öbür kanallar genel brifingle sürer.
+ *  Kanalı olmayan eski brifingler için davranış aynı: ilk aktif brifing. */
+export function brifingSec(brifingler = [], kanal) {
+  const aktifler = brifingler.filter((b) => b && b.aktif && !b.silindi);
+  const kanalli = (b) => Array.isArray(b.kanallar) && b.kanallar.length > 0;
+  return aktifler.find((b) => kanalli(b) && b.kanallar.includes(kanal)) || aktifler.find((b) => !kanalli(b)) || null;
+}
 
 /** Ajan cevabı: brifing + bilgi tabanı; emin değilse null. */
 export async function ajanCevap(env, db, { brifing, mesaj, gecmis = [], kanal, dil: dilUstu }, fetchFn = fetch) {

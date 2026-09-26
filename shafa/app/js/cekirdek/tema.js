@@ -12,7 +12,7 @@
      düğme, Ayarlar); gözcü ikisini de yakalıyor. */
   function cubukRengi() {
     var m = document.querySelector('meta[name="theme-color"]');
-    if (m) m.setAttribute('content', document.documentElement.getAttribute('data-tema') === 'karanlik' ? '#09141e' : '#f6fafd');
+    if (m) m.setAttribute('content', document.documentElement.getAttribute('data-tema') === 'karanlik' ? '#04111c' : '#f6fafd');
   }
   cubukRengi();
   new MutationObserver(cubukRengi).observe(document.documentElement, { attributes: true, attributeFilter: ['data-tema'] });

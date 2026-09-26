@@ -7,7 +7,7 @@ import { pencereAcik } from '../../app/js/paylasilan/kanallar.js';
 import { kelimeVar } from '../../app/js/paylasilan/metin.js';
 import * as tg from './telegram.js';
 import * as meta from './meta.js';
-import { ajanCevap } from './ai.js';
+import { ajanCevap, brifingSec, cevapDili } from './ai.js';
 import { simdi } from './db.js';
 
 async function kisiUpsert(db, olay) {
@@ -66,7 +66,7 @@ export async function olayIsle(env, db, olay, { fetchFn = fetch, hesaplar } = {}
     const akislarListe = await db.listele('akislar');
     const akislar = Object.fromEntries(akislarListe.map((a) => [a.id, a]));
     const tetikleyiciler = await db.listele('tetikleyiciler');
-    const ctx = { simdi, pencereAcik: (k) => pencereAcik(k), ai: async (a, kosu, k) => { const brif = a.brief_id ? await db.al('ai_brifingler', a.brief_id) : (await db.listele('ai_brifingler')).find((b) => b.aktif); return ajanCevap(env, db, { brifing: brif, mesaj: olay.text, kanal: olay.kanal }, fetchFn); }, webhook: async (a, kosu, k) => { const r = await fetchFn(a.url, { method: a.method || 'POST', headers: { 'Content-Type': 'application/json' }, body: a.method === 'GET' ? undefined : (a.body ? a.body.replace(/\{\{(\w+)\}\}/g, (_, n) => kosu.degiskenler[n] ?? k.degiskenler?.[n] ?? '') : JSON.stringify({ kisi: k.id, degiskenler: kosu.degiskenler })), signal: AbortSignal.timeout(a.timeout_ms || 5000) }); if (!r.ok) throw new Error('webhook ' + r.status); const ct = r.headers.get('content-type') || ''; return ct.includes('json') ? r.json() : r.text(); } };
+    const ctx = { simdi, pencereAcik: (k) => pencereAcik(k), ai: async (a, kosu, k) => { const brif = a.brief_id ? await db.al('ai_brifingler', a.brief_id) : brifingSec(await db.listele('ai_brifingler'), olay.kanal); return ajanCevap(env, db, { brifing: brif, mesaj: olay.text, kanal: olay.kanal }, fetchFn); }, webhook: async (a, kosu, k) => { const r = await fetchFn(a.url, { method: a.method || 'POST', headers: { 'Content-Type': 'application/json' }, body: a.method === 'GET' ? undefined : (a.body ? a.body.replace(/\{\{(\w+)\}\}/g, (_, n) => kosu.degiskenler[n] ?? k.degiskenler?.[n] ?? '') : JSON.stringify({ kisi: k.id, degiskenler: kosu.degiskenler })), signal: AbortSignal.timeout(a.timeout_ms || 5000) }); if (!r.ok) throw new Error('webhook ' + r.status); const ct = r.headers.get('content-type') || ''; return ct.includes('json') ? r.json() : r.text(); } };
 
     let sonuc;
     // Buton olayı: bekleyen koşuya doğrudan uygula.
@@ -100,7 +100,8 @@ export async function olayIsle(env, db, olay, { fetchFn = fetch, hesaplar } = {}
           await db.gelenBitir(olay.olay_id);
           return { karar: 'kural', kural: c.kural, tur: c.tur };
         }
-        const brif = (await db.listele('ai_brifingler')).find((b) => b.aktif);
+        // Kanala özel brifing (ör. Telegram'daki Shafa botu) genel brifingden önce gelir.
+        const brif = brifingSec(await db.listele('ai_brifingler'), olay.kanal);
         // "/start" de ağa girer: Start'a basmak her yeni kişinin ilk hareketidir ve
         // karşılama akışı yoksa sessizlik alıyordu. Çıplak "/start"ta soru yoktur,
         // o yüzden modele metni değil ne yapacağını veririz; dil kullanıcının
@@ -114,16 +115,19 @@ export async function olayIsle(env, db, olay, { fetchFn = fetch, hesaplar } = {}
           const istem = ciplakStart
             ? 'Kullanıcı botu yeni başlattı ve henüz bir şey sormadı. Onu kısaca karşıla, ne yapabileceğini bir cümleyle söyle ve ne aradığını sor.'
             : olay.text;
-          const cevap = devir ? null : await ajanCevap(env, db, { brifing: brif, mesaj: istem, gecmis, kanal: olay.kanal, dil: olay.dil }, fetchFn);
+          // Arayüz dili yalnız metinde dil kanıtı yoksa kullanılır (çıplak "/start", "ok"):
+          // Telegram'ı İngilizce olan hekim Dari yazınca Dari cevap almalı.
+          const dil = ciplakStart ? olay.dil : cevapDili(olay.text, olay.dil);
+          const cevap = devir ? null : await ajanCevap(env, db, { brifing: brif, mesaj: istem, gecmis, kanal: olay.kanal, dil }, fetchFn);
           if (cevap) {
             const gonderim = await eylemleriGonder(env, db, { hesap, kisi, olay, eylemler: [{ tip: 'mesaj', text: cevap }], fetchFn });
             await gunlukYaz(db, olay, kisi, { tur: 'ai', brifing: brif.id }, { eylemler: gonderim, prova: gonderim[0]?.prova ?? 1, gonderildi: gonderim[0]?.gonderildi || 0 });
           } else {
             await db.kaydet('cevapsiz_sorular', { soru: String(olay.text).slice(0, 300), kisi_id: kisi.id, durum: 'acik', devir }, { onek: 'soru' });
-            await gunlukYaz(db, olay, kisi, { tur: 'ai', sonuc: devir ? 'devir' : 'skip' });
+            await gunlukYaz(db, olay, kisi, { tur: 'ai', brifing: brif.id, sonuc: devir ? 'devir' : 'skip' });
           }
           await db.gelenBitir(olay.olay_id);
-          return { karar: 'ai', cevapVar: !!cevap };
+          return { karar: 'ai', cevapVar: !!cevap, brifing: brif.id };
         }
         await gunlukYaz(db, olay, kisi, { tur: 'yok', sebep: 'tetikleyici eşleşmedi' });
         await db.gelenBitir(olay.olay_id);

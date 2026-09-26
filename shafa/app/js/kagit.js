@@ -9,7 +9,7 @@
 import { el, svgEl, qrGorsel } from './cekirdek/dom.js';
 import { gorselMi } from './cekirdek/gorsel.js';
 import { simge, LOGO } from './cekirdek/simge.js';
-import { rxIsareti, hatCizimi } from './cekirdek/cizimler.js';
+import { rxIsareti, hatCizimi, VECIZE_METNI } from './cekirdek/cizimler.js';
 import { t } from './i18n.js';
 import { tamAd, hastaYasi } from './paylasilan/hasta.js';
 import { OLCUMLER } from './paylasilan/recete.js';
@@ -17,6 +17,10 @@ import { formKisa, ilacAdiFormsuz } from './paylasilan/ilac.js';
 import { ozetMetni, kodSatiri } from './paylasilan/dogrulama.js';
 import { tarihMetni } from './paylasilan/tarih.js';
 import { telefonNormalize } from './paylasilan/metin.js';
+import { qrOkunurMu } from './paylasilan/qr.js';
+import { kagitStiliCoz } from './paylasilan/antet.js';
+import { ilacSatiri } from './paylasilan/kagit-yogunluk.js';
+import { lacivertKagit } from './kagit-lacivert.js';
 
 /** Antet amblemi: kanatlı kadüse — hekimin basılı kâğıdındaki amblem.
  *
@@ -49,7 +53,7 @@ const YILAN_PARCALARI = [
 ];
 const KANAT = 'M31.6 9.6C31.2 6.6 28.6 5.4 25.6 6 16.5 6.2 6.5 8.6.2 12.8 3.5 14 7 14.4 10.5 14.3 7.5 15.2 5 16.2 4.2 16.8 8.5 17.8 13 18.3 17.6 18.2 15.4 19.2 13.6 20.2 13 20.8 19 22.6 26 22.9 31.6 22Z';
 const KANAT_TUY = 'M6.5 14.9C10.5 15.4 14.5 15.4 18 14.8M12.5 18.8C15.5 19.4 18.5 19.5 21.5 19';
-function amblemCiz() {
+export function amblemCiz() {
   const renk = tekilKimlik('kagit-kaduse');
   const ayna = 'matrix(-1 0 0 1 69 0)';
   const yilan = (donus) => svgEl('g', { fill: 'none', stroke: `url(#${renk})`, 'stroke-linecap': 'round', transform: donus },
@@ -211,13 +215,14 @@ function kartusCiz() {
     sus(false), sus(true));
 }
 
+/** Kâğıda basılı, değişmeyen satır. Ayarlarda karşılığı yoktur; kaldırmak
+ *  ya da değiştirmek için cizimler.js'i düzenlemek gerekir — öyle istendi.
+ *  Lacivert kâğıt aynı satırı hat çizimi olarak basıyor. */
+const VECIZE = VECIZE_METNI;
+
 /* Klinik alanların etiketleri kâğıtta İngilizce durur: doktorun kendi kâğıdı
    da böyle ve BP/PR/RR/BW hekimlikte evrensel kısaltmalar. */
-/** Kâğıda basılı, değişmeyen satır. Ayarlarda karşılığı yoktur; kaldırmak
- *  ya da değiştirmek için bu dosyayı düzenlemek gerekir — öyle istendi. */
-const VECIZE = 'طبیب حقیقی خداوند (ج) است';
-
-const KLINIK_ADLARI = { bp: 'BP', pr: 'PR', rr: 'RR', bw: 'BW', temp: 'Temperature', spo2: 'SpO2', ht: 'Height' };
+export const KLINIK_ADLARI = { bp: 'BP', pr: 'PR', rr: 'RR', bw: 'BW', temp: 'Temperature', spo2: 'SpO2', ht: 'Height' };
 
 /* Her ölçümün yanında kendi simgesi duruyor: sütun bir etiket listesi değil,
    bakışta taranabilen bir pano olsun. Simgeler dolgulu tablodan (simge.js
@@ -283,7 +288,7 @@ const ANTET_DALGASI = [
    aynı anda birden çok kâğıt olabiliyor (önizleme kutusu, yazdırma
    kopyaları) ve aynı kimlik ikincide ilkini gösteriyordu. */
 let kimlikSayaci = 0;
-const tekilKimlik = (on) => `${on}-${++kimlikSayaci}`;
+export const tekilKimlik = (on) => `${on}-${++kimlikSayaci}`;
 
 /* Ayak bandının katmanları, arkadan öne. Birim tasarımdaki kâğıdın pikseli:
    x 0–608, y 0 = gövde kutularının alt kenarı, 94 = kâğıdın dibi. Üst
@@ -357,18 +362,63 @@ const satirlara = (metin) => String(metin ?? '').split('\n').map((x) => x.trim()
  *  Contact" yazıyor ve boş kâğıtta da basılabilen tek içerik bu. */
 export const QR_VARSAYILAN = 'whatsapp';
 
-/** Kâğıdın üstündeki QR'ın içeriği. Ayarlardan seçilir. */
-export function qrIcerigi(ayar, recete, hasta, { bos = false } = {}) {
+/* QR'ın kâğıttaki basılı eni (mm, 2 modüllük sessiz alan dahil). Lacivert
+   kâğıtta QR kartı kipe göre 14/13/12 mm, içinde 1 mm pay: en küçüğü (10
+   mm) alınıyor ki içerik kararı kipe bağlı olmasın — önizleme ve baskı hangi
+   kipte olursa olsun aynı QR'ı bassın. Öbür stillerde QR 16 mm. */
+const QR_BASKI_MM = { lacivert: 10, modern: 16, klasik: 16, sade: 16 };
+/* A5'te lacivert yaprak 0,701 ölçekle basılıyor; kartı orada 14,5 mm
+   (yazdirma.css .kagit--l-a5), içi 12,5 × 0,701 ≈ 8,7 mm. Karar basılan
+   boydan verilmeli: A4'ün 10 mm'siyle A5'te okunmayacak bir QR onaylanırdı. */
+const QR_BASKI_MM_A5_LACIVERT = 8.7;
+export const qrBaskiMm = (ayar) => {
+  const stil = kagitStiliCoz(ayar);
+  return stil === 'lacivert' && ayar.yazdirmaBoyutu === 'A5' ? QR_BASKI_MM_A5_LACIVERT : QR_BASKI_MM[stil];
+};
+
+/**
+ * Kâğıdın QR'ı: içerik ve türü. Ayarlardan seçilir.
+ *
+ * «Reçete metni» seçiliyse içerik doğrulanabilir özet. Özet uzun: tek
+ * ilaçta bile basılı QR'ın modülü 0,17 mm'ye iniyor, on ilaçta QR hiç
+ * kurulamıyordu (sürüm 20'yi aşıyor) ve kâğıttaki yer sessizce boş
+ * kalıyordu. Okunamayacak bir QR basmak yerine iletişim QR'ı (numara yoksa
+ * doğrulama kodu) basılıyor; `yedek` bunu söylüyor, altındaki yazı da
+ * basılanı anlatıyor. Ayarlar sayfası bu seçimde ayrıca uyarıyor.
+ * @returns {{ metin: string, tur: 'recete'|'iletisim'|'kod'|'yok', yedek: boolean }}
+ */
+export function qrBilgisi(ayar, recete, hasta, { bos = false } = {}) {
   const secim = ayar.qrIcerik || QR_VARSAYILAN;
-  if (secim === 'yok') return '';
+  if (secim === 'yok') return { metin: '', tur: 'yok', yedek: false };
+  const numara = telefonNormalize(ayar.whatsapp || ayar.telefon, ayar.ulkeKodu);
+  const iletisim = numara ? { metin: `https://wa.me/${numara}`, tur: 'iletisim' } : { metin: '', tur: 'yok' };
   if (secim === 'recete' && !bos && recete) {
     // Doğrulanabilir içerik: kanonik özet + kod. Eczaneci QR'ı okutup kâğıttaki
     // yazıyla karşılaştırır; ikisi tutmuyorsa kâğıt üzerinde oynanmıştır.
     const ozet = ozetMetni(recete, tamAd(hasta));
-    return recete.dogrulamaKodu ? `${ozet}\n${kodSatiri(recete.dogrulamaKodu)}` : ozet;
+    const metin = recete.dogrulamaKodu ? `${ozet}\n${kodSatiri(recete.dogrulamaKodu)}` : ozet;
+    if (qrOkunurMu(metin, qrBaskiMm(ayar))) return { metin, tur: 'recete', yedek: false };
+    if (iletisim.metin) return { ...iletisim, yedek: true };
+    return recete.dogrulamaKodu
+      ? { metin: kodSatiri(recete.dogrulamaKodu), tur: 'kod', yedek: true }
+      : { metin: '', tur: 'yok', yedek: true };
   }
-  const numara = telefonNormalize(ayar.whatsapp || ayar.telefon, ayar.ulkeKodu);
-  return numara ? `https://wa.me/${numara}` : '';
+  return { ...iletisim, yedek: false };
+}
+
+/** Kâğıdın üstündeki QR'ın içeriği (basılan metin). */
+export const qrIcerigi = (ayar, recete, hasta, secenek) => qrBilgisi(ayar, recete, hasta, secenek).metin;
+
+/** QR çizimi. Sessiz alan 4 değil 2 modül: kâğıtta QR'ın çevresinde ayrıca
+ *  beyaz bir kart payı var. Dört modülde kod kartın ancak üçte ikisiydi;
+ *  tasarımda kart neredeyse tamamen koddan oluşuyor. */
+export function qrCiz(metin, { boy, sinif }) {
+  const qr = qrGorsel(metin, { boy, sinif });
+  if (!qr) return null;
+  const kutu = Number(qr.getAttribute('viewBox').split(' ')[2]);
+  qr.setAttribute('viewBox', `2 2 ${kutu - 4} ${kutu - 4}`);
+  qr.setAttribute('data-rol', 'qr');
+  return qr;
 }
 
 /** ℞ alanının arkasındaki filigran: kalın-ince (hat kalemiyle çizilmiş
@@ -412,29 +462,11 @@ function filigran() {
  */
 export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, duzenlenebilir = false } = {}) {
   const boyut = ayar.yazdirmaBoyutu === 'A5' ? 'A5' : 'A4';
-  // Kâğıt stili. 'klasik' hekimin hâlihazırda kullandığı basılı kâğıdın
-  // aynısı; eski sürüm bunu 'renkli' diye kaydediyordu, o değer korunuyor.
-  // Yeni kurulumlarda varsayılan 'modern'.
-  const stilAdi = ayar.kagitStili === 'sade' ? 'sade'
-    : (ayar.kagitStili === 'klasik' || ayar.kagitStili === 'renkli') ? 'klasik'
-      : 'modern';
-  const stilSinifi = stilAdi === 'klasik' ? '' : ` kagit--${stilAdi}`;
-  const stil = el('style', {});
-  // ℞ alanı sayfanın kalanını doldursun: boş kâğıtta yazmaya bol yer kalır.
-  // A4'te 140 mm: tasarımdaki 155 mm'lik gövde A4'e sığmıyor (tasarımın
-  // kâğıdı basılabilir alandan 10 mm uzun); kısalan yalnız bu esnek bölüm,
-  // antet ve ayak tasarımdaki oranlarını koruyor.
-  // --baski-boy: basılan modern kâğıdın en az boyu (yazdirma.css); A5'te yok.
-  stil.textContent = `@page { size: ${boyut}; margin: ${boyut === 'A5' ? '6mm' : '8mm'}; }`
-    + ` .kagit { --rx-boy: ${boyut === 'A5' ? '62mm' : '140mm'}; --baski-boy: ${boyut === 'A5' ? 'auto' : '270mm'}; }`;
-
-  // "Healthy Life Brighter Tomorrow" el yazısı yüzüyle (Kalam) basılıyor.
-  // window.print() eşzamanlı: yüz o an inmemişse satır yedek yazıyla
-  // çıkar. Kâğıt çizilirken yükleme başlatılıyor, beklenmiyor; hekim
-  // yazdır'a bastığında dosya çoktan gelmiş oluyor.
-  if (stilAdi === 'modern') document.fonts?.load('700 10pt Kalam').catch(() => {});
-
-  const yas = hasta ? hastaYasi(hasta) : null;
+  // Kâğıt stili. Varsayılan lacivert (paylasilan/antet.js); 'klasik'
+  // hekimin hâlihazırda kullandığı basılı kâğıdın aynısı, eski sürüm onu
+  // 'renkli' diye kaydediyordu. Lacivert kendi modülünde, kendi ağacıyla:
+  // aşağıdaki ağaç üç eski stilin olduğu gibi kalıyor.
+  const stilAdi = kagitStiliCoz(ayar);
 
   /** Alanı düzenleme ekranına tanıtır. Düzenlenebilir değilse öğeyi
    *  olduğu gibi bırakır: basılan kâğıtta hiçbir iz kalmaz. */
@@ -454,7 +486,27 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
     ? duz(ad, el('div', { class: 'kagit__duz-bos' },
       simge('arti', { boy: 12, sinif: 'kagit__duz-arti' }), el('span', {}, metin)))
     : null;
-  const cizgi = (genislik) => el('span', { class: 'kagit__cizgi', style: genislik ? { inlineSize: genislik } : null }, ' ');
+  const cizgi = (genislik) => el('span', { class: 'kagit__cizgi', style: genislik ? { inlineSize: genislik } : null }, '\u00a0');
+
+  if (stilAdi === 'lacivert') return lacivertKagit({ recete, hasta, ayar, bos, boyut, duzenlenebilir, duz, yerTutucu, cizgi });
+
+  const stilSinifi = stilAdi === 'klasik' ? '' : ` kagit--${stilAdi}`;
+  const stil = el('style', {});
+  // ℞ alanı sayfanın kalanını doldursun: boş kâğıtta yazmaya bol yer kalır.
+  // A4'te 140 mm: tasarımdaki 155 mm'lik gövde A4'e sığmıyor (tasarımın
+  // kâğıdı basılabilir alandan 10 mm uzun); kısalan yalnız bu esnek bölüm,
+  // antet ve ayak tasarımdaki oranlarını koruyor.
+  // --baski-boy: basılan modern kâğıdın en az boyu (yazdirma.css); A5'te yok.
+  stil.textContent = `@page { size: ${boyut}; margin: ${boyut === 'A5' ? '6mm' : '8mm'}; }`
+    + ` .kagit { --rx-boy: ${boyut === 'A5' ? '62mm' : '140mm'}; --baski-boy: ${boyut === 'A5' ? 'auto' : '270mm'}; }`;
+
+  // "Healthy Life Brighter Tomorrow" el yazısı yüzüyle (Kalam) basılıyor.
+  // window.print() eşzamanlı: yüz o an inmemişse satır yedek yazıyla
+  // çıkar. Kâğıt çizilirken yükleme başlatılıyor, beklenmiyor; hekim
+  // yazdır'a bastığında dosya çoktan gelmiş oluyor.
+  if (stilAdi === 'modern') document.fonts?.load('700 10pt Kalam').catch(() => {});
+
+  const yas = hasta ? hastaYasi(hasta) : null;
 
   /* Kâğıdın iki yanındaki sabit yazılar. Rozet etiketleri gibi `??` ile:
      ayarda hiç dokunulmamışsa basılı kâğıttakiler çıkıyor, hekim silmek
@@ -535,43 +587,40 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
   /* ---- Hasta şeridi: Name / Age / Date / No ---- */
   // Boş değer tire değil noktalı çizgi basılır: hekim yaşı ya da numarayı
   // çıktının üstüne kalemle yazabilsin. Dolu değer de aynı çizginin üstünde.
-  const alan = (etiket, deger, genislik, simgeAdi, duzAd) => duz(duzAd, el('span', { class: 'kagit__alan' },
+  const alan = (etiket, deger, genislik, simgeAdi, duzAd, rol) => duz(duzAd, el('span', { class: 'kagit__alan', 'data-rol': rol },
     simge(simgeAdi, { dolu: true, boy: 20, sinif: `kagit__alan-simge kagit__alan-simge--${simgeAdi}` }),
     el('b', {}, etiket + ':'),
     bos || !doluMu(deger) ? cizgi(genislik) : el('span', { class: 'kagit__alan-deger', dir: 'auto' }, deger)));
 
   // Şerit ve klinik sütun soldan sağa: etiketleri İngilizce ve basılı kâğıtta
   // da bu yönde. Sayfanın kalanı sağdan sola kalır.
-  const serit = el('div', { class: 'kagit__serit', dir: 'ltr' },
-    alan('Name', tamAd(hasta), '52mm', SERIT_SIMGELERI[0], 'hasta'),
-    alan('Age', yas !== null ? String(yas) : '', '18mm', SERIT_SIMGELERI[1], null),
-    alan('Date', bos ? '' : tarihMetni(recete.tarih), '30mm', SERIT_SIMGELERI[2], 'tarih'),
-    alan('No', bos ? '' : recete.receteNo, '28mm', SERIT_SIMGELERI[3], null));
+  const serit = el('div', { class: 'kagit__serit', dir: 'ltr', 'data-rol': 'serit' },
+    alan('Name', tamAd(hasta), '52mm', SERIT_SIMGELERI[0], 'hasta', 'hasta'),
+    alan('Age', yas !== null ? String(yas) : '', '18mm', SERIT_SIMGELERI[1], null, 'yas'),
+    alan('Date', bos ? '' : tarihMetni(recete.tarih), '30mm', SERIT_SIMGELERI[2], 'tarih', 'tarih'),
+    alan('No', bos ? '' : recete.receteNo, '28mm', SERIT_SIMGELERI[3], null, 'no'));
 
   /* ---- Clinical sütunu: ölçümler, altta stetoskop ve QR ---- */
   // Her ölçüm tek satır: simge, etiket ve hemen yanında değer; altta
   // noktalı yazı çizgisi. Girilmemiş ölçüm tire değil çizgi basılır: doktor
   // çıktının üstüne kalemle yazabilsin.
   const olcumSatiri = (anahtar, etiket, deger, sinif = '') => duz(anahtar === 'kanGrubu' ? 'kanGrubu' : 'olcum:' + anahtar,
-    el('div', { class: ('kagit__olcum ' + sinif).trim() },
+    el('div', {
+      class: ('kagit__olcum ' + sinif).trim(),
+      'data-rol': anahtar === 'kanGrubu' ? 'kan' : 'olcum',
+      'data-olcum': anahtar === 'kanGrubu' ? null : anahtar,
+    },
       el('span', { class: 'kagit__olcum-simge' },
         // Kutu boyu CSS'te, her simge için ayrı: viewBox'lardaki boşluk farklı.
         simge(OLCUM_SIMGELERI[anahtar], { dolu: true, sinif: 'kagit__olcum-cizim--' + anahtar })),
       el('b', {}, `${etiket} :`),
       doluMu(deger) ? el('span', { dir: 'ltr' }, deger) : cizgi()));
-  const qr = qrGorsel(qrIcerigi(ayar, recete, hasta, { bos }), { boy: 76, sinif: 'kagit__qr' });
-  // Sessiz alan 4 değil 2 modül: kâğıtta QR'ın çevresinde ayrıca beyaz bir
-  // kart payı var. Dört modülde kod 17 mm'lik kartın ancak üçte ikisiydi;
-  // tasarımda kart neredeyse tamamen koddan oluşuyor.
-  if (qr) {
-    const kutu = Number(qr.getAttribute('viewBox').split(' ')[2]);
-    qr.setAttribute('viewBox', `2 2 ${kutu - 4} ${kutu - 4}`);
-  }
+  const qr = qrCiz(qrIcerigi(ayar, recete, hasta, { bos }), { boy: 76, sinif: 'kagit__qr' });
   const sutun = el('aside', { class: 'kagit__klinik-sutun', dir: 'ltr' },
     el('div', { class: 'kagit__sutun-bas' },
       el('span', {}, t('kagit.klinik', 'Clinical')),
       simge('stetoskop', { boy: 24, dolu: true })),
-    el('div', { class: 'kagit__olcumler' },
+    el('div', { class: 'kagit__olcumler', 'data-rol': 'olcumler' },
       // Birimin yalnız ilk parçası basılıyor: BP'nin birimi formda iki
       // kutuyu anlatan «mmHg / mmHg»; kâğıtta «120/80 mmHg» yazılır.
       // «Temperature :» en uzun etiket; değer yazılınca satır sıkışık
@@ -587,7 +636,7 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
       // sınıfı var: deneme ölçüm sayarken bunu saymasın.
       olcumSatiri('kanGrubu', 'Blood Gr.', bos ? '' : recete.kanGrubu, 'kagit__olcum--kan')),
     !bos && doluMu(recete.dogrulamaKodu)
-      ? el('div', { class: 'kagit__kod' },
+      ? el('div', { class: 'kagit__kod', 'data-rol': 'kod' },
         el('span', { class: 'kagit__olcum-simge' }, simge('kilit', { boy: 15 })),
         el('b', {}, t('kagit.kod', 'کد تأیید') + ': '), el('span', { class: 'kagit__kod-deger', dir: 'ltr' }, recete.dogrulamaKodu))
       : null,
@@ -604,12 +653,12 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
 
   /* ---- ℞ alanı ---- */
   const tani = !bos && (doluMu(recete.tani) || doluMu(recete.taniKodu))
-    ? duz('tani', el('div', { class: 'kagit__tani' }, el('b', {}, t('recete.tani', 'Tanı') + ': '), [recete.tani, recete.taniKodu].filter(doluMu).join(' · ')))
+    ? duz('tani', el('div', { class: 'kagit__tani', 'data-rol': 'tani' }, el('b', {}, t('recete.tani', 'Tanı') + ': '), [recete.tani, recete.taniKodu].filter(doluMu).join(' · ')))
     : (bos ? null : yerTutucu('tani', t('recete.tani', 'Tanı')));
 
   const alerjiler = hasta?.alerjiler || [];
   const alerji = !bos && alerjiler.length
-    ? el('div', { class: 'kagit__alerji' }, el('b', {}, t('hasta.alerji', 'Alerji') + ': '), alerjiler.join(', '))
+    ? el('div', { class: 'kagit__alerji', 'data-rol': 'alerji' }, el('b', {}, t('hasta.alerji', 'Alerji') + ': '), alerjiler.join(', '))
     : null;
 
   // İlaç satırı hekimin ve eczacının alışık olduğu biçimde:
@@ -619,35 +668,35 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
     ? null
     // Liste soldan sağa: sıra numarası adın SOLUNDA dursun ("1. Tab: …").
     // RTL'de numara sağa geçiyor ve ".1" diye ters basılıyordu.
-    : el('ol', { class: 'kagit__ilaclar', dir: 'ltr' }, ...(recete.satirlar || []).map((s, i) => {
+    : el('ol', { class: 'kagit__ilaclar', dir: 'ltr', 'data-rol': 'ilaclar' }, ...(recete.satirlar || []).map((s, i) => {
       const kisa = formKisa(s.form);
-      return duz('ilac:' + i, el('li', {},
+      const { kullanim } = ilacSatiri(s);
+      return duz('ilac:' + i, el('li', { 'data-rol': 'ilac' },
         el('div', { class: 'kagit__ilac-ad', dir: 'ltr' },
           kisa ? el('span', { class: 'kagit__form' }, kisa + ':') : null,
           el('b', {}, ilacAdiFormsuz(s.ilacAdi, s.form)),
           el('span', { class: 'kagit__adet' }, `N=${s.adet}`)),
-        doluMu(s.kullanim) || doluMu(s.sure) || doluMu(s.yol) || doluMu(s.not)
-          // Kullanım satırı Farsça: yönünü içeriğinden alsın, liste LTR olsa da.
-          ? el('div', { class: 'kagit__kullanim', dir: 'auto' }, [s.kullanim, s.sure, s.yol, s.not].filter(doluMu).join(' · '))
-          : null));
+        // Kullanım satırı Farsça: yönünü içeriğinden alsın, liste LTR olsa da.
+        // Yemek zamanı (zaman) kullanımın hemen ardında, lacivertteki sırayla.
+        kullanim.length ? el('div', { class: 'kagit__kullanim', dir: 'auto' }, kullanim.join(' · ')) : null));
     }));
 
   // Hastanın anlattıkları tanının üstünde: kâğıt muayenenin sırasını izlesin.
   const belirtiler = !bos && doluMu(recete.belirtiler)
-    ? duz('belirtiler', el('div', { class: 'kagit__belirti' }, el('b', {}, t('kagit.belirtiler', 'Belirtiler') + ': '), recete.belirtiler))
+    ? duz('belirtiler', el('div', { class: 'kagit__belirti', 'data-rol': 'belirtiler' }, el('b', {}, t('kagit.belirtiler', 'Belirtiler') + ': '), recete.belirtiler))
     : (bos ? null : yerTutucu('belirtiler', t('kagit.belirtiler', 'Belirtiler')));
 
   // Tetkik istemi ilaçlardan sonra, kendi bloğunda: gerçek reçetede de
   // ayrı bir istem, ilaç listesinin parçası değil.
   const laboratuvar = !bos && doluMu(recete.laboratuvar)
-    ? duz('laboratuvar', el('div', { class: 'kagit__lab' },
+    ? duz('laboratuvar', el('div', { class: 'kagit__lab', 'data-rol': 'lab' },
       el('div', { class: 'kagit__lab-bas' }, t('kagit.laboratuvar', 'Laboratuvar')),
       el('div', {}, recete.laboratuvar)))
     : (bos ? null : yerTutucu('laboratuvar', t('kagit.laboratuvar', 'Laboratuvar')));
 
   // İmza yeri: gerçek reçetede hekimin imzası olur. Dolu kâğıtta da boş
   // kâğıtta da basılıyor — imza her hâlükârda elle atılıyor.
-  const imza = el('div', { class: 'kagit__imza' },
+  const imza = el('div', { class: 'kagit__imza', 'data-rol': 'imza' },
     el('span', { class: 'kagit__imza-cizgi' }, ' '),
     el('span', { class: 'kagit__imza-etiket' }, t('kagit.imza', 'امضا')));
 
@@ -664,7 +713,7 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
       bos ? null : yerTutucu('ilac-ekle', t('recete.ilac_ekle', 'İlaç ekle')),
       laboratuvar,
       !bos && doluMu(recete.notlar)
-        ? duz('notlar', el('div', { class: 'kagit__not' }, recete.notlar))
+        ? duz('notlar', el('div', { class: 'kagit__not', 'data-rol': 'not' }, recete.notlar))
         : (bos ? null : yerTutucu('notlar', t('recete.not', 'Reçete notu')))),
     el('div', { class: 'kagit__rx-alt' }, hat, imza));
 
@@ -689,7 +738,7 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
       simge('telefon', { boy: 16, dolu: true }),
       el('span', {}, `${doluMu(etiket) ? etiket : t('kagit.tel', 'شماره تماس')} : `, el('bdi', { dir: 'ltr' }, no))));
 
-  const ayak = el('footer', { class: 'kagit__ayak' },
+  const ayak = el('footer', { class: 'kagit__ayak', 'data-rol': 'ayak' },
     dalga('alt'),
     el('div', { class: 'kagit__iletisim' },
       doluMu(ayar.adres) ? el('div', { class: 'kagit__iletisim-satir' }, simge('konum', { boy: 16, dolu: true }), el('span', {}, `${t('kagit.adres', 'آدرس')} : ${ayar.adres}`)) : null,
@@ -711,13 +760,13 @@ export function kagitCiz({ recete = {}, hasta = null, ayar = {}, bos = false, du
      koyultuyordu; ad, rozet ve hizmetler altında beyaz zeminde kalıyordu.
      Sarmalayıcı yalnız EKLENDİ, içindekilerin sırası değişmedi — klasik ve
      sade stiller aynı ağacı giymeye devam ediyor. */
-  const tepe = el('div', { class: 'kagit__tepe' }, dalga('ust'), antet, unvan, hizmet);
+  const tepe = el('div', { class: 'kagit__tepe', 'data-rol': 'antet' }, dalga('ust'), antet, unvan, hizmet);
 
   // Dokuz ve daha çok ilaçta sık düzen (yazdirma.css .kagit--sik): her ilaç
   // bir satır daha az tutuyor. Yoksa on ilaçlı kâğıt A4'e sığmıyor, ayak
   // ikinci sayfaya bölünüyordu.
   const sik = !bos && (recete.satirlar?.length || 0) >= 9 ? ' kagit--sik' : '';
-  return el('div', { class: `yazdir-alan kagit${stilSinifi}${sik}` }, stil,
+  return el('div', { class: `yazdir-alan kagit${stilSinifi}${sik}`, 'data-rol': 'sayfa' }, stil,
     tepe, deneyim, vecize, serit,
     el('div', { class: 'kagit__govde' }, rx, sutun),
     ayak);
@@ -753,11 +802,35 @@ export function kagidiOlcekle(tuval, kagit, gozlenen = null, { pay = 8, yuksekli
     const enine = (tuval.clientWidth - pay) / KAGIT_PX;
     // 1 px pay: tuvalin boyu aşağıda yukarı yuvarlanıyor, küsuratlı bir
     // boyda kâğıt 1 px taşıp kaydırma çubuğu açıyordu.
-    const boyuna = yukseklik && kagit.offsetHeight ? (yukseklik() - 1) / kagit.offsetHeight : Infinity;
+    // Birden çok yapraklı (lacivert, devam sayfalı) kâğıtta boya YAPRAK
+    // sığdırılıyor, yığın değil: üst üste dizilmiş yapraklar boya sığdırılsa
+    // okunmayacak kadar küçülürdü. O seyrek durumda tuval kendi içinde
+    // kayıyor (data-cok-yaprak) ve ekrandan taşmıyor: yapışkan önizleme ve
+    // başlığındaki yazdır düğmesi yerinde kalıyor.
+    const yapraklar = kagit.querySelectorAll('[data-rol="sayfa"]');
+    const yaprakBoyu = yapraklar.length > 1 ? yapraklar[0].offsetHeight : kagit.offsetHeight;
+    const sigacak = yukseklik ? yukseklik() - 1 : Infinity;
+    // Tuvalin kendi dikey dolgusu da boydan düşülüyor (kutu border-box):
+    // düşülmeyince kayan tuvalin sonuna inildiğinde son yaprağın tepesi
+    // 8 px tuvalin dışında kalıyordu, tek yaprak da dolgu kadar taşıyordu.
+    const tcs = getComputedStyle(tuval);
+    const dikeyPay = (parseFloat(tcs.paddingBlockStart) || 0) + (parseFloat(tcs.paddingBlockEnd) || 0);
+    const boyuna = yaprakBoyu ? (sigacak - dikeyPay) / yaprakBoyu : Infinity;
     const olcek = Math.min(1, Math.max(0.2, Math.min(enine, boyuna)));
     tuval.style.setProperty('--olcek', String(olcek));
+    // Tuval yalnız boy sınırı varken kayıyor; reçete kaydı sayfasında ve
+    // telefonda (sınır yok ya da sonsuz) yapraklar sayfanın akışında alt alta.
+    const kayar = yapraklar.length > 1 && Number.isFinite(sigacak);
+    tuval.toggleAttribute('data-cok-yaprak', kayar);
+    // Kayan tuval klavyeyle de kaydırılabilsin: büyük önizlemedeki kâğıtta
+    // odaklanacak başka öğe yok, ikinci yaprağa ancak fareyle iniliyordu.
+    if (kayar) tuval.tabIndex = 0;
+    else tuval.removeAttribute('tabindex');
+    // Ölçek yerleşimi değiştirmiyor: kayan tuvalin içi ölçeklenmemiş boyda
+    // kalır, altında boş bir kaydırma payı açılırdı. Eksi alt pay onu kapatıyor.
+    kagit.style.marginBlockEnd = yapraklar.length > 1 ? `${(olcek - 1) * kagit.offsetHeight}px` : '';
     // Ölçeklenen öğe yerinde yer kaplamıyor; boyu elle veriliyor.
-    tuval.style.blockSize = Math.ceil(kagit.offsetHeight * olcek) + 'px';
+    tuval.style.blockSize = Math.ceil(Math.min(kagit.offsetHeight * olcek + dikeyPay, kayar ? sigacak : Infinity)) + 'px';
   };
   // İlk ölçüm yerleşimden SONRA: hemen ölçünce kap daha dar geliyor.
   requestAnimationFrame(uygula);
@@ -805,13 +878,34 @@ export function tarayiciBaskisi(uret) {
   };
 }
 
+/* Yazdırmadan önce yazı yüzünün inmesi için beklenecek en uzun süre (ms).
+   Lacivert kâğıdın Latin adı ve mühür yazısı Cinzel'le basılıyor;
+   window.print() o an inmemiş bir yüzü beklemiyor, satır yedek yazıyla
+   çıkıyordu. Çevrimdışı ve önbellekte yoksa sonsuza dek beklenmesin. */
+const YUZ_BEKLEME = 800;
+
+/** Kaydedilen PDF'in önerilen adı: Chrome ve Edge belge başlığını
+ *  kullanıyor. Harf, rakam ve tire dışı her şey atılıyor, 60 harfle sınırlı.
+ *  Boş kâğıt tomarı «nuskha-khali»: indirilenler klasöründe reçetelerden ayrılsın. */
+export function belgeAdi(recete = {}, hasta = null, { bos = false } = {}) {
+  const parca = (x) => String(x ?? '').replace(/[^\p{L}\p{N}-]+/gu, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  const parcalar = bos ? ['khali'] : [parca(recete?.receteNo), parca(tamAd(hasta))];
+  return ['nuskha', ...parcalar].filter(Boolean).join('-').slice(0, 60).replace(/-$/, '');
+}
+
 /**
  * Kâğıdı yazdırır. Sayfada duran kâğıt geçici olarak değiştirilir, yazdırma
  * bitince eski hale döner — böylece boş kâğıt da aynı düzenle basılır.
+ * `pdf`: «ذخیره PDF» düğmesi. Tarayıcı «PDF olarak kaydet»i kendisi
+ * seçtiremiyor; belge başlığı yazdırma boyunca dosya adı olacak biçime
+ * getiriliyor (Chrome kaydedilen dosyaya bu adı öneriyor), sonra geri alınıyor.
  */
-export function kagidiYazdir({ tekrar = 1, ...secenekler } = {}) {
+export async function kagidiYazdir({ tekrar = 1, pdf = false, ...secenekler } = {}) {
   const sayfa = document.getElementById('sayfa');
   const n = Math.max(1, Math.min(20, Math.trunc(Number(tekrar)) || 1));
+  if (kagitStiliCoz(secenekler.ayar) === 'lacivert' && document.fonts) {
+    await Promise.race([document.fonts.load('700 10pt Cinzel').catch(() => {}), new Promise((r) => setTimeout(r, YUZ_BEKLEME))]);
+  }
   /* Yalnız #sayfa'nın DOĞRUDAN çocuğu olan kâğıt yerinde değiştirilir
      (reçete kaydı sayfası böyle). Tuvalin içindeki önizleme kâğıdı yerinde
      DEĞİŞTİRİLEMEZ: yazdırma kuralı kâğıttan başka her doğrudan çocuğu
@@ -823,7 +917,13 @@ export function kagidiYazdir({ tekrar = 1, ...secenekler } = {}) {
   for (const k of kagitlar.slice(0, -1)) k.classList.add('yazdir-alan--kopya');
   if (eski) eski.replaceWith(kagitlar[0]);
   else for (const k of kagitlar) sayfa.appendChild(k);
-  window.print();
-  if (eski) kagitlar[0].replaceWith(eski);
-  else for (const k of kagitlar) k.remove();
+  const baslik = document.title;
+  if (pdf) document.title = belgeAdi(secenekler.recete, secenekler.hasta, { bos: secenekler.bos });
+  try {
+    window.print();
+  } finally {
+    document.title = baslik;
+    if (eski) kagitlar[0].replaceWith(eski);
+    else for (const k of kagitlar) k.remove();
+  }
 }

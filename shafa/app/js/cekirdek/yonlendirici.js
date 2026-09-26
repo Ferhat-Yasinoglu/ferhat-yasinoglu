@@ -43,7 +43,13 @@ export class Yonlendirici {
     try {
       const mod = await e.rota.yukle();
       if (benim !== this.sira) return;
-      const sonuc = await mod.default.cizim(this.kok, { ...this.ctx, param: e.param, sorgu: this.simdiki.sorgu, yol });
+      // `guncel`: sayfa veriyi bekledikten sonra kökü yazmadan önce sorar.
+      // Beklerken başka bir sayfaya geçildiyse (kaydedilen reçetenin sayfası
+      // yüklenirken hekim menüden yeni reçeteye geçti) eski çizim yeni
+      // sayfanın üstüne yazıyordu. Sayfaların kendi sayaçları yalnız AYNI
+      // sayfanın yeniden çizimini görür; bu sıra her gezinmeyi görüyor.
+      const guncel = () => benim === this.sira;
+      const sonuc = await mod.default.cizim(this.kok, { ...this.ctx, param: e.param, sorgu: this.simdiki.sorgu, yol, guncel });
       const temiz = typeof sonuc === 'function' ? sonuc : null;
       if (benim !== this.sira) { if (temiz) { try { temiz(); } catch (err) { console.error(err); } } return; }
       this.temizleyici = temiz;

@@ -148,6 +148,14 @@ const SIMGELER = {
     ['path', { d: 'M12 21.2s6.8-6 6.8-10.7a6.8 6.8 0 1 0-13.6 0C5.2 15.2 12 21.2 12 21.2z' }],
     ['circle', { cx: 12, cy: 10.2, r: 2.5 }],
   ],
+
+  /* Önizleme panelinin başlık düğmeleri (tasarımdaki gibi): kıvrık köşeli
+     sayfanın içinde PDF belgelerinin tanınan ilmeği («ذخیره PDF»); iki
+     köşeye açılan, ortada birbirinden ayrık iki ok (büyük önizleme). Oklar
+     birleşince tek bir çapraz çift ok gibi okunuyordu. */
+  pdf: [['path', { d: 'M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7zM14 3v4h4' }],
+    ['path', { d: 'M8.6 17.6c1.6-.7 3.6-4.4 3.3-6.3-.2-1-1.4-1-1.4.1 0 1.9 2.5 4.3 4.8 4.6.9.1 1-.9.1-1.1-2-.4-5.2.9-6.8 2.7z', 'stroke-width': 1.3 }]],
+  genislet: [['path', { d: 'M15 4h5v5M20 4l-5.5 5.5M9 20H4v-5M4 20l5.5-5.5' }]],
 };
 
 /* Dolgulu simgeler. Bir kısmı bootstrap-icons 1.13.1'den (MIT, © 2019-2024
@@ -362,6 +370,11 @@ const SIMGELER_DOLU = {
   ] },
   // bi: geo-alt-fill — adres
   konum: { vb: 16, yollar: [['path', { d: 'M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6' }]] },
+  // bi: briefcase-fill — antetteki «Professional Experience:» satırı
+  canta: { vb: 16, yollar: [
+    ['path', { d: 'M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v1.384l7.614 2.03a1.5 1.5 0 0 0 .772 0L16 5.884V4.5A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5' }],
+    ['path', { d: 'M0 12.5A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5V6.85L8.129 8.947a.5.5 0 0 1-.258 0L0 6.85z' }],
+  ] },
   // bi: telephone-fill
   telefon: { vb: 16, yollar: [['path', { 'fill-rule': 'evenodd', d: 'M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.68.68 0 0 0 .178.643l2.457 2.457a.68.68 0 0 0 .644.178l2.189-.547a1.75 1.75 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.6 18.6 0 0 1-7.01-4.42 18.6 18.6 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877z' }]] },
 };

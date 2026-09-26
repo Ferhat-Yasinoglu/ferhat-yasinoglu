@@ -26,6 +26,7 @@ import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { gercekVeriBul } from './gercek-veri.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -46,7 +47,8 @@ const CIKTI = fileURLToPath(new URL('../tanitim/gorsel/', import.meta.url));
 // betik sessizce zaman aşımına düşerdi.
 const SOZLUK = JSON.parse(await readFile(new URL('../app/i18n/fa.json', import.meta.url), 'utf8'));
 const T = (a) => { if (!SOZLUK[a]) throw new Error('sözlükte yok: ' + a); return SOZLUK[a]; };
-// Tanı adı klinik listeden, Türkçe karşılığıyla bulunur (Farsça ad değişse de).
+// Tanı klinik listeden, Türkçe karşılığıyla bulunur (adı değişse de); çipte ve
+// kâğıtta İngilizce adı (`en`) duruyor.
 const KLINIK = JSON.parse(await readFile(new URL('../app/veri/klinik.json', import.meta.url), 'utf8'));
 const TANI = KLINIK.tanilar.find((x) => x.tr === 'Üst solunum yolu enfeksiyonu');
 if (!TANI) throw new Error('klinik listede tanı yok');
@@ -141,6 +143,10 @@ async function bitir(sayfa) {
   await sayfa.waitForTimeout(900);
   const kalan = await sayfa.$$eval('.ortu, .tarih-kutu, .bildirim', (a) => a.map((x) => x.className));
   if (kalan.length) throw new Error('görüntüye kutu ya da bildirim girecekti: ' + kalan.join(', '));
+  // Görüntünün kendisi taranamıyor (JPEG); içindeki yazı çekimden ÖNCE
+  // taranıyor: tasarım görselinin gerçek görünen verisi tanıtıma girmesin.
+  const gercek = gercekVeriBul(await sayfa.evaluate(() => document.body.textContent));
+  if (gercek.length) throw new Error(`görüntüye gerçek görünen veri girecekti (${gercek.length} ifade)`);
 }
 
 /** Reçete sayfasını hekimin yaptığı gibi doldurur: hasta, ölçümler, tanı ve
@@ -150,22 +156,25 @@ async function receteDoldur(sayfa) {
   await sayfa.click('.recete-form .secim-alani');
   await sayfa.click('.ortu .liste__satir--tiklanir:has-text("محمد نعیم رحیمی")');
   await sayfa.waitForSelector('.ortu', { state: 'detached' });
-  for (const [ad, deger] of [['bp', '130/85'], ['pr', '78'], ['rr', '18'], ['bw', '74'], ['temp', '38.2'], ['spo2', '97']]) {
+  // Kan basıncı formda iki kutu (sistolik / diyastolik).
+  for (const [ad, deger] of [['bp_sis', '130'], ['bp_dia', '85'], ['pr', '78'], ['rr', '18'], ['bw', '74'], ['temp', '38.2'], ['spo2', '97']]) {
     await sayfa.fill(`input[name=olcum_${ad}]`, deger);
   }
-  await sayfa.click('.kagit-tuval [data-alan="tani"]');
-  await sayfa.click(`.modal .klinik-liste .cip-kume:not(.klinik-gecmis):not(.klinik-yaygin) .cip--secilir:has(span:text-is("${TANI.ad}"))`);
-  await sayfa.click(`.modal button:has-text("${T('genel.sec')}")`);
-  await sayfa.waitForSelector('.ortu', { state: 'detached' });
-  // İki ilaç: üçüncüsünde tablo kayıyor ve ilk satır yarım görünüyordu.
-  for (const ad of ['Panadol 500', 'Glucophage']) {
-    await sayfa.click('.recete-form .ilac-bas__ekle');
-    await sayfa.fill('.modal input[name=ilacArama]', ad.split(' ')[0]);
-    await sayfa.click(`.modal .liste__satir--tiklanir:has-text("${ad}") >> nth=0`);
+  // Tanı formdaki satır içi aramadan (çip olarak görünsün); belirti ve
+  // tetkik kartları boş kalmasın diye ikişer işaret.
+  await sayfa.fill('input[name=taniArama]', TANI.en);
+  await sayfa.click(`.tani-sonuc__satir:has(.liste__baslik:text-is("${TANI.en}"))`);
+  for (const kart of ['.kart--belirti', '.kart--lab']) {
+    for (const n of [0, 1]) await sayfa.check(`${kart} input[type=checkbox] >> nth=${n}`);
+  }
+  // İki ilaç, formdaki aramadan: sonuç satırı satır kutusunu ilaç seçili açıyor.
+  for (const ad of ['Panadol', 'Glucophage']) {
+    await sayfa.fill('.recete-form input[name=ilacArama]', ad);
+    await sayfa.click(`.ilac-sonuc__satir:has(.liste__baslik:text-is("${ad}")) >> nth=0`);
     await sayfa.click(`.modal button:has-text("${T('genel.ekle')}")`);
     await sayfa.waitForSelector('.ortu', { state: 'detached' });
   }
-  await sayfa.waitForSelector('.kagit__ilaclar li >> nth=1');
+  await sayfa.waitForSelector('.kagit-tuval [data-rol=ilac] >> nth=1');
 }
 
 /** Kâğıdı basıldığı gibi kurar: örnek hastaya kayıtlı bir reçete (numarası
@@ -185,10 +194,12 @@ const KAGIT_KUR = async (tani) => {
   const gun = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const recete = await receteKaydet(depo, {
     ...bosRecete(ayar, gun), hastaId: hasta.id, kanGrubu: hasta.kanGrubu,
-    belirtiler: 'تب، سرفه', tani: tani.ad, taniKodu: tani.kod, laboratuvar: 'CBC',
+    belirtiler: 'Fever، Cough', tani: tani.en, taniKodu: tani.kod, laboratuvar: 'CBC',
     olcumler: { bp: '130/85', pr: '78', rr: '18', bw: '74', temp: '38.2', spo2: '97' },
     satirlar: ['Panadol', 'Glucophage', 'Ventolin'].map((ad) => ({
-      ilacId: ilac(ad).id, ilacAdi: ilacEtiketi(ilac(ad)), form: ilac(ad).form, adet: 1, kullanim: '', sure: '', yol: '', not: '',
+      // Etken madde ve güç formdan eklenen satırdaki gibi: kâğıtta «Glucophage (Metformin) 500 mg».
+      ilacId: ilac(ad).id, ilacAdi: ilacEtiketi(ilac(ad)), etkenMadde: ilac(ad).etkenMadde, doz: ilac(ad).doz,
+      form: ilac(ad).form, adet: 1, kullanim: '', sure: '', yol: '', not: '',
     })),
   });
   const tuval = document.createElement('div');
@@ -231,7 +242,7 @@ const raporlar = [];
   // Kesim içeriye yuvarlanıyor: öğenin kutusu küsuratlı ve öğe görüntüsü
   // dışarı yuvarlıyordu; sağda ve altta 2 piksellik sayfa zemini ile
   // kenarlıktan taşan renk izleri kalıyordu.
-  const k = await sayfa.locator('.gorsel-tuval .kagit').boundingBox();
+  const k = await sayfa.locator('.gorsel-tuval [data-rol=sayfa] >> nth=0').boundingBox();
   const x = Math.ceil(k.x), y = Math.ceil(k.y);
   await sayfa.screenshot({
     path: CIKTI + 'recete.jpg', type: 'jpeg', quality: 88,

@@ -2,3 +2,6 @@ node_modules/
 .DS_Store
 *.log
 coverage/
+# wrangler dev: yerel gizli değerler ve önbellek (depoya girmez)
+sunucu/.dev.vars
+sunucu/.wrangler/

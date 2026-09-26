@@ -1,12 +1,18 @@
 // Hazır ilaç listesi: birleştirme mantığı ve gönderilen verinin sağlığı.
 import { describe, it, expect, beforeEach } from 'vitest';
 import { readFile } from 'node:fs/promises';
-import { eksikleriBul, eskiKayitlariBul, ilacAnahtari, listeKaydi, listeGecerliMi } from '../app/js/paylasilan/ilac-listesi.js';
+import {
+  eksikleriBul, eskiKayitlariBul, ilacAnahtari, listeKaydi, listeGecerliMi, katalogDamgasi, havuz,
+} from '../app/js/paylasilan/ilac-listesi.js';
 import { FORMLAR } from '../app/js/paylasilan/ilac.js';
 import { BellekDepo } from '../app/js/depo/depo.js';
-import { hazirListeyiYukle, hazirListeyiTazele, HAZIR_LISTE_SURUMU } from '../app/js/depo/hazir-ilaclar.js';
+import {
+  hazirListeyiYukle, hazirListeyiTazele, HAZIR_LISTE_SURUMU, katalogdanKaydet, katalogOku, katalogBelleginiBosalt,
+} from '../app/js/depo/hazir-ilaclar.js';
 
 const liste = JSON.parse(await readFile(new URL('../app/veri/ilaclar.json', import.meta.url), 'utf8'));
+/* 2. sürümün donmuş kopyası: sahadaki cihazların yüklediği liste bu. */
+const v2 = JSON.parse(await readFile(new URL('./veri/ilaclar-v2.json', import.meta.url), 'utf8'));
 
 describe('gönderilen liste', () => {
   it('beklenen biçimde', () => expect(listeGecerliMi(liste)).toBe(true));
@@ -29,21 +35,70 @@ describe('gönderilen liste', () => {
     expect(new Set(anahtarlar).size).toBe(anahtarlar.length);
   });
 
-  it('kullanım şekli ya da süre taşımıyor — o karar hekimin', () => {
+  // nuskha'nın listesinde her ilacın yanında hazır doz/zaman/tarika/adet
+  // vardı; o değerler buraya sızarsa uygulama reçete önermiş olur.
+  it('kullanım şekli, doz, zaman ya da süre taşımıyor — o karar hekimin', () => {
+    const yasak = ['kullanim', 'sure', 'endikasyon', 'dose', 'timing', 'tariqa', 'n', 'miktar', 'zaman', 'adet', 'yol'];
     for (const i of liste.ilaclar) {
-      expect(i.kullanim, JSON.stringify(i)).toBeUndefined();
-      expect(i.sure, JSON.stringify(i)).toBeUndefined();
-      expect(i.endikasyon, JSON.stringify(i)).toBeUndefined();
+      for (const a of yasak) expect(i[a], JSON.stringify(i)).toBeUndefined();
     }
   });
 
-  it('gözle görülür bir hacimde', () => expect(liste.ilaclar.length).toBeGreaterThan(80));
+  it('yalnız ad sözlüğü alanları var (beyaz liste)', () => {
+    const izinli = new Set(['hid', 'ad', 'etkenMadde', 'form', 'doz', 'marka', 'kisa', 'grup', 'receteli', 'sik', 'eski']);
+    for (const i of liste.ilaclar) {
+      expect(Object.keys(i).filter((k) => !izinli.has(k)), i.ad).toEqual([]);
+    }
+  });
+
+  it('gözle görülür bir hacimde', () => expect(liste.ilaclar.length).toBeGreaterThan(500));
+
+  it('her satırın kalıcı, tekil kimliği var (h + 4 hane)', () => {
+    const hidler = liste.ilaclar.map((i) => i.hid);
+    for (const h of hidler) expect(h).toMatch(/^h\d{4}$/);
+    expect(new Set(hidler).size).toBe(hidler.length);
+  });
+
+  // Sahada bu satırlar cihazlara yüklendi ve reçetelere yazıldı: adı, dozu ya
+  // da şekli değişirse hazır kayıt listeyle eşleşmez, kimliği kayarsa damga
+  // yanlış ilaca gider.
+  it('2. sürümün her satırı aynı kimlikle ve aynı alanlarla duruyor', () => {
+    v2.ilaclar.forEach((eski, i) => {
+      const hid = `h${String(i + 1).padStart(4, '0')}`;
+      const yeni = liste.ilaclar.find((x) => x.hid === hid);
+      expect(yeni, hid).toBeTruthy();
+      for (const a of ['ad', 'doz', 'form', 'etkenMadde', 'receteli', 'eski']) expect(yeni[a], `${hid} ${a}`).toEqual(eski[a]);
+    });
+  });
+
+  it('her ilacın grubu tanımlı gruplardan biri, boş grup yok', () => {
+    const gruplar = new Set(liste.gruplar.map((g) => g.anahtar));
+    expect(gruplar.size).toBe(18);
+    for (const i of liste.ilaclar) expect(gruplar.has(i.grup), `${i.ad}: ${i.grup}`).toBe(true);
+    const kullanilan = new Set(liste.ilaclar.map((i) => i.grup));
+    expect(liste.gruplar.filter((g) => !kullanilan.has(g.anahtar))).toEqual([]);
+    for (const g of liste.gruplar) {
+      expect(g.ad.trim(), g.anahtar).not.toBe('');
+      expect(g.en.trim(), g.anahtar).not.toBe('');
+    }
+  });
+
+  it('kâğıttaki önek (kisa) bilinen değerlerden, marka işareti yalnız 1', () => {
+    const kisalar = new Set(['Susp', 'Vial', 'Inj', 'Inf', 'Cream', 'Gel', 'Lotion', 'Eye Drops', 'Ear Drops', 'Nasal Drops',
+      'Nasal Spray', 'Inhaler', 'Eye Oint', 'Oral Gel', 'Oral Paste', 'Vag Tab', 'Mouthwash', 'Shampoo', 'Powder']);
+    for (const i of liste.ilaclar) {
+      if (i.kisa !== undefined) expect(kisalar.has(i.kisa), `${i.ad}: ${i.kisa}`).toBe(true);
+      if (i.marka !== undefined) expect(i.marka, i.ad).toBe(1);
+    }
+    expect(liste.ilaclar.filter((i) => i.marka).length).toBeGreaterThan(300);
+  });
 
   // Kâğıdı Dari/İngilizce okuyan hekim ve eczacı için nokta ondalık ayraçtır:
   // «100.000 IU/ml» 100 IU/ml okunuyordu (bin kat). Yüzde de sayıdan sonra.
+  // Binlik grup 0 ile başlamaz: «0.025%» ve «2/0.035 mg» gerçek ondalık.
   it('dozlarda Türk yazımı yok: binlik nokta ve önde yüzde', () => {
     for (const i of liste.ilaclar) {
-      expect(i.doz, i.ad).not.toMatch(/\d\.\d{3}\b/);
+      expect(i.doz, i.ad).not.toMatch(/\b[1-9]\d{0,2}\.\d{3}\b/);
       expect(i.doz, i.ad).not.toMatch(/%\d/);
     }
   });
@@ -74,7 +129,7 @@ describe('eski sürümden yükseltme', () => {
     expect(kayitlar.map((k) => k.ad)).toContain('Insulin (NPH)');
     expect(kayitlar.find((k) => k.ad === 'Nystatin').doz).toBe('100,000 IU/ml');
     expect(kayitlar.find((k) => k.ad.startsWith('Vitamin B')).etkenMadde).toBe('Vitamin B complex');
-    expect(await depo.meta()).toMatchObject({ hazirListeSurumu: 2 });
+    expect(await depo.meta()).toMatchObject({ hazirListeSurumu: HAZIR_LISTE_SURUMU });
   });
 
   it('açılışta bir kez: adları yeniliyor, yeni ilaç eklemiyor, hekimin kaydına dokunmuyor', async () => {
@@ -189,5 +244,105 @@ describe('hazirListeyiYukle', () => {
   it('bozuk biçimi reddeder', async () => {
     const bozuk = async () => ({ ok: true, json: async () => ({ ilaclar: [{ ad: '' }] }) });
     await expect(hazirListeyiYukle(depo, bozuk)).rejects.toMatchObject({ kod: 'liste_bozuk' });
+  });
+});
+
+describe('2 → 3: yerinde yükseltme (katalogDamgasi)', () => {
+  let depo;
+  const getir = (belge) => async () => ({ ok: true, json: async () => belge });
+  beforeEach(() => { depo = new BellekDepo(); });
+
+  it('dokunulmamış liste kayıtlarına kimlik ve grup ekliyor, ilaç EKLEMİYOR, hekimin kaydına dokunmuyor', async () => {
+    await hazirListeyiYukle(depo, getir(v2));
+    expect(await depo.meta()).toMatchObject({ hazirListeSurumu: 2 });
+    const hepsi = await depo.listele('ilaclar');
+    // Hekim birinin dozunu düzeltmiş, birini de kendisi eklemiş.
+    const duzeltilen = hepsi.find((k) => k.ad === 'Paracetamol' && k.form === 'tablet');
+    await depo.kaydet('ilaclar', { ...duzeltilen, doz: '650 mg' });
+    await depo.kaydet('ilaclar', { ad: 'Kendi ilacım', etkenMadde: 'Ibuprofen', form: 'tablet', doz: '200 mg' });
+
+    const n = await hazirListeyiTazele(depo, getir(liste));
+    const sonra = await depo.listele('ilaclar');
+    expect(sonra).toHaveLength(v2.ilaclar.length + 1);
+    expect(n).toBe(v2.ilaclar.length - 1);
+    for (const k of sonra.filter((x) => x.hazir && x.doz !== '650 mg')) {
+      const h = liste.ilaclar.find((x) => x.hid === k.hazirId);
+      expect(h, k.ad).toBeTruthy();
+      expect(ilacAnahtari(h)).toBe(ilacAnahtari(k));
+      expect(k.grup).toBe(h.grup);
+    }
+    const elli = sonra.find((k) => k.id === duzeltilen.id);
+    expect(elli.hazirId).toBeUndefined();
+    expect(elli.grup).toBeUndefined();
+    expect(sonra.find((k) => k.ad === 'Kendi ilacım').hazirId).toBeUndefined();
+    expect(await depo.meta()).toMatchObject({ hazirListeSurumu: 3 });
+    // İkinci açılışta listeyi okumuyor bile.
+    expect(await hazirListeyiTazele(depo, async () => { throw new Error('okunmamalı'); })).toBe(0);
+  });
+
+  it('damga bir kez: kimliği olan kayda ikinci kez dokunmuyor', () => {
+    const h = liste.ilaclar[0];
+    const m = { id: 'a', ...listeKaydi({ ...h, hid: undefined, grup: undefined }) };
+    const [damgali] = katalogDamgasi([m], liste.ilaclar);
+    expect(damgali).toMatchObject({ id: 'a', hazirId: h.hid, grup: h.grup });
+    expect(katalogDamgasi([damgali], liste.ilaclar)).toEqual([]);
+    // Silinmiş ve listeden gelmemiş kayda da dokunulmuyor.
+    expect(katalogDamgasi([{ ...m, silindi: 1 }, { ...m, hazir: undefined }], liste.ilaclar)).toEqual([]);
+  });
+});
+
+describe('listeKaydi 3. sürüm alanları', () => {
+  it('kimliği, grubu, marka işaretini ve öneki kayda taşıyor', () => {
+    const h = liste.ilaclar.find((x) => x.marka && x.kisa);
+    expect(listeKaydi(h)).toMatchObject({ hazirId: h.hid, grup: h.grup, marka: 1, kisa: h.kisa, hazir: 1 });
+    const jenerik = listeKaydi({ ad: 'X', form: 'tablet' });
+    for (const a of ['hazirId', 'grup', 'marka', 'kisa']) expect(a in jenerik, a).toBe(false);
+  });
+});
+
+describe('havuz ve seçilince kayda dönüşme', () => {
+  const katalog = liste.ilaclar;
+
+  it('kayda dönüşmüş liste satırı ikinci kez çıkmıyor (kimlikle de, ad|doz|şekille de)', () => {
+    const [a, b, c, d] = katalog;
+    const kayitlar = [
+      { id: '1', ...listeKaydi(a) },                              // kimliğiyle
+      { id: '2', ad: b.ad, doz: b.doz, form: b.form },              // elle, aynı ürün
+      { id: '3', ...listeKaydi(c), silindi: 1 },                  // silinmiş: satır geri gelir
+      { id: '4', ...listeKaydi(d), doz: 'hekimin düzelttiği' },   // seçilmiş, sonra düzeltilmiş
+    ];
+    const h = havuz(kayitlar, katalog);
+    expect(h).toHaveLength(3 + katalog.length - 3);
+    expect(h.filter((x) => x.katalog && [a, b, d].some((y) => y.hid === x.hid))).toEqual([]);
+    expect(h.some((x) => x.katalog && x.hid === c.hid)).toBe(true);
+    expect(h.find((x) => x.katalog).id).toBeUndefined();
+  });
+
+  it('iki kez seçmek kopya oluşturmuyor; kayıt olan ilaç olduğu gibi dönüyor', async () => {
+    const depo = new BellekDepo();
+    const satir = havuz([], katalog).find((x) => x.marka);
+    const ilk = await katalogdanKaydet(depo, satir);
+    const ikinci = await katalogdanKaydet(depo, satir);
+    expect(ilk.id).toBeTruthy();
+    expect(ikinci.id).toBe(ilk.id);
+    expect(await depo.say('ilaclar')).toBe(1);
+    expect(ilk).toMatchObject({ hazirId: satir.hid, hazir: 1, ad: satir.ad });
+    expect(ilk.katalog).toBeUndefined();
+    expect(await katalogdanKaydet(depo, ilk)).toBe(ilk);
+  });
+});
+
+describe('katalogOku', () => {
+  it('listeyi oturumda bir kez okuyor: arama her tuşta ağa gitmiyor', async () => {
+    katalogBelleginiBosalt();
+    let n = 0;
+    const getir = async () => { n++; return { ok: true, json: async () => liste }; };
+    expect(await katalogOku(getir)).toBe(await katalogOku(getir));
+    expect(n).toBe(1);
+    katalogBelleginiBosalt();
+    await expect(katalogOku(async () => { throw new Error('ağ yok'); })).rejects.toMatchObject({ kod: 'liste_okunamadi' });
+    // Başarısız okuma saklanmıyor: sonraki çağrı yeniden deniyor.
+    expect((await katalogOku(getir)).surum).toBe(3);
+    katalogBelleginiBosalt();
   });
 });

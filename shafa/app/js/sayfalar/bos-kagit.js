@@ -6,9 +6,12 @@
 //
 // Ayarlar sayfasında da bir "boş kâğıt bastır" düğmesi vardı; oraya gömülü
 // olduğu için kimse bulamıyordu. Buradaki ekran onun yerini alıyor: ne
-// basılacağı önce görünüyor, sonra basılıyor.
+// basılacağı önce görünüyor, sonra basılıyor. Önizleme, reçete yazma
+// sayfasındaki panelin aynısı (başlık satırında «چاپ» ve «ذخیره PDF»):
+// tomar bir matbaaya PDF olarak da götürülebiliyor.
 import { el, temizle, btnS, kart, sayfaBas, alan, secim } from '../cekirdek/dom.js';
 import { kagitCiz, kagidiYazdir, kagidiOlcekle, tarayiciBaskisi } from '../kagit.js';
+import { onizlemePaneli, pdfKaydet } from '../onizleme-arayuz.js';
 import { t } from '../i18n.js';
 
 export default {
@@ -16,6 +19,7 @@ export default {
   async cizim(kok, ctx) {
     const { depo } = ctx;
     const ayar = await depo.ayarlar();
+    if (!ctx.guncel()) return;
     temizle(kok);
 
     const adet = secim(
@@ -26,10 +30,8 @@ export default {
        kopya sayısını yazdırma kutusunda soruyor. O yüzden kâğıdı N kez
        arka arkaya çiziyoruz; her biri kendi sayfasına düşüyor
        (.yazdir-alan + `break-after`, bkz. yazdirma.css). */
-    const bastir = () => {
-      const n = Math.max(1, Math.min(20, Number(adet.value) || 1));
-      kagidiYazdir({ ayar, bos: true, tekrar: n });
-    };
+    const tekrar = () => Math.max(1, Math.min(20, Number(adet.value) || 1));
+    const bastir = () => kagidiYazdir({ ayar, bos: true, tekrar: tekrar() });
 
     kok.appendChild(sayfaBas(t('bos_kagit.baslik', 'Boş reçete kâğıdı'), {
       alt: t('bos_kagit.alt', 'Anteti basılı, içi boş kâğıt. Elle doldurmak için tomar halinde bastır.'),
@@ -43,11 +45,14 @@ export default {
 
     const kagit = kagitCiz({ ayar, bos: true });
     const tuval = el('div', { class: 'kagit-tuval' }, kagit);
-    kok.appendChild(kart({ class: 'kart recete-onizleme' },
-      el('div', { class: 'kart__bas' },
-        el('h2', {}, t('bos_kagit.onizleme', 'Basılacak kâğıt')),
-        el('span', { class: 'kart__alt' }, ayar.yazdirmaBoyutu === 'A5' ? 'A5' : 'A4')),
-      tuval));
+    const boyut = ayar.yazdirmaBoyutu === 'A5' ? 'A5' : 'A4';
+    kok.appendChild(onizlemePaneli({
+      baslik: `${t('bos_kagit.onizleme', 'Basılacak kâğıt')} · ${boyut}`, id: 'bos-kagit-onizleme', tuval,
+      eylemler: [
+        { simge: 'yazdir', metin: t('genel.yazdir', 'Yazdır'), odakAdi: 'bos-yazdir', onclick: bastir },
+        { simge: 'pdf', metin: t('recete.pdf_kaydet', 'PDF kaydet'), odakAdi: 'bos-pdf', onclick: () => pdfKaydet({ ayar, bos: true, tekrar: tekrar() }) },
+      ],
+    }));
     // Sayfadan çıkınca boyut gözcüsü ve yazdırma dinleyicileri bırakılsın
     // (yönlendirici temizleyiciyi çağırıyor). Ctrl+P tek boş kâğıt basıyor.
     const olcekBirak = kagidiOlcekle(tuval, kagit, kok);

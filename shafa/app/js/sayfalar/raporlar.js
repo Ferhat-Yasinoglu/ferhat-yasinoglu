@@ -42,6 +42,7 @@ export default {
       depo.listele('hastalar'),
       depo.listele('receteler', { sirala: 'tarih', azalan: true }),
     ]);
+    if (!ctx.guncel()) return;
 
     kok.appendChild(sayfaBas(t('rapor.baslik', 'Raporlar'), {
       alt: t('rapor.alt', 'Kendi kayıtlarından çıkan sayımlar. Hepsi bu cihazda hesaplanıyor, hiçbiri dışarı gitmiyor.'),

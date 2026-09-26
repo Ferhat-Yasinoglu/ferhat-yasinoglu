@@ -16,7 +16,7 @@ export default {
     async function ciz() {
       const benim = ++sira;
       const hasta = await depo.al('hastalar', ctx.param.id);
-      if (benim !== sira) return;
+      if (benim !== sira || !ctx.guncel()) return;
       if (!hasta) {
         temizle(kok);
         kok.appendChild(bosDurum({ simge: 'hata', baslik: t('hasta.bulunamadi', 'Hasta bulunamadı'), alt: t('genel.silinmis_olabilir', 'Kayıt silinmiş olabilir.'), eylem: btn(t('hasta.geri', 'Hastalara dön'), { class: 'btn', onclick: () => git('/hastalar') }) }));
@@ -24,7 +24,7 @@ export default {
       }
       const yas = hastaYasi(hasta);
       const receteler = await depo.listele('receteler', { filtre: { hastaId: hasta.id }, sirala: 'tarih', azalan: true });
-      if (benim !== sira) return;
+      if (benim !== sira || !ctx.guncel()) return;
 
       temizle(kok);
       kok.append(sayfaBas(tamAd(hasta), {

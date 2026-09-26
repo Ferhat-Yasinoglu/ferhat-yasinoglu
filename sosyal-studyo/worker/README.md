@@ -99,6 +99,24 @@ Worker `PROVA = "1"` ile gelir: hesap "canli" olsa bile hiçbir dış gönderim 
 yoksa Workers AI (`AI_MODEL`, günde 10.000 nöron ücretsiz). Günlük tavan `AI_GUNLUK_TAVAN`.
 Anthropic panelinde aylık harcama tavanı koymadan anahtar girme — koda hiç güvenmeyen tek fren odur.
 
+### Kanala özel brifing ve Shafa ajanı
+
+Bir brifing `kanallar: ["telegram"]` taşırsa yalnız o kanalda konuşur ve orada genel brifingden
+(kanal listesi boş) önce gelir (`ai.js` → `brifingSec`). Böylece Telegram botu Shafa desteği
+yaparken Instagram/WhatsApp genel brifingle (ör. FY Ajans) sürer. Kanalı olmayan eski kayıtlarda
+davranış değişmedi: ilk aktif brifing. Cevap dili metinden gelir (Arap yazısı ya da TR/DE/EN
+kelimeler); metinde kanıt yoksa ("ok", çıplak `/start`) Telegram arayüz dili kullanılır.
+
+Shafa destek ajanı `hazir/shafa-ajan.json`'da durur (Dari kimlik, yasaklar, bilgi tabanı, deneme
+soruları; her bilgi `shafa/` README'si, tanıtım sayfası ve uygulama kodundan). Yüklemek için
+**Actions → Sosyal Studyo Worker → Run workflow → ajan = `shafa`**: dağıtımdan sonra
+`tools/ajan-yukle.mjs` brifingi sabit id'yle (`brif_shafa`) yazar — tekrar çalıştırmak aynı kaydı
+günceller, dosya kaynaktır —, Telegram hesabını canlı yapar, `/api/prova` ile Telegram mesajının
+bu brifinge düştüğünü denetler ve örnek soruların cevaplarını iş özetine yazar. Bilgi tabanını
+değiştirmek = dosyayı düzenleyip aynı işi yeniden çalıştırmak (uygulamadaki elle düzenleme bir
+sonraki yüklemede dosyayla ezilir). `tools/ajan-kur.mjs` (Yonet → ajan_kur) yalnız genel brifinge
+dokunur.
+
 ## Uç noktalar
 
 | Yol | Koruma | İş |

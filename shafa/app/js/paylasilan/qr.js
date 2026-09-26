@@ -380,6 +380,23 @@ export function qrMatris(metin) {
   return { boy: enIyi.boy, modul: enIyi.modul.map((s) => Array.from(s)), surum };
 }
 
+/** Basılı bir QR'ın telefonla okunabilmesi için en küçük modül (mm):
+ *  ≈ 15 cm'den okuyan yaygın telefon kameralarının alt sınırı. */
+export const QR_EN_KUCUK_MODUL_MM = 0.30;
+
+/**
+ * Metnin QR'ı `genislikMm` enine (sessiz alan dahil) basıldığında okunur
+ * mu? Matris kurulmuyor: sürüm yalnız bayt sayısından çıkıyor.
+ * Sığmayan (sürüm 20'yi aşan) metin okunmaz sayılır.
+ */
+export function qrOkunurMu(metin, genislikMm, { sessizAlan = 2 } = {}) {
+  const n = baytlar(metin).length;
+  if (!n) return false;
+  let surum;
+  try { surum = surumSec(n); } catch (e) { if (e instanceof QrHatasi) return false; throw e; }
+  return genislikMm / (17 + 4 * surum + 2 * sessizAlan) >= QR_EN_KUCUK_MODUL_MM;
+}
+
 /**
  * QR'ı tek bir SVG yol verisi olarak döndürür — çizimi çağıran yapar.
  * `sessizAlan` modül cinsinden kenar boşluğu (standart 4).

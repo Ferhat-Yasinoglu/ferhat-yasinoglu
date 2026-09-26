@@ -72,11 +72,22 @@ export function modal({ baslik, govde, dugmeler = [], kapatilabilir = true, geni
           disabled: d.pasif,
           onclick: async (e) => {
             e.currentTarget.disabled = true;
+            // `false` yalnız cb'den gelince «açık kal» (denetim tutmadı).
+            // Düğmenin kendi değeri false olabilir: onayla()'nın «انصراف»ı öyle
+            // ve kutuyu kapatmalı; önce aynı kurala takılıp hiçbir şey
+            // yapmıyordu, hekim ancak Escape'le çıkabiliyordu. Düğme baştan
+            // alınıyor: await'ten sonra e.currentTarget boş, denetim tutmayınca
+            // düğme pasif kalıyordu.
+            const dugme = e.currentTarget;
             try {
               const r = d.cb ? await d.cb() : d.deger;
-              if (r === false) { e.currentTarget.disabled = false; return; }
-              kapat(r ?? d.deger ?? true);
-            } catch (err) { e.currentTarget.disabled = false; throw err; }
+              if (d.cb && r === false) { dugme.disabled = false; return; }
+              // `deger: null` (Vazgeç) null döner. Önce `r ?? d.deger ?? true`
+              // idi: null iki kez atlanıp true oluyordu ve «Tüm verileri sil»de
+              // Vazgeç'e basan hekimin bütün kayıtları siliniyordu, yedekten
+              // geri yüklemede de Vazgeç yüklüyordu.
+              kapat(r !== undefined ? r : d.deger !== undefined ? d.deger : true);
+            } catch (err) { dugme.disabled = false; throw err; }
           },
         }, d.metin)))
         : null);

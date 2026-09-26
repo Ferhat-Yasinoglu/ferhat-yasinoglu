@@ -3,6 +3,8 @@
 // (3) paylasilan/ saf kalıyor (DOM ya da node: yok), (4) sayfa modülleri sözleşmeye uyuyor.
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
+import { listeyiDenetle, YASAK_KAYNAK } from './ilac-uret.mjs';
+import { gercekVeriBul } from './gercek-veri.mjs';
 
 const KOK = new URL('../app/', import.meta.url).pathname;
 let hata = 0;
@@ -22,6 +24,11 @@ for (const f of await dosyalar(join(KOK, 'css'), '.css')) {
   const s = await readFile(f, 'utf8');
   const m = s.match(/(^|[^-\w])(margin-left|margin-right|padding-left|padding-right|left:|right:|text-align:\s*(left|right)|border-left|border-right)/m);
   if (m) hataVer(`${f}: fiziksel yön özelliği (${m[2]}); mantıksal özellik kullan`);
+  // İçe gölgeyle çizilen kenar şeridi de fiziksel: yatay kayma sağdan sola
+  // çevrilmiyor. İlaç tablosunun uyarı şeridi satırın başında değil, # ile
+  // ad arasında çıkıyordu. Şerit border-inline-* ile çizilsin.
+  const golge = s.match(/box-shadow:[^;]*\binset\s+-?(?:\d*\.)?\d*[1-9][\d.]*(?:px|em|rem)?\s/);
+  if (golge) hataVer(`${f}: yatay kaymalı içe gölge (${golge[0].trim()}); şeridi border-inline-start/end ile çiz`);
 }
 for (const f of await dosyalar(join(KOK, 'js'), '.js')) {
   const s = await readFile(f, 'utf8');
@@ -133,15 +140,16 @@ for (const m of (await oku('js/uygulama.js')).matchAll(/anahtar:\s*'([^']+)'/g))
 }
 
 // 6f. Önekle kurulan öbür anahtarlar: Ayarlar'daki antet alanları
-// (`t('ayar.' + anahtar)` ve ipucu için `…_ipucu`), QR seçenekleri ve Clinical
-// ölçümleri. Antete ikinci telefon eklenince iki alanın etiketi de ipucu da
-// sözlüğe girmedi; hekim Ayarlar'da «İkinci telefon» diye Türkçe okudu.
-const antetGovde = ayarlarKaynak.match(/const ANTET_ALANLARI\s*=\s*\[(.*?)\n\];/s);
-if (!antetGovde) hataVer('ayarlar.js: ANTET_ALANLARI okunamadı — antet etiketleri doğrulanamıyor');
+// (`t('ayar.' + anahtar)` ve ipucu için `…_ipucu`; liste paylasilan/antet.js'te),
+// QR seçenekleri ve Clinical ölçümleri. Antete ikinci telefon eklenince iki
+// alanın etiketi de ipucu da sözlüğe girmedi; hekim Ayarlar'da «İkinci telefon»
+// diye Türkçe okudu.
+const antetGovde = (await oku('js/paylasilan/antet.js')).match(/const ANTET_ALANLARI\s*=\s*\[(.*?)\n\];/s);
+if (!antetGovde) hataVer('paylasilan/antet.js: ANTET_ALANLARI okunamadı — antet etiketleri doğrulanamıyor');
 else {
   for (const m of antetGovde[1].matchAll(/\[\s*'(\w+)',\s*'[^']*',\s*'([^']*)'/g)) {
-    dinamik.push([`ayar.${m[1]}`, 'ANTET_ALANLARI (ayarlar.js)']);
-    if (m[2]) dinamik.push([`ayar.${m[1]}_ipucu`, 'ANTET_ALANLARI (ayarlar.js)']);
+    dinamik.push([`ayar.${m[1]}`, 'ANTET_ALANLARI (paylasilan/antet.js)']);
+    if (m[2]) dinamik.push([`ayar.${m[1]}_ipucu`, 'ANTET_ALANLARI (paylasilan/antet.js)']);
   }
 }
 for (const [yol, ad, onek] of [
@@ -212,6 +220,82 @@ for (const m of tanitim.matchAll(/<img[^>]*src="(gorsel\/[^"]+\.(?:png|jpg))"[^>
   if (olcu.en !== Number(en[1]) || olcu.boy !== Number(boy[1])) {
     hataVer(`tanitim/${m[1]}: HTML ${en[1]}×${boy[1]} diyor, dosya ${olcu.en}×${olcu.boy}`);
   }
+}
+
+// (10) Sunucu (sunucu/*.js) workerd'da nodejs_compat OLMADAN ve derlemesiz
+// koşuyor: `node:` modülü ya da npm paketi içe aktarılırsa Node'daki testler
+// geçer ama wrangler paketleyemez ya da Worker açılışta çöker. Yalnız göreli
+// yollar (kendi dosyaları ve app/js/paylasilan). Sırlar yalnız WebCrypto'dan
+// (Math.random tahmin edilebilir). İstek gövdesi ve Authorization asla
+// loglanmaz: sunucuda tek log hata mesajıdır (console.error), başka console yok.
+for (const f of await dosyalar(new URL('../sunucu/', import.meta.url).pathname, '.js')) {
+  const s = await readFile(f, 'utf8');
+  for (const m of s.matchAll(/\b(?:from|import)\s*\(?\s*['"]([^'"]+)['"]/g)) {
+    if (!m[1].startsWith('.')) hataVer(`${f}: göreli olmayan içe aktarma (${m[1]}); sunucu bağımlılıksız ve nodejs_compat'sız`);
+  }
+  if (/Math\.random/.test(s)) hataVer(`${f}: Math.random; rastgelelik yalnız crypto.getRandomValues'tan`);
+  const m = s.match(/console\.(log|info|debug|warn|trace|dir)\b/);
+  if (m) hataVer(`${f}: console.${m[1]}; sunucu istek verisini loglamaz (yalnız console.error ile hata mesajı)`);
+}
+
+// (11) Hazır ilaç listesi ilaç başına kullanım TAŞIMAZ. nuskha'nın listesinde
+// her ilacın yanında hazır doz/zaman/tarika/adet vardı («Amoxil → ۱ دانه ·
+// روزانه ۳ بار · 15»); Shafa reçete önermiyor, kullanım kararı hekimin.
+// Birim testi de bakıyor ama bu denetim vitest'siz de koşsun: liste elle
+// düzenlenip ya da başka bir araçla üretilip bu alanlar geri sızarsa burada
+// durur. Liste alanları beyaz listeyle (listeyiDenetle), depodaki nuskha
+// kopyası yasak alanlarla denetleniyor.
+const ilacListesi = JSON.parse(await oku('veri/ilaclar.json'));
+for (const m of listeyiDenetle(ilacListesi)) hataVer(`veri/ilaclar.json: ${m}`);
+const nuskhaKopyasi = JSON.parse(await readFile(new URL('./kaynak/nuskha-ilaclar.json', import.meta.url), 'utf8'));
+for (const d of nuskhaKopyasi.drugs || []) {
+  const sizan = YASAK_KAYNAK.filter((k) => k in d);
+  if (sizan.length) hataVer(`tools/kaynak/nuskha-ilaclar.json: ${d.brand || d.generic} ilaç başına kullanım taşıyor (${sizan.join(', ')})`);
+}
+
+// (12) Gerçek kişi verisi yok (depo herkese açık). Hekimlerin getirdiği
+// tasarım görselinde gerçek görünen bir adres, iş yerleri ve telefon vardı;
+// kâğıt yeniden kurulurken bunlardan biri örnek veriye, sözlüğe ya da bir
+// denemeye sızarsa yayına gider. Liste ve neden tam ifade: gercek-veri.mjs.
+const METIN_UZANTILARI = ['.js', '.mjs', '.json', '.css', '.html', '.md', '.txt', '.py', '.svg', '.webmanifest'];
+const DEPO = new URL('../', import.meta.url).pathname;
+const taranacak = [join(DEPO, 'README.md')];
+for (const dizin of ['app', 'tanitim', 'tools', 'test', 'sunucu']) {
+  for (const uzanti of METIN_UZANTILARI) taranacak.push(...(await dosyalar(join(DEPO, dizin), uzanti)));
+}
+for (const f of taranacak) {
+  for (const ifade of gercekVeriBul(await readFile(f, 'utf8'))) hataVer(`${f}: tasarım görselindeki gerçek görünen veri (${ifade.slice(0, 3)}…)`);
+}
+
+// (13) Sonsuz hareket yok: dikkat dağıtıyor, pili yiyor ve azaltılmış
+// hareket tercihini deliyor. Tarayıcı denemesi getAnimations() ile de bakıyor;
+// bu denetim çalışma anında hiç görünmeyen (ör. yalnız bir durumda açılan)
+// kuralları da yakalıyor.
+for (const f of [...(await dosyalar(join(KOK, 'css'), '.css')), ...(await dosyalar(join(KOK, 'js'), '.js'))]) {
+  const s = await readFile(f, 'utf8');
+  if (/animation[\w-]*\s*:[^;{}]*\binfinite\b/.test(s) || /iterations\s*:\s*Infinity/.test(s)) hataVer(`${f}: sonsuz hareket`);
+}
+
+// (14) Service worker'ın önbellek listesi (KABUK) eksiksiz: caches.addAll
+// bir tek dosya 404 verirse BÜTÜN kurulum düşüyor, uygulama internetsiz
+// açılmıyor. Kâğıdın yazı tipleri (Cinzel) listeye eklenince tam bu risk.
+// Önbellek adı 'ecz-' önekiyle ve veritabanı 'eczane' adıyla kalmalı:
+// ikisi değişirse hekimin cihazındaki eski önbellek temizlenmez, kayıtları
+// yeni adla boş bir veritabanında kaybolmuş görünür.
+{
+  const sw = await oku('sw.js');
+  const kabuk = sw.match(/const KABUK = \[([\s\S]*?)\];/);
+  if (!kabuk) hataVer('sw.js: KABUK listesi bulunamadı');
+  else {
+    for (const [, yol] of kabuk[1].matchAll(/'\.\/([^']*)'/g)) {
+      try { await readFile(join(KOK, yol || 'index.html')); } catch { hataVer(`sw.js KABUK: app/${yol} yok, service worker kurulamaz`); }
+    }
+    for (const yazi of await readdir(join(KOK, 'yazi'))) {
+      if (yazi.endsWith('.woff2') && !kabuk[1].includes(`'./yazi/${yazi}'`)) hataVer(`sw.js KABUK: yazi/${yazi} önbellekte değil, kâğıt internetsiz yedek yazıyla basılır`);
+    }
+  }
+  if (!/const ONBELLEK = 'ecz-' \+/.test(sw)) hataVer("sw.js: önbellek adı 'ecz-' önekini kaybetti");
+  if (!/const VT_ADI = 'eczane';/.test(await oku('js/depo/idb.js'))) hataVer("depo/idb.js: veritabanı adı 'eczane' olmalı");
 }
 
 console.log(hata ? `${hata} sorun` : `✓ statik denetimler geçti (${kullanilan.size} çeviri anahtarı yerinde)`);

@@ -28,6 +28,14 @@ on:
         type: choice
         default: "koru"
         options: ["koru", "1", "0"]
+      ajan:
+        # "shafa": dağıtımdan sonra tools/ajan-yukle.mjs Telegram botuna Shafa destek brifingini
+        # (sosyal-studyo/worker/hazir/shafa-ajan.json) yükler, Telegram hesabını canlı yapar ve
+        # örnek soruların cevaplarını iş özetine yazar. "koru": brifinglere dokunulmaz.
+        description: "AI ajanı — koru: brifinglere dokunma · shafa: Telegram botuna Shafa destek ajanını yükle"
+        type: choice
+        default: "koru"
+        options: ["koru", "shafa"]
 
 defaults:
   run:
@@ -177,3 +185,12 @@ jobs:
               echo "**CANLI:** hesabı \"canli\" olan kanallarda gerçek mesaj gönderilir."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # Yalnız elle "ajan = shafa" seçilince: brifing sabit id ile yazılır (tekrar çalıştırmak
+      # aynı kaydı günceller), Telegram hesabı canlı yapılır, /api/prova ile Telegram mesajının
+      # Shafa brifingine düştüğü denetlenir, örnek sorular sorulur. Anahtar çıktıya yazılmaz.
+      - name: Shafa ajanini yukle
+        if: ${{ inputs.ajan == 'shafa' && steps.dagit.outputs.url != '' }}
+        env:
+          WORKER_URL: ${{ steps.dagit.outputs.url }}
+        run: node tools/ajan-yukle.mjs

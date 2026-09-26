@@ -1,14 +1,18 @@
 // Reçete kartı: yazılan reçetenin künyesi, gönderilmesi ve yazdırılması.
 // Karşılama yok — hasta ilacını dışarıdaki eczaneden kendi alıyor.
+// Sayfanın dibinde basılacak kâğıdın kendisi duruyor (reçete yazma
+// sayfasındaki önizleme paneliyle aynı çerçeve): hekim yazdırmadan ya da
+// PDF kaydetmeden önce neyin basılacağını, bölünmüşse her yaprağını görüyor.
 import { el, temizle, btn, btnS, metinAlani, alan, kart, sayfaBas, bosDurum, sirala } from '../cekirdek/dom.js';
 import { simge } from '../cekirdek/simge.js';
 import { RECETE_TURLERI, doluOlcumler, receteUyarilari, receteMetni } from '../paylasilan/recete.js';
 import { tamAd, hastaYasi, alerjiCakismasi } from '../paylasilan/hasta.js';
 import { basHarfler, telefonNormalize } from '../paylasilan/metin.js';
 import { tarihMetni, tarihSaatMetni } from '../paylasilan/tarih.js';
-import { satirAdi } from '../paylasilan/ilac.js';
+import { satirKagitAdi } from '../paylasilan/ilac.js';
 import { t, secenekAdi } from '../i18n.js';
-import { kagitCiz, kagidiYazdir } from '../kagit.js';
+import { kagitCiz, kagidiYazdir, kagidiOlcekle } from '../kagit.js';
+import { onizlemePaneli, pdfKaydet, yaprakRozeti } from '../onizleme-arayuz.js';
 import { uyariMetni } from '../hatalar.js';
 import { kodSatiri } from '../paylasilan/dogrulama.js';
 
@@ -70,23 +74,19 @@ async function paylasKutusu(ctx, recete, hasta, ayar) {
   });
 }
 
-// Gezinme sırası. Sayfa ilk çizimden önce veriyi bekliyor; o sırada başka
-// bir sayfaya geçilirse eski çizim geri dönüp yeni sayfanın üstüne yazıyordu
-// (düzenlemeden "yeni reçete"ye geçince eski hasta ekranda kalıyordu).
-// Her çizim sırasını alır, beklerken yenisi başladıysa sessizce çekilir.
-let cizimSirasi = 0;
-
 export default {
   baslik: 'Reçete',
   async cizim(kok, ctx) {
-    const benimSira = ++cizimSirasi;
     const { depo, git, basari, onayla } = ctx;
     let sira = 0;
+    let olcekBirak = null;
 
     async function ciz() {
       const benim = ++sira;
       const recete = await depo.al('receteler', ctx.param.id);
-      if (benim !== sira || benimSira !== cizimSirasi) return;
+      // Veri beklenirken başka bir sayfaya geçildiyse (yönlendiricinin
+      // sırası) eski çizim yeni sayfanın üstüne yazmasın.
+      if (benim !== sira || !ctx.guncel()) return;
       if (!recete) {
         temizle(kok);
         kok.appendChild(bosDurum({
@@ -101,17 +101,18 @@ export default {
         depo.listele('ilaclar'),
         depo.ayarlar(),
       ]);
-      if (benim !== sira || benimSira !== cizimSirasi) return;
+      if (benim !== sira || !ctx.guncel()) return;
 
       const uyarilar = receteUyarilari(recete.satirlar, hasta, ilaclar, { alerjiBul: alerjiCakismasi });
 
       temizle(kok);
+      // Yazdır ve PDF başlıkta değil, önizleme panelinin başında (aşağıda):
+      // aynı iki eylem iki kez duruyordu, klavye iki çiftten geçiyordu.
       kok.append(sayfaBas(recete.receteNo || t('nav.recete', 'Reçete'), {
         alt: [tarihMetni(recete.tarih), secenekAdi(RECETE_TURLERI, recete.tur, 'recete.tur'), tamAd(hasta)].filter(Boolean).join(' · '),
         geri: () => git('/receteler'),
         eylemler: [
           btnS('telefon', t('paylas.gonder', 'Gönder'), { class: 'btn btn--birincil', onclick: () => paylasKutusu(ctx, recete, hasta, ayar) }),
-          btnS('yazdir', t('genel.yazdir', 'Yazdır'), { class: 'btn', onclick: () => kagidiYazdir({ recete, hasta, ayar }) }),
           btnS('kalem', t('genel.duzenle', 'Düzenle'), { class: 'btn', onclick: () => git(`/recete/${recete.id}/duzenle`) }),
           btnS('cop', t('genel.sil', 'Sil'), { class: 'btn', onclick: async () => {
             if (await onayla(t('recete.sil_onay', 'Reçete silinsin mi?'), { tehlikeli: true, evet: t('genel.sil', 'Sil') })) {
@@ -137,21 +138,29 @@ export default {
         ...(hasta?.alerjiler || []).map((a) => el('div', { class: 'uyari uyari--hata', style: { marginBlockStart: 'var(--b-2)' } }, simge('uyari', { boy: 16 }), el('span', {}, t('hasta.alerji_satiri', 'Alerji: {a}', { a })))),
         el('div', { class: 'izgara', style: { marginBlockStart: 'var(--b-4)' } },
           ...[[t('recete.tani', 'Tanı'), [recete.tani, recete.taniKodu].filter(Boolean).join(' · ') || '—'],
+            // Kâğıdın sol sütunundakiler burada da: kayıt sayfası basılandan azını göstermesin.
+            [t('kagit.belirtiler', 'Belirtiler'), recete.belirtiler || '—'],
+            [t('kagit.laboratuvar', 'Laboratuvar'), recete.laboratuvar || '—'],
             [t('recete.protokol', 'Protokol no'), recete.protokolNo || '—'],
             [t('recete.yazan', 'Yazan'), [recete.doktorUnvan, recete.doktorAd].filter(Boolean).join(' ') || '—'],
             [t('recete.yazildigi_an', 'Yazıldığı an'), tarihSaatMetni(recete.olusturuldu)]]
             .map(([b, d]) => el('div', {}, el('div', { class: 'alan__etiket' }, b), el('div', {}, d)))),
         recete.notlar ? el('p', { class: 'kart__alt', style: { marginBlockStart: 'var(--b-3)' } }, recete.notlar) : null));
 
-      /* --- Klinik ölçümler (girilmişse) --- */
-      const olcumler = doluOlcumler(recete);
+      /* --- Klinik ölçümler ve kan grubu (girilmişse) ---
+         Birimin yalnız ilk parçası: BP'ninki formdaki iki kutuyu anlatıyor
+         («mmHg / mmHg»), kâğıtta da «130/85 mmHg» basılıyor. Değer ile birim
+         soldan sağa yalıtılmış: sağdan sola satırda «kg 74» diye diziliyordu. */
+      const olcumler = doluOlcumler(recete).map(([anahtar, ad, kisa, birim]) =>
+        [`${t('olcum.' + anahtar, ad)} (${kisa})`, `${recete.olcumler[anahtar]} ${birim.split(' / ')[0]}`]);
+      if (String(recete.kanGrubu ?? '').trim()) olcumler.push([t('hasta.kan_grubu', 'Kan grubu'), recete.kanGrubu]);
       if (olcumler.length) {
         kok.appendChild(kart({},
           el('div', { class: 'kart__bas' }, el('h2', {}, t('recete.olcumler', 'Klinik ölçümler'))),
-          el('div', { class: 'izgara' }, ...olcumler.map(([anahtar, ad, kisa, birim]) =>
+          el('div', { class: 'izgara' }, ...olcumler.map(([etiket, deger]) =>
             el('div', {},
-              el('div', { class: 'alan__etiket' }, `${t('olcum.' + anahtar, ad)} (${kisa})`),
-              el('div', {}, `${recete.olcumler[anahtar]} ${birim}`))))));
+              el('div', { class: 'alan__etiket' }, etiket),
+              el('div', {}, el('bdi', { dir: 'ltr' }, deger)))))));
       }
 
       /* --- Reçetedeki ilaçlar --- */
@@ -161,8 +170,11 @@ export default {
         tbody.appendChild(el('tr', {},
           el('td', { class: 'sayi' }, String(i + 1)),
           el('td', {},
-            el('div', { class: 'liste__baslik' }, el('bdi', {}, satirAdi(s))),
-            el('div', { class: 'liste__alt' }, [s.kullanim, s.sure].filter(Boolean).join(' \u00b7 ') || '\u2014'),
+            // Ad kâğıttaki gibi: etken madde ve güçle («Cap: Feldene (Piroxicam) 20 mg»).
+            el('div', { class: 'liste__baslik' }, el('bdi', {}, satirKagitAdi(s))),
+            // Kâğıttaki ikinci satırın sırası: kullanım, yemek zamanı, süre, yol.
+            // Zaman kâğıda basılıp burada görünmezse hekim kaydında basılandan azını okur.
+            el('div', { class: 'liste__alt' }, [s.kullanim, s.zaman, s.sure, s.yol].filter(Boolean).join(' \u00b7 ') || '\u2014'),
             s.not ? el('div', { class: 'liste__alt' }, s.not) : null,
             ...satirUyarilari.map((u) => el('div', { class: 'alan__hata', style: u.tur === 'uyari' ? { color: 'rgb(var(--sari))' } : null }, uyariMetni(u)))),
           el('td', { class: 'sayi' }, String(s.adet))));
@@ -179,10 +191,27 @@ export default {
             tbody))
           : bosDurum({ simge: 'ilac', baslik: t('recete.ilac_yok', 'Re\u00e7etede ila\u00e7 yok') })));
 
-      kok.appendChild(kagitCiz({ recete, hasta, ayar }));
+      /* --- Basılacak kâğıt: ekranda ölçekli kopya; her yaprak alt alta ---
+         Yazdırılan kopya sayfanın doğrudan çocuğu (gizli; Ctrl+P ve
+         kagidiYazdir onu basıyor), buradaki yalnız bakmak için. */
+      const kagit = kagitCiz({ recete, hasta, ayar });
+      const tuval = el('div', { class: 'kagit-tuval' }, kagit);
+      const panel = onizlemePaneli({
+        baslik: t('recete.onizleme_bas', 'Reçete önizlemesi'), id: 'recete-kayit-onizleme', sinif: 'recete-kayit__onizleme', tuval,
+        eylemler: [
+          { simge: 'yazdir', metin: t('genel.yazdir', 'Yazdır'), odakAdi: 'kayit-yazdir', onclick: () => kagidiYazdir({ recete, hasta, ayar }) },
+          { simge: 'pdf', metin: t('recete.pdf_kaydet', 'PDF kaydet'), odakAdi: 'kayit-pdf', onclick: () => pdfKaydet({ recete, hasta, ayar }) },
+        ],
+      });
+      kok.append(panel, kagitCiz({ recete, hasta, ayar }));
+      yaprakRozeti(panel, kagit);
+      olcekBirak?.();
+      olcekBirak = kagidiOlcekle(tuval, kagit, kok);
       sirala(tbody);
     }
 
     await ciz();
+    // Sayfadan çıkınca önizlemenin boyut gözcüsü bırakılsın.
+    return () => olcekBirak?.();
   },
 };

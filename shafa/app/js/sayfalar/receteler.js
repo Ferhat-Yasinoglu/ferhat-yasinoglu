@@ -1,6 +1,8 @@
 // Reçeteler: liste, süzme ve arama. En yeni reçete en üstte.
 import { el, temizle, btnS, girdi, secim, sayfaBas, bosDurum, sirala } from '../cekirdek/dom.js';
-import { receteOzet, RECETE_TURLERI } from '../paylasilan/recete.js';
+import { receteOzet, receteAramaMetni, RECETE_TURLERI } from '../paylasilan/recete.js';
+import { adIndeksi } from '../paylasilan/klinik.js';
+import { klinigiOku } from '../depo/klinik.js';
 import { tamAd } from '../paylasilan/hasta.js';
 import { eslesir } from '../paylasilan/metin.js';
 import { tarihMetni, bugun } from '../paylasilan/tarih.js';
@@ -15,7 +17,7 @@ export default {
     const { depo, git } = ctx;
     temizle(kok);
 
-    const arama = girdi({ type: 'search', placeholder: t('recete.ara', 'Reçete no, hasta adı, tanı…'), style: { flex: '2', minWidth: '200px', inlineSize: 'auto' } });
+    const arama = girdi({ type: 'search', placeholder: t('recete.ara', 'Reçete no, hasta adı, tanı, ilaç…'), style: { flex: '2', minWidth: '200px', inlineSize: 'auto' } });
     const suzgec = secim(suzgecler(), { value: ctx.sorgu?.suzgec || '', style: { flex: '1', minWidth: '180px', inlineSize: 'auto' } });
     const govde = el('div', {});
 
@@ -26,6 +28,10 @@ export default {
       }),
       el('div', { class: 'satir', style: { marginBlockEnd: 'var(--b-4)' } }, arama, suzgec),
       govde);
+
+    // Tanıların Dari adları: liste okunamazsa (çevrimdışı ve önbellekte yok)
+    // arama yalnız kayıttaki İngilizce adla sürüyor.
+    const taniIndeksi = await klinigiOku().then((b) => adIndeksi(b.tanilar), () => null);
 
     let sira = 0;
     async function listele() {
@@ -42,7 +48,7 @@ export default {
       const s = suzgec.value;
 
       let liste = hepsi.map((r) => ({ r, o: receteOzet(r), hasta: hastaAdi(r.hastaId) }));
-      if (q) liste = liste.filter(({ r, hasta }) => eslesir(`${r.receteNo || ''} ${hasta} ${r.tani || ''} ${r.taniKodu || ''}`, q));
+      if (q) liste = liste.filter(({ r, hasta }) => eslesir(receteAramaMetni(r, hasta, taniIndeksi), q));
       if (s === 'bugun') liste = liste.filter(({ r }) => String(r.tarih).slice(0, 10) === bugun());
 
       liste.sort((a, b) => String(b.r.tarih).localeCompare(String(a.r.tarih)));

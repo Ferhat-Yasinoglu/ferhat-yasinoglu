@@ -2,7 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   receteOzet, receteNoUret, receteDogrula, bosRecete,
   receteUyarilari, receteMetni, doluOlcumler, OLCUMLER, sikIlaclar, SURE_ONERILERI,
+  bosSatir, sonKullanimlar, sonKullanim, bpBol, bpBirlestir, receteAramaMetni,
 } from '../app/js/paylasilan/recete.js';
+import { adIndeksi } from '../app/js/paylasilan/klinik.js';
+import { ilacEtiketi } from '../app/js/paylasilan/ilac.js';
 
 const satir = (o) => ({ adet: 2, ...o });
 
@@ -94,6 +97,10 @@ describe('receteMetni', () => {
     expect(m).toContain('2) Parol 500 mg — 1 kutu (tok karnına)');
     expect(m).toContain('0700000000');
   });
+  it('yemek zamanı doluysa kullanımdan sonra yazılıyor', () => {
+    const r = { ...recete, satirlar: [{ ...recete.satirlar[0], zaman: 'بعد از غذا' }] };
+    expect(receteMetni(r, hasta, ayar)).toContain('1) Nurofen 400 mg — 2 kutu · Günde 2×1 · بعد از غذا · 5 gün');
+  });
   it('alerjiyi metne taşır', () => {
     expect(receteMetni(recete, hasta, ayar)).toContain('Alerji: İbuprofen');
   });
@@ -107,6 +114,10 @@ describe('receteMetni', () => {
   });
   it('boş reçetede çökmez', () => {
     expect(receteMetni({ satirlar: [] }, null, {})).toBeTypeOf('string');
+  });
+  it('ilacın adını kâğıttaki gibi etken madde ve güçle yazar', () => {
+    const m = receteMetni({ satirlar: [{ ilacAdi: 'Feldene 20 mg Kapsül', form: 'kapsul', doz: '20 mg', etkenMadde: 'Piroxicam', adet: 1 }] }, null, {});
+    expect(m).toContain('1) Cap: Feldene (Piroxicam) 20 mg — 1 kutu');
   });
   it('kayıttaki Türkçe şekil adını göndermez, kâğıttaki gibi yazar', () => {
     const m = receteMetni({ satirlar: [{ ilacAdi: 'Panadol Syrup 120 mg/5 ml Şurup', form: 'surup', adet: 1 }] }, null, {});
@@ -158,5 +169,119 @@ describe('SURE_ONERILERI', () => {
   it('ilaçla eşleştirilmiş değil — sadece yazım kısayolu', () => {
     for (const x of SURE_ONERILERI) expect(typeof x).toBe('string');
     expect(new Set(SURE_ONERILERI).size).toBe(SURE_ONERILERI.length);
+  });
+});
+
+describe('bosSatir', () => {
+  it('yeni satırda yemek zamanı ve güç boş', () => {
+    expect(bosSatir()).toMatchObject({ zaman: '', doz: '', kullanim: '', sure: '', yol: '', adet: 1 });
+  });
+});
+
+describe('sonKullanimlar — hekimin kendi son kullanımı', () => {
+  const ilac = { id: 'ila_1', ad: 'Amoxil', doz: '500 mg', form: 'kapsul' };
+  const satir = (o) => ({ ilacId: 'ila_1', ilacAdi: ilacEtiketi(ilac), form: 'kapsul', adet: 1, ...o });
+  const recete = (tarih, satirlar, o = {}) => ({ tarih, satirlar, ...o });
+
+  it('ilaca en son yazılan kullanımı veriyor (tarih sırasıyla, kayıt sırası değil)', () => {
+    const h = sonKullanimlar([
+      recete('2026-09-20', [satir({ kullanim: 'روزانه 3 بار', zaman: 'بعد از غذا', sure: '7 روز' })]),
+      recete('2026-09-10', [satir({ kullanim: 'روزانه 2 بار', sure: '5 روز' })]),
+    ]);
+    expect(sonKullanim(h, ilac)).toEqual({ kullanim: 'روزانه 3 بار', zaman: 'بعد از غذا', sure: '7 روز', yol: '', tarih: '2026-09-20' });
+  });
+
+  it('aynı gün iki reçetede sonra güncelleneni alıyor', () => {
+    const h = sonKullanimlar([
+      recete('2026-09-20', [satir({ kullanim: 'B' })], { guncellendi: '2026-09-20T10:00:00Z' }),
+      recete('2026-09-20', [satir({ kullanim: 'A' })], { guncellendi: '2026-09-20T09:00:00Z' }),
+    ]);
+    expect(sonKullanim(h, ilac).kullanim).toBe('B');
+  });
+
+  it('boş satır hafızayı silmiyor; not ve adet hatırlanmıyor', () => {
+    const h = sonKullanimlar([
+      recete('2026-09-10', [satir({ kullanim: 'روزانه 2 بار', not: 'hastaya özel', adet: 3 })]),
+      recete('2026-09-20', [satir({})]),
+    ]);
+    const v = sonKullanim(h, ilac);
+    expect(v.kullanim).toBe('روزانه 2 بار');
+    expect(v).not.toHaveProperty('not');
+    expect(v).not.toHaveProperty('adet');
+  });
+
+  it('silinmiş ve örnek reçeteleri saymıyor', () => {
+    const h = sonKullanimlar([
+      recete('2026-09-10', [satir({ kullanim: 'gerçek' })]),
+      recete('2026-09-20', [satir({ kullanim: 'silindi' })], { silindi: 1 }),
+      recete('2026-09-21', [satir({ kullanim: 'örnek' })], { ornek: 1 }),
+    ]);
+    expect(sonKullanim(h, ilac).kullanim).toBe('gerçek');
+  });
+
+  it('hiç yazılmamış ilaçta null: alanlar boş kalır, başka ilaçtan taşınmaz', () => {
+    const h = sonKullanimlar([recete('2026-09-10', [satir({ kullanim: 'X' })])]);
+    expect(sonKullanim(h, { id: 'ila_2', ad: 'Brufen', doz: '400 mg', form: 'tablet' })).toBeNull();
+    expect(sonKullanim(sonKullanimlar([]), ilac)).toBeNull();
+    expect(sonKullanim(sonKullanimlar(null), ilac)).toBeNull();
+  });
+
+  it('ilaç silinip yeniden eklense de (yeni kimlik) ad ve şekille hatırlanıyor', () => {
+    const h = sonKullanimlar([recete('2026-09-10', [satir({ kullanim: 'روزانه 2 بار' })])]);
+    expect(sonKullanim(h, { ...ilac, id: 'ila_yeni' }).kullanim).toBe('روزانه 2 بار');
+    expect(sonKullanim(h, { ...ilac, id: 'ila_yeni', form: 'surup' })).toBeNull();
+  });
+});
+
+describe('bpBol / bpBirlestir — iki kutu, tek metin', () => {
+  it('bölüyor ve birleştiriyor', () => {
+    expect(bpBol('130/85')).toEqual(['130', '85']);
+    expect(bpBirlestir('130', '85')).toBe('130/85');
+  });
+  it('boş iki kutu boş metin; yalnız sistolik «130/»', () => {
+    expect(bpBirlestir('', '')).toBe('');
+    expect(bpBirlestir('  ', '')).toBe('');
+    expect(bpBirlestir('130', '')).toBe('130/');
+    expect(bpBol('')).toEqual(['', '']);
+    expect(bpBol(undefined)).toEqual(['', '']);
+  });
+  // «/»suz eski değer bütünüyle ilk kutuda: kesilmiyor, bir şey atılmıyor.
+  it('eski serbest metin ilk kutuya bütün olarak düşüyor', () => {
+    expect(bpBol('بالا (نشسته)')).toEqual(['بالا (نشسته)', '']);
+  });
+  // Düzeltilen eski değerin sonuna «/» eklenmiyordu değil, ekleniyordu:
+  // «بالا (ایستاده)/» kaydedilip kâğıda «/mmHg» diye basılıyordu.
+  it('düzeltilen eski serbest metne ve sistoliğe yapıştırılan «130/85»e «/» eklenmiyor', () => {
+    expect(bpBirlestir('بالا (ایستاده)', '')).toBe('بالا (ایستاده)');
+    expect(bpBirlestir('بالا (ایستاده) x', '  ')).toBe('بالا (ایستاده) x');
+    expect(bpBirlestir('130/85', '')).toBe('130/85');
+    expect(bpBirlestir('120.5', '')).toBe('120.5/');
+  });
+  it('«/» içeren her değerde gidiş-dönüş aynı metni veriyor', () => {
+    for (const v of ['118/76', '130 / 85', ' 120/80 ', '120/80 (نشسته)', '130/', '/85', '1/2/3']) {
+      expect(bpBirlestir(...bpBol(v))).toBe(v);
+    }
+    // Tek başına eğik çizgi değer değil: iki kutu boş, metin boş.
+    expect(bpBirlestir(...bpBol('/'))).toBe('');
+  });
+});
+
+describe('receteAramaMetni — reçeteler listesinde arama', () => {
+  const recete = {
+    receteNo: '2026-09-25-01', tani: 'Chronic hepatitis C، Fever', taniKodu: 'B18.2',
+    satirlar: [{ ilacAdi: 'Feldene 20 mg Kapsül', form: 'kapsul', doz: '20 mg', etkenMadde: 'Piroxicam', adet: 1 }],
+  };
+  const indeks = adIndeksi([{ ad: 'هپاتیت C مزمن', en: 'Chronic hepatitis C', kod: 'B18.2' }]);
+  it('numara, hasta, tanı, kod ve ilaç adı (etken maddesiyle) metinde', () => {
+    const m = receteAramaMetni(recete, 'زهرا صدیقی', indeks);
+    for (const parca of ['2026-09-25-01', 'زهرا صدیقی', 'Chronic hepatitis C', 'B18.2', 'Feldene', 'Piroxicam']) expect(m).toContain(parca);
+  });
+  it('kâğıda İngilizce yazılan tanının Dari adı da aranıyor', () => {
+    expect(receteAramaMetni(recete, '', indeks)).toContain('هپاتیت C مزمن');
+    // Listede olmayan parça (elle yazılmış) bir şey eklemiyor; indeks yoksa yalnız kayıttaki ad.
+    expect(receteAramaMetni(recete, '', null)).not.toContain('هپاتیت');
+  });
+  it('boş reçetede çökmez', () => {
+    expect(receteAramaMetni({}, '', indeks)).toBe('');
   });
 });

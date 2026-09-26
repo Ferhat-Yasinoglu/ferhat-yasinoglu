@@ -9,7 +9,7 @@ const KABUK = [
   './', './index.html', './manifest.webmanifest',
   './css/tokenlar.css', './css/bilesenler.css', './css/uygulama.css', './css/yazdirma.css',
   './js/cekirdek/tema.js', './js/uygulama.js', './js/i18n.js',
-  './i18n/fa.json', './img/logo.svg', './yazi/vazirmatn.woff2', './yazi/kalam-700.woff2',
+  './i18n/fa.json', './img/logo.svg', './yazi/vazirmatn.woff2', './yazi/kalam-700.woff2', './yazi/cinzel-kagit.woff2',
   './veri/ilaclar.json', './veri/klinik.json',
 ];
 
@@ -30,7 +30,10 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
-  if (e.request.method !== 'GET' || url.origin !== location.origin) return;
+  // Hesap API'si (/v1/) önbelleğe girmez: yerelde uygulamayla aynı kökenden
+  // sunuluyor ve "önce önbellek" eski bir kasa sürümü döndürürdü. Yayında
+  // zaten başka kökende.
+  if (e.request.method !== 'GET' || url.origin !== location.origin || url.pathname.includes('/v1/')) return;
   // Önbellekten hemen ver, arkada tazele.
   e.respondWith(caches.open(ONBELLEK).then(async (c) => {
     const eski = await c.match(e.request);

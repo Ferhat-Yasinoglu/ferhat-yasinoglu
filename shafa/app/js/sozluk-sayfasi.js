@@ -84,6 +84,9 @@ export function sozlukSayfasi(tur) {
             kap.appendChild(el('div', { class: 'liste__satir' },
               el('div', { class: 'liste__govde' },
                 el('div', { class: 'liste__baslik' }, x.ad),
+                // İngilizce ad reçeteye basılan ad: hekim kâğıtta ne
+                // göreceğini sözlükte de görsün.
+                x.en ? el('div', { class: 'liste__alt', dir: 'ltr' }, x.en) : null,
                 trGoster && x.tr ? el('div', { class: 'liste__alt' }, x.tr) : null),
               bicim.kodlu && x.kod ? el('div', { class: 'liste__son' }, rozet(x.kod, 'gri')) : null));
           }

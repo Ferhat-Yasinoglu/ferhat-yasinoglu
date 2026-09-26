@@ -491,36 +491,49 @@ a { color: rgb(var(--vurgu)); }
   /* ---- 2. Reçete sayfası: form solda, kâğıt sağda ----
      Sonraki adımlar (form paneli, kâğıt) kurallarını buraya ekler. */
   /* Tasarımda sayfa tam genişlikte; öbür sayfalardaki 1240 px sınırı
-     okunurluk için, burada iki panel yan yana ekranı dolduruyor. */
-  .icerik:has(.recete-duzen) { max-inline-size: none; }
+     okunurluk için, burada iki panel yan yana ekranı dolduruyor. Kenar
+     payları da tasarımdan: üstte 10, kenar çubuğunun yanında 10, sağda 11
+     (.icerik sağdan sola: başlangıç = sağ). */
+  .icerik:has(.recete-duzen) { max-inline-size: none; padding-block: 10px 12px; padding-inline: 11px 10px; }
   .recete-duzen { direction: ltr; }
   /* Kâğıt kendi yönünü koruyor: antet ve satırlar sağdan sola. */
   .recete-duzen > .recete-onizleme { direction: rtl; }
 
   /* ---- 3. Form: yerleşim soldan sağa, yazı yaprakları sağdan sola ----
-     Tasarımdaki gibi: başlık simgesi solda, ad alanı en solda, Clinical ℞'nin
-     solunda, asıl düğme kâğıdın yanında. Formda serbest Farsça yazılan kutu
-     yok (hasta listeden seçiliyor, ölçümler soldan sağa), bu yüzden yazma
-     rahatlığından bir şey gitmiyor. Soldan sağa yön .recete-duzen'den
-     miras geliyor. */
+     Tasarımdaki gibi: başlık simgesi solda, ad alanı en solda, Clinical ilaç
+     kartlarının solunda, belirtiler solda ve tanı sağda, asıl düğme kâğıdın
+     yanında. Soldan sağa yön .recete-duzen'den miras geliyor; Farsça yazı
+     taşıyan yapraklar kendi içinde sağdan sola. */
   /* Başlık ve alt yazı simgeye yaslı (sağdan sola blokta bitiş = sol). */
   .recete-form .recete-panel__metin > * { direction: rtl; text-align: end; }
+  /* Kart başlıkları simgenin hemen yanında; «(Clinical)» parantezleri
+     Farsça cümlenin yönünde dizilsin. */
+  .recete-form :is(.kart__bas h2, .kart--not__etiket > span) { direction: rtl; }
   /* «* etiket» kutunun sol kenarında, yıldız solda. */
   .recete-form .alan__etiket { direction: rtl; align-self: flex-start; }
   /* Kenar payı taşıyan yazılar: yalnız harf sırası sağdan sola. */
-  .recete-form :is(.rx-satir__deger, .secim-alani__metin) { unicode-bidi: plaintext; }
+  .recete-form :is(.secim-alani__metin, .kart__bas-sayi) { unicode-bidi: plaintext; }
   .recete-form :is(.uyarilar, .uyari) { direction: rtl; }
   /* Takvim açılır kutusu alanın hesaplanan yönüne bakıyor; düğme sağdan
      sola kapta kendiliğinden solda (tasarımdaki gibi). */
   .recete-form .tarih-secici { direction: rtl; }
   /* Tablo tasarımda sağdan sola: # sütunu sağda. */
   .recete-form .tablo-kap { direction: rtl; }
-  /* «+ افزودن دوا»: tasarımda artı yazının sağında. */
-  .recete-form .ilac-bas .btn { direction: rtl; }
-  /* Ölçüm etiketi ve kutusu dir="ltr": kenar payları soldan sağa satırda
+  /* İlaç aramasının yer tutucusu büyütecin hemen yanında (üst çubuktaki
+     arama gibi); tanı aramasınınki kutunun sağında (tasarım). */
+  .recete-form .ilac-ara .input { direction: rtl; text-align: end; }
+  .recete-form .tani-ara .input { direction: rtl; }
+  /* «+ افزودن …» düğmeleri: tasarımda artı yazının sağında. Yön değil
+     sıra çevriliyor: direction: rtl düğmenin kendi otomatik kenar payını
+     da çevirir, bitişe itilen düğme başa kaçardı. */
+  .recete-form :is(.satir-ekle, .madde-ekle, .ilac-ara__dugme) { flex-direction: row-reverse; }
+  /* Ölçüm etiketi ve birimi dir="ltr": kenar payları soldan sağa satırda
      başlangıç tarafına geçiyor (telefondaki bitiş kuralının karşılığı). */
   .recete-form .olcum-satir__ad { margin-inline: 11px 0; text-align: start; }
-  .recete-form .olcum-satir .input { margin-inline: auto 0; }
+  @container (max-width: 235px) {
+    .recete-form .olcum-satir__ad { margin-inline: 6px 0; }
+  }
+  .recete-form .olcum-satir__birim { margin-inline: 10px 0; }
   /* Önizleme kutusunun ayağı formun alt düğmeleriyle aynı dizilişte:
      بستن solda, ذخیره و چاپ sağda (formda da kâğıdın yanında, sağda). */
   .modal--onizleme .modal__ayak { direction: ltr; }

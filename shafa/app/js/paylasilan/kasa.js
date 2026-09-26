@@ -1,17 +1,22 @@
-// Kasa: Drive'a yüklenmeden önce veriyi şifreler, indirildikten sonra çözer.
+// Kasa: sunucuya yüklenmeden önce veriyi şifreler, indirildikten sonra çözer.
 //
 // Neden: bu uygulamanın baştan beri verdiği söz "hasta bilgisi bu cihazdan
 // çıkmaz" idi. Eşitleme o sözü tek başına bozardı. Kasa sözü şu hale getiriyor:
-// veri cihazdan çıkar ama OKUNABİLİR halde çıkmaz. Google'ın elinde rastgele
-// baytlar durur; açacak parola yalnız hekimin iki cihazında.
+// veri cihazdan çıkar ama OKUNABİLİR halde çıkmaz. Sunucunun elinde rastgele
+// baytlar durur; açacak anahtar (K) yalnız hekimin cihazlarında.
 //
-// Parola kaybolursa buluttaki kopya bir daha açılamaz. Cihazdaki veri ve
+// Anahtar kaybolursa sunucudaki kopya bir daha açılamaz. Cihazdaki veri ve
 // indirilen yedek dosyaları bundan etkilenmez — kayıp, yedeğin yedeği kadardır.
 //
-// Saf modül: yalnız WebCrypto kullanır, DOM'a dokunmaz.
+// 2. sürüm: JSON şifrelemeden ÖNCE gzip'leniyor (`sikistirma: 'gzip'`). Kasa
+// her turda bütünüyle taşınıyor; Afgan mobil hattında 5–10 kat küçük paket,
+// eşitlemenin bitip bitmemesi demek. Şifreli veri sıkışmaz, sıra bu yüzden böyle.
+// 1. sürüm kasalar okunmaya devam ediyor.
+//
+// Saf modül: yalnız WebCrypto ve akış sıkıştırması kullanır, DOM'a dokunmaz.
 
 export const KASA_BICIMI = 'shafa-kasa';
-export const KASA_SURUMU = 1;
+export const KASA_SURUMU = 2;
 
 /** OWASP'ın PBKDF2-SHA256 için verdiği alt sınır. Telefonda ~0,3 sn sürüyor;
  *  eşitleme başına bir kez çalıştığı için hissedilmiyor. */
@@ -62,27 +67,51 @@ async function anahtarTuret(parola, tuz, dongu = DONGU) {
     ham, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
 }
 
+/** Baytları bir akış dönüşümünden (gzip aç/kapa) geçirir. */
+async function donustur(baytlar, donusum) {
+  const akis = new Blob([baytlar]).stream().pipeThrough(donusum);
+  return new Uint8Array(await new Response(akis).arrayBuffer());
+}
+
 /**
  * Nesneyi kasaya koyar. Dönen paket JSON'a yazılabilir; içinde tuz ve IV
  * AÇIK durur (durmaları gerekir, gizli değiller), veri şifrelidir.
  * `tuz` verilirse yeniden kullanılır — aynı kasaya yazarken anahtar
  * yeniden türetilmesin diye değil, kasanın kimliği değişmesin diye.
+ * `sikistir`: tarayıcıda CompressionStream varsa gzip'ler; yoksa (eski iOS)
+ * sıkıştırmasız yazar — öbür cihazlar ikisini de okur.
+ *
+ * Alan sırası SABİT: paket `{"bicim":"shafa-kasa"` diye başlamalı, sunucu
+ * kasa olmayan gövdeyi bu önekle reddediyor.
  */
-export async function kasayaKoy(nesne, parola, { tuz } = {}) {
+export async function kasayaKoy(nesne, parola, { tuz, sikistir = true } = {}) {
   if (!parola) throw new KasaHatasi('parola_yok', 'Parola gerekli.');
   const c = altyapi();
   const t = tuz ? b64Oku(tuz) : c.getRandomValues(new Uint8Array(16));
   const iv = c.getRandomValues(new Uint8Array(12));
   const anahtar = await anahtarTuret(parola, t);
-  const acik = new TextEncoder().encode(JSON.stringify(nesne));
+  const gzip = sikistir && typeof CompressionStream === 'function';
+  let acik = new TextEncoder().encode(JSON.stringify(nesne));
+  if (gzip) acik = await donustur(acik, new CompressionStream('gzip'));
   const kapali = await c.subtle.encrypt({ name: 'AES-GCM', iv }, anahtar, acik);
-  return { bicim: KASA_BICIMI, surum: KASA_SURUMU, dongu: DONGU, tuz: b64Yaz(t), iv: b64Yaz(iv), veri: b64Yaz(kapali) };
+  return {
+    bicim: KASA_BICIMI, surum: KASA_SURUMU, dongu: DONGU, tuz: b64Yaz(t), iv: b64Yaz(iv),
+    ...(gzip ? { sikistirma: 'gzip' } : {}),
+    veri: b64Yaz(kapali),
+  };
 }
 
 /** Kasayı açar. Parola yanlışsa AES-GCM etiketi tutmaz ve 'parola' hatası düşer. */
 export async function kasadanAl(paket, parola) {
   if (!paket || paket.bicim !== KASA_BICIMI) throw new KasaHatasi('bicim', 'Bu bir Shafa kasası değil.');
   if (Number(paket.surum) > KASA_SURUMU) throw new KasaHatasi('surum', 'Kasa bu sürümden yeni; önce uygulamayı güncelle.');
+  // Tanımadığımız bir sıkıştırma da "daha yeni sürüm" demek: tahminle açmaya
+  // çalışıp "bozuk" demek hekimi yanlış yere gönderirdi.
+  if (paket.sikistirma !== undefined && paket.sikistirma !== 'gzip') throw new KasaHatasi('surum', 'Kasa bilinmeyen biçimde sıkıştırılmış.');
+  // gzip'li kasayı açamayan tarayıcıda sebep ağ ya da parola değil: tarayıcı eski.
+  if (paket.sikistirma === 'gzip' && typeof DecompressionStream !== 'function') {
+    throw new KasaHatasi('gzip_yok', 'Bu tarayıcı sıkıştırılmış kasayı açamıyor; tarayıcıyı güncelle.');
+  }
   if (!parola) throw new KasaHatasi('parola_yok', 'Parola gerekli.');
   const c = altyapi();
   // Başlığın çözülmesi AYRI deneniyor: bozuk bir dosyada da "parola tutmuyor"
@@ -97,8 +126,10 @@ export async function kasadanAl(paket, parola) {
     const anahtar = await anahtarTuret(parola, tuz, donguSayisi(paket));
     acik = await c.subtle.decrypt({ name: 'AES-GCM', iv }, anahtar, veri);
   } catch { throw new KasaHatasi('parola', 'Parola tutmuyor.'); }
-  try { return JSON.parse(new TextDecoder().decode(acik)); }
-  catch { throw new KasaHatasi('bozuk', 'Kasa açıldı ama içi okunamadı.'); }
+  try {
+    if (paket.sikistirma === 'gzip') acik = await donustur(acik, new DecompressionStream('gzip'));
+    return JSON.parse(new TextDecoder().decode(acik));
+  } catch { throw new KasaHatasi('bozuk', 'Kasa açıldı ama içi okunamadı.'); }
 }
 
 /** Kasanın tuzu — aynı kasaya yazmaya devam etmek için. */

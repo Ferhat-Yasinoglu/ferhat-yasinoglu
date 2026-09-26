@@ -5,7 +5,9 @@
 // Burada "karşılama" (ne verildi, ne verilmedi) yok: hasta ilacını dışarıdaki
 // eczaneden kendi alıyor, hekim neyin verildiğini zaten bilemez. Reçete
 // yazılır, kâğıda basılır, gönderilir — hikâye burada biter.
-import { satirAdi } from './ilac.js';
+import { satirKagitAdi, ilacAdiFormsuz, ilacEtiketi } from './ilac.js';
+import { normalize } from './metin.js';
+import { parcala, normalizeFa } from './klinik.js';
 
 export const RECETE_TURLERI = [
   ['normal', 'Normal reçete'], ['kirmizi', 'Kırmızı reçete'], ['yesil', 'Yeşil reçete'],
@@ -18,9 +20,21 @@ export function receteOzet(recete) {
   return { toplam: (recete?.satirlar || []).length };
 }
 
-/** Boş reçete satırı. */
+/** Reçeteler listesinde aranan metin: numara, hasta, tanı ve kodu, ilaç
+ *  adları (kâğıttaki gibi, etken maddesiyle). Tanı kâğıda İngilizce
+ *  yazılıyor; `taniIndeksi` (klinik.adIndeksi) verilirse listedeki Dari adı
+ *  da ekleniyor: hekim «هپاتیت» yazınca «Chronic hepatitis C» reçetesini bulsun. */
+export function receteAramaMetni(recete, hastaAdi = '', taniIndeksi = null) {
+  const dari = taniIndeksi ? parcala(recete?.tani).map((p) => taniIndeksi.get(normalizeFa(p))?.ad) : [];
+  return [recete?.receteNo, hastaAdi, recete?.tani, recete?.taniKodu, ...dari, ...(recete?.satirlar || []).map(satirKagitAdi)]
+    .filter(Boolean).join(' ');
+}
+
+/** Boş reçete satırı. `zaman` (yemekle ilişkisi: «بعد از غذا») ve `doz`
+ *  (ilacın gücü, seçildiği andaki hâliyle; kâğıtta «20 mg (Cap)») isteğe
+ *  bağlı: eski satırlarda yoklar ve öyle de doğru basılıyorlar. */
 export function bosSatir() {
-  return { ilacId: '', ilacAdi: '', form: '', adet: 1, kullanim: '', sure: '', yol: '', not: '' };
+  return { ilacId: '', ilacAdi: '', form: '', doz: '', adet: 1, kullanim: '', zaman: '', sure: '', yol: '', not: '' };
 }
 
 /** Gün içinde artan reçete numarası: "2026-09-20-03". Aynı güne ait en büyük
@@ -112,6 +126,31 @@ export const OLCUMLER = [
   ['ht', 'Boy', 'Ht', 'cm'],
 ];
 
+/* Kan basıncı formda iki kutu (sistolik / diyastolik), reçetede ise TEK
+   metin («130/85»): kâğıt, doğrulama özeti ve eski reçeteler o biçimi okuyor.
+   Bölme kırpmıyor ve bir şey atmıyor: «/» içeren her değer bölünüp
+   birleştirilince aynen geri geliyor; «/» içermeyen eski bir değer
+   («بالا (نشسته)») bütünüyle ilk kutuya düşüyor. Sayfa değeri yalnız hekim
+   bir kutuya YAZINCA yeniden birleştiriyor, yani dokunulmadan kaydedilen
+   eski reçetenin metni değişmiyor. Kutularda azami uzunluk da yok: o, eski
+   değeri açılışta sessizce keserdi. */
+export function bpBol(bp) {
+  const s = String(bp ?? '');
+  const i = s.indexOf('/');
+  return i < 0 ? [s, ''] : [s.slice(0, i), s.slice(i + 1)];
+}
+
+/** İki kutudan tek metin. İkisi boşsa ''; yalnız sistolik yazıldıysa
+ *  «130/» (kâğıt onu olduğu gibi basıyor, eksik olduğu görünsün). Sistolik
+ *  sayı değilse (eski serbest değer «بالا (نشسته)», «/» da içeriyorsa) ve
+ *  diyastolik boşsa olduğu gibi: düzeltilen eski değerin sonuna «/» eklenmesin. */
+export function bpBirlestir(sis, dia) {
+  const a = String(sis ?? '');
+  const b = String(dia ?? '');
+  if (!b.trim() && /[^\d.\s]/.test(a)) return a;
+  return a.trim() || b.trim() ? `${a}/${b}` : '';
+}
+
 /** Dolu olan ölçümler: çıktıda ve kartta yalnız bunlar gösterilir. */
 export const doluOlcumler = (recete) =>
   OLCUMLER.filter(([k]) => String(recete?.olcumler?.[k] ?? '').trim() !== '');
@@ -192,8 +231,8 @@ export function receteMetni(recete, hasta, ayar = {}, etiket = {}) {
   if ((recete.satirlar || []).length) {
     satirlar.push('', e.ilaclar + ':');
     recete.satirlar.forEach((s, i) => {
-      const parcalar = [`${s.adet} ${e.adet}`, s.kullanim, s.sure, s.yol].filter(Boolean).join(' · ');
-      satirlar.push(`${i + 1}) ${satirAdi(s)}${parcalar ? ' — ' + parcalar : ''}${s.not ? ` (${s.not})` : ''}`);
+      const parcalar = [`${s.adet} ${e.adet}`, s.kullanim, s.zaman, s.sure, s.yol].filter(Boolean).join(' · ');
+      satirlar.push(`${i + 1}) ${satirKagitAdi(s)}${parcalar ? ' — ' + parcalar : ''}${s.not ? ` (${s.not})` : ''}`);
     });
   }
   if (recete.laboratuvar) { satirlar.push(''); ekle(e.laboratuvar, recete.laboratuvar); }
@@ -202,3 +241,45 @@ export function receteMetni(recete, hasta, ayar = {}, etiket = {}) {
 
   return satirlar.join('\n').trim();
 }
+
+/* ---------------------------------------------------------------- son kullanım
+   Hekimin bir ilaca en son yazdığı kullanım, KENDİ kaydedilmiş reçetelerinden
+   türetiliyor. Shafa ilaç başına kullanım göndermiyor (liste yalnız ad
+   sözlüğü); önerilebilecek tek kullanım bu hekimin bu ilaca daha önce
+   yazdığıdır ve o da kendiliğinden doldurulmaz, tek dokunuşluk çip olarak
+   sunulur. Ayrıca saklanmıyor: yeni koleksiyon ya da eşitleme yüzeyi yok,
+   reçeteler zaten eşitleniyor; reçete silinince unutuluyor. İlaç kaydına
+   alan olarak yazmak reddedildi: her reçetede yazılırdı ve kayıt başına
+   «son yazan kazanır» eşitlemesinde hekimin kendi ilaç düzenlemesiyle
+   yarışırdı. */
+
+/** Hatırlanan alanlar. `not` hastaya özel, `adet` her seferinde ayrı: yok. */
+const HATIRLANAN = ['kullanim', 'zaman', 'sure', 'yol'];
+
+const adAnahtari = (ad, form) => 'ad:' + normalize(ad) + '|' + (form || '');
+
+/**
+ * İlaç → son kullanım haritası. Anahtar hem ilaç kimliği hem ad+şekil:
+ * ilaç silinip yeniden eklense de (yeni kimlik) hatırlansın. Boş satır
+ * hafızayı silmez; silinmiş ve örnek reçeteler sayılmaz.
+ * @returns {Map<string, {kullanim, zaman, sure, yol, tarih}>}
+ */
+export function sonKullanimlar(receteler) {
+  const m = new Map();
+  const sirali = (receteler || []).filter((r) => r && !r.silindi && r.ornek !== 1)
+    .sort((a, b) => `${a.tarih}|${a.guncellendi || ''}`.localeCompare(`${b.tarih}|${b.guncellendi || ''}`));
+  for (const r of sirali) {
+    for (const s of r.satirlar || []) {
+      const v = Object.fromEntries(HATIRLANAN.map((k) => [k, String(s[k] ?? '').trim()]));
+      if (!HATIRLANAN.some((k) => v[k])) continue;
+      v.tarih = r.tarih || '';
+      if (s.ilacId) m.set('id:' + s.ilacId, v);
+      if (s.ilacAdi) m.set(adAnahtari(ilacAdiFormsuz(s.ilacAdi, s.form), s.form), v);
+    }
+  }
+  return m;
+}
+
+/** Bir ilacın son kullanımı; hiç yazılmamışsa null (alanlar boş kalır). */
+export const sonKullanim = (harita, ilac) =>
+  (ilac?.id && harita.get('id:' + ilac.id)) || harita.get(adAnahtari(ilacEtiketi(ilac, () => ''), ilac?.form)) || null;

@@ -18,31 +18,24 @@
 //    anahtar siliniyor değil, `eskiAnahtarlar`a düşüyor; doğrulama sırayla
 //    hepsini deniyor. (Aynı tehlike yedekten geri yüklemede de vardı.)
 
-/** Eşitlemeyle gidip gelmeyen, her cihazda kendine ait kalan ayarlar.
- *  Kasa parolası buradaysa mecburen: kasayı açacak parola kasanın içinde
- *  duramaz. İstemci kimliği de kasa açılmadan önce gerekiyor. */
-export const CIHAZA_OZEL_AYARLAR = ['senkronParolasi', 'senkronIstemciId', 'senkronIstemciIdBozuk', 'senkronAcik', 'senkronHesap', 'senkronDosyaId'];
+/** Google dönemindeki eşitlemenin cihaza özel ayarları. Artık kimse yazmıyor;
+ *  açılışta bir kez ayarlardan siliniyor (depo/senkron.js). Listede KALIYORLAR:
+ *  güncellenmemiş eski bir cihazın yedeğinden ya da kasasından gelseler bile
+ *  hiçbir yere taşınmasınlar — senkronParolasi o dönemin kasa anahtarıydı. */
+export const ESKI_SENKRON_AYARLARI = ['senkronParolasi', 'senkronIstemciId', 'senkronIstemciIdBozuk', 'senkronAcik', 'senkronHesap', 'senkronDosyaId'];
 
-/** Google istemci kimliğinin biçimi. */
-export const KIMLIK_KALIBI = /^\d+-[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/;
+/** Eşitlemeyle gidip gelmeyen, yedek dosyasına da girmeyen, her cihazda
+ *  kendine ait kalan ayarlar. Hesabın durumu (jeton, K) ayarlarda değil,
+ *  meta deposunda duruyor; buradaki hesap adları yalnız savunma: biri bu
+ *  adlarla bir alan yazsa bile cihazdan çıkmasın. İmza görseli de burada:
+ *  hekimin imzası çalınırsa sahte reçete basılır, cihazdan hiç çıkmıyor. */
+export const CIHAZA_OZEL_AYARLAR = [...ESKI_SENKRON_AYARLARI, 'hesap', 'hesapKullanici', 'hesapJetonu', 'hesapSunucu', 'imzaGorseli'];
 
-/**
- * Ayarlarda biçime uymayan bir istemci kimliği varsa onu kenara alan yamayı
- * döndürür; yoksa null.
- *
- * Neden gerekti: kimlik koda gömülmeden önce "Ayarlar'a yapıştır" deniyordu.
- * Telefonda yarım kalmış bir değer orada kalınca gömülü kimliğin YERİNE geçip
- * Google'a gidiyor, "client bulunamadı" diye dönüyor ve sebebi uygulamada hiç
- * görünmüyor. Hekimin telefonda bir alanı bulup boşaltmasını beklemek yerine
- * uygulama kendi düzeltiyor.
- *
- * Değer SİLİNMİYOR, `senkronIstemciIdBozuk`a taşınıyor: yanlış olduğu kesin
- * ama bizim sildiğimiz şey kullanıcının yazdığı bir şey.
- */
-export function bozukKimligiAyikla(ayar) {
-  const ham = String(ayar?.senkronIstemciId || '').trim();
-  if (!ham || KIMLIK_KALIBI.test(ham)) return null;
-  return { senkronIstemciId: '', senkronIstemciIdBozuk: ham };
+/** Kayıttan cihaza özel alanları söker (yeni nesne döner). */
+export function cihazaOzelSiz(kayit) {
+  const temiz = { ...kayit };
+  for (const a of CIHAZA_OZEL_AYARLAR) delete temiz[a];
+  return temiz;
 }
 
 const ZARF_ALANLARI = ['id', 'rev', 'olusturuldu', 'guncellendi', 'silindi', 'silindiZamani'];
@@ -94,7 +87,9 @@ export function ayarlariBirlestir(yerel, uzak, { tercih = 'yeni' } = {}) {
   // sessizce yeniden adlandırırdı.
   const kimlik = y.id || u.id || 'genel';
   if (!uzak) return { sonuc: { ...y, id: kimlik }, cakisan: [], degisti: false };
-  if (!yerel) return { sonuc: { ...u, id: kimlik }, cakisan: [], degisti: true };
+  // Yerelde kayıt yokken bile uzaktakinin cihaza özel alanları ALINMAZ:
+  // başka bir cihazın (ya da hekimin) anahtarı bu cihaza yerleşmesin.
+  if (!yerel) return { sonuc: { ...cihazaOzelSiz(u), id: kimlik }, cakisan: [], degisti: true };
 
   const yerelYeni = (y.guncellendi || '') >= (u.guncellendi || '');
   const yerelKazandi = tercih === 'yerel' || (tercih === 'yeni' && yerelYeni);
@@ -138,18 +133,28 @@ export function ayarlariBirlestir(yerel, uzak, { tercih = 'yeni' } = {}) {
   return { sonuc, cakisan, degisti: olcut(sonuc) !== olcut(y) };
 }
 
-/** Yüklenecek belgeden cihaza özel ayarları söker — parola buluta gitmesin. */
+/** Belgeden cihaza özel ayarları söker. Hem eşitlemede hem DOSYA YEDEĞİNDE
+ *  çalışır: yedek dosyası WhatsApp'la, USB'yle el değiştiriyor; içinde bir
+ *  cihazın anahtarı durmamalı. */
 export function belgeyiTemizle(belge) {
   const kopya = { ...belge, koleksiyonlar: { ...(belge?.koleksiyonlar || {}) } };
   const ayarlar = kopya.koleksiyonlar.ayarlar;
-  if (Array.isArray(ayarlar)) {
-    kopya.koleksiyonlar.ayarlar = ayarlar.map((k) => {
-      const temiz = { ...k };
-      for (const a of CIHAZA_OZEL_AYARLAR) delete temiz[a];
-      return temiz;
-    });
-  }
+  if (Array.isArray(ayarlar)) kopya.koleksiyonlar.ayarlar = ayarlar.map(cihazaOzelSiz);
   return kopya;
+}
+
+/**
+ * Örnek (demo) kayıtları belgeden söker — YALNIZ eşitlemede. Örnekler hiçbir
+ * cihaza taşınmaz: yüklenselerdi «örnek verileri sil» bir cihazda silip
+ * öbüründen geri indirirdi (kalıcı silme mezar taşı bırakmıyor). Dosya
+ * yedeğinde duruyorlar; hekim yedeği kendi cihazına geri yüklüyor.
+ */
+export function ornekleriAyikla(belge) {
+  const koleksiyonlar = {};
+  for (const [ad, liste] of Object.entries(belge?.koleksiyonlar || {})) {
+    koleksiyonlar[ad] = Array.isArray(liste) ? liste.filter((k) => k?.ornek !== 1) : liste;
+  }
+  return { ...belge, koleksiyonlar };
 }
 
 /** Nesneyi anahtar sırasından bağımsız hale getirir — parmak izi için. */
