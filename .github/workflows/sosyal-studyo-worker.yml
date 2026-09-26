@@ -36,6 +36,12 @@ on:
         type: choice
         default: "koru"
         options: ["koru", "shafa"]
+      bot_foto:
+        # ajan = shafa ile birlikte: tools/bot-profil.mjs botun adını ve açıklamalarını her seferinde
+        # (yalnız değişeni) yazar; profil resmini ise bot resimsizse ya da bu kutu işaretliyse yükler.
+        description: "Bot profil resmini yeniden yükle (ajan = shafa ile)"
+        type: boolean
+        default: false
 
 defaults:
   run:
@@ -194,3 +200,11 @@ jobs:
         env:
           WORKER_URL: ${{ steps.dagit.outputs.url }}
         run: node tools/ajan-yukle.mjs
+
+      # Botun Telegram profili (ad, açıklamalar, resim): worker/hazir/shafa-bot-profil.json.
+      # AI cevaplarından bağımsız; ajan yüklemesi uyarıyla bitse de çalışır.
+      - name: Shafa bot profili
+        if: ${{ !cancelled() && inputs.ajan == 'shafa' }}
+        env:
+          BOT_FOTO_YENILE: ${{ inputs.bot_foto }}
+        run: node tools/bot-profil.mjs

@@ -1,0 +1,16 @@
+{
+  "aciklama": "@rabatshafa_bot'un Telegram profili. tools/bot-profil.mjs okur: ad, kısa açıklama (profilde ve paylaşımda, en fazla 120) ve açıklama (boş sohbette 'Bu bot ne yapar?', en fazla 512) dile göre yazılır; '' varsayılan (Dari), 'en' İngilizce arayüzlü kullanıcılar içindir. Yalnız farklı olan alan gönderilir. Resim (640x640 JPG) botun resmi yoksa ya da bot_foto seçilince yüklenir.",
+  "foto": "shafa-bot.jpg",
+  "diller": {
+    "": {
+      "ad": "Shafa | شفا",
+      "kisa": "دستیار رایگان برنامهٔ نسخه‌نویسی شفا. دربارهٔ نصب، نوشتن و چاپ نسخه، سربرگ و پشتیبان بپرسید.",
+      "uzun": "سلام! من دستیار برنامهٔ «شفا» هستم؛ برنامهٔ رایگان نسخه‌نویسی برای داکتران در افغانستان.\n\nاز من بپرسید: نصب روی تیلفون و کمپیوتر، نوشتن و چاپ نسخه، سربرگ، پشتیبان‌گیری و کد تأیید.\n\nدربارهٔ دوز دوا و تداوی مشوره نمی‌دهم. معلومات مریض را این‌جا نفرستید.\n\nبرنامه: https://ferhat-yasinoglu.github.io/ferhat-yasinoglu/shafa/"
+    },
+    "en": {
+      "ad": "Shafa | شفا",
+      "kisa": "Free helper for the Shafa prescription app. Ask about installing, writing and printing prescriptions, and backups.",
+      "uzun": "Hi! I'm the assistant for Shafa, a free prescription-writing app for doctors in Afghanistan.\n\nAsk me about installing it on your phone or computer, writing and printing prescriptions, the letterhead, backups and the verification code.\n\nI don't give advice on medicine doses or treatment. Please don't send patient information here.\n\nApp: https://ferhat-yasinoglu.github.io/ferhat-yasinoglu/shafa/"
+    }
+  }
+}

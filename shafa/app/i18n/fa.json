@@ -124,6 +124,8 @@
  "ayar.telefonEtiket": "نام شماره‌ها",
  "ayar.telefonEtiket_ipucu": "اگر دو شماره دارید، نام هر کدام با کامه: داکتر, دواخانه",
  "ayar.telefon_ipucu": "در پایین کاغذ",
+ "ayar.telegram": "سوال دارید؟ دستیار شفا در تلگرام جواب می‌دهد؛ رایگان است. معلومات مریض را آن‌جا نفرستید.",
+ "ayar.telegram_dugme": "پرسیدن در تلگرام",
  "ayar.tema": "تم",
  "ayar.tema_aydinlik": "روشن",
  "ayar.tema_degistir": "تغییر تم",
