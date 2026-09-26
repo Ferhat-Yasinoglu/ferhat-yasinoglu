@@ -112,7 +112,7 @@ export async function apiIsle(env, db, istek, url, { fetchFn = fetch, ctx } = {}
     if (parca[0] === 'ai' && parca[1] && istek.method === 'POST') {
       const girdi = await govde();
       if (parca[1] === 'transkript') return ok(await transkript(env, girdi), cors);
-      if (parca[1] === 'ajan_cevap') { const { ajanCevap } = await import('./ai.js'); const brif = girdi.brifing_id ? await db.al('ai_brifingler', girdi.brifing_id) : (await db.listele('ai_brifingler'))[0]; const c = await ajanCevap(env, db, { brifing: brif, mesaj: girdi.mesaj, kanal: 'test' }, fetchFn); return ok({ cevap: c }, cors); }
+      if (parca[1] === 'ajan_cevap') { const { ajanCevap } = await import('./ai.js'); const brif = girdi.brifing_id ? await db.al('ai_brifingler', girdi.brifing_id) : (await db.listele('ai_brifingler'))[0]; const rapor = {}; const c = await ajanCevap(env, db, { brifing: brif, mesaj: girdi.mesaj, kanal: 'test', rapor }, fetchFn); return ok({ cevap: c, ...rapor }, cors); }
       return ok(await ozellikCalistir(env, db, parca[1], girdi, fetchFn), cors);
     }
     // POST /api/prova — gerçek yapılandırmayla karar, gönderimsiz

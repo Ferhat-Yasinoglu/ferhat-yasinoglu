@@ -1,20 +1,41 @@
 // AI katmanı: Anthropic (ANTHROPIC_API_KEY varsa) → Workers AI → kapalı. Günlük bütçe D1 sayaçlarında.
 // Ajan cevabında "<skip>" = model emin değil → susar, soru "cevapsız" listesine düşer.
 const ANTHROPIC = 'https://api.anthropic.com/v1/messages';
+const VARSAYILAN_AI_MODEL = '@cf/meta/llama-3.1-8b-instruct-fp8-fast';
 
 export function saglayici(env) { return env.ANTHROPIC_API_KEY ? 'anthropic' : env.AI ? 'workers-ai' : 'yok'; }
+
+// Anahtar geçersiz/yetkisiz ya da kredi bitmiş: bu, sahibin düzeltmesini bekleyen bir
+// hesap sorunudur, geçici değil. Workers AI bağlıysa cevap oradan gelir, bot susmaz;
+// anahtar düzelince hiçbir şey yapmadan yeniden Anthropic kullanılır.
+// Başka hatalar (429, 5xx, bozuk istek) eskisi gibi yukarı çıkar.
+const anahtarSorunu = (durum, mesaj) => durum === 401 || durum === 403 || (durum === 400 && /credit balance/i.test(mesaj));
+
+// AI_MODEL virgülle birden çok model alabilir: ilki kaldırılmış ya da hata verirse sıradaki denenir.
+async function workersAi(env, { sistem, mesajlar, maxToken }) {
+  const modeller = String(env.AI_MODEL || VARSAYILAN_AI_MODEL).split(',').map((m) => m.trim()).filter(Boolean);
+  let son;
+  for (const model of modeller) {
+    try {
+      const r = await env.AI.run(model, { messages: [{ role: 'system', content: sistem }, ...mesajlar], max_tokens: maxToken });
+      const metin = typeof r?.response === 'string' ? r.response : r?.choices?.[0]?.message?.content ?? '';
+      return { metin: String(metin).trim(), girdi: r?.usage?.prompt_tokens || 0, cikti: r?.usage?.completion_tokens || 0, saglayici: 'workers-ai', model };
+    } catch (e) { son = e; console.warn(`workers-ai ${model}: ${e.message}`); }
+  }
+  throw son;
+}
 
 export async function modelCagir(env, { sistem, mesajlar, maxToken = 600, fetchFn = fetch }) {
   if (env.ANTHROPIC_API_KEY) {
     const r = await fetchFn(ANTHROPIC, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' }, body: JSON.stringify({ model: env.MODEL || 'claude-haiku-4-5', max_tokens: maxToken, system: sistem, messages: mesajlar }) });
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(`anthropic ${r.status}: ${j.error?.message || ''}`);
-    return { metin: (j.content || []).map((c) => c.text || '').join('').trim(), girdi: j.usage?.input_tokens || 0, cikti: j.usage?.output_tokens || 0 };
+    if (r.ok) return { metin: (j.content || []).map((c) => c.text || '').join('').trim(), girdi: j.usage?.input_tokens || 0, cikti: j.usage?.output_tokens || 0, saglayici: 'anthropic', model: env.MODEL || 'claude-haiku-4-5' };
+    const mesaj = j.error?.message || '';
+    if (!(env.AI && anahtarSorunu(r.status, mesaj))) throw new Error(`anthropic ${r.status}: ${mesaj}`);
+    console.warn(`anthropic ${r.status}: ${mesaj} → Workers AI`);
+    return { ...(await workersAi(env, { sistem, mesajlar, maxToken })), anthropicHatasi: `${r.status}: ${mesaj}` };
   }
-  if (env.AI) {
-    const r = await env.AI.run(env.AI_MODEL || '@cf/meta/llama-3.1-8b-instruct-fp8-fast', { messages: [{ role: 'system', content: sistem }, ...mesajlar], max_tokens: maxToken });
-    return { metin: String(r.response || '').trim(), girdi: 0, cikti: 0 };
-  }
+  if (env.AI) return workersAi(env, { sistem, mesajlar, maxToken });
   throw new Error('AI sağlayıcısı yok');
 }
 
@@ -112,8 +133,19 @@ export function brifingSec(brifingler = [], kanal) {
   return aktifler.find((b) => kanalli(b) && b.kanallar.includes(kanal)) || aktifler.find((b) => !kanalli(b)) || null;
 }
 
-/** Ajan cevabı: brifing + bilgi tabanı; emin değilse null. */
-export async function ajanCevap(env, db, { brifing, mesaj, gecmis = [], kanal, dil: dilUstu }, fetchFn = fetch) {
+/** Brifingin `yasakDesenleri` (RegExp kaynakları) cevapta geçiyorsa eşleşen desen. İstem
+ *  bir ricadır; küçük bir model (Workers AI) "doz söyleme" kuralını çiğneyebilir. Bu
+ *  denetim modelden bağımsızdır: yasak içerik hiçbir sağlayıcıdan dışarı çıkmaz. */
+export function yasakDesen(brifing, metin) {
+  for (const d of brifing?.yasakDesenleri || []) {
+    try { if (new RegExp(d, 'iu').test(metin)) return d; } catch { /* bozuk desen: ajan-yukle yüklerken reddeder */ }
+  }
+  return null;
+}
+
+/** Ajan cevabı: brifing + bilgi tabanı; emin değilse null. `rapor` verilirse hangi
+ *  sağlayıcının cevapladığı ve cevabın engellenip engellenmediği içine yazılır. */
+export async function ajanCevap(env, db, { brifing, mesaj, gecmis = [], kanal, dil: dilUstu, rapor = {} }, fetchFn = fetch) {
   if (!brifing) return null;
   if (!(await butceVar(db, env, 'ajan'))) return null;
   const gunKredi = await db.sayac('ajan:' + brifing.id);
@@ -127,8 +159,19 @@ export async function ajanCevap(env, db, { brifing, mesaj, gecmis = [], kanal, d
   const mesajlar = [...gecmis.slice(-6).map((m) => ({ role: m.yon === 'gelen' ? 'user' : 'assistant', content: m.metin })), { role: 'user', content: String(mesaj).slice(0, 2000) }];
   const r = await modelCagir(env, { sistem, mesajlar, maxToken: 400, fetchFn });
   await db.sayacArtir('ai'); await db.sayacArtir('ajan:' + brifing.id);
+  rapor.saglayici = r.saglayici; rapor.model = r.model;
+  if (r.anthropicHatasi) rapor.anthropicHatasi = r.anthropicHatasi;
   const metin = r.metin.trim();
   if (!metin || /<skip>/i.test(metin)) return null;
+  const desen = yasakDesen(brifing, metin);
+  if (desen) {
+    rapor.engellendi = desen;
+    console.warn(`ajan ${brifing.id}: cevap yasak desene uydu, gönderilmedi (${desen})`);
+    // Hazır ret cümlesi (dile göre) varsa o gider; yoksa <skip> gibi susulur.
+    const ret = brifing.yasakCevabi;
+    const hazir = typeof ret === 'string' ? ret : ret && (ret[dil] || Object.values(ret)[0]);
+    return hazir ? String(hazir).slice(0, brifing.maxKarakter || 400) : null;
+  }
   return metin.slice(0, brifing.maxKarakter || 400);
 }
 

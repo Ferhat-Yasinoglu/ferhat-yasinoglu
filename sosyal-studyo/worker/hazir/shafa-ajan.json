@@ -24,6 +24,11 @@
       "قیمت، تاریخ و وعده (prices, dates, promises)",
       "موضوعات بیرون از برنامهٔ شفا (topics outside the Shafa app)"
     ],
+    "yasakDesenleri": ["[0-9۰-۹٠-٩]+([.,٫][0-9۰-۹٠-٩]+)?\\s*(mg|mcg|ml|µg|milligram|ملی|میلی|گرام|قطره|tablet|قرص)"],
+    "yasakCevabi": {
+      "fa": "ببخشید، این دستیار تنها در استفاده از برنامهٔ شفا کمک می‌کند و دربارهٔ دوز دوا یا تداوی معلومات نمی‌دهد.",
+      "en": "Sorry, this assistant only helps with using the Shafa app and does not give information about medicine doses or treatment."
+    },
     "maxKarakter": 600,
     "operatorSessizlikDk": 60,
     "gunlukKredi": 200,

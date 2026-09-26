@@ -56,6 +56,10 @@ export function ajanHazirla(veri) {
   if (Array.isArray(brifing.kimlik)) brifing.kimlik = brifing.kimlik.join('\n');
   if (!String(brifing.kimlik || '').trim()) throw new Error('ajan dosyasında kimlik boş');
   if (!Array.isArray(brifing.bilgi_tabani) || !brifing.bilgi_tabani.length) throw new Error('ajan dosyasında bilgi_tabani boş');
+  // Worker bozuk deseni sessizce atlar; burada yüklemeden önce yakalanır.
+  for (const d of brifing.yasakDesenleri || []) {
+    try { new RegExp(d, 'iu'); } catch (e) { throw new Error(`yasakDesenleri: geçersiz desen ${JSON.stringify(d)}: ${e.message}`); }
+  }
   brifing.bilgi_tabani = brifing.bilgi_tabani.map((b, i) => {
     if (!b || !String(b.baslik || '').trim() || !String(b.metin || '').trim()) throw new Error(`bilgi_tabani[${i}] başlık ya da metin boş`);
     return { baslik: b.baslik, metin: b.metin, aktif: b.aktif === 0 ? 0 : 1 };
@@ -149,13 +153,14 @@ export async function yolDenetimi(api, { brifingId, hesapId, soru }) {
 export async function ornekleriSor(api, brifingId, sorular) {
   const sonuclar = [];
   for (const s of sorular) {
-    let cevap = null, hata = '';
-    try { cevap = (await api('/api/ai/ajan_cevap', { method: 'POST', govde: { brifing_id: brifingId, mesaj: s.soru, deneme: true } }))?.cevap || null; } catch (e) { hata = e.message; }
+    let cevap = null, hata = '', v = {};
+    try { v = (await api('/api/ai/ajan_cevap', { method: 'POST', govde: { brifing_id: brifingId, mesaj: s.soru, deneme: true } })) || {}; cevap = v.cevap || null; } catch (e) { hata = e.message; }
     const uyarilar = [];
     if (cevap && EMOJI.test(cevap)) uyarilar.push('emoji kullandı');
     if (cevap && yaziTuru(cevap) !== yaziTuru(s.soru)) uyarilar.push(`soru ${yaziTuru(s.soru)} yazısıyla, cevap ${yaziTuru(cevap)}`);
     if (cevap && s.tur === 'tibbi' && DOZ.test(cevap)) uyarilar.push('tıbbi soruya doz/miktar yazdı');
-    sonuclar.push({ ...s, cevap, hata, uyarilar });
+    if (v.engellendi) uyarilar.push('model yasak içerik yazdı; yerine hazır ret cümlesi gitti');
+    sonuclar.push({ ...s, cevap, hata, uyarilar, saglayici: v.saglayici || '', model: v.model || '', anthropicHatasi: v.anthropicHatasi || '' });
   }
   return sonuclar;
 }
@@ -186,12 +191,14 @@ export function ozetMetni(r) {
   if (r.ornekler?.length) {
     s.push('', '### Örnek sorular (deneme; dışarı mesaj gitmez)', '');
     for (const o of r.ornekler) {
-      s.push(`**Soru${o.tur === 'tibbi' ? ' (tıbbi, reddetmeli)' : ''}:** ${o.soru}`, '');
+      s.push(`**Soru${o.tur === 'tibbi' ? ' (tıbbi, reddetmeli)' : ''}:** ${o.soru}${o.model ? ` _(${o.saglayici} · ${o.model})_` : ''}`, '');
       s.push(o.hata ? blok('HATA: ' + o.hata) : o.cevap ? blok(o.cevap) : blok('(sustu: <skip> — soru cevapsızlar listesine düşer)'));
       if (o.uyarilar.length) s.push('', '⚠ ' + o.uyarilar.join(' · '));
       s.push('');
     }
   }
+  const yedek = (r.ornekler || []).find((o) => o.anthropicHatasi);
+  if (yedek) s.push('', `> **Not:** Anthropic anahtarı kabul edilmedi (${yedek.anthropicHatasi}); cevaplar Workers AI'dan geldi. Geçerli bir \`ANTHROPIC_API_KEY\` girilince kendiliğinden Anthropic'e döner.`);
   if (r.hatalar?.length) s.push('', '### Hatalar', '', ...r.hatalar.map((h) => '- ' + h));
   return s.join('\n') + '\n';
 }
@@ -254,10 +261,12 @@ export async function calistir({ env = process.env, fetchFn = fetch, yaz = (s) =
   rapor.ornekler = await ornekleriSor(api, brifing.id, sorular);
   cikti('--- örnek sorular (deneme: dışarı mesaj gitmez) ---');
   for (const o of rapor.ornekler) {
-    cikti(`? ${o.soru}`);
+    cikti(`? ${o.soru}${o.model ? ` [${o.saglayici} · ${o.model}]` : ''}`);
     cikti(o.hata ? `  HATA: ${o.hata}` : o.cevap ? '  ' + o.cevap.replace(/\n/g, ' ') : '  <skip> (sustu)');
     for (const u of o.uyarilar) cikti(`::warning::"${o.soru.slice(0, 40)}": ${u}`);
   }
+  const yedek = rapor.ornekler.find((o) => o.anthropicHatasi);
+  if (yedek) cikti(`::warning::Anthropic anahtarı kabul edilmedi (${yedek.anthropicHatasi}); cevaplar Workers AI'dan geldi`);
   if (rapor.ornekler.length && rapor.ornekler.every((o) => o.hata)) hataVer('hiçbir örnek soru cevaplanamadı (AI sağlayıcısı ya da günlük tavan)');
 
   return { hata: rapor.hatalar.length ? 1 : 0, rapor, ozet: gizle(ozetMetni(rapor)) };

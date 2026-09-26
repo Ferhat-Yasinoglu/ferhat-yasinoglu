@@ -97,6 +97,13 @@ Worker `PROVA = "1"` ile gelir: hesap "canli" olsa bile hiçbir dış gönderim 
 
 `ANTHROPIC_API_KEY` secret'ı girilirse `MODEL` (varsayılan `claude-haiku-4-5`) kullanılır;
 yoksa Workers AI (`AI_MODEL`, günde 10.000 nöron ücretsiz). Günlük tavan `AI_GUNLUK_TAVAN`.
+Anahtar girilmiş ama Anthropic onu reddediyorsa (401/403, kredi bitti) cevap yine Workers AI'dan
+gelir; bot susmaz, anahtar düzelince kendiliğinden Anthropic'e döner. `AI_MODEL` virgüllü bir
+sıradır: kaldırılan ya da hata veren model atlanıp sıradaki denenir.
+
+Brifing `yasakDesenleri` (RegExp kaynakları) taşıyabilir: cevap bunlardan birine uyarsa gönderilmez,
+yerine `yasakCevabi` (dile göre `{ fa, en }` ya da tek metin) gider; o da yoksa ajan susar. İstem
+bir ricadır, bu denetim modelden bağımsızdır (Shafa ajanında ilaç dozu).
 Anthropic panelinde aylık harcama tavanı koymadan anahtar girme — koda hiç güvenmeyen tek fren odur.
 
 ### Kanala özel brifing ve Shafa ajanı

@@ -9,9 +9,10 @@ compatibility_date = "2026-09-01"
 ALLOWED_ORIGINS = "https://ferhat-yasinoglu.github.io"
 # "1" = PROVA: hesap 'canli' olmadıkça hiçbir dış gönderim yapılmaz; karar günlüğe düşer.
 PROVA = "1"
-# AI: Anthropic anahtarı girilirse MODEL kullanılır; yoksa Workers AI (AI_MODEL, ücretsiz katman).
+# AI: Anthropic anahtarı girilirse MODEL kullanılır; yoksa ya da anahtar geçersizse/kredisi bittiyse
+# Workers AI (AI_MODEL, ücretsiz katman). AI_MODEL virgüllü bir sıradır: kaldırılan model atlanır.
 MODEL = "claude-haiku-4-5"
-AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8-fast"
+AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast,@cf/google/gemma-3-12b-it,@cf/meta/llama-3.1-8b-instruct-fp8-fast"
 # Günlük AI istek tavanı (hesap geneli); brifingdeki gunlukKredi ayrıca uygulanır.
 AI_GUNLUK_TAVAN = "300"
 # Günlük saklama (gün)
@@ -23,7 +24,7 @@ binding = "DB"
 database_name = "sosyal-studyo"
 database_id = "D1_ID_BURAYA"
 
-# Workers AI (Anthropic anahtarı yoksa devreye girer)
+# Workers AI (Anthropic anahtarı yoksa ya da kabul edilmezse devreye girer)
 [ai]
 binding = "AI"
 
