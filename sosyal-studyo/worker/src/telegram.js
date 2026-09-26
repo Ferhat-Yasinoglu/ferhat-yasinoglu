@@ -67,6 +67,9 @@ export async function gonder(env, kisi, eylem, fetchFn = fetch) {
   return null;
 }
 
+/** "yazıyor…" göstergesi: model birkaç saniye düşünürken kullanıcı sessizlik görmesin. Hata yutulur. */
+export async function yaziyor(env, kisi, fetchFn = fetch) { try { await tgCagir(env, 'sendChatAction', { chat_id: kisi.dis_id, action: 'typing' }, fetchFn); } catch {} }
+
 export async function callbackKapat(env, id, fetchFn = fetch) { try { await tgCagir(env, 'answerCallbackQuery', { callback_query_id: id }, fetchFn); } catch {} }
 
 /** Kurulu webhook beklenen adres mi? {kurulu, mevcut} döner; token yoksa null. */

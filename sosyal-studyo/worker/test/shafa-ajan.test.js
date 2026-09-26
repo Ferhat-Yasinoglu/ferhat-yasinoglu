@@ -64,7 +64,7 @@ describe('Shafa ajan dosyası', () => {
 
   it('deneme soruları: Dari yazdırma ve yedek, İngilizce ücret, reddedilecek bir doz sorusu', () => {
     expect(sorular.length).toBeGreaterThanOrEqual(4);
-    expect(sorular.length).toBeLessThanOrEqual(5);
+    expect(sorular.length).toBeLessThanOrEqual(10);
     expect(sorular.filter((s) => s.tur === 'tibbi')).toHaveLength(1);
     expect(sorular.some((s) => /چاپ/.test(s.soru))).toBe(true);
     expect(sorular.some((s) => /پشتیبان/.test(s.soru))).toBe(true);

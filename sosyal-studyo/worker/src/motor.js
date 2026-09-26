@@ -7,7 +7,7 @@ import { pencereAcik } from '../../app/js/paylasilan/kanallar.js';
 import { kelimeVar } from '../../app/js/paylasilan/metin.js';
 import * as tg from './telegram.js';
 import * as meta from './meta.js';
-import { ajanCevap, brifingSec, cevapDili } from './ai.js';
+import { ajanCevap, brifingSec, cevapDili, dileGore } from './ai.js';
 import { simdi } from './db.js';
 
 async function kisiUpsert(db, olay) {
@@ -29,9 +29,27 @@ async function sohbetGuncelle(db, kisi, olay, yon, metin) {
   return s;
 }
 
+const canliMi = (env, hesap) => hesap?.durum === 'canli' && String(env.PROVA || '1') !== '1' || hesap?.durum === 'canli' && String(env.PROVA) === '0';
+
+/** Ajana giden konuşma geçmişi: bu sohbetin son 24 saatteki EN YENİ mesajları (en fazla 6).
+ *  Gönderilmemiş bot mesajları ([prova], ⚠️) kullanıcı görmedi; hazır "bulamadım" cevabı
+ *  modelin sözü değil, geçmişte kalırsa modeli yeniden susmaya iter. Şu anki mesaj zaten
+ *  istemin sonunda, iki kez verilmez. */
+export function sohbetGecmisi(mesajlar = [], { suAn = Date.now(), simdiki, haric = [] } = {}) {
+  const liste = mesajlar.filter((m) => {
+    const metin = String(m.metin || '');
+    if (!metin || !(Date.parse(m.zaman) >= suAn - 864e5)) return false;
+    if (m.yon === 'giden') return !/^(\[prova\] |⚠️ )/.test(metin) && !haric.includes(metin);
+    return m.yon === 'gelen';
+  });
+  const son = liste[liste.length - 1];
+  if (son && son.yon === 'gelen' && son.metin === simdiki) liste.pop();
+  return liste.slice(-6);
+}
+
 /** Eylemleri kanala gönderir ya da PROVA'da yalnız günlüğe yazar. */
 export async function eylemleriGonder(env, db, { hesap, kisi, olay, eylemler, fetchFn = fetch }) {
-  const canli = hesap?.durum === 'canli' && String(env.PROVA || '1') !== '1' || hesap?.durum === 'canli' && String(env.PROVA) === '0';
+  const canli = canliMi(env, hesap);
   const sonuc = [];
   for (const e of eylemler) {
     if (!['mesaj', 'ozel_yanit', 'yorum_yanit', 'gizle'].includes(e.tip)) continue;
@@ -111,20 +129,32 @@ export async function olayIsle(env, db, olay, { fetchFn = fetch, hesaplar } = {}
         const aiUygun = olay.tip === 'dm' || ilkTemas || (olay.tip === 'story_reply' && brif?.storylereCevap);
         if (brif && aiUygun && (ciplakStart || kelimeVar(olay.text)) && !(kisi.ai_sustur_bitis && kisi.ai_sustur_bitis > simdi())) {
           const devir = (brif.devirKelimeleri || []).some((d) => String(olay.text || '').toLowerCase().includes(d.toLowerCase()));
-          const gecmis = await db.listele('mesajlar', { k1: (await db.listele('sohbetler', { k1: kisi.id, limit: 1 }))[0]?.id, limit: 8 });
+          // Geçmiş: sohbetin EN YENİ mesajları. (Eskiden en eski 8 mesaj gidiyordu: uzun sohbette
+          // model aylar önceki konuşmayı görüp susuyordu; sohbet yoksa k1 boş kalıp herkesin
+          // mesajları okunuyordu.)
+          const sohbetId = (await db.listele('sohbetler', { k1: kisi.id, limit: 1 }))[0]?.id;
+          const bilinmeyen = brif.bilinmeyenCevabi;
+          const haric = typeof bilinmeyen === 'string' ? [bilinmeyen] : Object.values(bilinmeyen || {});
+          const gecmis = sohbetId ? sohbetGecmisi(await db.listele('mesajlar', { k1: sohbetId, limit: 12, sonDan: true }), { simdiki: String(olay.text || '').slice(0, 4000), haric }) : [];
           const istem = ciplakStart
             ? 'Kullanıcı botu yeni başlattı ve henüz bir şey sormadı. Onu kısaca karşıla, ne yapabileceğini bir cümleyle söyle ve ne aradığını sor.'
             : olay.text;
           // Arayüz dili yalnız metinde dil kanıtı yoksa kullanılır (çıplak "/start", "ok"):
           // Telegram'ı İngilizce olan hekim Dari yazınca Dari cevap almalı.
           const dil = ciplakStart ? olay.dil : cevapDili(olay.text, olay.dil);
+          // Model birkaç saniye düşünür: Telegram'da "yazıyor…" görünsün (yalnız canlıda).
+          if (!devir && olay.kanal === 'telegram' && canliMi(env, hesap)) await tg.yaziyor(env, kisi, fetchFn);
           const cevap = devir ? null : await ajanCevap(env, db, { brifing: brif, mesaj: istem, gecmis, kanal: olay.kanal, dil }, fetchFn);
-          if (cevap) {
-            const gonderim = await eylemleriGonder(env, db, { hesap, kisi, olay, eylemler: [{ tip: 'mesaj', text: cevap }], fetchFn });
-            await gunlukYaz(db, olay, kisi, { tur: 'ai', brifing: brif.id }, { eylemler: gonderim, prova: gonderim[0]?.prova ?? 1, gonderildi: gonderim[0]?.gonderildi || 0 });
-          } else {
+          // Model <skip> dediyse ve brifingin hazır "bulamadım" cevabı varsa kullanıcı sessizlik
+          // yerine onu alır; soru yine cevapsızlar listesine düşer. Devirde (insan devralır) susulur.
+          const yedek = cevap || devir ? null : dileGore(bilinmeyen, dil);
+          if (cevap || yedek) {
+            const gonderim = await eylemleriGonder(env, db, { hesap, kisi, olay, eylemler: [{ tip: 'mesaj', text: cevap || yedek }], fetchFn });
+            await gunlukYaz(db, olay, kisi, { tur: 'ai', brifing: brif.id, ...(cevap ? {} : { sonuc: 'skip', yedek: 1 }) }, { eylemler: gonderim, prova: gonderim[0]?.prova ?? 1, gonderildi: gonderim[0]?.gonderildi || 0 });
+          }
+          if (!cevap) {
             await db.kaydet('cevapsiz_sorular', { soru: String(olay.text).slice(0, 300), kisi_id: kisi.id, durum: 'acik', devir }, { onek: 'soru' });
-            await gunlukYaz(db, olay, kisi, { tur: 'ai', brifing: brif.id, sonuc: devir ? 'devir' : 'skip' });
+            if (!yedek) await gunlukYaz(db, olay, kisi, { tur: 'ai', brifing: brif.id, sonuc: devir ? 'devir' : 'skip' });
           }
           await db.gelenBitir(olay.olay_id);
           return { karar: 'ai', cevapVar: !!cevap, brifing: brif.id };

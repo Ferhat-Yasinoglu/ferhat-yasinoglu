@@ -34,15 +34,17 @@ export class Veritabani {
     return k && (silinmisDahil || !k.silindi) ? k : null;
   }
 
-  async listele(kol, { k1, k2, since, limit = 500, silinmisDahil = false } = {}) {
+  /** `sonDan`: en yeni `limit` kayıt (yine eskiden yeniye sıralı döner). */
+  async listele(kol, { k1, k2, since, limit = 500, silinmisDahil = false, sonDan = false } = {}) {
     let sql = 'SELECT * FROM kayitlar WHERE kol = ?'; const args = [kol];
     if (k1 !== undefined) { sql += ' AND k1 = ?'; args.push(k1); }
     if (k2 !== undefined) { sql += ' AND k2 = ?'; args.push(k2); }
     if (since !== undefined) { sql += ' AND degisiklik_no > ?'; args.push(since); }
     if (!silinmisDahil) sql += ' AND silindi = 0';
-    sql += ' ORDER BY degisiklik_no ASC LIMIT ?'; args.push(limit);
+    sql += ` ORDER BY degisiklik_no ${sonDan ? 'DESC' : 'ASC'} LIMIT ?`; args.push(limit);
     const r = await this.d1.prepare(sql).bind(...args).all();
-    return (r.results || []).map((s) => this.satirdan(s));
+    const satirlar = (r.results || []).map((s) => this.satirdan(s));
+    return sonDan ? satirlar.reverse() : satirlar;
   }
 
   /** Upsert; `rev` verilirse iyimser kilit (uyuşmazsa {cakisma:true}). */
