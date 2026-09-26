@@ -17,6 +17,7 @@ on:
     paths:
       - "shafa/**"
       - "sosyal-studyo/**"
+      - "nuskha/**"
       - ".github/site/**"
       - ".github/workflows/site.yml"
   workflow_dispatch:
@@ -69,8 +70,15 @@ jobs:
       - name: Siteyi hazirla
         run: |
           set -euo pipefail
-          mkdir -p site/sosyal-studyo site/shafa/app site/eczane
+          mkdir -p site/sosyal-studyo site/shafa/app site/eczane site/nuskha
           cp -r sosyal-studyo/app/. site/sosyal-studyo/
+          # Nuskha tek dosya: veri listeleri index.html'e gomulu (tools/build.mjs).
+          # Gomulmemisse uygulama bos ilac listesiyle acilir; yayinlamayalim.
+          if grep -q "const DATA = /\*__DATA__\*/null;" nuskha/index.html; then
+            echo "::error::nuskha/index.html icine veri gomulmemis: node nuskha/tools/build.mjs"
+            exit 1
+          fi
+          cp nuskha/index.html nuskha/sw.js site/nuskha/
           # /shafa/ tanitim sayfasi (satis icin paylasilan adres),
           # /shafa/app/ uygulamanin kendisi.
           cp -r shafa/tanitim/. site/shafa/
@@ -89,7 +97,8 @@ jobs:
           sed -i "s/__SURUM__/${GITHUB_SHA::7}/g" \
             site/sosyal-studyo/sw.js \
             site/sosyal-studyo/js/uygulama.js \
-            site/shafa/app/sw.js
+            site/shafa/app/sw.js \
+            site/nuskha/sw.js
           # Yer tutucu kalmadigini dogrula: kalirsa onbellek anahtari her
           # dagitimda ayni kalir ve guncelleme kullaniciya hic ulasmaz.
           if grep -rl "__SURUM__" site; then
