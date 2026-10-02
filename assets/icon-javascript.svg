@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="92" height="108" viewBox="0 0 92 108" role="img" aria-label="JavaScript">
+  <defs>
+    
+    <pattern id="iizg" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M36 0 H0 V36" fill="none" stroke="#d4af37" stroke-opacity=".06" stroke-width="1" />
+    </pattern>
+    <filter id="ih" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="9" />
+    </filter>
+    <style>
+    text { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; }
+    .card-bg { fill: #070604; stroke: #d4af37; stroke-opacity: .3; stroke-width: 1; }
+    /* Her animasyon "backwards" ile kurulur: animasyon hic calismazsa
+       ogenin dogal hali gecerli olur, yani icerik yine de gorunur. */
+    .rise { animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: .01ms !important; animation-delay: 0s !important; }
+    }
+      .etk { font-size: 13px; font-weight: 600; fill: #f4ecd8; }
+      /* Hareket bilincli sekilde hafif: sayfada baska seyler de oynuyor,
+         ikonlar dikkati calmadan yasiyor olsun. */
+      .bob { animation: bob 5s ease-in-out infinite alternate; }
+      @keyframes bob { from { transform: translateY(-1.5px); } to { transform: translateY(1.5px); } }
+      .nabiz { animation: nabiz 4.5s ease-in-out infinite; }
+      @keyframes nabiz { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+      .sallan { animation: sallan 5s ease-in-out infinite; }
+      @keyframes sallan { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+      .don { animation: don 22s linear infinite; }
+      @keyframes don { to { transform: rotate(360deg); } }
+      .alev { animation: alev 3s ease-in-out infinite; }
+      @keyframes alev {
+        0%,100% { transform: scale(1) rotate(-1.5deg); }
+        50% { transform: scale(1.05) rotate(1.5deg); }
+      }
+      .isik { animation: isik 4.5s ease-in-out infinite; }
+      @keyframes isik { 0%,100% { opacity: .05; } 50% { opacity: .16; } }
+    </style>
+  </defs>
+  
+  <rect class="card-bg" width="92" height="108" rx="4" />
+  <rect width="92" height="108" rx="4" fill="url(#iizg)" />
+  <rect x="10" y="10" width="5" height="5" fill="#d4af37" fill-opacity=".45" />
+  <rect x="77" y="93" width="5" height="5" fill="#d4af37" fill-opacity=".45" />
+  <g transform="translate(46 40)">
+    <circle class="isik" r="24" fill="#F7DF1E" filter="url(#ih)" opacity=".1" />
+    <g class="bob">
+      <g class="nabiz">
+        <g transform="translate(-20 -20) scale(1.6667)">
+          <path d="M0 0h24v24H0V0zm22.034 18.276c-.175-1.095-.888-2.015-3.003-2.873-.736-.345-1.554-.585-1.797-1.14-.091-.33-.105-.51-.046-.705.15-.646.915-.84 1.515-.66.39.12.75.42.976.9 1.034-.676 1.034-.676 1.755-1.125-.27-.42-.404-.601-.586-.78-.63-.705-1.469-1.065-2.834-1.034l-.705.089c-.676.165-1.32.525-1.71 1.005-1.14 1.291-.811 3.541.569 4.471 1.365 1.02 3.361 1.244 3.616 2.205.24 1.17-.87 1.545-1.966 1.41-.811-.18-1.26-.586-1.755-1.336l-1.83 1.051c.21.48.45.689.81 1.109 1.74 1.756 6.09 1.666 6.871-1.004.029-.09.24-.705.074-1.65l.046.067zm-8.983-7.245h-2.248c0 1.938-.009 3.864-.009 5.805 0 1.232.063 2.363-.138 2.711-.33.689-1.18.601-1.566.48-.396-.196-.597-.466-.83-.855-.063-.105-.11-.196-.127-.196l-1.825 1.125c.305.63.75 1.172 1.324 1.517.855.51 2.004.675 3.207.405.783-.226 1.458-.691 1.811-1.411.51-.93.402-2.07.397-3.346.012-2.054 0-4.109 0-6.179l.004-.056z" fill="#F7DF1E" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <text class="etk" x="46" y="90" text-anchor="middle">JavaScript</text>
+</svg>

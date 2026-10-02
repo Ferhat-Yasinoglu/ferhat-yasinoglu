@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="92" height="108" viewBox="0 0 92 108" role="img" aria-label="Git">
+  <defs>
+    
+    <pattern id="iizg" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M36 0 H0 V36" fill="none" stroke="#d4af37" stroke-opacity=".06" stroke-width="1" />
+    </pattern>
+    <filter id="ih" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="9" />
+    </filter>
+    <style>
+    text { font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', Helvetica, sans-serif; }
+    .card-bg { fill: #070604; stroke: #d4af37; stroke-opacity: .3; stroke-width: 1; }
+    /* Her animasyon "backwards" ile kurulur: animasyon hic calismazsa
+       ogenin dogal hali gecerli olur, yani icerik yine de gorunur. */
+    .rise { animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: .01ms !important; animation-delay: 0s !important; }
+    }
+      .etk { font-size: 13px; font-weight: 600; fill: #f4ecd8; }
+      /* Hareket bilincli sekilde hafif: sayfada baska seyler de oynuyor,
+         ikonlar dikkati calmadan yasiyor olsun. */
+      .bob { animation: bob 5s ease-in-out infinite alternate; }
+      @keyframes bob { from { transform: translateY(-1.5px); } to { transform: translateY(1.5px); } }
+      .nabiz { animation: nabiz 4.5s ease-in-out infinite; }
+      @keyframes nabiz { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+      .sallan { animation: sallan 5s ease-in-out infinite; }
+      @keyframes sallan { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+      .don { animation: don 22s linear infinite; }
+      @keyframes don { to { transform: rotate(360deg); } }
+      .alev { animation: alev 3s ease-in-out infinite; }
+      @keyframes alev {
+        0%,100% { transform: scale(1) rotate(-1.5deg); }
+        50% { transform: scale(1.05) rotate(1.5deg); }
+      }
+      .isik { animation: isik 4.5s ease-in-out infinite; }
+      @keyframes isik { 0%,100% { opacity: .05; } 50% { opacity: .16; } }
+    </style>
+  </defs>
+  
+  <rect class="card-bg" width="92" height="108" rx="4" />
+  <rect width="92" height="108" rx="4" fill="url(#iizg)" />
+  <rect x="10" y="10" width="5" height="5" fill="#d4af37" fill-opacity=".45" />
+  <rect x="77" y="93" width="5" height="5" fill="#d4af37" fill-opacity=".45" />
+  <g transform="translate(46 40)">
+    <circle class="isik" r="24" fill="#F03C2E" filter="url(#ih)" opacity=".1" />
+    <g class="bob">
+      <g class="don">
+        <g transform="translate(-20 -20) scale(1.6667)">
+          <path d="M13.09 23.549a1.54 1.54 0 0 1-2.18 0L.451 13.089a1.54 1.54 0 0 1 0-2.179l7.191-7.19 2.733 2.733a1.85 1.85 0 0 0 .964 2.326v6.66a1.849 1.849 0 1 0 1.54 0V8.957l2.508 2.508a1.85 1.85 0 1 0 1.09-1.09l-2.634-2.634a1.85 1.85 0 0 0-2.378-2.377L8.73 2.63 10.91.451a1.54 1.54 0 0 1 2.179 0l10.459 10.46a1.54 1.54 0 0 1 0 2.179z" fill="#F03C2E" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <text class="etk" x="46" y="90" text-anchor="middle">Git</text>
+</svg>
