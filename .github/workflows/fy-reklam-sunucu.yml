@@ -1,0 +1,148 @@
+# FY Reklam sunucusu dağıtımı (Cloudflare Worker + Durable Object).
+#
+# GitHub → Settings → Secrets and variables → Actions:
+#   Secrets:   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+#              REKLAMCILAR (panele girebilen Gmail adresleri, virgülle: sen ve reklamcı arkadaşın)
+#              META_SAYFA_TOKEN, META_SAYFA_ID, META_IG_ID, META_APP_SECRET   (Meta kurulumu bitince)
+#              META_KULLANICI_TOKEN (isteğe bağlı: uzun ömürlü kullanıcı token'ı), META_IG_TOKEN (isteğe bağlı: Instagram Login yolu)
+#   Variables: GOOGLE_ISTEMCI = Google Cloud OAuth "Web application" istemci kimliği (….apps.googleusercontent.com)
+#              PROVA = "1" (varsayılan: hiçbir dış gönderim yok) ya da "0" (canlı)
+# Cloudflare secret'ları yoksa iş uyarı verip dağıtmadan biter (kırmızı olmaz).
+# Kendi deposuna taşınınca `paths` ve `working-directory` kaldırılır (fy-merkez/.github/workflows/sunucu.yml kalıbı).
+name: FY Reklam sunucu
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "fy-reklam/sunucu/**"
+      - "fy-reklam/app/js/paylasilan/**"
+      - ".github/workflows/fy-reklam-sunucu.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fy-reklam-sunucu
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: fy-reklam
+
+jobs:
+  dagit:
+    name: Cloudflare
+    runs-on: ubuntu-latest
+    env:
+      WRANGLER_SEND_METRICS: "false"
+      TOML: sunucu/wrangler.toml
+      WRANGLER: wrangler@4.131.1
+      KOKEN: https://fy-reklam.pages.dev
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: fy-reklam/package-lock.json
+      - run: npm ci
+      - run: npx vitest run test/sunucu
+
+      # Değerler loga yazılmaz; görünmez karakterler temizlenip maskeli olarak sonraki adımlara geçer.
+      - name: Secret'lari denetle
+        id: denetle
+        env:
+          HAM_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          HAM_HESAP: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          HAM_REKLAMCILAR: ${{ secrets.REKLAMCILAR }}
+          HAM_ISTEMCI: ${{ vars.GOOGLE_ISTEMCI }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const temiz = (s) => String(s || "").replace(/[​-‏⁠﻿ ]/g, "").trim();
+            const token = temiz(process.env.HAM_TOKEN), hesap = temiz(process.env.HAM_HESAP);
+            if (!token || !hesap) {
+              console.log("::warning::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID yok: sunucu dağıtılmadı.");
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, "hazir=0\n");
+              process.exit(0);
+            }
+            const reklamcilar = temiz(process.env.HAM_REKLAMCILAR).split(/[\s,;]+/).filter(Boolean).join(",");
+            if (!reklamcilar) { console.log("::error::REKLAMCILAR secret yok: panele kimse giremez. İki Gmail adresini virgülle yazın."); process.exit(1); }
+            if (!/^[^@\s,]+@[^@\s,]+\.[^@\s,]+(,[^@\s,]+@[^@\s,]+\.[^@\s,]+)*$/.test(reklamcilar)) { console.log("::error::REKLAMCILAR e-posta adreslerinden oluşmalı (virgülle ayrılmış)."); process.exit(1); }
+            const istemci = temiz(process.env.HAM_ISTEMCI);
+            if (!istemci) console.log("::warning::GOOGLE_ISTEMCI değişkeni yok: Google ile giriş çalışmaz.");
+            else if (!/^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$/.test(istemci)) { console.log("::error::GOOGLE_ISTEMCI bir Google OAuth istemci kimliğine benzemiyor."); process.exit(1); }
+            for (const d of [token, hesap, reklamcilar]) console.log("::add-mask::" + d);
+            fs.appendFileSync(process.env.GITHUB_ENV, ["CLOUDFLARE_API_TOKEN=" + token, "CLOUDFLARE_ACCOUNT_ID=" + hesap, "REKLAMCILAR=" + reklamcilar, "GOOGLE_ISTEMCI=" + istemci].join("\n") + "\n");
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, "hazir=1\n");
+          '
+
+      - name: Dagit
+        id: dagit
+        if: steps.denetle.outputs.hazir == '1'
+        env:
+          PROVA: ${{ vars.PROVA || '1' }}
+        run: |
+          set -o pipefail
+          npx --yes "$WRANGLER" deploy --config "$TOML" --var "GOOGLE_ISTEMCI_KIMLIGI:$GOOGLE_ISTEMCI" --var "PROVA:$PROVA" 2>&1 | tee dagit.log
+          url="$(grep -o 'https://fy-reklam-sunucu\.[a-z0-9.-]*\.workers\.dev' dagit.log | head -1 || true)"
+          rm -f dagit.log
+          [ -n "$url" ] || { echo "::error::Worker adresi bulunamadi (workers.dev alt alani acik mi?)"; exit 1; }
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          {
+            echo "## FY Reklam sunucusu"
+            echo
+            echo "**Adres:** \`$url\` · PROVA=$PROVA"
+            echo
+            echo "Uygulama bu adresi \`app/js/ayar.js\` (YAYIN) ve \`app/index.html\` CSP'sinden okur; farklıysa ikisi de güncellenmeli."
+            echo "Google Cloud → OAuth istemcisi → *Authorized JavaScript origins* listesinde \`$KOKEN\` bulunmalı."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Secret'lar stdin'den verilir: komut satırına ve loga düşmez. Boş olanlar atlanır (Meta kurulumu sonra gelebilir).
+      - name: Secret'lari yaz
+        if: steps.denetle.outputs.hazir == '1'
+        env:
+          META_SAYFA_TOKEN: ${{ secrets.META_SAYFA_TOKEN }}
+          META_SAYFA_ID: ${{ secrets.META_SAYFA_ID }}
+          META_IG_ID: ${{ secrets.META_IG_ID }}
+          META_APP_SECRET: ${{ secrets.META_APP_SECRET }}
+          META_KULLANICI_TOKEN: ${{ secrets.META_KULLANICI_TOKEN }}
+          META_IG_TOKEN: ${{ secrets.META_IG_TOKEN }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$REKLAMCILAR" | npx --yes "$WRANGLER" secret put REKLAMCILAR --config "$TOML"
+          for ad in META_SAYFA_TOKEN META_SAYFA_ID META_IG_ID META_APP_SECRET META_KULLANICI_TOKEN META_IG_TOKEN; do
+            deger="${!ad:-}"
+            if [ -n "$deger" ]; then printf '%s' "$deger" | npx --yes "$WRANGLER" secret put "$ad" --config "$TOML"; echo "$ad yazildi"; else echo "$ad bos, atlandi"; fi
+          done
+
+      - name: Duman testi
+        if: steps.denetle.outputs.hazir == '1'
+        env:
+          URL: ${{ steps.dagit.outputs.url }}
+        run: |
+          for i in $(seq 1 24); do
+            kod="$(curl -sS --max-time 10 -o durum.json -w '%{http_code}' "$URL/v1/durum" || true)"
+            [ "$kod" = 200 ] && break
+            sleep 5
+          done
+          durum="$(head -c 600 durum.json 2>/dev/null)"; rm -f durum.json
+          echo "GET /v1/durum → HTTP $kod $durum"
+          [ "$kod" = 200 ] || { echo "::error::/v1/durum yanıt vermedi: $kod"; exit 1; }
+          DURUM="$durum" node -e '
+            const d = JSON.parse(process.env.DURUM);
+            if (d.ok !== true) { console.log("::error::/v1/durum ok:true değil"); process.exit(1); }
+            if (d.gelistirme !== false) { console.log("::error::Yayındaki sunucuda geliştirme kipi açık!"); process.exit(1); }
+          ' || exit 1
+          gel="$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' -X POST "$URL/v1/gelistirme/giris" -H 'Content-Type: application/json' -d '{}' || true)"
+          [ "$gel" = 404 ] || { echo "::error::/v1/gelistirme/giris yayında 404 değil: $gel"; exit 1; }
+          robots="$(curl -sS --max-time 10 "$URL/robots.txt" || true)"
+          echo "$robots" | grep -qi 'facebookexternalhit' || { echo "::error::/robots.txt Meta çekicisine izin vermiyor"; exit 1; }
+          basliklar="$(curl -sS --max-time 10 -o /dev/null -D - -X OPTIONS "$URL/v1/kayit" -H "Origin: $KOKEN" -H 'Access-Control-Request-Method: GET' -H 'Access-Control-Request-Headers: authorization' | tr -d '\r')"
+          echo "$basliklar" | grep -qi "^access-control-allow-origin: $KOKEN\$" || { echo "::error::CORS ön-uçuşu $KOKEN kökenine izin vermedi"; exit 1; }
+          {
+            echo "- \`GET /v1/durum\` → \`$durum\`"
+            echo "- Geliştirme girişi yayında kapalı (404); robots.txt Meta çekicisine açık; CORS \`$KOKEN\` için geçti."
+          } >> "$GITHUB_STEP_SUMMARY"

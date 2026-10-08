@@ -1,0 +1,158 @@
+/* FY Reklam — tasarım tokenları.
+   Kaynak: fy-ajans/css/src/style.css, tasarım dili v3 «Yeşil» (Relay çizgisi): nötr gece siyahı zemin,
+   tek vurgu kireç yeşili, cam kartlar, eş aralıklı «sistem sesi» etiketleri, italik serif vurgu.
+   Renkler RGB üçlüsü: rgb(var(--x)) ya da rgb(var(--x) / .3). Buraya hex yazılmaz.
+   Değerler ajans sitesiyle birebir; burada değişen bir şey orada da değişmeli (tek tasarım dili). */
+
+/* ---------- Yazı tipleri (yerel, SIL OFL; app/fonts/*-OFL.txt) ----------
+   Geist başlık ve gövde (100–900), Geist Mono etiketler, Instrument Serif italik vurgu kelimesi,
+   Vazirmatn Dari/Farsça için (Latin + Latin-ext + Arapça alt kümeleri). Her Latin dosya yalnız Latin +
+   Türkçe harfleri (Ğ ğ İ Ş ş) taşır; başka harf (ör. «ł», «₺») yedek yazı tipiyle çizilir. */
+@font-face { font-family: "Geist"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("../fonts/geist-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+011E-011F, U+0130, U+015E-015F; }
+@font-face { font-family: "Geist Mono"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("../fonts/geistmono-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+011E-011F, U+0130, U+015E-015F; }
+@font-face { font-family: "Instrument Serif"; font-style: italic; font-weight: 400; font-display: swap; src: url("../fonts/instrumentserif-italic-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+011E-011F, U+0130, U+015E-015F; }
+@font-face { font-family: "Vazirmatn"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("../fonts/vazirmatn-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Vazirmatn"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("../fonts/vazirmatn-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Vazirmatn"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("../fonts/vazirmatn-arabic.woff2") format("woff2"); unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC; }
+
+:root {
+  color-scheme: dark;
+
+  /* yazı aileleri */
+  --font-display: "Geist", "Vazirmatn", system-ui, sans-serif;
+  --font-body: "Geist", "Vazirmatn", system-ui, sans-serif;
+  --font-accent: "Instrument Serif", Georgia, serif;
+  --font-mono: "Geist Mono", "Vazirmatn", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* gece siyahı (Relay #030303'e bir tutam yeşil) */
+  --ink-0: 4 5 4;
+  --ink-1: 10 11 10;
+  --ink-2: 16 17 15;
+  --ink-3: 26 28 24;
+  --surface-1: 11 12 11;
+  --surface-2: 18 19 17;
+  --surface-3: 29 31 27;
+
+  /* metin: dört basamak */
+  --fg: 242 242 238;
+  --fg-muted: 163 163 160;
+  --fg-dim: 150 150 145;       /* yalnız opak kartta ya da düz zeminde */
+  --fg-faint: 85 85 79;        /* YALNIZ süs: anlam taşıyan metne asla */
+
+  /* kireç — tek vurgu */
+  --lime-pale: 238 249 196;    /* #eef9c4 */
+  --lime-hi: 220 249 143;      /* #dcf98f (hover) */
+  --lime: 192 242 68;          /* #c0f244 — ink-0'da 15,6:1 */
+  --lime-deep: 138 176 44;     /* #8ab02c */
+  --olive: 94 105 47;          /* #5e692f */
+  --on-lime: 11 16 0;          /* kireç üstündeki metin: beyaz ASLA (1,3:1) */
+  --on-lime-2: 61 90 0;
+
+  /* durum renkleri (yalnız etiket ve uyarı; vurgu değil) */
+  --ok: 134 239 172;
+  --uyari: 253 224 71;
+  --hata: 252 165 165;
+  --bilgi: 124 192 204;        /* Relay --cyan: ikincil veri rengi */
+
+  --line: 255 255 255;
+
+  /* tip ölçeği */
+  --fs-h1: clamp(1.75rem, 2.4vw + 1rem, 2.5rem);
+  --fs-h2: clamp(1.25rem, 1.1rem + .6vw, 1.625rem);
+  --fs-h3: 1.0625rem;
+  --fs-body: 1rem;
+  --fs-sm: .875rem;
+  --fs-xs: .8125rem;
+  --fs-mono: .8125rem;
+  --fs-mono-sm: .75rem;
+  --lh-tight: 1.08;
+  --lh-snug: 1.2;
+  --lh-body: 1.6;
+  --track-h1: -.035em;
+  --track-h2: -.02em;
+
+  /* boşluk (8 tabanlı) */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px;
+  --space-6: 32px; --space-7: 48px; --space-8: 64px;
+  --kenar: clamp(16px, 4vw, 28px);
+  --icerik: 1120px;
+  --menu-boy: 68px;
+
+  /* köşeler */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-xl: 14px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-pill: 999px;
+  --radius-tag: 6px;
+  --radius-node: 12px;
+
+  /* hareket */
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --ease-relay: cubic-bezier(.2, .7, .2, 1);
+  --dur-micro: 180ms;
+  --dur-ui: 320ms;
+  --dur-reveal: 700ms;
+
+  /* derinlik */
+  --shadow-rgb: 0 0 0;
+  --shadow-1: 0 1px 1px rgb(var(--shadow-rgb) / .3), 0 10px 24px -14px rgb(var(--shadow-rgb) / .7);
+  --shadow-2: 0 2px 4px rgb(var(--shadow-rgb) / .22), 0 30px 60px -30px rgb(var(--shadow-rgb) / .8);
+  --highlight: inset 0 1px 0 rgb(var(--line) / .06);
+  --glow-lime: 0 0 0 4px rgb(var(--lime) / .12), 0 8px 24px rgb(var(--lime) / .25);
+  --ring-focus: rgb(var(--lime));
+
+  /* cam ve kenar: dolgu padding-box, --edge border-box */
+  --edge: linear-gradient(140deg, rgb(var(--line) / .11), rgb(var(--line) / .05) 40%, rgb(var(--line) / .05) 70%, rgb(var(--lime) / .12));
+  --edge-strong: linear-gradient(140deg, rgb(var(--line) / .16), rgb(var(--line) / .07) 40%, rgb(var(--line) / .06) 70%, rgb(var(--lime) / .20));
+  --glass-fill: linear-gradient(180deg, rgb(var(--surface-2) / .82), rgb(var(--surface-1) / .82));
+  --aurum: linear-gradient(100deg, #8ab02c 0%, #c0f244 22%, #eef9c4 42%, #dcf98f 55%, #a3d63a 74%, #c0f244 100%);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Gündüz teması (Daha → Görünüm). Ajans sitesindeki açık paletle aynı. */
+:root[data-tema="gunduz"] {
+  color-scheme: light;
+  --ink-0: 246 247 242;
+  --ink-1: 252 252 249;
+  --ink-2: 236 238 230;
+  --ink-3: 220 224 212;
+  --surface-1: 252 252 249;
+  --surface-2: 255 255 255;
+  --surface-3: 236 239 228;
+  --fg: 17 19 12;
+  --fg-muted: 82 86 74;
+  --fg-dim: 104 108 96;
+  --fg-faint: 150 154 142;
+  --lime-pale: 58 84 0;
+  --lime-hi: 64 94 0;
+  --lime: 74 106 0;
+  --lime-deep: 52 76 0;
+  --olive: 40 58 0;
+  --on-lime: 11 16 0;
+  --on-lime-2: 61 90 0;
+  --ok: 22 101 52;
+  --uyari: 133 77 14;
+  --hata: 153 27 27;
+  --bilgi: 22 110 125;
+  --line: 17 19 12;
+  --shadow-rgb: 30 40 10;
+  --shadow-1: 0 1px 1px rgb(var(--shadow-rgb) / .06), 0 10px 24px -14px rgb(var(--shadow-rgb) / .22);
+  --shadow-2: 0 2px 4px rgb(var(--shadow-rgb) / .05), 0 30px 60px -30px rgb(var(--shadow-rgb) / .28);
+  --highlight: inset 0 1px 0 rgb(255 255 255 / .8);
+  --edge: linear-gradient(140deg, rgb(var(--lime) / .42), rgb(var(--line) / .1) 45%, rgb(var(--lime) / .2));
+  --edge-strong: linear-gradient(140deg, rgb(var(--lime) / .7), rgb(var(--line) / .14) 45%, rgb(var(--lime) / .32));
+  --glass-fill: linear-gradient(180deg, rgb(var(--surface-2) / .94), rgb(var(--surface-1) / .94));
+  --aurum: linear-gradient(100deg, #34500a 0%, #4a6a00 22%, #6b8f12 40%, #3a5600 58%, #4a6a00 78%, #34500a 100%);
+}
+
+/* Dari ve RTL: her şey Vazirmatn (Geist'te Arapça glif yok). --font-mono'ya dokunulmaz: zincirindeki
+   Vazirmatn eş aralıklı öğedeki Dari'yi yazar, Latin kodlar Geist Mono'da kalır. */
+html[lang^="fa"], html[dir="rtl"] {
+  --font-display: "Vazirmatn", system-ui, sans-serif;
+  --font-body: "Vazirmatn", system-ui, sans-serif;
+  --font-accent: "Vazirmatn", system-ui, sans-serif;
+}

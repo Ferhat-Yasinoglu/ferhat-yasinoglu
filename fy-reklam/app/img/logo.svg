@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="FY"><!-- tools/build-logo.mjs üretir; elle düzenleme -->
+<defs>
+<linearGradient id="fb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#12140a"/><stop offset="1" stop-color="#070604"/></linearGradient>
+<linearGradient id="fg" gradientUnits="userSpaceOnUse" x1="455" y1="243" x2="655" y2="828"><stop offset="0" stop-color="#e0fdb5"/><stop offset=".35" stop-color="#bce558"/><stop offset=".7" stop-color="#a2c207"/><stop offset="1" stop-color="#8b9b0f"/></linearGradient>
+</defs>
+<rect width="96" height="96" rx="20" fill="url(#fb)"/>
+<path transform="translate(-54.029 -12.643) scale(0.12754)" d="M471 243 H821 L918 403 L1026 243 H1145 L972 497 V708 H855 V497 L753 329 H578 V400 H767 L708 500 H578 V708 H455 V259 A16 16 0 0 1 471 243 Z" fill="url(#fg)"/>
+</svg>

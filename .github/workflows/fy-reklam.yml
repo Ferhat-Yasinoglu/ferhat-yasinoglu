@@ -1,0 +1,38 @@
+# FY Reklam'ın denetim ve testleri. Yayın (Cloudflare Pages + Worker) ayrı bir depoya taşınınca
+# fy-merkez'deki yayin.yml / sunucu.yml kalıbıyla eklenir; burada yalnız doğrulama koşar.
+# Workflow'lar yalnız depo kökündeki .github/workflows'tan okunur; fy-reklam/ içinde bir kopya çalışmaz.
+name: FY Reklam testleri
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "fy-reklam/**"
+      - ".github/workflows/fy-reklam.yml"
+  pull_request:
+    paths:
+      - "fy-reklam/**"
+      - ".github/workflows/fy-reklam.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: fy-reklam
+
+jobs:
+  dogrula:
+    name: Denetim ve testler
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: fy-reklam/package-lock.json
+      - run: npm ci
+      - run: npm run kontrol
+      - run: npm test

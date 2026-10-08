@@ -1,0 +1,38 @@
+# FY Reklam sunucusu — Worker + tek SQLite tabanlı Durable Object (ücretsiz planda yalnız bu tür var).
+# nodejs_compat AÇILMAZ: yalnız Web API (fetch, crypto.subtle, streams) — Node'da (yerel.mjs) test edilebilir kalsın.
+# Dağıtım: .github/workflows/sunucu.yml (npx wrangler deploy --config sunucu/wrangler.toml).
+name = "fy-reklam-sunucu"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+# Oturumlar, ortak kayıt ve Meta'nın çekeceği JPEG'ler: tek örnek (idFromName('reklam')).
+[[durable_objects.bindings]]
+name = "REKLAM"
+class_name = "Reklam"
+
+# Depolama türü sonradan değiştirilemez; sınıf SQLite tabanlı açılır.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Reklam"]
+
+[vars]
+# CORS: yalnız bu kökenler (virgülle ayır). Uygulama Cloudflare Pages'te (ve GitHub Pages yedeği), API workers.dev'de.
+# Uçların hepsi Bearer jetonla korunur, çerez yok: köken izni bir güvenlik sınırı değil, tarayıcının yanıtı okuyabilmesi.
+IZINLI_KOKENLER = "https://fy-reklam.pages.dev,https://ferhat-yasinoglu.github.io"
+# Google OAuth "Web application" istemci kimliği (gizli değil; /v1/durum da döndürür).
+# Burada boş: workflow GitHub repo değişkeni GOOGLE_ISTEMCI'yi `--var GOOGLE_ISTEMCI_KIMLIGI:…` ile yazar.
+GOOGLE_ISTEMCI_KIMLIGI = ""
+# PROVA = "1": /v1/yayinla Meta'ya HİÇ gitmez, kayıt 'prova' durumuyla yazılır (dis_id 'prova-N').
+# Meta uygulaması onaylanıp secret'lar girilince "0" yapılır.
+PROVA = "1"
+# Graph API sürümü (Facebook ve Instagram konaklarının yolunda).
+GRAPH_SURUM = "v26.0"
+
+# Gizli değerler toml'a YAZILMAZ; workflow'da GitHub secret'larından `wrangler secret put` ile yazılır:
+#   REKLAMCILAR      uygulamaya girebilen Gmail adresleri (virgülle; Ferhat + arkadaşı). Boşsa kimse giremez (503).
+#   META_SAYFA_TOKEN Facebook Sayfası erişim token'ı (uzun ömürlü; pages_manage_posts, pages_read_engagement)
+#   META_SAYFA_ID    Facebook Sayfası kimliği
+#   META_IG_ID       Instagram profesyonel hesabının kimliği
+#   META_IG_TOKEN    isteğe bağlı: "Instagram API with Instagram login" token'ı. Varsa Instagram çağrıları
+#                    graph.instagram.com'a bu token'la gider; yoksa graph.facebook.com'a Sayfa token'ıyla.
+# GELISTIRME burada HİÇ tanımlanmaz: Google'sız giriş yalnız yerel.mjs --gelistirme'de var.

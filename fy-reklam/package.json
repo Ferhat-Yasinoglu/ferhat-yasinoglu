@@ -1,0 +1,21 @@
+{
+  "name": "fy-reklam",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "FY Reklam — ürünleri tanıtan Instagram ve Facebook gönderilerini tasarlayan, metnini yazan ve paylaşan iki kişilik stüdyo. Çerçevesiz, derleme adımsız PWA + Cloudflare Worker.",
+  "scripts": {
+    "yerel": "node sunucu/yerel.mjs 8796 --gelistirme",
+    "test": "vitest run",
+    "test:izle": "vitest",
+    "kontrol": "node tools/kontrol.mjs",
+    "ekran": "node tools/ekran.mjs",
+    "ekran:bagli": "node tools/ekran-bagli.mjs"
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}
