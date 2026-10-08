@@ -89,7 +89,9 @@ async function basla() {
   if (sunucuVar()) {
     try {
       durumBilgisi.sunucu = await durum();
-      durumBilgisi.kip = 'bagli';
+      // Worker yayında ama Google girişi henüz ayarlı değilse (GOOGLE_ISTEMCI boş) kimse giremezdi;
+      // o durumda yerel kip: tasarla/indir/paylaş çalışır, Daha → Bağlantı eksiği söyler.
+      durumBilgisi.kip = (durumBilgisi.sunucu?.istemciKimligi || durumBilgisi.sunucu?.gelistirme) ? 'bagli' : 'yerel';
     } catch {
       durumBilgisi.kip = 'yerel';
     }

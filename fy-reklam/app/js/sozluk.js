@@ -111,6 +111,7 @@ const tr = {
   'daha.baglantilar': 'Bağlantılar', 'daha.suite_not': 'Instagram ve Facebook\'a elle paylaşım ve zamanlama',
   'daha.hakkinda': 'FY Reklam 0.1 — çerçevesiz, derleme adımsız; görseller cihazda üretilir, anahtarlar yalnız sunucuda durur.',
   'daha.kurulum': 'Meta kurulum rehberi',
+  'daha.google_eksik': 'Sunucu yanıt veriyor ama Google istemcisi (GOOGLE_ISTEMCI) ya da REKLAMCILAR eksik: giriş kapalı, uygulama yerel kipte. README → Yayın.',
 
   // kurulum rehberi
   'kurulum.ust': 'Meta tarafı', 'kurulum.baslik': 'Kurulum rehberi',
@@ -215,6 +216,7 @@ const fa = {
   'daha.baglantilar': 'لینک‌ها', 'daha.suite_not': 'اشتراک و زمان‌بندی دستی در انستاگرام و فیسبوک',
   'daha.hakkinda': 'FY Reklam 0.1 — بدون فریم‌ورک و بدون مرحلهٔ ساخت؛ تصویرها در دستگاه ساخته می‌شوند، کلیدها تنها در سرور می‌مانند.',
   'daha.kurulum': 'راهنمای تنظیم Meta',
+  'daha.google_eksik': 'سرور جواب می‌دهد اما کلاینت گوگل (GOOGLE_ISTEMCI) یا REKLAMCILAR نیست: ورود بسته، برنامه در حالت محلی. README ← Yayın.',
 
   'kurulum.ust': 'سمت Meta', 'kurulum.baslik': 'راهنمای تنظیم',
   'kurulum.aciklama': 'کارهایی که برای نشر مستقیم یک بار در سمت Meta انجام می‌شود. ترتیب مهم است؛ تیک‌ها در این دستگاه می‌مانند.',

@@ -23,8 +23,9 @@ export async function dahaEkrani(kap, a, ctx) {
   (async () => {
     const satirlar = [];
     if (ctx.kip !== 'bagli') {
-      satirlar.push(satir(t('daha.sunucu'), SUNUCU || t('daha.ayni_koken'), kanalCipi('yerel', t)));
-      satirlar.push(h('p', { class: 'g-note', style: { marginTop: '10px' } }, t('kip.yerel_aciklama')));
+      satirlar.push(satir(t('daha.sunucu'), SUNUCU || t('daha.ayni_koken'), kanalCipi(ctx.sunucu ? 'calisir' : 'yerel', t)));
+      if (ctx.sunucu) satirlar.push(satir(t('daha.google'), t('daha.ayarsiz'), kanalCipi('kapali', t)));
+      satirlar.push(h('p', { class: 'g-note', style: { marginTop: '10px' } }, ctx.sunucu ? t('daha.google_eksik') : t('kip.yerel_aciklama')));
     } else {
       let d = ctx.sunucu;
       try { d = await durum(true); } catch { /* eski bilgi kalır */ }
