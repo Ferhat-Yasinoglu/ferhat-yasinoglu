@@ -134,7 +134,7 @@ describe('oturum ve çıkış', () => {
     expect(await k.jsonIste('kanallar', { jeton: j })).toMatchObject({ durum: 401, veri: { hata: 'oturum' } });
   });
 
-  it('iki yönetici aynı anda ayrı oturumlarla çalışır', async () => {
+  it('iki reklamcı aynı anda ayrı oturumlarla çalışır', async () => {
     const k = kur();
     const a = await k.gir(SAHIP);
     const b = await k.gir(ARKADAS);

@@ -54,6 +54,16 @@ describe('CORS', () => {
     expect((await k.iste(`/g/${id}.jpg`, { koken: 'https://meta.example' })).status).toBe(200);
   });
 
+  it('/robots.txt jetonsuz ve kökensiz: text/plain, facebookexternalhit /g/ serbest, gerisi yasak', async () => {
+    const k = kur();
+    const r = await k.iste('/robots.txt', { koken: null });
+    expect(r.status).toBe(200);
+    expect(r.headers.get('Content-Type')).toMatch(/^text\/plain/);
+    expect(await r.text()).toBe('User-agent: facebookexternalhit\nAllow: /g/\n\nUser-agent: *\nDisallow: /\n');
+    expect((await k.iste('/robots.txt', { method: 'HEAD', koken: null })).status).toBe(200);
+    expect((await k.iste('/robots.txt', { method: 'POST', koken: null, govde: {} })).status).toBe(404);
+  });
+
   it('bilinmeyen yolun ön-uçuşu 404', async () => {
     const k = kur();
     expect((await k.iste('/baska', { method: 'OPTIONS' })).status).toBe(404);

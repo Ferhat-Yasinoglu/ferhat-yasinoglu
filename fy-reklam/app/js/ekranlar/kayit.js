@@ -25,9 +25,16 @@ export async function kayitEkrani(kap, a, ctx) {
     // Aynı eylem iki kaynakta da olabilir (yerel + ortak): zaman ve kanal yakınsa biri gösterilir.
     const hepsi = [...ortak.map((k) => ({ ...k, kaynak: 'ortak' })), ...yerel.map((k) => ({ ...k, kaynak: 'yerel' }))]
       .sort((x, y) => (x.zaman < y.zaman ? 1 : -1));
+    // Sunucu zamanı sayı (epoch ms), bu cihazınki ISO metni; SQLite biçimi («YYYY-MM-DD HH:MM:SS», UTC) de olabilir.
+    const an = (z) => {
+      if (typeof z === 'number') return z < 1e12 ? z * 1000 : z;
+      const m = String(z || '').trim();
+      if (/^\d+$/.test(m)) return an(Number(m));
+      return Date.parse(/[zZ]$|[+-]\d\d:\d\d$/.test(m) ? m : m.replace(' ', 'T') + 'Z');
+    };
     const tekil = [];
     for (const k of hepsi) {
-      const es = tekil.find((x) => x.kanal === k.kanal && x.urun === k.urun && Math.abs(Date.parse(x.zaman) - Date.parse(k.zaman)) < 60_000);
+      const es = tekil.find((x) => (k.dis_id && x.dis_id === k.dis_id) || (x.kanal === k.kanal && x.urun === k.urun && Math.abs(an(x.zaman) - an(k.zaman)) < 60_000));
       if (!es) tekil.push(k);
     }
     if (!tekil.length) { doldur(liste, bosDurum({ simgeAdi: 'kayit', baslik: t('kayit.bos'), aciklama: t('kayit.bos_aciklama') })); return; }
@@ -38,7 +45,7 @@ export async function kayitEkrani(kap, a, ctx) {
         h('div', { class: 'sutun', style: { gap: '2px' } },
           h('span', { class: 'satir', style: { gap: '8px' } }, h('b', {}, u?.ad || k.urun), h('span', { class: 'soluk kucuk' }, t(`kanal_eylem.${k.kanal}`, {}, k.kanal)), k.durum && k.durum !== 'yapildi' ? h('span', { class: ['chip', DURUM_SINIF[k.durum] || ''] }, t(`kayit_durum.${k.durum}`, {}, k.durum)) : null),
           h('span', { class: 'kart__alt' }, [k.baslik, k.kim, k.hata ? t(`yayin_hata.${k.hata}`, {}, k.hata) : ''].filter(Boolean).join(' · '))),
-        h('span', { class: 'kayit__zaman' }, zamanMetni(k.zaman, dil())));
+        h('span', { class: 'kayit__zaman' }, zamanMetni(new Date(an(k.zaman)).toISOString(), dil())));
     }));
   }
 

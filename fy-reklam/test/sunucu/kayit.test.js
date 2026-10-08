@@ -40,7 +40,7 @@ describe('POST /v1/kayit', () => {
 });
 
 describe('GET /v1/kayit', () => {
-  it('yeniden eskiye; iki yöneticinin kayıtları ortak', async () => {
+  it('yeniden eskiye; iki reklamcının kayıtları ortak', async () => {
     const k = kur();
     const a = await k.gir(SAHIP);
     const b = await k.gir(ARKADAS);

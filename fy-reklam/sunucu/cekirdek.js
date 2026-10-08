@@ -21,7 +21,7 @@ export const AYAR = Object.freeze({
   /* Barındırılan JPEG'in tavanı: DO SQLite'ta tek bir BLOB en çok 2.000.000
      bayt olabilir; pay bırakılır. Uygulama JPEG kalitesini buna göre düşürür. */
   gorselSiniri: 1_900_000,
-  /** Oturum bu kadar sonra düşer (iki yönetici, kendi cihazları; yeniden giriş kolay). */
+  /** Oturum bu kadar sonra düşer (iki reklamcı, kendi cihazları; yeniden giriş kolay). */
   oturumOmru: 30 * GUN,
   /** Görsel Meta çekene kadar durur; sonra işi biter. Her yüklemede eskiler silinir. */
   gorselOmru: 7 * GUN,
@@ -29,6 +29,10 @@ export const AYAR = Object.freeze({
   metinSiniri: 2200,
   /** Karusel: Instagram en çok 10 öğe; Facebook'a da aynı tavan. */
   enCokGorsel: 10,
+  /** Instagram görsel alt metni (erişilebilirlik) tavanı. */
+  altMetinSiniri: 1000,
+  /** Aynı kanalda aynı metin bu süre içinde ikinci kez yayınlanmaz (409 tekrar; `zorla: true` geçer). */
+  tekrarPenceresi: 24 * SAAT,
   listeVarsayilan: 100,
   listeSiniri: 500,
   /** IP başına başarısız giriş (bozuk Google jetonu ya da allowlist dışı adres). */
@@ -278,9 +282,12 @@ export function kayitGovdesi(veri) {
 }
 
 /**
- * POST yayinla: `{ kanal, gorseller: [id…], metin?, urun, baslik?, bicim? }`.
- * Görsel ve metin sınırları 422 (kullanıcının düzeltebileceği şeyler), biçim
- * hataları 400. Görsellerin gerçekten var olup olmadığına DO bakar.
+ * POST yayinla: `{ kanal, gorseller: [id…], metin?, urun, baslik?, bicim?,
+ * altMetin?, zorla? }`. Görsel ve metin sınırları 422 (kullanıcının
+ * düzeltebileceği şeyler), biçim hataları 400. Görsellerin gerçekten var olup
+ * olmadığına ve metnin yakın zamanda yayınlanıp yayınlanmadığına DO bakar.
+ * `altMetin` Instagram'ın alt_text'i (erişilebilirlik; Facebook'ta yok),
+ * `zorla: true` tekrar korumasını (409) geçer.
  */
 export function yayinGovdesi(veri) {
   if (!YAYIN_KANALLARI.includes(veri.kanal)) throw gecersiz('kanal');
@@ -291,10 +298,22 @@ export function yayinGovdesi(veri) {
   if (veri.metin !== undefined && veri.metin !== null && typeof veri.metin !== 'string') throw gecersiz('metin');
   const metin = cokSatirMetin(veri.metin ?? '');
   if (karakterSayisi(metin) > AYAR.metinSiniri) throw new ApiHatasi(422, 'metin_uzun', { sinir: AYAR.metinSiniri });
+  if (veri.zorla !== undefined && typeof veri.zorla !== 'boolean') throw gecersiz('zorla');
   return {
     kanal: veri.kanal, gorseller: veri.gorseller, metin, urun: urunAlani(veri.urun),
     baslik: metinAlani(veri, 'baslik', 200), bicim: metinAlani(veri, 'bicim', 40) || (veri.gorseller.length > 1 ? 'karusel' : 'tek'),
+    altMetin: metinAlani(veri, 'altMetin', AYAR.altMetinSiniri), zorla: veri.zorla === true,
   };
+}
+
+/**
+ * Tekrar korumasının anahtarı: metnin boşlukları tek boşluğa indirgenmiş
+ * hâlinin SHA-256'sı. Boş metin için null: görseli farklı, metni olmayan iki
+ * gönderi "aynı" sayılmasın.
+ */
+export async function metinOzeti(metin) {
+  const s = String(metin ?? '').replace(/\s+/g, ' ').trim();
+  return s ? ozetHex(s) : null;
 }
 
 /** `?sinir=` → 1…500, bozuk ya da yoksa 100. */

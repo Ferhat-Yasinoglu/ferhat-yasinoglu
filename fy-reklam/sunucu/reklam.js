@@ -20,11 +20,14 @@ const SEMA = [
   'CREATE INDEX IF NOT EXISTS oturumlar_bitis ON oturumlar(bitis)',
   /* Ortak kayıt. durum: yapildi (API'siz kanal) | gonderiliyor | yayinlandi |
      prova | hata. dis_id: Meta'nın verdiği gönderi kimliği (provada 'prova-N').
-     hata: Meta hatasının kodu (yeniden_baglan, izin, oran, gorsel, meta). */
+     hata: Meta hatasının kodu (yeniden_baglan, izin, oran, gorsel, kota…).
+     metin_ozet: yayın metninin özeti (tekrar koruması; API'siz kanalda null). */
   `CREATE TABLE IF NOT EXISTS kayitlar (
      id INTEGER PRIMARY KEY AUTOINCREMENT, zaman INTEGER NOT NULL, kim TEXT NOT NULL, urun TEXT NOT NULL,
-     kanal TEXT NOT NULL, bicim TEXT NOT NULL, durum TEXT NOT NULL, baslik TEXT NOT NULL, dis_id TEXT, hata TEXT)`,
+     kanal TEXT NOT NULL, bicim TEXT NOT NULL, durum TEXT NOT NULL, baslik TEXT NOT NULL, dis_id TEXT, hata TEXT,
+     metin_ozet TEXT)`,
   'CREATE INDEX IF NOT EXISTS kayitlar_zaman ON kayitlar(zaman)',
+  'CREATE INDEX IF NOT EXISTS kayitlar_tekrar ON kayitlar(kanal, metin_ozet, zaman)',
   /* Meta görseli herkese açık bir adresten çeker; uygulama JPEG'i buraya
      yükler, Worker /g/<id>.jpg olarak verir. 7 gün sonra silinir. */
   `CREATE TABLE IF NOT EXISTS gorseller (
@@ -54,6 +57,10 @@ export class ReklamCekirdek {
     this.reklamciHam = null;
     this.reklamcilar = new Set();
     for (const s of SEMA) this.sql.exec(s);
+    /* Sütun sonradan eklendi: tablo bu sütun olmadan açılmışsa eklenir
+       (CREATE TABLE IF NOT EXISTS var olan tabloya dokunmaz). */
+    const sutunlar = new Set(this.sql.exec('PRAGMA table_info(kayitlar)').toArray().map((r) => r.name));
+    if (!sutunlar.has('metin_ozet')) this.sql.exec('ALTER TABLE kayitlar ADD COLUMN metin_ozet TEXT');
   }
 
   /** REKLAMCILAR secret'ından reklamcı kümesi (secret değişince yeniden okunur). */
@@ -137,10 +144,10 @@ export class ReklamCekirdek {
     return { kayitlar: this.sql.exec('SELECT * FROM kayitlar ORDER BY id DESC LIMIT ?', n).toArray().map(kayitCikti) };
   }
 
-  /** Kaydı yazar ve döndürür. `g`: { urun, kanal, bicim, baslik } (Worker denetledi). */
+  /** Kaydı yazar ve döndürür. `g`: { urun, kanal, bicim, baslik, metin_ozet? } (Worker denetledi). */
   kayitEkle(kim, g, durum = 'yapildi', simdi = Date.now()) {
-    this.sql.exec('INSERT INTO kayitlar (zaman, kim, urun, kanal, bicim, durum, baslik, dis_id, hata) VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NULL)',
-      simdi, kim, g.urun, g.kanal, g.bicim || '', durum, g.baslik || '');
+    this.sql.exec('INSERT INTO kayitlar (zaman, kim, urun, kanal, bicim, durum, baslik, dis_id, hata, metin_ozet) VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?)',
+      simdi, kim, g.urun, g.kanal, g.bicim || '', durum, g.baslik || '', g.metin_ozet ?? null);
     const { id } = this.sql.exec('SELECT last_insert_rowid() AS id').one();
     return this.kayitOku(id);
   }
@@ -170,8 +177,11 @@ export class ReklamCekirdek {
 
   /**
    * Yayın kaydını açar: görsellerin hepsi burada olmalı (yoksa 422 `gorsel_yok`,
-   * eksikler `eksik`te). Kayıt 'gonderiliyor' durumuyla yazılır; Worker Meta'ya
-   * gidip gelince `yayinBitir` sonucu yazar. Yarıda kalan istek kayıtta
+   * eksikler `eksik`te); aynı kanalda son 24 saatte aynı metin 'yayinlandi'
+   * olmuşsa 409 `tekrar` (çift tıklama, iki reklamcının aynı gönderiyi
+   * paylaşması) — `zorla` geçer; prova ve hata kayıtları sayılmaz, boş metin
+   * denetlenmez. Kayıt 'gonderiliyor' durumuyla yazılır; Worker Meta'ya gidip
+   * gelince `yayinBitir` sonucu yazar. Yarıda kalan istek kayıtta
    * 'gonderiliyor' olarak görünür — sessizce kaybolmaz.
    */
   yayinHazirla(kim, g) {
@@ -181,6 +191,13 @@ export class ReklamCekirdek {
       .toArray().map((r) => r.id));
     const eksik = g.gorseller.filter((id) => !varOlan.has(id));
     if (eksik.length) throw new ApiHatasi(422, 'gorsel_yok', { eksik });
+    if (g.metin_ozet && !g.zorla) {
+      const onceki = this.sql.exec(
+        "SELECT id, zaman FROM kayitlar WHERE kanal = ? AND metin_ozet = ? AND durum = 'yayinlandi' AND zaman >= ? ORDER BY id DESC LIMIT 1",
+        g.kanal, g.metin_ozet, simdi - AYAR.tekrarPenceresi,
+      ).toArray()[0];
+      if (onceki) throw new ApiHatasi(409, 'tekrar', { onceki: { id: onceki.id, zaman: onceki.zaman } });
+    }
     return { kayit: this.kayitEkle(kim, g, 'gonderiliyor', simdi) };
   }
 

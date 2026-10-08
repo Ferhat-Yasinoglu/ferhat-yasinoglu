@@ -16,7 +16,7 @@
 
 import {
   ApiHatasi, AYAR, JETON_KALIBI, bearer, gelistirmeGovdesi, girisGovdesi, govdeOku, jpegMi, jsonOku, jsonYanit as json, kayitGovdesi,
-  sinirAlani, yayinGovdesi, reklamciListesi,
+  metinOzeti, reklamciListesi, sinirAlani, yayinGovdesi,
 } from './cekirdek.js';
 import { googleDogrula } from './google.js';
 import { MetaHatasi, fbCokluYayinla, fbFotoYayinla, gizle, igKaruselYayinla, igKota, igYayinla, igYolu, kanalBagli } from './meta.js';
@@ -199,7 +199,8 @@ async function gorselVer(istek, env, id) {
   return new Response(r.body, { status: 200, headers: basliklar });
 }
 
-/* Kanalların durumu: bağlı mı (secret'lar var mı), Instagram hangi yoldan,
+/* Kanalların durumu: bağlı mı (secret'lar var mı — PROVA'da da gerçek durum),
+   Instagram hangi konaktan, kullanıcı token'ı tanımlı mı (yalnız var/yok),
    günlük API kotası. Kota yalnız canlıda sorulur; Meta'ya ulaşılamazsa null —
    isteği düşürmez. Kimlikler gizli değil (gönderi adreslerinde zaten görünür). */
 async function kanallar(istek, env, { getir }) {
@@ -211,12 +212,12 @@ async function kanallar(istek, env, { getir }) {
   return json({
     prova,
     facebook: { bagli: fb, sayfaId: env.META_SAYFA_ID || null },
-    instagram: { bagli: ig, igId: env.META_IG_ID || null, yol: igYolu(env), kota },
+    instagram: { bagli: ig, igId: env.META_IG_ID || null, yol: igYolu(env), kullaniciToken: !!env.META_KULLANICI_TOKEN, kota },
   });
 }
 
 /** Kanala ve görsel sayısına göre Meta çağrısı; döner dış kimlik (dis_id). */
-async function metaYayinla(env, { kanal, adresler, metin }, getir, bekle) {
+async function metaYayinla(env, { kanal, adresler, metin, altMetin }, getir, bekle) {
   if (kanal === 'facebook') {
     if (adresler.length === 1) {
       const r = await fbFotoYayinla(env, { gorselAdresi: adresler[0], mesaj: metin }, getir);
@@ -224,42 +225,60 @@ async function metaYayinla(env, { kanal, adresler, metin }, getir, bekle) {
     }
     return (await fbCokluYayinla(env, { gorselAdresleri: adresler, mesaj: metin }, getir)).id;
   }
-  if (adresler.length === 1) return (await igYayinla(env, { gorselAdresi: adresler[0], aciklama: metin }, getir, { bekle })).id;
-  return (await igKaruselYayinla(env, { gorselAdresleri: adresler, aciklama: metin }, getir, { bekle })).id;
+  if (adresler.length === 1) return (await igYayinla(env, { gorselAdresi: adresler[0], aciklama: metin, altMetin }, getir, { bekle })).id;
+  return (await igKaruselYayinla(env, { gorselAdresleri: adresler, aciklama: metin, altMetin }, getir, { bekle })).id;
 }
 
 /*
  * Yayınla: gövde denetimi (400/422) → kanal secret'ları (canlıda; 422
- * kanal_kapali) → DO kaydı 'gonderiliyor' açar ve görsellerin varlığını
- * denetler (422 gorsel_yok) → PROVA'da dış çağrı yok, kayıt 'prova' →
- * canlıda Meta; başarı 'yayinlandi' + dis_id, hata 'hata' + kod ve 502
- * { hata: 'meta', kod, meta_kod }. PROVA'da secret aranmaz: yerel geliştirme
- * (--gelistirme) secret'sız çalışır, akış uçtan uca denenir.
+ * kanal_kapali) → DO kaydı 'gonderiliyor' açar, görsellerin varlığını (422
+ * gorsel_yok) ve aynı metnin son 24 saatte yayınlanmadığını (409 tekrar;
+ * zorla geçer) denetler → PROVA'da dış çağrı yok, kayıt 'prova' → canlıda
+ * Instagram kotası (doluysa 429 kota, kayıt 'hata'/kota; okunamazsa devam) →
+ * Meta; başarı 'yayinlandi' + dis_id, hata 'hata' + kod ve 502 { hata: 'meta',
+ * kod, meta_kod, meta_alt_kod }. PROVA'da secret aranmaz: yerel geliştirme
+ * (--gelistirme) secret'sız çalışır, akış uçtan uca denenir. Worker kendi
+ * /g/ adresini hiç çekmez (Cloudflare 1042): görsel varlığına DO bakar,
+ * adresi yalnız Meta'ya verir.
  */
 async function yayinla(istek, env, { getir, bekle }) {
   const jeton = jetonGerekli(istek);
   const g = yayinGovdesi(await jsonOku(istek));
   const prova = provaMi(env);
   if (!prova && !kanalBagli(env, g.kanal)) throw new ApiHatasi(422, 'kanal_kapali', { kanal: g.kanal });
-  const { kayit } = await reklamIste(env, 'yayin/hazirla', { jeton, veri: g });
+  const { kayit } = await reklamIste(env, 'yayin/hazirla', { jeton, veri: { ...g, metin_ozet: await metinOzeti(g.metin) } });
   const bitir = (sonuc) => reklamIste(env, 'yayin/bitir', { veri: { id: kayit.id, ...sonuc } });
   if (prova) {
     const r = await bitir({ durum: 'prova', dis_id: 'prova-' + kayit.id, hata: null });
     return json({ kayit: r.kayit, sonuc: { dis_id: r.kayit.dis_id, prova: true } });
   }
+  if (g.kanal === 'instagram') {
+    const kota = await igKota(env, getir).catch(() => null);
+    if (kota && kota.sinir !== null && kota.kullanilan >= kota.sinir) {
+      await bitir({ durum: 'hata', dis_id: null, hata: 'kota' }).catch(() => {});
+      throw new ApiHatasi(429, 'kota', { kullanilan: kota.kullanilan, sinir: kota.sinir });
+    }
+  }
   const adresler = g.gorseller.map((id) => `${koken(istek)}/g/${id}.jpg`);
   let disId;
   try {
-    disId = await metaYayinla(env, { kanal: g.kanal, adresler, metin: g.metin }, getir, bekle);
+    disId = await metaYayinla(env, { kanal: g.kanal, adresler, metin: g.metin, altMetin: g.altMetin }, getir, bekle);
   } catch (e) {
     const meta = e instanceof MetaHatasi;
     if (!meta) console.error('meta hatasi:', gizle(String(e?.message || e)).slice(0, 200));
     await bitir({ durum: 'hata', dis_id: null, hata: meta ? e.kod : 'meta' }).catch(() => {});
-    throw new ApiHatasi(502, 'meta', { kod: meta ? e.kod : 'meta', meta_kod: meta ? e.metaKod : null });
+    throw new ApiHatasi(502, 'meta', { kod: meta ? e.kod : 'meta', meta_kod: meta ? e.metaKod : null, meta_alt_kod: meta ? e.metaAltKod : null });
   }
   const r = await bitir({ durum: 'yayinlandi', dis_id: disId, hata: null });
   return json({ kayit: r.kayit, sonuc: { dis_id: disId, prova: false } });
 }
+
+/* Meta'nın görsel çekicisi (facebookexternalhit) /g/ altına girebilsin, başka
+   tarayıcı hiçbir yolu dizine eklemesin. Jetonsuz, herkese açık. */
+export const ROBOTS = 'User-agent: facebookexternalhit\nAllow: /g/\n\nUser-agent: *\nDisallow: /\n';
+const robots = (istek) => new Response(istek.method === 'HEAD' ? null : ROBOTS, {
+  status: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=86400' },
+});
 
 const YOLLAR = {
   'GET durum': durum,
@@ -277,10 +296,15 @@ const GORSEL_YOLU = /^\/g\/([a-f0-9]{16})\.jpg$/;
 
 async function yonlendir(istek, env, baglam) {
   const yol = new URL(istek.url).pathname;
+  const okuma = istek.method === 'GET' || istek.method === 'HEAD';
   const g = GORSEL_YOLU.exec(yol);
   if (g) {
-    if (istek.method !== 'GET' && istek.method !== 'HEAD') throw new ApiHatasi(404, 'yok');
+    if (!okuma) throw new ApiHatasi(404, 'yok');
     return gorselVer(istek, env, g[1]);
+  }
+  if (yol === '/robots.txt') {
+    if (!okuma) throw new ApiHatasi(404, 'yok');
+    return robots(istek);
   }
   if (!yol.startsWith('/v1/')) throw new ApiHatasi(404, 'yok');
   if (istek.method === 'OPTIONS') return new Response(null, { status: 204 });

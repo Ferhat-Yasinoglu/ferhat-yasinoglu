@@ -16,6 +16,12 @@ export const ARKADAS = 'arkadas@fy.af';
 
 const RS256 = { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' };
 
+/** Testin kendi appsecret_proof hesabı: HMAC-SHA256(app_secret, token) hex. */
+export async function appsecretProofHesapla(token, appSecret) {
+  const anahtar = await crypto.subtle.importKey('raw', utf8(appSecret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return Array.from(new Uint8Array(await crypto.subtle.sign('HMAC', anahtar, utf8(token))), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 /** Sahte "Google": RSA anahtar çifti + onu yayımlayan JWKS (data: adresi). */
 export async function googleTaklidi(kid = 'test-anahtar-1') {
   const cift = await crypto.subtle.generateKey({ ...RS256, modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]) }, true, ['sign', 'verify']);
@@ -62,11 +68,11 @@ export const PNG = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x
 
 /**
  * Sahte Meta Graph API. Her çağrı `cagrilar`a yazılır:
- *   { konak, yol, method, query, govde, alanlar (ikisinin birleşimi), ham }
+ *   { konak, yol, method, query, govde, alanlar (ikisinin birleşimi), basliklar (küçük harf adlarla), ham }
  * Yanıtlar: photos → id (published=true ise post_id de), feed → id,
  * media → kap id, media_publish → medya id, status sorgusu → `durumlar`
  * dizisinden sırayla (son değer tekrar eder), content_publishing_limit → kota.
- * `hata` verilirse HER çağrı o Graph hatasıyla döner.
+ * `hata` verilirse HER çağrı o Graph hatasıyla döner ({ code, subcode?, message?, durum? }).
  */
 export function metaTaklidi({ durumlar = ['FINISHED'], hata = null, kota = { quota_usage: 3, config: { quota_total: 50, quota_duration: 'DAY' } } } = {}) {
   const t = { cagrilar: [], durumlar, hata, kota };
@@ -78,9 +84,14 @@ export function metaTaklidi({ durumlar = ['FINISHED'], hata = null, kota = { quo
     const method = ayar.method || 'GET';
     const query = Object.fromEntries(url.searchParams);
     const govde = ayar.body ? Object.fromEntries(new URLSearchParams(String(ayar.body))) : {};
-    const cagri = { konak: url.host, yol: url.pathname, method, query, govde, alanlar: { ...query, ...govde }, ham: `${url} ${ayar.body || ''}` };
+    const basliklar = Object.fromEntries(Object.entries(ayar.headers || {}).map(([a, d]) => [a.toLowerCase(), d]));
+    const cagri = { konak: url.host, yol: url.pathname, method, query, govde, alanlar: { ...query, ...govde }, basliklar, ham: `${url} ${ayar.body || ''}` };
     t.cagrilar.push(cagri);
-    if (t.hata) return yanit({ error: { message: t.hata.message || 'Meta hatası', type: 'OAuthException', code: t.hata.code, fbtrace_id: 'xyz' } }, t.hata.durum || 400);
+    if (t.hata) {
+      const h = { message: t.hata.message || 'Meta hatası', type: 'OAuthException', code: t.hata.code, fbtrace_id: 'xyz' };
+      if (t.hata.subcode !== undefined) h.error_subcode = t.hata.subcode;
+      return yanit({ error: h }, t.hata.durum || 400);
+    }
     const yol = url.pathname;
     if (/\/photos$/.test(yol)) return yanit({ id: `foto${++sayac}`, ...(cagri.alanlar.published === 'true' ? { post_id: `sayfa_${sayac}` } : {}) });
     if (/\/feed$/.test(yol)) return yanit({ id: `akis_${++sayac}` });

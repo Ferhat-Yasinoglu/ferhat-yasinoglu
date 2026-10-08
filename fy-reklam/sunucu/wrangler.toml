@@ -34,5 +34,11 @@ GRAPH_SURUM = "v26.0"
 #   META_SAYFA_ID    Facebook Sayfası kimliği
 #   META_IG_ID       Instagram profesyonel hesabının kimliği
 #   META_IG_TOKEN    isteğe bağlı: "Instagram API with Instagram login" token'ı. Varsa Instagram çağrıları
-#                    graph.instagram.com'a bu token'la gider; yoksa graph.facebook.com'a Sayfa token'ıyla.
+#                    graph.instagram.com'a bu token'la gider.
+#   META_KULLANICI_TOKEN  isteğe bağlı: uzun ömürlü KULLANICI token'ı. META_IG_TOKEN yoksa Instagram kap
+#                    oluşturma, kap durumu sorgusu ve yayın bununla gider (Sayfa token'ı durum sorgusunda
+#                    hata veriyordu). Facebook Sayfası işlemleri her zaman META_SAYFA_TOKEN ile.
+#   META_APP_SECRET  isteğe bağlı: Meta uygulamasının app secret'ı. Varsa her Graph çağrısına
+#                    appsecret_proof eklenir (uygulama ayarında "Require App Secret" açılabilir).
+# Token'lar Authorization: Bearer başlığında gider, sorgu dizisinde değil (izlerde URL görünür).
 # GELISTIRME burada HİÇ tanımlanmaz: Google'sız giriş yalnız yerel.mjs --gelistirme'de var.

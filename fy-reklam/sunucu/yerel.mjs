@@ -200,7 +200,8 @@ export function yerelSunucu({ gelistirme = false, reklamcilar, istemciKimligi = 
   const kok = fileURLToPath(new URL('../app/', import.meta.url));
   const sunucu = createServer((istek, yanit) => {
     const yol = new URL(istek.url, 'http://x').pathname;
-    const api = yol.startsWith('/v1/') || yol.startsWith('/g/');
+    // Worker'ın yolları: API, herkese açık görseller ve Meta çekicisine izin veren robots.txt.
+    const api = yol.startsWith('/v1/') || yol.startsWith('/g/') || yol === '/robots.txt';
     // Yakalanmayan bir red Node'da süreci kapatır; tek bir bozuk istek sunucuyu düşürmesin.
     (api ? apiSun(env, istek, yanit) : statikSun(kok, istek, yanit)).catch(() => {
       if (!yanit.headersSent) yanit.writeHead(500);
@@ -216,7 +217,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const gelistirme = argumanlar.includes('--gelistirme') || process.env.GELISTIRME === '1';
   const host = process.env.HOST || '127.0.0.1';
   const degiskenler = { PROVA: process.env.PROVA || '1' };
-  for (const a of ['META_SAYFA_TOKEN', 'META_SAYFA_ID', 'META_IG_ID', 'META_IG_TOKEN', 'GRAPH_SURUM']) if (process.env[a]) degiskenler[a] = process.env[a];
+  for (const a of ['META_SAYFA_TOKEN', 'META_SAYFA_ID', 'META_IG_ID', 'META_IG_TOKEN', 'META_KULLANICI_TOKEN', 'META_APP_SECRET', 'GRAPH_SURUM']) {
+    if (process.env[a]) degiskenler[a] = process.env[a];
+  }
   const sunucu = yerelSunucu({ gelistirme, reklamcilar: process.env.REKLAMCILAR || '', istemciKimligi: process.env.GOOGLE_ISTEMCI_KIMLIGI || '', degiskenler });
   sunucu.listen(port, host, () => {
     console.log(`sunuluyor: http://localhost:${port}/  (uygulama + /v1/ API${gelistirme ? ', GELİŞTİRME' : ''}, PROVA=${degiskenler.PROVA}, ${host})`);
