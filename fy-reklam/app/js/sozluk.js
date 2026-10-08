@@ -29,6 +29,10 @@ const tr = {
   'projeler.aciklama': 'Bir ürün seç; görsel ve metin onun gerçek özelliklerinden başlar. Sayfada olmayan bir vaat yazılmaz.',
   'urun.yakinda': 'yakında', 'urun.tasarla': 'Tasarla',
 
+  // günün ürünü (her gün bir proje)
+  'bugun.ust': 'Bugün · {gun}', 'bugun.baslik': 'Bugünün projesi:', 'bugun.hazirla': 'Bugünün gönderisini hazırla',
+  'bugun.bekliyor': 'henüz paylaşılmadı', 'bugun.yapildi': 'bugün paylaşıldı', 'bugun.siradakiler': 'Sonraki günler (yayındaki ürünler sırayla döner):',
+
   // adımlar
   'adim.tasarla': 'Tasarla', 'adim.metin': 'Metin', 'adim.paylas': 'Paylaş', 'adim.etiket': 'Adım {n} / 3',
 
@@ -79,6 +83,7 @@ const tr = {
   'paylas.prova_not': 'PROVA: sunucu hiçbir dış gönderim yapmaz; istek kayda düşer. Canlıya almak: Worker PROVA=0.', 'paylas.prova_tamam': 'Prova tamam: kayda yazıldı, dışarı bir şey gitmedi.',
   'paylas.kota': 'Instagram API kotası: son 24 saatte {k} / {s}',
   'paylas.tekrar_onay': 'Aynı metin son 24 saatte bu kanalda yayınlanmış. Yine de yayınlansın mı? (Meta tekrarı reddedebilir)',
+  'paylas.hikaye_surumu': 'Hikâye sürümü (9:16)', 'paylas.kare_surumu': 'Kare sürümü (1:1)',
   'kanal_ad.instagram': 'Instagram', 'kanal_ad.facebook': 'Facebook',
   'kanal.calisir': 'çalışır', 'kanal.prova': 'prova', 'kanal.kapali': 'bağlı değil', 'kanal.yerel': 'yerel',
 
@@ -143,6 +148,9 @@ const fa = {
   'projeler.aciklama': 'یک محصول را انتخاب کنید؛ تصویر و متن از امکانات واقعی آن آغاز می‌شود. وعده‌ای که در صفحه نیست نوشته نمی‌شود.',
   'urun.yakinda': 'به‌زودی', 'urun.tasarla': 'طراحی',
 
+  'bugun.ust': 'امروز · {gun}', 'bugun.baslik': 'پروژهٔ امروز:', 'bugun.hazirla': 'پست امروز را آماده کن',
+  'bugun.bekliyor': 'هنوز اشتراک نشده', 'bugun.yapildi': 'امروز اشتراک شد', 'bugun.siradakiler': 'روزهای بعد (محصولات منتشرشده به نوبت می‌چرخند):',
+
   'adim.tasarla': 'طراحی', 'adim.metin': 'متن', 'adim.paylas': 'اشتراک', 'adim.etiket': 'قدم {n} از ۳',
 
   'tasarla.aciklama': 'قالب، طرح و زبان را انتخاب کنید؛ متن‌ها را ویرایش کنید. پیش‌نمایش زنده است.',
@@ -188,6 +196,7 @@ const fa = {
   'paylas.prova_not': 'تمرین: سرور هیچ ارسال بیرونی نمی‌کند؛ درخواست ثبت می‌شود. برای زنده شدن: Worker PROVA=0.', 'paylas.prova_tamam': 'تمرین تمام: ثبت شد، چیزی بیرون نرفت.',
   'paylas.kota': 'سهمیهٔ API انستاگرام: در ۲۴ ساعت گذشته {k} / {s}',
   'paylas.tekrar_onay': 'همین متن در ۲۴ ساعت گذشته در این کانال نشر شده. باز هم نشر شود؟ (Meta ممکن است تکرار را رد کند)',
+  'paylas.hikaye_surumu': 'نسخهٔ استوری (۹:۱۶)', 'paylas.kare_surumu': 'نسخهٔ مربع (۱:۱)',
   'kanal_ad.instagram': 'انستاگرام', 'kanal_ad.facebook': 'فیسبوک',
   'kanal.calisir': 'کار می‌کند', 'kanal.prova': 'تمرین', 'kanal.kapali': 'وصل نیست', 'kanal.yerel': 'محلی',
 

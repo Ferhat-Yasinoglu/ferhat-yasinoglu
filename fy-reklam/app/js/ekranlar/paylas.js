@@ -67,6 +67,13 @@ export async function paylasEkrani(kap, a, ctx) {
   } }, simge('paylas', { boyut: 18 }), t('paylas.paylas'));
   const kopyalaDugmesi = h('button', { class: 'btn btn--hayalet', type: 'button', onclick: async () => { const ok = await kopyala(metin); if (ok) await kaydaYaz('kopyala'); bildir(ok ? t('metin.kopyalandi') : t('metin.kopyalanamadi'), ok ? 'basari' : 'hata'); } }, simge('kopyala', { boyut: 18 }), t('metin.kopyala'));
   const suiteDugmesi = h('a', { class: 'btn btn--hayalet', href: BUSINESS_SUITE, target: '_blank', rel: 'noopener', onclick: () => { kaydaYaz('business_suite'); } }, simge('harici', { boyut: 18 }), t('paylas.business_suite'));
+  // «Her yere»: aynı gönderinin hikâye (9:16) ya da kare sürümünü tek dokunuşla aç; metin ve dil aynı kalır.
+  const hikayeDugmesi = h('button', { class: 'btn btn--hayalet btn--kucuk', type: 'button', onclick: async () => {
+    const hedef = taslak.bicim === 'hikaye' ? 'kare' : 'hikaye';
+    const { id, olusturuldu, guncellendi, ...kopya } = taslak;
+    const yeni = await depo.kaydet('taslaklar', { ...kopya, bicim: hedef, durum: 'taslak', sablon: hedef === 'hikaye' ? 'baslik' : taslak.sablon });
+    git(`#/paylas/${yeni.id}`);
+  } }, simge(taslak.bicim === 'hikaye' ? 'kare' : 'hikaye', { boyut: 16 }), taslak.bicim === 'hikaye' ? t('paylas.kare_surumu') : t('paylas.hikaye_surumu'));
   const eylemDugmeleri = [indirDugmesi, paylasDugmesi];
 
   // --- doğrudan yayınlama (Worker bağlıysa) -----------------------------------------
@@ -132,7 +139,7 @@ export async function paylasEkrani(kap, a, ctx) {
     h('div', { class: 'iki-sutun' },
       h('div', { class: 'sutun', style: { gap: 'var(--space-5)' } },
         onizleme, boyutNotu,
-        h('div', { class: 'dugmeler' }, indirDugmesi, paylasDugmesi, kopyalaDugmesi, suiteDugmesi),
+        h('div', { class: 'dugmeler' }, indirDugmesi, paylasDugmesi, kopyalaDugmesi, suiteDugmesi, hikayeDugmesi),
         h('p', { class: 'g-note' }, t('paylas.elle_not'))),
       h('div', { class: 'sutun' },
         h('div', { class: 'glass' }, h('p', { class: 'eyebrow eyebrow--xs', style: { marginBottom: '12px' } }, t('paylas.metin')), h('div', { class: 'metin-onizleme', dir: 'auto' }, metin),

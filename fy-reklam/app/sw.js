@@ -7,7 +7,7 @@ const KABUK = [
   'fonts/geist-latin.woff2', 'fonts/geistmono-latin.woff2', 'fonts/instrumentserif-italic-latin.woff2',
   'fonts/vazirmatn-latin.woff2', 'fonts/vazirmatn-latin-ext.woff2', 'fonts/vazirmatn-arabic.woff2',
   'js/ana.js', 'js/api.js', 'js/ayar.js', 'js/depo.js', 'js/dom.js', 'js/i18n.js', 'js/sozluk.js', 'js/simge.js', 'js/tema.js',
-  'js/paylasilan/urunler.js', 'js/paylasilan/metin.js', 'js/sablon/cizim.js', 'js/rehber.js',
+  'js/paylasilan/urunler.js', 'js/paylasilan/metin.js', 'js/paylasilan/sira.js', 'js/sablon/cizim.js', 'js/rehber.js',
   'js/ekranlar/ortak.js', 'js/ekranlar/giris.js', 'js/ekranlar/projeler.js', 'js/ekranlar/tasarla.js', 'js/ekranlar/metin.js',
   'js/ekranlar/paylas.js', 'js/ekranlar/taslaklar.js', 'js/ekranlar/kayit.js', 'js/ekranlar/daha.js', 'js/ekranlar/kurulum.js',
 ];
