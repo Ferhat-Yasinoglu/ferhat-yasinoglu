@@ -1,20 +1,36 @@
 """kazi çekirdeği: scrape, map, crawl."""
 from __future__ import annotations
 
+import codecs
+import os
 import re
 import time
 import urllib.robotparser
 from collections import deque
 from dataclasses import dataclass, field
+from html import unescape
+from pathlib import Path
+from typing import Callable
 from urllib.parse import urldefrag, urljoin, urlparse
 
 import httpx
 import trafilatura
+from trafilatura.utils import decode_file
 
 UA = "kazi/0.1 (personal use)"
-_HREF = re.compile(r"""<a\s[^>]*?href\s*=\s*["']([^"'#][^"']*)["']""", re.I)
+MAX_BYTES = 50 * 1024 * 1024  # açılmış (gzip sonrası) tek yanıt gövdesi
+MAX_SECONDS = 120.0  # tek yanıtı indirmenin toplam süre sınırı (httpx zaman aşımı okuma başınadır)
+MAX_REDIRECTS = 10
+_HREF = re.compile(r"""<a\s[^<>]*?href\s*=\s*["']([^"'#][^"']*)["']""", re.I)
+_PDF_VIEWER = re.compile(r"""<embed[^<>]*type=["']application/pdf""", re.I)
+_LOC = re.compile(r"<loc>\s*([^<\s]+)\s*</loc>", re.I)
+_META_CHARSET = re.compile(rb"""<meta[^>]{0,500}?charset\s*=\s*["']?\s*([A-Za-z0-9_.:-]+)""", re.I)
+_CODEC = {"iso8859-1": "cp1252", "ascii": "cp1252", "iso8859-9": "cp1254", "utf-8": "utf-8-sig"}  # WHATWG eşlemesi
+_HTML_START = re.compile(r"<(?:!doctype\s+html|html|head|body)\b", re.I)
+_PLAIN = ("text/plain", "text/markdown", "text/x-markdown", "text/csv", "application/json")
 _SKIP_EXT = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".ico", ".css", ".js",
              ".zip", ".gz", ".mp4", ".mp3", ".woff", ".woff2", ".xml", ".json")
+_DROP_HEADERS = {"content-encoding", "content-length", "transfer-encoding"}
 
 
 @dataclass
@@ -30,59 +46,203 @@ def _client(timeout: float = 30.0) -> httpx.Client:
     return httpx.Client(headers={"User-Agent": UA}, follow_redirects=True, timeout=timeout)
 
 
-def _fetch_html(url: str, client: httpx.Client, js: bool = False, retries: int = 2) -> tuple[str, int, str]:
-    """(html, status, son_url). js=True ise Playwright ile render eder."""
-    if js:
-        return _fetch_js(url)
+def _check_url(url: str) -> None:
+    try:
+        u = httpx.URL(url)
+    except httpx.InvalidURL as e:
+        raise RuntimeError(f"Geçersiz URL ({url}): {e}") from e
+    if u.scheme not in ("http", "https") or not u.host:
+        raise RuntimeError(f"{url} geçersiz: URL http:// ya da https:// ile başlamalı.")
+
+
+def _read(client: httpx.Client, url: str, check: Callable[[str], str | None] | None = None) -> httpx.Response:
+    """GET; gövde MAX_BYTES (açılmış bayt) ve MAX_SECONDS ile sınırlı. check verilirse yönlendirmeler
+    elle izlenir ve her hedef check(url) ile sorulur (None: serbest, metin: engel nedeni)."""
+    deadline = time.monotonic() + MAX_SECONDS
+    for _ in range(MAX_REDIRECTS + 1):
+        with client.stream("GET", url, follow_redirects=check is None) as r:
+            loc = r.headers.get("location") if check and r.is_redirect else None
+            if loc is None:
+                buf = bytearray()
+                for chunk in r.iter_bytes():
+                    buf += chunk
+                    if len(buf) > MAX_BYTES:
+                        raise RuntimeError(f"{url} yanıtı {MAX_BYTES // 2**20} MB sınırını aştı.")
+                    if time.monotonic() > deadline:
+                        raise RuntimeError(f"{url} indirmesi {MAX_SECONDS:.0f} sn sınırını aştı.")
+                headers = [(k, v) for k, v in r.headers.multi_items() if k.lower() not in _DROP_HEADERS]
+                return httpx.Response(r.status_code, headers=headers, content=bytes(buf), request=r.request)
+        try:
+            nxt = urljoin(str(r.url), loc)
+        except ValueError as e:
+            raise RuntimeError(f"{url} geçersiz yönlendirme: {e}") from e
+        why = check(nxt)
+        if why:
+            raise RuntimeError(f"yönlendirme {nxt} adresine gidiyor: {why}")
+        url = nxt
+    raise RuntimeError(f"{url} çok fazla yönlendirme (>{MAX_REDIRECTS}).")
+
+
+def _get(url: str, client: httpx.Client, retries: int = 2, check: Callable[[str], str | None] | None = None) -> httpx.Response:
+    _check_url(url)
     last: Exception | None = None
     for i in range(retries + 1):
         try:
-            r = client.get(url)
+            r = _read(client, url, check)
             if r.status_code >= 500 and i < retries:
                 time.sleep(2**i)
                 continue
-            return r.text, r.status_code, str(r.url)
+            return r
+        except httpx.InvalidURL as e:
+            raise RuntimeError(f"{url} indirilemedi: geçersiz URL ({e})") from e
+        except (httpx.UnsupportedProtocol, httpx.TooManyRedirects, httpx.DecodingError) as e:  # tekrar denemek anlamsız
+            raise RuntimeError(f"{url} indirilemedi: {e}") from e
         except httpx.HTTPError as e:
             last = e
-            time.sleep(2**i)
+            if i < retries:
+                time.sleep(2**i)
     raise RuntimeError(f"{url} indirilemedi: {last}")
 
 
-def _fetch_js(url: str) -> tuple[str, int, str]:
+def _ctype(r: httpx.Response) -> str:
+    return r.headers.get("content-type", "").split(";")[0].strip().lower()
+
+
+def _is_pdf(r: httpx.Response) -> bool:
+    return _ctype(r) in ("application/pdf", "application/x-pdf") or r.content.startswith(b"%PDF-")
+
+
+def _is_plain(r: httpx.Response) -> bool:
+    return _ctype(r) in _PLAIN or _ctype(r).endswith("+json")
+
+
+def _codec(name: str | None) -> str | None:
     try:
+        n = codecs.lookup(name).name if name else None
+        b"a".decode(n or "utf-8", errors="replace")  # rot13, hex gibi metin olmayan codec'leri ele
+    except (LookupError, ValueError):
+        return None
+    return _CODEC.get(n, n)
+
+
+def _decode(data: bytes, charset: str | None = None, html: bool = True) -> str:
+    """Bayt → metin: BOM, başlıktaki charset, UTF-8; html ise ayrıca <meta charset> ve tahmin."""
+    if data.startswith((codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE)):
+        return data.decode("utf-32", errors="replace")
+    if data.startswith((codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE)):
+        return data.decode("utf-16", errors="replace")
+    enc = _codec(charset)
+    if enc is None:
+        try:
+            return data.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            pass
+        m = _META_CHARSET.search(data[:4096]) if html else None
+        enc = _codec(m.group(1).decode("ascii")) if m else None
+        if enc is None and html:
+            return decode_file(data, MAX_BYTES)
+    return data.decode(enc or "utf-8", errors="replace")
+
+
+def _fetch(url: str, client: httpx.Client, js: bool = False, retries: int = 2,
+           check: Callable[[str], str | None] | None = None) -> tuple[str, int, str, bytes | None, bool]:
+    """(html, status, son_url, pdf, düz_metin). Yanıt PDF ise pdf ham bayttır (html boş), değilse None;
+    düz_metin True ise html aslında text/plain, Markdown ya da JSON gövdesidir."""
+    _check_url(url)
+    html = None
+    if js:
+        try:
+            html, status, final = _fetch_js(url)
+        except RuntimeError as e:
+            if "Download is starting" not in str(e):  # headless_shell PDF'i indirmeye çalışır
+                raise
+        if html is not None and not _PDF_VIEWER.search(html):
+            return html, status, final, None, False
+        # tam Chromium PDF görüntüleyici sarmalayıcısı döndürdü: gerçek baytlar HTTP ile alınır
+    r = _get(url, client, retries, check)
+    if _is_pdf(r):
+        return "", r.status_code, str(r.url), r.content, False
+    if html is not None:  # PDF değilmiş, JS çıktısı geçerli
+        return html, status, final, None, False
+    plain = _is_plain(r)
+    text = _decode(r.content, r.charset_encoding, html=not plain)
+    if plain and _HTML_START.search(text[:1024]):  # text/plain diye HTML sunan sunucular
+        plain, text = False, _decode(r.content, r.charset_encoding)
+    return text, r.status_code, str(r.url), None, plain
+
+
+def _fetch_html(url: str, client: httpx.Client, js: bool = False, retries: int = 2) -> tuple[str, int, str]:
+    """(html, status, son_url). js=True ise Playwright ile render eder."""
+    return _fetch(url, client, js, retries)[:3]
+
+
+def _fetch_js(url: str, timeout: float = 30.0, settle: float = 0.7) -> tuple[str, int, str]:
+    """Playwright ile render: load, sınırlı networkidle, sonra DOM `settle` sn durulana kadar bekler.
+    Chromium sandbox'ı açık başlar; root'ta ya da KAZI_NO_SANDBOX=1 iken kapalıdır (root'ta açılamaz)."""
+    import glob
+
+    try:
+        from playwright.sync_api import Error as PWError
         from playwright.sync_api import sync_playwright
     except ImportError as e:
         raise RuntimeError("JS render için: pip install 'kazi[js]' && playwright install chromium") from e
-    with sync_playwright() as p:
-        b = p.chromium.launch()
-        pg = b.new_page(user_agent=UA)
-        resp = pg.goto(url, wait_until="networkidle")
-        html, final = pg.content(), pg.url
-        status = resp.status if resp else 200
-        b.close()
-    return html, status, final
+    quiet = """([quiet, cap]) => new Promise(done => {
+        let t, mo = new MutationObserver(() => { clearTimeout(t); t = setTimeout(end, quiet); });
+        const c = setTimeout(end, cap);
+        function end() { mo.disconnect(); clearTimeout(t); clearTimeout(c); done(); }
+        mo.observe(document, {subtree: true, childList: true, characterData: true, attributes: true});
+        t = setTimeout(end, quiet);
+    })"""
+    ms = int(timeout * 1000)
+    sandbox = getattr(os, "geteuid", lambda: 1)() != 0 and not os.environ.get("KAZI_NO_SANDBOX")
+    try:
+        with sync_playwright() as p:
+            try:
+                b = p.chromium.launch(chromium_sandbox=sandbox)
+            except PWError:
+                base = os.environ.get("PLAYWRIGHT_BROWSERS_PATH") or os.path.expanduser("~/.cache/ms-playwright")
+                exes = sorted(glob.glob(os.path.join(base, "chromium-*", "chrome-linux*", "chrome")), reverse=True)
+                if not exes:
+                    raise
+                b = p.chromium.launch(executable_path=exes[0], chromium_sandbox=sandbox)
+            try:
+                pg = b.new_page(user_agent=UA)
+                pg.set_default_timeout(ms)
+                resp = pg.goto(url, wait_until="load")
+                cap = min(ms, 5000)
+                try:
+                    pg.wait_for_load_state("networkidle", timeout=cap)
+                except PWError:
+                    pass  # long-poll/websocket: networkidle hiç gelmeyebilir, eldeki DOM ile devam
+                try:
+                    pg.evaluate(quiet, [int(settle * 1000), cap])
+                except PWError:
+                    pass  # sayfa bu sırada başka adrese gezindi
+                return pg.content(), (resp.status if resp else 200), pg.url
+            finally:
+                b.close()
+    except PWError as e:
+        hint = " (sandbox açılamadıysa, güvendiğiniz ortamda KAZI_NO_SANDBOX=1 deneyin)" if sandbox and "sandbox" in str(e).lower() else ""
+        raise RuntimeError(f"{url} JS ile indirilemedi: {str(e).strip().splitlines()[0]}{hint}") from e
 
 
 def extract_links(html: str, base: str) -> list[str]:
     out, seen = [], set()
     for href in _HREF.findall(html):
-        u = urldefrag(urljoin(base, href.strip()))[0]
-        if urlparse(u).scheme not in ("http", "https") or u.lower().endswith(_SKIP_EXT) or u in seen:
+        href = unescape(href).strip()
+        try:
+            u = urldefrag(urljoin(base, href))[0]
+            scheme = urlparse(u).scheme
+        except ValueError:  # örn. http://[bozuk
+            continue
+        if href.startswith("#") or scheme not in ("http", "https") or u.lower().endswith(_SKIP_EXT) or u in seen:
             continue
         seen.add(u)
         out.append(u)
     return out
 
 
-def scrape(url: str, js: bool = False, only_main: bool = True, client: httpx.Client | None = None) -> Page:
-    """Tek sayfa → Markdown. js=True: Playwright. only_main=False: sayfanın tamamı."""
-    own = client is None
-    client = client or _client()
-    try:
-        html, status, final = _fetch_html(url, client, js=js)
-    finally:
-        if own:
-            client.close()
+def _page_from_html(html: str, final: str, status: int, only_main: bool) -> Page:
     md = trafilatura.extract(
         html, output_format="markdown", include_links=True, include_tables=True,
         favor_recall=not only_main, url=final,
@@ -92,76 +252,204 @@ def scrape(url: str, js: bool = False, only_main: bool = True, client: httpx.Cli
                 links=extract_links(html, final), status=status)
 
 
+def _page_from_pdf(data: bytes, final: str, status: int) -> Page:
+    from .pdf import pdf_to_markdown
+
+    try:
+        md, title = pdf_to_markdown(data)
+    except ValueError as e:
+        raise RuntimeError(f"{final} PDF olarak okunamadı: {e}") from e
+    return Page(url=final, markdown=md, title=title, status=status)
+
+
+def scrape(url: str, js: bool = False, only_main: bool = True, client: httpx.Client | None = None,
+           check: Callable[[str], str | None] | None = None) -> Page:
+    """Tek sayfa → Markdown. js=True: Playwright. only_main=False: sayfanın tamamı. PDF otomatik çevrilir;
+    text/plain, Markdown ve JSON yanıtlar olduğu gibi döner. check: yönlendirme hedefi denetimi (bkz. _read)."""
+    own = client is None
+    client = client or _client()
+    try:
+        html, status, final, pdf, plain = _fetch(url, client, js=js, check=check)
+    finally:
+        if own:
+            client.close()
+    if pdf is not None:
+        return _page_from_pdf(pdf, final, status) if status < 400 else Page(url=final, markdown="", status=status)
+    if plain:
+        return Page(url=final, markdown=html, status=status)
+    return _page_from_html(html, final, status, only_main)
+
+
+def scrape_file(path: str, only_main: bool = True) -> Page:
+    """Yerel dosya → Page: PDF (.pdf ya da %PDF- imzalı), .html/.htm ya da düz metin/Markdown."""
+    p = Path(path)
+    if not p.is_file():
+        raise RuntimeError(f"Dosya bulunamadı: {path} (URL ise http:// ya da https:// ile başlamalı)")
+    data, url, ext = p.read_bytes(), p.resolve().as_uri(), p.suffix.lower()
+    if data.startswith(b"%PDF-") or ext == ".pdf":
+        return _page_from_pdf(data, url, 200)
+    if ext in (".html", ".htm"):
+        return _page_from_html(_decode(data), url, 200, only_main)
+    return Page(url=url, markdown=_decode(data, html=False))
+
+
 def _same_site(a: str, b: str) -> bool:
-    return urlparse(a).netloc.lower() == urlparse(b).netloc.lower()
+    try:
+        return urlparse(a).netloc.lower() == urlparse(b).netloc.lower()
+    except ValueError:
+        return False
 
 
 def _robots(url: str, client: httpx.Client) -> urllib.robotparser.RobotFileParser:
+    """RFC 9309: 200 → kurallar, 4xx → serbest, 5xx ya da erişilemez → hepsi yasak (rp.unavailable = neden)."""
     p = urlparse(url)
     rp = urllib.robotparser.RobotFileParser()
+    rp.unavailable = None
     try:
-        r = client.get(f"{p.scheme}://{p.netloc}/robots.txt")
-        rp.parse(r.text.splitlines() if r.status_code == 200 else [])
-    except httpx.HTTPError:
-        rp.parse([])
+        r = _get(f"{p.scheme}://{p.netloc}/robots.txt", client, retries=1)
+        rp.parse(_decode(r.content, r.charset_encoding, html=False).splitlines() if r.status_code == 200 else [])
+        if r.status_code >= 500:
+            rp.unavailable = f"HTTP {r.status_code}"
+    except RuntimeError as e:
+        rp.unavailable = str(e)
+    if rp.unavailable:
+        rp.parse(["User-agent: *", "Disallow: /"])
     return rp
 
 
-def _sitemap_urls(start: str, client: httpx.Client) -> list[str]:
+def _sitemap_urls(start: str, client: httpx.Client, max_files: int = 20) -> list[str]:
+    """sitemap.xml'deki sayfa URL'leri; sitemap index'in alt sitemap'leri (aynı site, en çok max_files dosya) açılır."""
     p = urlparse(start)
-    try:
-        r = client.get(f"{p.scheme}://{p.netloc}/sitemap.xml")
-        if r.status_code == 200:
-            return re.findall(r"<loc>\s*([^<\s]+)\s*</loc>", r.text)
-    except httpx.HTTPError:
-        pass
-    return []
+    todo = [f"{p.scheme}://{p.netloc}/sitemap.xml"]
+    seen, out = set(todo), []
+    while todo:
+        try:
+            r = _get(todo.pop(0), client, retries=0)
+        except RuntimeError:
+            continue
+        if r.status_code != 200:
+            continue
+        text = _decode(r.content, r.charset_encoding, html=False)
+        index = "<sitemapindex" in text[:4096].lower()
+        for loc in _LOC.findall(text):
+            u = unescape(loc)
+            if not index:
+                out.append(u)
+            elif u not in seen and len(seen) < max_files and _same_site(u, start):
+                seen.add(u)
+                todo.append(u)
+    return out
 
 
 def map_site(url: str, limit: int = 200, use_sitemap: bool = True) -> list[str]:
-    """Sayfaları indirmeden (sitemap varsa onunla, yoksa sadece ana sayfa linkleriyle) URL listesi."""
+    """Sayfaları indirmeden (sitemap varsa onunla, yoksa sadece ana sayfa linkleriyle) URL listesi.
+    Başlangıç URL'si yönlendirilirse (örn. apex → www) site, yönlendirmenin vardığı adrestir."""
+    _check_url(url)
     with _client() as c:
+        page, err = None, None
+        try:
+            page = scrape(url, client=c)
+        except RuntimeError as e:
+            err = e
+        origin = page.url if page else url
         found: dict[str, None] = {}
         if use_sitemap:
-            for u in _sitemap_urls(url, c):
-                if _same_site(u, url) and not u.endswith(".xml"):
+            for u in _sitemap_urls(origin, c):
+                if _same_site(u, origin) and not u.endswith(".xml"):
                     found[u] = None
-        if len(found) < limit:
-            page = scrape(url, client=c)
+        if page and page.status < 400:
             for u in page.links:
-                if _same_site(u, url):
+                if _same_site(u, origin):
                     found[u] = None
+        if not found:
+            if err:
+                raise err
+            if page.status >= 400:
+                raise RuntimeError(f"{page.url} HTTP {page.status} döndü.")
         return list(found)[:limit]
+
+
+def _regex(pattern: str | None, flag: str) -> re.Pattern | None:
+    try:
+        return re.compile(pattern) if pattern else None
+    except re.error as e:
+        raise ValueError(f"{flag} geçerli bir regex değil: {e}") from e
 
 
 def crawl(url: str, limit: int = 20, depth: int = 2, include: str | None = None,
           exclude: str | None = None, delay: float = 0.5, js: bool = False,
-          respect_robots: bool = True):
-    """Genişlik öncelikli tarama; sayfaları geldikçe üretir (generator)."""
-    inc = re.compile(include) if include else None
-    exc = re.compile(exclude) if exclude else None
+          respect_robots: bool = True, on_skip: Callable[[str, str], None] | None = None):
+    """Genişlik öncelikli tarama; sayfaları geldikçe üretir (generator).
+
+    Aynı site: ilk sayfanın yönlendirmeden sonraki adresidir (apex → www). Yönlendirmeler her adımda robots.txt ve
+    aynı-site denetiminden geçer (ilk sayfa için yalnızca robots). limit alınan sayfa sayısıdır; yapılan istek
+    sayısı ise limit*3+10 ile sınırlıdır. Atlanan sayfalar on_skip(url, neden) ile bildirilir.
+    """
+    skip = on_skip or (lambda u, why: None)
+    inc, exc = _regex(include, "--include"), _regex(exclude, "--exclude")
+    _check_url(url)
+    max_tries = limit * 3 + 10
     with _client() as c:
-        rp = _robots(url, c) if respect_robots else None
+        origin = url
+        rps: dict[str, urllib.robotparser.RobotFileParser] = {}
+
+        def blocked(u: str, start: bool = False) -> str | None:
+            if not start and not _same_site(u, origin):
+                return "başka bir siteye yönlendiriyor"
+            if respect_robots:
+                p = urlparse(u)
+                key = f"{p.scheme}://{p.netloc}".lower()
+                rp = rps.get(key) or rps.setdefault(key, _robots(u, c))
+                if rp.unavailable:
+                    return f"robots.txt alınamadı ({rp.unavailable}); --no-robots ile yok sayılabilir"
+                if not rp.can_fetch(UA, u):
+                    return "robots.txt izin vermiyor"
+            return None
+
         queue = deque([(urldefrag(url)[0], 0)])
         seen = {queue[0][0]}
-        n = 0
-        while queue and n < limit:
+        visited: set[str] = set()
+        n = tries = 0
+        while queue and n < limit and tries < max_tries:
             cur, d = queue.popleft()
-            if rp and not rp.can_fetch(UA, cur):
+            why = blocked(cur, d == 0)
+            if why:
+                skip(cur, why)
                 continue
+            if tries:
+                time.sleep(delay)
+            tries += 1
             try:
-                page = scrape(cur, js=js, client=c)
-            except RuntimeError:
+                page = scrape(cur, js=js, client=c, check=lambda u, first=d == 0: blocked(u, first))
+            except RuntimeError as e:
+                skip(cur, str(e))
                 continue
-            if page.status < 400 and page.markdown:
+            final = urldefrag(page.url)[0]
+            why = blocked(final, d == 0) if final != cur else None
+            if why:
+                skip(cur, f"{final} adresine yönlendi: {why}")
+                continue
+            if d == 0:
+                origin = final
+            seen.add(final)
+            if final in visited:  # başka bir adres aynı sayfaya yönlendirmiş
+                continue
+            visited.add(final)
+            if page.status >= 400:
+                skip(final, f"HTTP {page.status}")
+                continue
+            if page.markdown:
                 n += 1
                 yield page
+            else:
+                skip(final, "metin bulunamadı")
             if d < depth:
                 for l in page.links:
-                    if l in seen or not _same_site(l, url):
+                    if l in seen or not _same_site(l, origin):
                         continue
                     if (inc and not inc.search(l)) or (exc and exc.search(l)):
                         continue
+                    if len(queue) + tries >= max_tries:
+                        break
                     seen.add(l)
                     queue.append((l, d + 1))
-            time.sleep(delay)
