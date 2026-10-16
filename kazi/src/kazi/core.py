@@ -4,9 +4,11 @@ from __future__ import annotations
 import codecs
 import os
 import re
+import ssl
 import time
 import urllib.robotparser
 from collections import deque
+from contextlib import nullcontext
 from dataclasses import dataclass, field
 from html import unescape
 from pathlib import Path
@@ -33,6 +35,14 @@ _SKIP_EXT = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".ico", ".css", "
 _DROP_HEADERS = {"content-encoding", "content-length", "transfer-encoding"}
 
 
+class FetchError(RuntimeError):
+    """İndirme hatası; kind: tls_cert, tls, refused, timeout, net, hops, decode, big, pdf (boşsa genel)."""
+
+    def __init__(self, message: str, kind: str = ""):
+        super().__init__(message)
+        self.kind = kind
+
+
 @dataclass
 class Page:
     url: str
@@ -55,9 +65,11 @@ def _check_url(url: str) -> None:
         raise RuntimeError(f"{url} geçersiz: URL http:// ya da https:// ile başlamalı.")
 
 
-def _read(client: httpx.Client, url: str, check: Callable[[str], str | None] | None = None) -> httpx.Response:
-    """GET; gövde MAX_BYTES (açılmış bayt) ve MAX_SECONDS ile sınırlı. check verilirse yönlendirmeler
-    elle izlenir ve her hedef check(url) ile sorulur (None: serbest, metin: engel nedeni)."""
+def _read(client: httpx.Client, url: str, check: Callable[[str], str | None] | None = None,
+          max_bytes: int | None = None) -> httpx.Response:
+    """GET; gövde max_bytes (varsayılan MAX_BYTES; açılmış bayt) ve MAX_SECONDS ile sınırlı. check verilirse
+    yönlendirmeler elle izlenir ve her hedef check(url) ile sorulur (None: serbest, metin: engel nedeni)."""
+    cap = max_bytes or MAX_BYTES
     deadline = time.monotonic() + MAX_SECONDS
     for _ in range(MAX_REDIRECTS + 1):
         with client.stream("GET", url, follow_redirects=check is None) as r:
@@ -66,10 +78,10 @@ def _read(client: httpx.Client, url: str, check: Callable[[str], str | None] | N
                 buf = bytearray()
                 for chunk in r.iter_bytes():
                     buf += chunk
-                    if len(buf) > MAX_BYTES:
-                        raise RuntimeError(f"{url} yanıtı {MAX_BYTES // 2**20} MB sınırını aştı.")
+                    if len(buf) > cap:
+                        raise FetchError(f"{url} yanıtı {cap // 2**20} MB sınırını aştı.", "big")
                     if time.monotonic() > deadline:
-                        raise RuntimeError(f"{url} indirmesi {MAX_SECONDS:.0f} sn sınırını aştı.")
+                        raise FetchError(f"{url} indirmesi {MAX_SECONDS:.0f} sn sınırını aştı.", "timeout")
                 headers = [(k, v) for k, v in r.headers.multi_items() if k.lower() not in _DROP_HEADERS]
                 return httpx.Response(r.status_code, headers=headers, content=bytes(buf), request=r.request)
         try:
@@ -80,15 +92,31 @@ def _read(client: httpx.Client, url: str, check: Callable[[str], str | None] | N
         if why:
             raise RuntimeError(f"yönlendirme {nxt} adresine gidiyor: {why}")
         url = nxt
-    raise RuntimeError(f"{url} çok fazla yönlendirme (>{MAX_REDIRECTS}).")
+    raise FetchError(f"{url} çok fazla yönlendirme (>{MAX_REDIRECTS}).", "hops")
 
 
-def _get(url: str, client: httpx.Client, retries: int = 2, check: Callable[[str], str | None] | None = None) -> httpx.Response:
+def _net_kind(e: BaseException) -> str:
+    """httpx hatasının nedeni (FetchError.kind): zincirdeki ssl/soket hatalarına bakar."""
+    chain, c = [], e
+    while c is not None and len(chain) < 8:
+        chain.append(c)
+        c = c.__cause__ or c.__context__
+    if any(isinstance(c, ssl.SSLCertVerificationError) for c in chain):
+        return "tls_cert"
+    if any(isinstance(c, ssl.SSLError) for c in chain):
+        return "tls"
+    if any(isinstance(c, ConnectionRefusedError) for c in chain):
+        return "refused"
+    return "timeout" if isinstance(e, httpx.TimeoutException) else "net"
+
+
+def _get(url: str, client: httpx.Client, retries: int = 2, check: Callable[[str], str | None] | None = None,
+         max_bytes: int | None = None) -> httpx.Response:
     _check_url(url)
     last: Exception | None = None
     for i in range(retries + 1):
         try:
-            r = _read(client, url, check)
+            r = _read(client, url, check, max_bytes)
             if r.status_code >= 500 and i < retries:
                 time.sleep(2**i)
                 continue
@@ -96,12 +124,15 @@ def _get(url: str, client: httpx.Client, retries: int = 2, check: Callable[[str]
         except httpx.InvalidURL as e:
             raise RuntimeError(f"{url} indirilemedi: geçersiz URL ({e})") from e
         except (httpx.UnsupportedProtocol, httpx.TooManyRedirects, httpx.DecodingError) as e:  # tekrar denemek anlamsız
-            raise RuntimeError(f"{url} indirilemedi: {e}") from e
+            kind = {httpx.TooManyRedirects: "hops", httpx.DecodingError: "decode"}.get(type(e), "")
+            raise FetchError(f"{url} indirilemedi: {e}", kind) from e
         except httpx.HTTPError as e:
             last = e
+            if _net_kind(e) in ("tls_cert", "tls", "refused"):  # sertifika/bağlantı reddi: tekrar denemek bekletmekten başka işe yaramaz
+                break
             if i < retries:
                 time.sleep(2**i)
-    raise RuntimeError(f"{url} indirilemedi: {last}")
+    raise FetchError(f"{url} indirilemedi: {last}", _net_kind(last)) from last
 
 
 def _ctype(r: httpx.Response) -> str:
@@ -145,21 +176,22 @@ def _decode(data: bytes, charset: str | None = None, html: bool = True) -> str:
 
 
 def _fetch(url: str, client: httpx.Client, js: bool = False, retries: int = 2,
-           check: Callable[[str], str | None] | None = None) -> tuple[str, int, str, bytes | None, bool]:
+           check: Callable[[str], str | None] | None = None,
+           max_bytes: int | None = None) -> tuple[str, int, str, bytes | None, bool]:
     """(html, status, son_url, pdf, düz_metin). Yanıt PDF ise pdf ham bayttır (html boş), değilse None;
     düz_metin True ise html aslında text/plain, Markdown ya da JSON gövdesidir."""
     _check_url(url)
     html = None
     if js:
         try:
-            html, status, final = _fetch_js(url)
+            html, status, final = _fetch_js(url, check=check) if check else _fetch_js(url)
         except RuntimeError as e:
             if "Download is starting" not in str(e):  # headless_shell PDF'i indirmeye çalışır
                 raise
         if html is not None and not _PDF_VIEWER.search(html):
             return html, status, final, None, False
         # tam Chromium PDF görüntüleyici sarmalayıcısı döndürdü: gerçek baytlar HTTP ile alınır
-    r = _get(url, client, retries, check)
+    r = _get(url, client, retries, check, max_bytes)
     if _is_pdf(r):
         return "", r.status_code, str(r.url), r.content, False
     if html is not None:  # PDF değilmiş, JS çıktısı geçerli
@@ -176,9 +208,11 @@ def _fetch_html(url: str, client: httpx.Client, js: bool = False, retries: int =
     return _fetch(url, client, js, retries)[:3]
 
 
-def _fetch_js(url: str, timeout: float = 30.0, settle: float = 0.7) -> tuple[str, int, str]:
+def _fetch_js(url: str, timeout: float = 30.0, settle: float = 0.7,
+              check: Callable[[str], str | None] | None = None) -> tuple[str, int, str]:
     """Playwright ile render: load, sınırlı networkidle, sonra DOM `settle` sn durulana kadar bekler.
-    Chromium sandbox'ı açık başlar; root'ta ya da KAZI_NO_SANDBOX=1 iken kapalıdır (root'ta açılamaz)."""
+    Chromium sandbox'ı açık başlar; root'ta ya da KAZI_NO_SANDBOX=1 iken kapalıdır (root'ta açılamaz).
+    check verilirse tarayıcının yaptığı her http(s) isteği (yönlendirme adımları, alt kaynaklar) check(url) ile sorulur."""
     import glob
 
     try:
@@ -208,7 +242,7 @@ def _fetch_js(url: str, timeout: float = 30.0, settle: float = 0.7) -> tuple[str
             try:
                 pg = b.new_page(user_agent=UA)
                 pg.set_default_timeout(ms)
-                resp = pg.goto(url, wait_until="load")
+                resp = _guarded_goto(pg, url, check) if check else pg.goto(url, wait_until="load")
                 cap = min(ms, 5000)
                 try:
                     pg.wait_for_load_state("networkidle", timeout=cap)
@@ -224,6 +258,47 @@ def _fetch_js(url: str, timeout: float = 30.0, settle: float = 0.7) -> tuple[str
     except PWError as e:
         hint = " (sandbox açılamadıysa, güvendiğiniz ortamda KAZI_NO_SANDBOX=1 deneyin)" if sandbox and "sandbox" in str(e).lower() else ""
         raise RuntimeError(f"{url} JS ile indirilemedi: {str(e).strip().splitlines()[0]}{hint}") from e
+
+
+def _guarded_goto(pg, url: str, check: Callable[[str], str | None]):
+    """goto + adres denetimi: tarayıcının her isteği (WebSocket dahil) check'ten geçer. Chromium sayfa yönlendirmelerini route'a
+    göstermeden kendi izlediği için bunları biz izleriz (yanıt yönlendirmesiz alınır, yeni adrese yeniden gidilir)."""
+    from playwright.sync_api import Error as PWError
+
+    hops: list[str] = []
+
+    def handler(route):
+        req = route.request
+        if not req.url.startswith(("http://", "https://")):
+            return route.continue_()
+        if check(req.url) is not None:
+            return route.abort()
+        if not req.is_navigation_request():
+            return route.continue_()
+        try:
+            r = route.fetch(max_redirects=0)
+        except PWError:
+            return route.abort()
+        loc = r.headers.get("location")
+        if 300 <= r.status < 400 and loc:
+            if req.frame != pg.main_frame:
+                return route.abort()
+            hops.append(urljoin(req.url, loc))
+            return route.fulfill(status=200, content_type="text/html", body="")
+        route.fulfill(response=r)
+
+    def ws_handler(ws):  # WebSocket el sıkışmaları pg.route'tan geçmez. Engellenen sunucuya hiç bağlanılmaz
+        if check(re.sub(r"^ws", "http", ws.url, count=1)) is None:
+            ws.connect_to_server()
+
+    pg.route("**/*", handler)
+    pg.route_web_socket("**/*", ws_handler)
+    for _ in range(MAX_REDIRECTS + 1):
+        resp = pg.goto(url, wait_until="load")
+        if not hops:
+            return resp
+        url = hops.pop()
+    raise RuntimeError(f"{url} çok fazla yönlendirme (>{MAX_REDIRECTS}).")
 
 
 def extract_links(html: str, base: str) -> list[str]:
@@ -258,18 +333,19 @@ def _page_from_pdf(data: bytes, final: str, status: int) -> Page:
     try:
         md, title = pdf_to_markdown(data)
     except ValueError as e:
-        raise RuntimeError(f"{final} PDF olarak okunamadı: {e}") from e
+        raise FetchError(f"{final} PDF olarak okunamadı: {e}", "pdf") from e
     return Page(url=final, markdown=md, title=title, status=status)
 
 
 def scrape(url: str, js: bool = False, only_main: bool = True, client: httpx.Client | None = None,
-           check: Callable[[str], str | None] | None = None) -> Page:
-    """Tek sayfa → Markdown. js=True: Playwright. only_main=False: sayfanın tamamı. PDF otomatik çevrilir;
-    text/plain, Markdown ve JSON yanıtlar olduğu gibi döner. check: yönlendirme hedefi denetimi (bkz. _read)."""
+           check: Callable[[str], str | None] | None = None, max_bytes: int | None = None) -> Page:
+    """Tek sayfa → Markdown. js=True: Playwright. only_main=False: daha çok metin (favor_recall). PDF otomatik
+    çevrilir; text/plain, Markdown ve JSON yanıtlar olduğu gibi döner. check: yönlendirme hedefi denetimi,
+    max_bytes: yanıt boyut sınırı (bkz. _read)."""
     own = client is None
     client = client or _client()
     try:
-        html, status, final, pdf, plain = _fetch(url, client, js=js, check=check)
+        html, status, final, pdf, plain = _fetch(url, client, js=js, check=check, max_bytes=max_bytes)
     finally:
         if own:
             client.close()
@@ -317,46 +393,53 @@ def _robots(url: str, client: httpx.Client) -> urllib.robotparser.RobotFileParse
     return rp
 
 
-def _sitemap_urls(start: str, client: httpx.Client, max_files: int = 20) -> list[str]:
-    """sitemap.xml'deki sayfa URL'leri; sitemap index'in alt sitemap'leri (aynı site, en çok max_files dosya) açılır."""
+def _sitemap_urls(start: str, client: httpx.Client, max_files: int = 20, limit: int | None = None,
+                  keep: Callable[[str], bool] | None = None, max_bytes: int | None = None) -> list[str]:
+    """sitemap.xml'deki sayfa URL'leri; sitemap index'in alt sitemap'leri (aynı site, en çok max_files dosya) açılır.
+    keep verilirse yalnız onu geçenler alınır; limit'e ulaşılınca okuma durur (dev sitemap belleği doldurmasın)."""
     p = urlparse(start)
     todo = [f"{p.scheme}://{p.netloc}/sitemap.xml"]
-    seen, out = set(todo), []
+    seen, out = set(todo), {}
     while todo:
         try:
-            r = _get(todo.pop(0), client, retries=0)
+            r = _get(todo.pop(0), client, retries=0, max_bytes=max_bytes)
         except RuntimeError:
             continue
         if r.status_code != 200:
             continue
         text = _decode(r.content, r.charset_encoding, html=False)
         index = "<sitemapindex" in text[:4096].lower()
-        for loc in _LOC.findall(text):
-            u = unescape(loc)
+        for m in _LOC.finditer(text):
+            u = unescape(m.group(1))
             if not index:
-                out.append(u)
+                if keep is None or keep(u):
+                    out[u] = None
+                    if limit and len(out) >= limit:
+                        return list(out)
             elif u not in seen and len(seen) < max_files and _same_site(u, start):
                 seen.add(u)
                 todo.append(u)
-    return out
+    return list(out)
 
 
-def map_site(url: str, limit: int = 200, use_sitemap: bool = True) -> list[str]:
+def map_site(url: str, limit: int = 200, use_sitemap: bool = True, client: httpx.Client | None = None,
+             max_bytes: int | None = None) -> list[str]:
     """Sayfaları indirmeden (sitemap varsa onunla, yoksa sadece ana sayfa linkleriyle) URL listesi.
-    Başlangıç URL'si yönlendirilirse (örn. apex → www) site, yönlendirmenin vardığı adrestir."""
+    Başlangıç URL'si yönlendirilirse (örn. apex → www) site, yönlendirmenin vardığı adrestir.
+    client verilirse tüm istekler onunla yapılır ve kapatılmaz; max_bytes her indirmenin boyut sınırıdır."""
     _check_url(url)
-    with _client() as c:
+    with (nullcontext(client) if client else _client()) as c:
         page, err = None, None
         try:
-            page = scrape(url, client=c)
+            page = scrape(url, client=c, max_bytes=max_bytes)
         except RuntimeError as e:
             err = e
         origin = page.url if page else url
         found: dict[str, None] = {}
         if use_sitemap:
-            for u in _sitemap_urls(origin, c):
-                if _same_site(u, origin) and not u.endswith(".xml"):
-                    found[u] = None
+            keep = lambda u: _same_site(u, origin) and not u.endswith(".xml")  # noqa: E731
+            for u in _sitemap_urls(origin, c, limit=limit, keep=keep, max_bytes=max_bytes):
+                found[u] = None
         if page and page.status < 400:
             for u in page.links:
                 if _same_site(u, origin):

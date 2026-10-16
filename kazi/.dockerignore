@@ -1,0 +1,21 @@
+# Build bağlamı kazi/ klasörü; imaja yalnız pyproject.toml, README.md ve src/ lazım.
+.git
+.gitignore
+.venv
+venv
+cikti
+tests
+.pytest_cache
+build
+dist
+**/__pycache__
+**/*.pyc
+**/*.egg-info
+
+# Gizli bilgiler imaja girmesin
+.env
+.env.*
+
+# Yayın dosyaları
+render.yaml
+DEPLOY.md

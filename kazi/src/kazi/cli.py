@@ -124,6 +124,25 @@ def _cmd_search(a) -> int:
     return 0
 
 
+def _cmd_serve(a) -> int:
+    try:
+        from .web import serve
+    except ModuleNotFoundError as e:
+        if e.name not in ("fastapi", "uvicorn", "starlette", "pydantic"):
+            raise
+        raise RuntimeError("serve için: pip install 'kazi[web]'") from e
+    port = a.port
+    if port is None:
+        try:
+            port = int(os.environ.get("PORT") or 8000)
+        except ValueError:
+            raise ValueError("PORT bir sayı olmalı.") from None
+    if not 0 < port < 65536:
+        raise ValueError("port 1-65535 arasında olmalı.")
+    serve(a.host, port, a.no_auth)
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="kazi", description="Web sayfalarını temiz Markdown'a çevirir.")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -164,11 +183,18 @@ def main(argv=None) -> int:
     q.add_argument("--js", action="store_true", help="--scrape ile sayfaları Playwright ile render et")
     q.add_argument("--json", action="store_true", help="JSON çıktı")
 
+    v = sub.add_parser("serve", help="web arayüzünü başlat (KAZI_TOKEN gerekir)")
+    v.add_argument("--host", default="0.0.0.0", help="varsayılan: 0.0.0.0")
+    v.add_argument("--port", type=int, help="varsayılan: $PORT ya da 8000")
+    v.add_argument("--no-auth", action="store_true", help="kimlik denetimi yok (yalnızca --host 127.0.0.1)")
+
     a = ap.parse_args(argv)
     logging.getLogger("pypdf").setLevel(logging.ERROR)
     _utf8_streams()
 
     try:
+        if a.cmd == "serve":
+            return _cmd_serve(a)
         if a.cmd == "extract":
             return _cmd_extract(a)
         if a.cmd == "search":

@@ -186,6 +186,8 @@ def test_scrape_file_errors(tmp_path):
 
 # --- sağlamlaştırma: yönlendirme, robots, sınırlar, kodlama ------------------------------------------
 import gzip
+import socket
+import ssl
 import sys
 import threading
 import time
@@ -709,3 +711,108 @@ def test_chromium_sandbox_failure_hints_opt_out(monkeypatch):
     monkeypatch.setattr(core.os, "geteuid", lambda: 1000, raising=False)
     with pytest.raises(RuntimeError, match="KAZI_NO_SANDBOX=1"):
         core._fetch_js("http://a.test/")
+
+
+# --- FetchError.kind: neden + anlamsız yeniden denemeyi atlama --------------------------------------------------
+def _chained(outer, inner):
+    outer.__cause__ = inner
+    return outer
+
+
+@pytest.mark.parametrize("make,kind,slept", [
+    (lambda: _chained(httpx.ConnectError("x"), ssl.SSLCertVerificationError(1, "certificate verify failed")), "tls_cert", []),
+    (lambda: _chained(httpx.ConnectError("x"), ssl.SSLError(1, "wrong version number")), "tls", []),
+    (lambda: _chained(_chained(httpx.ConnectError("x"), OSError("y")), ConnectionRefusedError(111, "refused")), "refused", []),
+    (lambda: httpx.ConnectTimeout("t"), "timeout", [1, 2]),
+    (lambda: httpx.ReadTimeout("t"), "timeout", [1, 2]),
+    (lambda: httpx.RemoteProtocolError("kesildi"), "net", [1, 2]),
+])
+def test_get_error_kind_and_retry_only_when_it_can_help(sleeps, make, kind, slept):
+    def h(req):
+        raise make()
+    with pytest.raises(core.FetchError) as e:
+        core._get("http://a.test/", mk(h))
+    assert e.value.kind == kind and "indirilemedi" in str(e.value) and sleeps == slept
+
+
+def test_get_special_errors_have_their_own_kind(sleeps):
+    def loop(req):
+        return httpx.Response(302, headers={"Location": "/"})
+    with pytest.raises(core.FetchError) as e:
+        core._get("http://a.test/", mk(loop))
+    assert e.value.kind == "hops"
+    with pytest.raises(core.FetchError) as e:
+        core._get("http://a.test/", mk(loop), check=lambda u: None)
+    assert e.value.kind == "hops"
+    with pytest.raises(core.FetchError) as e:
+        core._get("http://a.test/", mk(lambda req: httpx.Response(200, headers={"content-encoding": "gzip"}, content=b"degil-gzip")))
+    assert e.value.kind == "decode"
+    with pytest.raises(core.FetchError) as e:
+        scrape("http://a.test/x.pdf", client=mk(lambda req: httpx.Response(200, content=b"%PDF-1.4 bozuk")))
+    assert e.value.kind == "pdf"
+
+
+def test_real_sockets_refused_port_and_https_to_plain_http_fail_fast(sleeps):
+    s = socket.socket()
+    s.bind(("127.0.0.1", 0))
+    closed = s.getsockname()[1]
+    s.close()  # kimse dinlemiyor
+    srv = ThreadingHTTPServer(("127.0.0.1", 0), _Hostile)
+    srv.daemon_threads = True
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        with core._client(timeout=5) as c:
+            with pytest.raises(core.FetchError) as e:
+                core._get(f"http://127.0.0.1:{closed}/", c)
+            assert e.value.kind == "refused"
+            with pytest.raises(core.FetchError) as e:
+                core._get(f"https://127.0.0.1:{srv.server_address[1]}/", c)  # düz http sunucuya https
+            assert e.value.kind == "tls"
+    finally:
+        srv.shutdown()
+        srv.server_close()
+    assert sleeps == []
+
+
+# --- yanıt boyutu parametresi ve sitemap sınırı -----------------------------------------------------------------
+def test_max_bytes_argument_limits_one_call_without_touching_the_default():
+    big = lambda req: httpx.Response(200, headers={"content-type": "text/html"}, content=b"a" * (2**20 + 1))  # noqa: E731
+    with pytest.raises(core.FetchError, match="1 MB sınırını aştı") as e:
+        scrape("http://a.test/", client=mk(big), max_bytes=2**20)
+    assert e.value.kind == "big"
+    assert scrape("http://a.test/", client=mk(big)).status == 200  # sınır verilmezse MAX_BYTES (50 MB)
+
+
+def test_map_site_stops_reading_sitemaps_at_limit(monkeypatch):
+    def h(req):
+        p = req.url.path
+        if p == "/sitemap.xml":
+            subs = "".join(f"<sitemap><loc>http://a.test/s{i}.xml</loc></sitemap>" for i in range(1, 6))
+            return httpx.Response(200, text=f"<sitemapindex>{subs}</sitemapindex>")
+        if p.startswith("/s"):
+            urls = "".join(f"<url><loc>http://a.test/{p[1:-4]}-{j}</loc></url>" for j in range(10))
+            return httpx.Response(200, text=f"<urlset>{urls}</urlset>")
+        return httpx.Response(200, html=page("/home"))
+    log = serve(monkeypatch, h)
+    assert map_site("http://a.test/", limit=3) == ["http://a.test/s1-0", "http://a.test/s1-1", "http://a.test/s1-2"]
+    assert [l for l in log if l.startswith("a.test/s")] == ["a.test/sitemap.xml", "a.test/s1.xml"]  # s2..s5 hiç indirilmedi
+    log.clear()
+    assert len(map_site("http://a.test/", limit=200)) == 51  # 5 x 10 sitemap adresi + ana sayfa linki
+    assert len([l for l in log if l.startswith("a.test/s")]) == 6
+
+
+def test_sitemap_limit_counts_only_kept_unique_urls():
+    def h(req):
+        return httpx.Response(200, text="<urlset>" + "".join(
+            f"<url><loc>{u}</loc></url>" for u in ["http://x.test/1", "http://a.test/1", "http://a.test/1", "http://a.test/2",
+                                                  "http://a.test/3"]) + "</urlset>")
+    keep = lambda u: u.startswith("http://a.test/")  # noqa: E731
+    assert core._sitemap_urls("http://a.test/", mk(h), limit=2, keep=keep) == ["http://a.test/1", "http://a.test/2"]
+    assert core._sitemap_urls("http://a.test/", mk(h)) == ["http://x.test/1", "http://a.test/1", "http://a.test/2", "http://a.test/3"]
+
+
+def test_map_site_passes_byte_limit_to_every_download(monkeypatch):
+    big = "<urlset>" + "<url><loc>http://a.test/p</loc></url>" * 200 + "</urlset>"  # ~7 KB
+    log = serve(monkeypatch, lambda req: httpx.Response(200, text=big if req.url.path == "/sitemap.xml" else page("/home")))
+    assert map_site("http://a.test/", max_bytes=2048) == ["http://a.test/home"]  # dev sitemap atlandı, sayfa linkleri kaldı
+    assert "a.test/sitemap.xml" in log
