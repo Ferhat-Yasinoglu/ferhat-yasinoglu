@@ -1,0 +1,28 @@
+# Render Blueprint: kazi web arayüzü, ücretsiz plan.
+# Bu dosya repo kökünde değil kazi/ klasöründe; Blueprint kurarken dosya yolu olarak
+# "kazi/render.yaml" girilir (bkz. DEPLOY.md).
+#
+# rootDir bilerek yok: Render belgelerinin iki sayfası dockerfilePath/dockerContext'in repo köküne mi
+# yoksa rootDir'e mi göre okunduğunu farklı anlatıyor. rootDir boşken (repo kökü) ikisi de aynı sonucu
+# verir. Yalnız kazi/ altındaki değişiklikler yeniden yayın başlatsın diye buildFilter var.
+services:
+  - type: web
+    name: kazi
+    runtime: docker
+    plan: free
+    dockerfilePath: ./kazi/Dockerfile
+    dockerContext: ./kazi
+    healthCheckPath: /api/health
+    buildFilter:
+      paths:
+        - kazi/**
+    envVars:
+      # Giriş şifresi: Render rastgele üretir; panelde Environment sayfasından görülür.
+      - key: KAZI_TOKEN
+        generateValue: true
+      # İsteğe bağlı ve ücretli (Veri çıkarma için). Değeri Render panelinde siz girersiniz.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      # JS modu kapalı (imajda Playwright yok).
+      - key: KAZI_ALLOW_JS
+        value: "0"

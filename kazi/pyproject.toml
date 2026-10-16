@@ -6,9 +6,10 @@ requires-python = ">=3.10"
 dependencies = ["httpx>=0.27", "trafilatura>=2.0", "pypdf>=6.0"]
 
 [project.optional-dependencies]
-js = ["playwright>=1.40"]
+js = ["playwright>=1.48"]
 extract = ["anthropic>=1.0"]
-dev = ["pytest>=8", "anthropic>=1.0", "cryptography>=3.1"]
+web = ["fastapi>=0.110", "uvicorn>=0.29"]
+dev = ["pytest>=8", "anthropic>=1.0", "cryptography>=3.1", "fastapi>=0.110", "uvicorn>=0.29"]
 
 [project.scripts]
 kazi = "kazi.cli:main"
@@ -19,3 +20,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+kazi = ["static/*", "static/**/*"]
