@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#14A89A"/>
+      <stop offset="1" stop-color="#0B4F6C"/>
+    </linearGradient>
+    <linearGradient id="needle" x1="256" y1="160" x2="256" y2="290" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <!-- tile -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- compass ring -->
+  <circle cx="256" cy="256" r="152" stroke="#FFFFFF" stroke-width="22"/>
+  <!-- cardinal ticks -->
+  <line x1="256" y1="130" x2="256" y2="104" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round"/>
+  <line x1="256" y1="382" x2="256" y2="408" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round"/>
+  <line x1="130" y1="256" x2="104" y2="256" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round"/>
+  <line x1="382" y1="256" x2="408" y2="256" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round"/>
+  <!-- needle: amber half points north-east (the chosen route), white half trails -->
+  <path d="M342 170 L278.5 278.5 L233.5 233.5 Z" fill="url(#needle)"/>
+  <path d="M170 342 L233.5 233.5 L278.5 278.5 Z" fill="#FFFFFF" fill-opacity="0.92"/>
+  <!-- pivot -->
+  <circle cx="256" cy="256" r="13" fill="#0B4F6C"/>
+  <circle cx="256" cy="256" r="6" fill="#FFFFFF"/>
+</svg>

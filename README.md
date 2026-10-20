@@ -19,6 +19,25 @@
 
 ## 🛠️ What I've built
 
+### 🧭 Pusula
+
+<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/pusula.svg" width="96" align="right" alt="Pusula: a compass mark on a teal tile, amber needle pointing north-east" />
+
+<sub>*One endpoint for every AI tool — hundreds of providers behind it, automatic fallback in front.*</sub>
+
+Coding agents such as Claude Code, Codex, Cursor and Cline talk to Pusula instead of to a single
+vendor. Pusula keeps the keys and sign-ins for hundreds of model providers, serves them all through
+one OpenAI-compatible endpoint, moves to the next provider when a quota or key runs out, and stacks
+RTK and Caveman compression so prompts cost fewer tokens. A dashboard shows usage, health and cost;
+it runs as a server, a desktop app or a PWA — in English, Turkish, German and Spanish.
+
+<sub>**Built with** TypeScript &nbsp;·&nbsp; Next.js &nbsp;·&nbsp; Node.js &nbsp;·&nbsp; SQLite &nbsp;·&nbsp; MCP &nbsp;·&nbsp; Electron</sub><br>
+<sub>**Learned here** quota-aware failover across providers &nbsp;·&nbsp; stacked prompt compression &nbsp;·&nbsp; keeping a 20k-file codebase consistent under one name</sub>
+
+[![Code](https://img.shields.io/badge/Read-Source-070604?style=flat-square&logo=github&logoColor=d4af37)](https://github.com/Ferhat-Yasinoglu/pusula)
+
+<br>
+
 ### 🤖 botflow-mcp
 
 <sub>*Telegram chatbot funnels, built by talking to a model instead of clicking a dashboard.*</sub>
