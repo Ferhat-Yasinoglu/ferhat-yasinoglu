@@ -29,7 +29,7 @@ Coding agents such as Claude Code, Codex, Cursor and Cline talk to Pusula instea
 vendor. Pusula keeps the keys and sign-ins for hundreds of model providers, serves them all through
 one OpenAI-compatible endpoint, moves to the next provider when a quota or key runs out, and stacks
 RTK and Caveman compression so prompts cost fewer tokens. A dashboard shows usage, health and cost;
-it runs as a server, a desktop app or a PWA — in English, Turkish, German and Spanish.
+it runs as a server, a desktop app or a PWA — in English, Turkish, German and Persian.
 
 <sub>**Built with** TypeScript &nbsp;·&nbsp; Next.js &nbsp;·&nbsp; Node.js &nbsp;·&nbsp; SQLite &nbsp;·&nbsp; MCP &nbsp;·&nbsp; Electron</sub><br>
 <sub>**Learned here** quota-aware failover across providers &nbsp;·&nbsp; stacked prompt compression &nbsp;·&nbsp; keeping a 20k-file codebase consistent under one name</sub>
