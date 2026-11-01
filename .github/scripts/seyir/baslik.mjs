@@ -150,7 +150,8 @@ function plakalar(cx, cy, R) {
     const a0 = (i / n) * 100;
     const a1 = ((i + 1) / n) * 100;
     // yanik pencere: [a0+2, a1-1]
-    stilK += `.${k} { animation: ${k} ${tur}s linear 1.4s infinite backwards; }
+    // taban: yalniz ilk plaka yanik (karet ve HUD da orada durur)
+    stilK += `.${k} { opacity: ${i === 0 ? 1 : 0}; animation: ${k} ${tur}s linear 1.4s infinite backwards; }
       @keyframes ${k} { 0%, ${f1(a0 + 1.5)}% { opacity: 0; } ${f1(a0 + 3)}%, ${f1(a1 - 1.5)}% { opacity: 1; } ${f1(a1)}%, 100% { opacity: 0; } }\n`;
     const [ix, iy] = pol(cx, cy, 104, p.aci);
     isin += `<g class="${k}"><line x1="${f1(ix)}" y1="${f1(iy)}" x2="${f1(px)}" y2="${f1(py)}" stroke="${S.ember}" stroke-opacity=".75" stroke-dasharray="3 4" class="flow" />

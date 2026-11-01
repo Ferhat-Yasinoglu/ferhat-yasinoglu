@@ -24,7 +24,7 @@
 
 <a href="https://dawayar.pages.dev/"><img src="assets/project-dawayar.svg" width="49%" alt="Dawayar — pharmacy management for Afghan pharmacies: batch and expiry stock, barcode till, credit and reports; offline first, synced by a Worker. Live." /></a>
 <a href="https://mini-dakhl.pages.dev/"><img src="assets/project-mini-dakhl.svg" width="49%" alt="Mini Dakhl — offline accounting: day book, receivables, stock, hawala and currency exchange with a balance per currency. Live." /></a>
-<a href="https://shafa.pages.dev/"><img src="assets/project-shafa.svg" width="49%" alt="Shafa — prescriptions and patient records for a clinic doctor, with QR verification and allergy warnings; data stays on the device. Live." /></a>
+<a href="https://shafa.pages.dev/"><img src="assets/project-shafa.svg" width="49%" alt="Shafa — prescriptions and patient records for a clinic doctor, with a verification code against forged prescriptions and allergy warnings; patient data stays on the device. Live." /></a>
 <a href="https://nuskha.pages.dev/"><img src="assets/project-nusha.svg" width="49%" alt="Nüsha — prescription system for one doctor on the web, Android and Windows; Shafa's forerunner. Live." /></a>
 <a href="https://naqsha-zamin.pages.dev/"><img src="assets/project-zamin.svg" width="49%" alt="Zamin — land measuring, dividing and selling for property agents: satellite map, GPS, jerib, biswa and m². Live." /></a>
 <a href="https://fy-netstore.pages.dev/"><img src="assets/project-netstore.svg" width="49%" alt="NetStore — stock, sales, customers and debt for a retail shop; works offline. Live." /></a>
@@ -37,7 +37,7 @@
 
 <img src="assets/station-ai.svg" width="100%" alt="090° · AI &amp; Platforms — AI tools and platforms. Gateways, studios and bots that do the work." />
 
-<a href="https://github.com/Ferhat-Yasinoglu/pusula"><img src="assets/project-pusula.svg" width="100%" alt="Pusula — open-source AI gateway: one OpenAI-compatible endpoint for Claude Code, Codex, Cursor and Cline, automatic fallback across 375 providers, 20 routing strategies, RTK and Caveman compression." /></a>
+<a href="https://github.com/Ferhat-Yasinoglu/pusula"><img src="assets/project-pusula.svg" width="100%" alt="Pusula — open-source AI gateway, continuing OmniRoute: one OpenAI-compatible endpoint for Claude Code, Codex, Cursor and Cline, automatic fallback across 375 providers, 20 routing strategies, RTK and Caveman compression." /></a>
 
 <div align="center">
 
@@ -45,7 +45,7 @@
 <a href="https://sosyal-studyo.pages.dev/"><img src="assets/project-sosyal-studyo.svg" width="49%" alt="Sosyal Stüdyo — social media automation: flows, contacts, bulk messages, an AI agent and content tools. Live." /></a>
 <img src="assets/project-fy-reklam.svg" width="49%" alt="FY Reklam — studio that designs Instagram and Facebook posts, checks captions and publishes through the Meta API. In-house." />
 <a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/botflow-mcp"><img src="assets/project-botflow-mcp.svg" width="49%" alt="botflow-mcp — Telegram chatbot funnels built by talking to a model over MCP. Open source." /></a>
-<a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/kazi"><img src="assets/project-kazi.svg" width="49%" alt="kazi — a small personal Firecrawl: web pages and PDFs to Markdown, JSON extraction with Claude, web search. Open source." /></a>
+<a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/kazi"><img src="assets/project-kazi.svg" width="49%" alt="kazi — a small Firecrawl-like scraper for personal use: web pages and PDFs to Markdown, JSON extraction with Claude, web search. Source on GitHub." /></a>
 
 </div>
 
@@ -68,7 +68,7 @@
 
 | Project | Learned here |
 |---|---|
-| Pusula | quota-aware failover across providers · stacked prompt compression · keeping a 20k-file codebase consistent under one name |
+| Pusula | quota-aware failover across providers · stacked prompt compression · keeping a rebranded 16k-file fork consistent under one name |
 | Dawayar | deriving stock and balances from documents instead of counters · last-writer-wins sync over a server sequence · rotating nonces to catch a cloned session |
 | FY Merkez | one licence server for many products · trials and one-device rules · Shamsi dates and right-to-left in a panel |
 | botflow-mcp | the Model Context Protocol · resumable background jobs · migrating a schema in place |
@@ -101,10 +101,9 @@
 <a href="https://react.dev/" title="React"><img src="assets/icon-react.svg" width="70" alt="React" /></a>
 <a href="https://www.electronjs.org/" title="Electron"><img src="assets/icon-electron.svg" width="70" alt="Electron" /></a>
 <a href="https://web.dev/explore/progressive-web-apps" title="PWA"><img src="assets/icon-pwa.svg" width="70" alt="PWA" /></a>
-<a href="https://developers.cloudflare.com/workers/" title="Workers"><img src="assets/icon-cloudflareworkers.svg" width="70" alt="Workers" /></a>
 
+<a href="https://developers.cloudflare.com/workers/" title="Workers"><img src="assets/icon-cloudflareworkers.svg" width="70" alt="Workers" /></a>
 <a href="https://www.sqlite.org/" title="SQLite"><img src="assets/icon-sqlite.svg" width="70" alt="SQLite" /></a>
-<a href="https://firebase.google.com/" title="Firebase"><img src="assets/icon-firebase.svg" width="70" alt="Firebase" /></a>
 <a href="https://modelcontextprotocol.io/" title="MCP"><img src="assets/icon-mcp.svg" width="70" alt="MCP" /></a>
 <a href="https://docs.anthropic.com/" title="Claude API"><img src="assets/icon-anthropic.svg" width="70" alt="Claude API" /></a>
 <a href="https://core.telegram.org/bots/api" title="Telegram"><img src="assets/icon-telegram.svg" width="70" alt="Telegram" /></a>
@@ -113,13 +112,12 @@
 <a href="https://git-scm.com/" title="Git"><img src="assets/icon-git.svg" width="70" alt="Git" /></a>
 <a href="https://github.com/" title="GitHub"><img src="assets/icon-github.svg" width="70" alt="GitHub" /></a>
 <a href="https://www.kernel.org/" title="Linux"><img src="assets/icon-linux.svg" width="70" alt="Linux" /></a>
-<a href="https://www.figma.com/" title="Figma"><img src="assets/icon-figma.svg" width="70" alt="Figma" /></a>
 
 </div>
 
 <a name="logbook"></a>
 
-<img src="assets/station-logbook.svg" width="100%" alt="270° · Logbook — read from the GitHub API every six hours." />
+<img src="assets/station-logbook.svg" width="100%" alt="270° · Logbook — cards read from the GitHub API every six hours; the snake comes from Platane/snk." />
 
 <div align="center">
 

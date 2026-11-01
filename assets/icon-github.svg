@@ -32,9 +32,9 @@
   @keyframes flowr { to { stroke-dashoffset: 24; } }
   .draw { animation: draw 1.6s cubic-bezier(.16,1,.3,1) backwards; }
   @keyframes draw { from { stroke-dashoffset: var(--len, 1000); } }
-  .dalga { animation: dalga 7s cubic-bezier(.37,0,.63,1) 4.2s infinite; }
+  .dalga { animation: dalga 7s cubic-bezier(.37,0,.63,1) 4s infinite; }
       @keyframes dalga { 0% { transform: translateX(-70px); } 30%, 100% { transform: translateX(116px); } }
-      .yuz { transform-box: fill-box; transform-origin: center; animation: yuz 7s ease-in-out 4.2s infinite; }
+      .yuz { transform-box: fill-box; transform-origin: center; animation: yuz 7s ease-in-out 4s infinite; }
       @keyframes yuz { 0%, 30%, 100% { transform: scale(1); } 12% { transform: scale(1.07); } }
   @media (prefers-reduced-motion: reduce) {
     * { animation-duration: .001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }

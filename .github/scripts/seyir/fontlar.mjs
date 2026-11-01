@@ -108,6 +108,8 @@ export function gom(kartlar) {
     });
     sonuc = JSON.parse(out.toString("utf8"));
   } catch (e) {
+    // CI'da yazi tipsiz kart uretmek butun kartlari bozup commit'lerdi: dur.
+    if (process.env.CI) throw new Error("yazi tipleri gomulemedi (subset.py): " + String(e.stderr || e.message));
     console.warn("uyari: yazi tipleri gomulemedi (python3 + fonttools + brotli gerekli); sistem yazi tipleri kullanilacak");
     console.warn(String(e.stderr || e.message).split("\n").slice(-3).join("\n"));
   }

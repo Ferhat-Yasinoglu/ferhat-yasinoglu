@@ -56,65 +56,65 @@
   </defs>
   <rect x="16" y="16" width="468" height="160" rx="10" fill="#111013" />
   <rect x="16" y="16" width="468" height="160" rx="10" fill="url(#ap3)" />
-  <g clip-path="url(#ac4)"><g transform="translate(16 16)"><style>.w5 { opacity: 0; animation: w5 8s linear 0.3s infinite backwards; }
+  <g clip-path="url(#ac4)"><g transform="translate(16 16)"><style>.w5 { opacity: 1; animation: w5 8s linear 0.3s infinite backwards; }
     @keyframes w5 { 0%, 2% { opacity: 0; } 3.5%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.w6 { opacity: 0; animation: w6 8s linear 0.3s infinite backwards; }
+.w6 { opacity: 1; animation: w6 8s linear 0.3s infinite backwards; }
     @keyframes w6 { 0%, 13.7% { opacity: 0; } 15.2%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.w7 { opacity: 0; animation: w7 8s linear 0.3s infinite backwards; }
+.w7 { opacity: 1; animation: w7 8s linear 0.3s infinite backwards; }
     @keyframes w7 { 0%, 25.3% { opacity: 0; } 26.8%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.w8 { opacity: 0; animation: w8 8s linear 0.3s infinite backwards; }
+.w8 { opacity: 1; animation: w8 8s linear 0.3s infinite backwards; }
     @keyframes w8 { 0%, 37% { opacity: 0; } 38.5%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.w9 { opacity: 0; animation: w9 8s linear 0.3s infinite backwards; }
+.w9 { opacity: 1; animation: w9 8s linear 0.3s infinite backwards; }
     @keyframes w9 { 0%, 48.7% { opacity: 0; } 50.2%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wa { opacity: 0; animation: wa 8s linear 0.3s infinite backwards; }
+.wa { opacity: 1; animation: wa 8s linear 0.3s infinite backwards; }
     @keyframes wa { 0%, 60.3% { opacity: 0; } 61.8%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wb { opacity: 0; animation: wb 8s linear 0.3s infinite backwards; }
+.wb { opacity: 1; animation: wb 8s linear 0.3s infinite backwards; }
     @keyframes wb { 0%, 4.3% { opacity: 0; } 5.8%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wc { opacity: 0; animation: wc 8s linear 0.3s infinite backwards; }
+.wc { opacity: 1; animation: wc 8s linear 0.3s infinite backwards; }
     @keyframes wc { 0%, 16% { opacity: 0; } 17.5%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wd { opacity: 0; animation: wd 8s linear 0.3s infinite backwards; }
+.wd { opacity: 1; animation: wd 8s linear 0.3s infinite backwards; }
     @keyframes wd { 0%, 27.7% { opacity: 0; } 29.2%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.we { opacity: 0; animation: we 8s linear 0.3s infinite backwards; }
+.we { opacity: 1; animation: we 8s linear 0.3s infinite backwards; }
     @keyframes we { 0%, 39.3% { opacity: 0; } 40.8%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wf { opacity: 0; animation: wf 8s linear 0.3s infinite backwards; }
+.wf { opacity: 1; animation: wf 8s linear 0.3s infinite backwards; }
     @keyframes wf { 0%, 51% { opacity: 0; } 52.5%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wg { opacity: 0; animation: wg 8s linear 0.3s infinite backwards; }
+.wg { opacity: 1; animation: wg 8s linear 0.3s infinite backwards; }
     @keyframes wg { 0%, 62.7% { opacity: 0; } 64.2%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wh { opacity: 0; animation: wh 8s linear 0.3s infinite backwards; }
+.wh { opacity: 1; animation: wh 8s linear 0.3s infinite backwards; }
     @keyframes wh { 0%, 6.7% { opacity: 0; } 8.2%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wi { opacity: 0; animation: wi 8s linear 0.3s infinite backwards; }
+.wi { opacity: 1; animation: wi 8s linear 0.3s infinite backwards; }
     @keyframes wi { 0%, 18.3% { opacity: 0; } 19.8%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wj { opacity: 0; animation: wj 8s linear 0.3s infinite backwards; }
+.wj { opacity: 1; animation: wj 8s linear 0.3s infinite backwards; }
     @keyframes wj { 0%, 30% { opacity: 0; } 31.5%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wk { opacity: 0; animation: wk 8s linear 0.3s infinite backwards; }
+.wk { opacity: 1; animation: wk 8s linear 0.3s infinite backwards; }
     @keyframes wk { 0%, 41.7% { opacity: 0; } 43.2%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wl { opacity: 0; animation: wl 8s linear 0.3s infinite backwards; }
+.wl { opacity: 1; animation: wl 8s linear 0.3s infinite backwards; }
     @keyframes wl { 0%, 53.3% { opacity: 0; } 54.8%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wm { opacity: 0; animation: wm 8s linear 0.3s infinite backwards; }
+.wm { opacity: 1; animation: wm 8s linear 0.3s infinite backwards; }
     @keyframes wm { 0%, 65% { opacity: 0; } 66.5%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wn { opacity: 0; animation: wn 8s linear 0.3s infinite backwards; }
+.wn { opacity: 1; animation: wn 8s linear 0.3s infinite backwards; }
     @keyframes wn { 0%, 9% { opacity: 0; } 10.5%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wo { opacity: 0; animation: wo 8s linear 0.3s infinite backwards; }
+.wo { opacity: 1; animation: wo 8s linear 0.3s infinite backwards; }
     @keyframes wo { 0%, 20.7% { opacity: 0; } 22.2%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wp { opacity: 0; animation: wp 8s linear 0.3s infinite backwards; }
+.wp { opacity: 1; animation: wp 8s linear 0.3s infinite backwards; }
     @keyframes wp { 0%, 32.3% { opacity: 0; } 33.8%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wq { opacity: 0; animation: wq 8s linear 0.3s infinite backwards; }
+.wq { opacity: 1; animation: wq 8s linear 0.3s infinite backwards; }
     @keyframes wq { 0%, 44% { opacity: 0; } 45.5%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wr { opacity: 0; animation: wr 8s linear 0.3s infinite backwards; }
+.wr { opacity: 1; animation: wr 8s linear 0.3s infinite backwards; }
     @keyframes wr { 0%, 55.7% { opacity: 0; } 57.2%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.ws { opacity: 0; animation: ws 8s linear 0.3s infinite backwards; }
+.ws { opacity: 1; animation: ws 8s linear 0.3s infinite backwards; }
     @keyframes ws { 0%, 67.3% { opacity: 0; } 68.8%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wt { opacity: 0; animation: wt 8s linear 0.3s infinite backwards; }
+.wt { opacity: 1; animation: wt 8s linear 0.3s infinite backwards; }
     @keyframes wt { 0%, 11.3% { opacity: 0; } 12.8%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wu { opacity: 0; animation: wu 8s linear 0.3s infinite backwards; }
+.wu { opacity: 1; animation: wu 8s linear 0.3s infinite backwards; }
     @keyframes wu { 0%, 23% { opacity: 0; } 24.5%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wv { opacity: 0; animation: wv 8s linear 0.3s infinite backwards; }
+.wv { opacity: 1; animation: wv 8s linear 0.3s infinite backwards; }
     @keyframes wv { 0%, 34.7% { opacity: 0; } 36.2%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.ww { opacity: 0; animation: ww 8s linear 0.3s infinite backwards; }
+.ww { opacity: 1; animation: ww 8s linear 0.3s infinite backwards; }
     @keyframes ww { 0%, 46.3% { opacity: 0; } 47.8%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wx { opacity: 0; animation: wx 8s linear 0.3s infinite backwards; }
+.wx { opacity: 1; animation: wx 8s linear 0.3s infinite backwards; }
     @keyframes wx { 0%, 58% { opacity: 0; } 59.5%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }
-.wy { opacity: 0; animation: wy 8s linear 0.3s infinite backwards; }
+.wy { opacity: 1; animation: wy 8s linear 0.3s infinite backwards; }
     @keyframes wy { 0%, 69.7% { opacity: 0; } 71.2%, 93.5% { opacity: 1; } 95%, 100% { opacity: 0; } }</style><text class="mono" x="98" y="24" font-size="8.5" text-anchor="middle" letter-spacing="0.8" fill="#8a7e64">SAT</text><text class="mono" x="130" y="24" font-size="8.5" text-anchor="middle" letter-spacing="0.8" fill="#8a7e64">SUN</text><text class="mono" x="162" y="24" font-size="8.5" text-anchor="middle" letter-spacing="0.8" fill="#8a7e64">MON</text><text class="mono" x="194" y="24" font-size="8.5" text-anchor="middle" letter-spacing="0.8" fill="#8a7e64">TUE</text><text class="mono" x="226" y="24" font-size="8.5" text-anchor="middle" letter-spacing="0.8" fill="#8a7e64">WED</text><text class="mono" x="258" y="24" font-size="8.5" text-anchor="middle" letter-spacing="0.8" fill="#8a7e64">THU</text><text class="sans" x="18" y="46" font-size="10" fill="#f7f0df">Ahmad</text><rect x="87" y="34" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="w5"><circle cx="98" cy="42" r="3.6" fill="#d4a840" /></g><rect x="119" y="34" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="w6"><circle cx="130" cy="42" r="3.6" fill="#d4a840" /></g><rect x="151" y="34" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="w7"><circle cx="162" cy="42" r="3.6" fill="#d4a840" /></g><rect x="183" y="34" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="w8"><path d="M190.5 38.5l7 7m0-7l-7 7" stroke="#ff7a45" stroke-width="1.6" /></g><rect x="215" y="34" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="w9"><circle cx="226" cy="42" r="3.6" fill="#d4a840" /></g><rect x="247" y="34" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wa"><circle cx="258" cy="42" r="3.6" fill="#d4a840" /></g><text class="sans" x="18" y="68" font-size="10" fill="#f7f0df">Maryam</text><rect x="87" y="56" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wb"><circle cx="98" cy="64" r="3.6" fill="#d4a840" /></g><rect x="119" y="56" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wc"><circle cx="130" cy="64" r="3.6" fill="#d4a840" /></g><rect x="151" y="56" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wd"><circle cx="162" cy="64" r="3.6" fill="#d4a840" /></g><rect x="183" y="56" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="we"><path d="M190.5 60.5l7 7m0-7l-7 7" stroke="#ff7a45" stroke-width="1.6" /></g><rect x="215" y="56" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wf"><circle cx="226" cy="64" r="3.6" fill="#d4a840" /></g><rect x="247" y="56" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wg"><circle cx="258" cy="64" r="3.6" fill="#d4a840" /></g><text class="sans" x="18" y="90" font-size="10" fill="#f7f0df">Sami</text><rect x="87" y="78" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wh"><circle cx="98" cy="86" r="3.6" fill="#d4a840" /></g><rect x="119" y="78" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wi"><circle cx="130" cy="86" r="3.6" fill="#d4a840" /></g><rect x="151" y="78" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wj"><circle cx="162" cy="86" r="3.6" fill="#d4a840" /></g><rect x="183" y="78" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wk"><path d="M190.5 82.5l7 7m0-7l-7 7" stroke="#ff7a45" stroke-width="1.6" /></g><rect x="215" y="78" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wl"><circle cx="226" cy="86" r="3.6" fill="#d4a840" /></g><rect x="247" y="78" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wm"><circle cx="258" cy="86" r="3.6" fill="#d4a840" /></g><text class="sans" x="18" y="112" font-size="10" fill="#f7f0df">Hila</text><rect x="87" y="100" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wn"><circle cx="98" cy="108" r="3.6" fill="none" stroke="#ffd36e" stroke-width="1.4" /></g><rect x="119" y="100" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wo"><circle cx="130" cy="108" r="3.6" fill="#d4a840" /></g><rect x="151" y="100" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wp"><circle cx="162" cy="108" r="3.6" fill="none" stroke="#ffd36e" stroke-width="1.4" /></g><rect x="183" y="100" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wq"><circle cx="194" cy="108" r="3.6" fill="#d4a840" /></g><rect x="215" y="100" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wr"><path d="M222.5 104.5l7 7m0-7l-7 7" stroke="#ff7a45" stroke-width="1.6" /></g><rect x="247" y="100" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="ws"><circle cx="258" cy="108" r="3.6" fill="#d4a840" /></g><text class="sans" x="18" y="134" font-size="10" fill="#f7f0df">Nabi</text><rect x="87" y="122" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wt"><circle cx="98" cy="130" r="3.6" fill="#d4a840" /></g><rect x="119" y="122" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wu"><circle cx="130" cy="130" r="3.6" fill="#d4a840" /></g><rect x="151" y="122" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wv"><circle cx="162" cy="130" r="3.6" fill="none" stroke="#ffd36e" stroke-width="1.4" /></g><rect x="183" y="122" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="ww"><circle cx="194" cy="130" r="3.6" fill="#d4a840" /></g><rect x="215" y="122" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wx"><circle cx="226" cy="130" r="3.6" fill="#d4a840" /></g><rect x="247" y="122" width="22" height="16" rx="4" fill="#040405" stroke="#1d1a13" /><g class="wy"><circle cx="258" cy="130" r="3.6" fill="#d4a840" /></g><text class="mono" x="98" y="156" font-size="8.5" fill="#8a7e64">● present   ✕ absent   ○ late</text><style>.fmz { transform-origin: 400px 70px; animation: fmz 30s linear infinite; } @keyframes fmz { to { transform: rotate(360deg); } }</style>
     <circle cx="400" cy="70" r="40" fill="#040405" stroke="#8c6a1e" />
     <g class="fmz"><circle cx="400" cy="70" r="34" fill="none" stroke="#d4a840" stroke-dasharray="1.5 4" /></g>

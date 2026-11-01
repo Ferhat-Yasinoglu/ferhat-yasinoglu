@@ -30,9 +30,10 @@ jobs:
           node-version: "22"
 
       # Kartlara gomulen yazi tipleri kartta gecen harflere indirgenir
-      # (.github/scripts/subset.py). Yoksa kartlar sistem yazi tipleriyle cikar.
+      # (.github/scripts/subset.py). Surumler sabit: yeni bir fonttools/brotli
+      # surumu baytlari degistirirse 60 kartin hepsi birden commit'lenirdi.
       - name: Yazi tipi araclarini kur
-        run: python3 -m pip install --quiet fonttools brotli
+        run: python3 -m pip install --quiet fonttools==4.68.0 brotli==1.2.1
 
       - name: Ornek veriyle kartlari uret
         run: node .github/scripts/cards.mjs --mock --out "$RUNNER_TEMP/kartlar"
@@ -56,7 +57,7 @@ jobs:
           node-version: "22"
 
       - name: Yazi tipi araclarini kur
-        run: python3 -m pip install --quiet fonttools brotli
+        run: python3 -m pip install --quiet fonttools==4.68.0 brotli==1.2.1
 
       - name: Kartlari uret
         env:

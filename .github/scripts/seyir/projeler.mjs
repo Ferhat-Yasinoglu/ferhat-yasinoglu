@@ -2,7 +2,8 @@
 // sayfasindan; orada olmayan vaat ya da rakam yazilmaz. Ozel depolarin kodu
 // paylasilmaz: kartta yalnizca ne yaptiklari ve kimin icin olduklari var.
 //
-// durum: live (yayinda, baglanti acilir) · open (acik kaynak) · internal (ekip ici)
+// durum: live (yayinda, baglanti acilir) · open (acik kaynak, lisansli) ·
+//        source (kaynak GitHub'da ama lisans yok: acik kaynak denmez) · internal (ekip ici)
 // sanat: sanat.mjs'teki cizim
 
 export const PROJELER = [
@@ -30,7 +31,7 @@ export const PROJELER = [
     italik: "Exact books, a balance for every currency.",
     aciklama:
       "Day book, receivables, stock and warehouse, buying and selling, hawala transfers and currency exchange for shops, wholesalers, sarrafs and fuel stations. Offline first, synced across the business's devices.",
-    cipler: ["Dari · Pashto · English", "AFN · USD · PKR", "PWA", "Workers"],
+    cipler: ["Dari · Pashto · English", "AFG · USD · PKR", "PWA", "Workers"],
     durum: "live",
     link: "https://mini-dakhl.pages.dev/",
     sanat: "minidakhl",
@@ -43,8 +44,8 @@ export const PROJELER = [
     tur: "Clinic",
     italik: "A prescription, written the way it is on paper.",
     aciklama:
-      "Prescriptions and patient records for a clinic doctor: 24 letterhead designs, a QR and 8-letter code against forged prescriptions, allergy and duplicate-ingredient warnings. Patient data stays on the device.",
-    cipler: ["Dari · Pashto · English", "A4 · A5 · PDF", "encrypted sync"],
+      "Prescriptions and patient records for a clinic doctor: 24 letterhead designs, a signed 8-character code against forged prescriptions, allergy and duplicate-ingredient warnings. Patient data stays on the device.",
+    cipler: ["Dari · Pashto · English", "opt-in encrypted sync"],
     durum: "live",
     link: "https://shafa.pages.dev/",
     sanat: "shafa",
@@ -57,7 +58,7 @@ export const PROJELER = [
     tur: "Prescriptions",
     italik: "Shafa's forerunner: write, print, keep the record.",
     aciklama:
-      "A computer prescription system for one doctor — on the web, as an Android APK and as a Windows install. Six paper templates, bilingual letterhead, patient history with vitals and diagnosis. The data never leaves the machine.",
+      "A computer prescription system for one doctor — on the web, as an Android APK and as a Windows install. Six paper templates, bilingual letterhead, patient history with vitals and diagnosis. Patient data never leaves the machine.",
     cipler: ["Web · Android · Windows", "Dari · English", "offline"],
     durum: "live",
     link: "https://nuskha.pages.dev/",
@@ -110,7 +111,7 @@ export const PROJELER = [
     tur: "Licence hub",
     italik: "One hub for every app's licences, customers and cash.",
     aciklama:
-      "The panel and server behind all the apps: Gmail sign-in, 15-day trials, one-device licences and cloned-session detection; payments in cash, M-Paisa or HesabPay; a cash desk and a map of customers by city.",
+      "The panel and server behind all the apps: Gmail sign-in, free trials (15 days by default), one-device licences and cloned-session detection; payments in cash, M-Paisa or HesabPay; a cash desk and a map of customers by city.",
     cipler: ["Worker + Durable Object", "SQLite", "Turkish · Dari"],
     durum: "internal",
     link: null,
@@ -126,7 +127,7 @@ export const PROJELER = [
     tur: "AI gateway",
     italik: "Never stop coding: when one quota runs out, the next provider answers.",
     aciklama:
-      "Claude Code, Codex, Cursor and Cline talk to Pusula instead of a single vendor. It keeps the keys and sign-ins for hundreds of providers, serves them through one OpenAI-compatible endpoint, falls back automatically and stacks RTK and Caveman compression so prompts cost fewer tokens.",
+      "Claude Code, Codex, Cursor and Cline talk to Pusula instead of a single vendor. It keeps the keys and sign-ins for hundreds of providers, serves them through one OpenAI-compatible endpoint, falls back automatically and stacks RTK and Caveman compression so prompts cost fewer tokens. A rebrand and continuation of OmniRoute (MIT), kept in sync with upstream.",
     olcum: [
       { deger: "375", etiket: "providers" },
       { deger: "20", etiket: "routing strategies" },
@@ -146,7 +147,7 @@ export const PROJELER = [
     tur: "Publishing",
     italik: "Your GitHub sites, under your own domain.",
     aciklama:
-      "Add a static site from a GitHub repository and it is served at its own subdomain — shafa becomes shafa.fyajan.com. One Cloudflare Worker, no build step; a cron checks every project every ten minutes.",
+      "Add a static site from a GitHub repository and it is served at its own subdomain — the FY Language site runs at dil-platform.fyajan.com. One Cloudflare Worker, no build step; a cron checks every project every ten minutes.",
     cipler: ["one Worker", "KV", "cron", "no dependencies"],
     durum: "internal",
     link: null,
@@ -198,9 +199,9 @@ export const PROJELER = [
     tur: "Scraper",
     italik: "Web pages and PDFs in, clean Markdown out.",
     aciklama:
-      "A small personal Firecrawl: scrape, map and crawl sites into Markdown, read PDFs page by page, extract JSON to a schema with Claude and search the web — from the terminal or a token-guarded web UI.",
+      "A small, personal Firecrawl-like tool: scrape, map and crawl sites into Markdown, read PDFs page by page, extract JSON to a schema with Claude and search the web from the terminal; scrape, map and extract also run in a token-guarded web UI.",
     cipler: ["Python", "Playwright", "Claude API", "SSRF guard"],
-    durum: "open",
+    durum: "source",
     link: "https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/kazi",
     sanat: "kazi",
   },
@@ -249,7 +250,7 @@ export const PROJELER = [
     aciklama:
       "A Node script reads the GitHub API and writes these animated SVGs, with fonts subset and embedded per card. A workflow reruns it every six hours and commits only the cards whose content changed.",
     cipler: ["Node", "SVG + CSS", "fonttools", "Actions"],
-    durum: "open",
+    durum: "source",
     link: "https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/blob/main/.github/scripts/cards.mjs",
     sanat: "profil",
   },

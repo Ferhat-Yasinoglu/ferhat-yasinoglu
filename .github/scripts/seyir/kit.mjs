@@ -5,10 +5,12 @@
 // bir pusula acisi (000° · FY, 045° · Products ...), ember kuzey ibresi,
 // rota dikisi (course seam), split-flap sayaclar, kose kosebentleri.
 //
-// Kartlar <img> olarak gosterilir: betik yok, dis kaynak yok. Hareket yalniz
-// CSS (transform ve opacity) ve SMIL ile; prefers-reduced-motion acikken
-// her sey son haline yerlesir. Animasyonlar "backwards" ile kurulur:
-// animasyon hic calismazsa oge dogal halinde (gorunur) kalir.
+// Kartlar <img> olarak gosterilir: betik yok, dis kaynak yok. Hareket CSS
+// (transform ve opacity) ve SMIL ile. prefers-reduced-motion acikken CSS
+// animasyonlari tek turda biter ve oge taban haline yerlesir; bu yuzden taban
+// hal her zaman okunur hal olmali (animasyonlar "backwards" ile kurulur).
+// SMIL donguleri (gezgin isiklari, terminal) medya sorgusundan etkilenmez;
+// onlarin da taban hali gorunur.
 
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -357,10 +359,12 @@ export function yaz(x, y, parcalar, { boy = 14, gec = 0, cps = 38, imlec = false
 }
 
 // Bir yol boyunca gezen isik (SMIL animateMotion). mpath href + xlink:href.
+// keyPoints sart: Firefox keyPoints yoksa yolun her parcasini ayri deger
+// sayar, keyTimes ile tutmayinca animasyonu atar ve isik (0,0)'da kalir.
 export function gezgin(yolId, { sure = 4, gec = 0, r = 2.6, renk = S.goldHi, kuyruk = true } = {}) {
   return `<g opacity="0">
     <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.1;.85;1" dur="${sure}s" begin="${gec}s" repeatCount="indefinite" />
-    <animateMotion dur="${sure}s" begin="${gec}s" repeatCount="indefinite" rotate="auto" calcMode="spline" keyTimes="0;1" keySplines=".37 0 .63 1">
+    <animateMotion dur="${sure}s" begin="${gec}s" repeatCount="indefinite" rotate="auto" calcMode="spline" keyPoints="0;1" keyTimes="0;1" keySplines=".37 0 .63 1">
       <mpath href="#${yolId}" xlink:href="#${yolId}" />
     </animateMotion>
     ${kuyruk ? `<rect x="-14" y="-1" width="14" height="2" rx="1" fill="${renk}" opacity=".35" />` : ""}

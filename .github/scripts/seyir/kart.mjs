@@ -9,6 +9,7 @@ import { SANAT } from "./sanat.mjs";
 const DURUM = {
   live: { metin: "LIVE", ton: "ember", led: "nefes" },
   open: { metin: "OPEN SOURCE", ton: "gold", led: "gold" },
+  source: { metin: "SOURCE ON GITHUB", ton: "gold", led: "gold" },
   internal: { metin: "IN-HOUSE", ton: "dim", led: null },
   private: { metin: "PRIVATE BETA", ton: "dim", led: null },
 };
@@ -66,6 +67,7 @@ export function ikili(p, H = 416) {
   const maxW = W - 48;
   const acik = kir(p.aciklama, 13.5, maxW, "sans");
   if (acik.length > 4) console.warn(`uyari: ${p.ad} aciklamasi ${acik.length} satir (en cok 4)`);
+  if (cipler(0, 0, p.cipler, maxW, { boy: 11, h: 22 }).y > 22) console.warn(`uyari: ${p.ad} cipleri tek satira sigmiyor`);
   let y = ay + ah + 32;
   const ic = `
   ${zemin(W, H, { r: 14, parilti: { cx: W * 0.7, cy: 40, r: 320, o: 0.07 } })}

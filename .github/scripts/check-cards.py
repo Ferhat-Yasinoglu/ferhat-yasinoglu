@@ -47,9 +47,15 @@ def main(argv):
         if belge.documentElement.tagName != "svg":
             print(f"hata: {yol.name} kok ogesi <svg> degil")
             return 1
-        # Yazi tipi yer tutucusu her durumda doldurulmus olmali (gomulemese bile bos)
-        if "/*@FONTS@*/" in yol.read_text(encoding="utf-8"):
+        metin = yol.read_text(encoding="utf-8")
+        # Yazi tipi yer tutucusu her durumda doldurulmus olmali
+        if "/*@FONTS@*/" in metin:
             print(f"hata: {yol.name} icinde doldurulmamis yazi tipi yer tutucusu var")
+            return 1
+        # Metni olan kartta yazi tipi gomulu olmali (fonttools eksikse kartlar
+        # sistem yazi tipine duser ve hepsi birden degismis gorunur)
+        if "<text" in metin and "@font-face" not in metin:
+            print(f"hata: {yol.name} metin iceriyor ama yazi tipi gomulmemis")
             return 1
 
     print(f"{len(svgler)} kart dogrulandi")

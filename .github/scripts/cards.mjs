@@ -48,7 +48,7 @@ const ICONS = JSON.parse(await readFile(join(HERE, "icons.json"), "utf8"));
 // README'deki teknoloji sirasi (slug). Dalga bu sirayla gecer.
 const TEKNOLOJI = [
   "javascript", "typescript", "html5", "css", "python", "nodejs", "nextdotjs", "react", "electron", "pwa",
-  "cloudflareworkers", "sqlite", "firebase", "mcp", "anthropic", "telegram", "leaflet", "vitest", "git", "github", "linux", "figma",
+  "cloudflareworkers", "sqlite", "mcp", "anthropic", "telegram", "leaflet", "vitest", "git", "github", "linux",
 ];
 
 // ------------------------------------------------------------------ veri
@@ -176,7 +176,7 @@ function mockData() {
 const AD = "Farhad Yaqoobi";
 const ITALIK = "Software that keeps working when the power doesn't.";
 const GIRIS =
-  "Offline-first apps for small businesses in Afghanistan, an AI gateway for coding agents, and the sites that tell their story — built by hand in NRW, Germany.";
+  "Offline-first apps for small businesses in Afghanistan, an open-source AI gateway for coding agents, and the sites that tell their story — made in NRW, Germany.";
 
 // --veri dosya.json: API'ye gitmeden kayitli bir veriyle uret (yerel onizleme)
 const useMock = process.argv.includes("--mock");
@@ -202,7 +202,7 @@ const ISTASYON_METNI = {
     baslik: "Software for Afghan small businesses",
     italik: "The till keeps selling when the power goes out.",
     giris:
-      "Pharmacies, clinics, shops, land agents and language schools. Every app installs from the browser, keeps its records on the device, works without internet or electricity and syncs when the line comes back. Licences, trials and payments run through one hub, FY Merkez.",
+      "Pharmacies, clinics, shops, land agents and language schools. Every app installs from the browser, keeps its records on the device and works without internet or electricity; the multi-device ones sync when the line comes back. Licences, trials and payments run through one hub, FY Merkez.",
   },
   ai: {
     baslik: "AI tools and platforms",
@@ -212,9 +212,9 @@ const ISTASYON_METNI = {
   },
   sites: {
     baslik: "Sites, written by hand",
-    italik: "No framework, no build step, no tracking.",
+    italik: "No framework, no bundler, no tracking.",
     giris:
-      "Plain HTML, CSS and JavaScript in four languages — right-to-left in Persian, readable offline, and every animation stops when the system asks for less motion.",
+      "Plain HTML, CSS and JavaScript: four languages, right-to-left in Persian, offline reading where it matters — and on fyajan.com and Açık Defter every animation stops when the system asks for less motion.",
   },
   about: {
     baslik: "Who's on the bridge",
@@ -230,7 +230,8 @@ const ISTASYON_METNI = {
   logbook: {
     baslik: "Logbook",
     italik: "Read from the GitHub API every six hours.",
-    giris: "No third-party card service: a script in this repository draws these from live data and commits only what changed.",
+    giris:
+      "No third-party card service: a script in this repository draws these cards from live data and commits only what changed; the snake below comes from Platane/snk twice a day.",
   },
   contact: {
     baslik: "Say hello",
@@ -284,7 +285,7 @@ kart("header.svg", () =>
     giris: GIRIS,
     almanak: [
       { deger: PROJELER.length, etiket: "projects shipped" },
-      { deger: data.totalContributions, etiket: "contributions this year" },
+      { deger: data.totalContributions, etiket: "contributions in the last year" },
       { deger: 6, etiket: "interface languages" },
       { deger: 8, etiket: "apps that run offline" },
       { deger: 5236, etiket: "km from NRW to Kabul" },

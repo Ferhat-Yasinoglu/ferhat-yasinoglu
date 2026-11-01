@@ -11,11 +11,14 @@ const rad = (d) => (d * Math.PI) / 180;
 const yazi = (x, y, t, { boy = 11, renk = S.mist, cls = "mono", anchor = "start", ls = 0, w = null, ek = "" } = {}) =>
   `<text class="${cls}" x="${f1(x)}" y="${f1(y)}" font-size="${boy}"${anchor !== "start" ? ` text-anchor="${anchor}"` : ""}${ls ? ` letter-spacing="${ls}"` : ""}${w ? ` font-weight="${w}"` : ""} fill="${renk}"${ek}>${esc(t)}</text>`;
 
-// Tur icinde [a0, a1] (0..1) diliminde gorunen oge sinifi.
-function pencere(sure, a0, a1, { gec = 0, min = 0, yumusak = 0.015 } = {}) {
+// Tur icinde [a0, a1] (0..1) diliminde gorunen oge sinifi. Taban opaklik
+// "sabit": animasyon calismazsa ya da hareket azaltilinca (tek tur, hemen
+// biter) oge bu halde kalir. Varsayilan 1 (gorunur); birbirinin yerine gecen
+// durumlarda (cevrimdisi/cevrimici, aktif saglayici) yalniz biri 1 olur.
+function pencere(sure, a0, a1, { gec = 0, min = 0, yumusak = 0.015, sabit = 1 } = {}) {
   const k = uid("w");
   const p = (v) => f1(Math.max(0, Math.min(100, v * 100)));
-  const css = `.${k} { opacity: ${min}; animation: ${k} ${sure}s linear ${gec}s infinite backwards; }
+  const css = `.${k} { opacity: ${sabit}; animation: ${k} ${sure}s linear ${gec}s infinite backwards; }
     @keyframes ${k} { 0%, ${p(a0)}% { opacity: ${min}; } ${p(a0 + yumusak)}%, ${p(a1 - yumusak)}% { opacity: 1; } ${p(a1)}%, 100% { opacity: ${min}; } }`;
   return { k, css };
 }
@@ -70,8 +73,8 @@ function pusula(x, y, w, h) {
     const yid = uid("pp");
     const ac = (Math.atan2(px - hx, -(py + 10 - hy)) * 180) / Math.PI;
     acilar.push(ac);
-    const aktif = pencere(sure, i / n, (i + 1) / n, { gec: 0.6 });
-    const kapali = pencere(sure, (i + 1) / n, Math.min(1, (i + 2.4) / n), { gec: 0.6, yumusak: 0.01 });
+    const aktif = pencere(sure, i / n, (i + 1) / n, { gec: 0.6, sabit: i === 0 ? 1 : 0 });
+    const kapali = pencere(sure, (i + 1) / n, Math.min(1, (i + 2.4) / n), { gec: 0.6, yumusak: 0.01, sabit: 0 });
     stilK.push(aktif, kapali);
     s += `<path id="${yid}" d="M${f1(hx + 44)} ${f1(hy)}C${f1(hx + 90)} ${f1(hy)} ${f1(px - 50)} ${py + 10} ${px} ${py + 10}" fill="none" stroke="${S.rule}" />`;
     s += `<g class="${aktif.k}"><path d="M${f1(hx + 44)} ${f1(hy)}C${f1(hx + 90)} ${f1(hy)} ${f1(px - 50)} ${py + 10} ${px} ${py + 10}" fill="none" stroke="${S.goldHi}" stroke-opacity=".85" stroke-width="1.4" stroke-dasharray="4 4" class="flow" />${gezgin(yid, { sure: 1.1, r: 2.4 })}</g>`;
@@ -157,7 +160,7 @@ function dawayar(x, y, w, h) {
   s += fis;
   // cihazlar ve esitleme
   const dx = 312;
-  const off = pencere(sure, 0, 0.5, { gec: 0.4 });
+  const off = pencere(sure, 0, 0.5, { gec: 0.4, sabit: 0 });
   const on = pencere(sure, 0.5, 1, { gec: 0.4 });
   pen.push(off, on);
   const yid = uid("dy");
@@ -175,7 +178,7 @@ function dawayar(x, y, w, h) {
 
 function minidakhl(x, y, w, h) {
   const satir = [
-    ["AFN", "1,250,000", [3, 6, 4, 8, 7, 11, 10]],
+    ["AFG", "1,250,000", [3, 6, 4, 8, 7, 11, 10]],
     ["USD", "8,420", [6, 5, 7, 6, 9, 8, 10]],
     ["PKR", "312,500", [9, 7, 8, 5, 6, 4, 6]],
     ["EUR", "1,980", [2, 4, 3, 5, 7, 6, 9]],
@@ -236,7 +239,7 @@ function shafa(x, y, w, h) {
     ${hap(26, 120, "ALLERGY · PENICILLIN", { boy: 8.5, renk: S.ember, kenar: S.ember, zem: "rgba(255,122,69,.08)", h: 17 }).svg.replace("<rect", '<rect class="breathe"')}`;
   // QR ve dogrulama kodu
   s += `${kutu(252, 14, 96, 96, { r: 4, fill: S.void })}${qr(258, 20, 21, 4, 31, 7)}
-    ${yazi(300, 128, "VERIFY", { boy: 9, renk: S.mistDim, anchor: "middle", ls: 1.4 })}
+    ${yazi(300, 128, "VERIFY CODE", { boy: 9, renk: S.mistDim, anchor: "middle", ls: 1.4 })}
     ${yaz(258, 146, [["K7QM", S.goldHi], ["-", S.mistDim], ["2XPA", S.goldHi]], { boy: 12, gec: 1.6, imlec: true })}
     ${yazi(370, 34, "24", { boy: 30, renk: S.goldHi, cls: "serif" })}${yazi(370, 50, "LETTERHEADS", { boy: 8.5, renk: S.mistDim, ls: 1 })}
     ${yazi(370, 92, "A4 · A5", { boy: 12, renk: S.foam })}${yazi(370, 108, "PDF · WHATSAPP", { boy: 8.5, renk: S.mistDim, ls: 1 })}`;
@@ -420,7 +423,7 @@ function fymerkez(x, y, w, h) {
     <circle class="${hm}" cx="${cx}" cy="${f1(cy)}" r="30" fill="none" stroke="${S.goldHi}" />
     <circle cx="${cx}" cy="${f1(cy)}" r="28" fill="${S.void}" stroke="${S.gold}" />
     ${yildiz8(cx, cy, 13, { renk: S.gold })}
-    ${yazi(14, 22, "15-DAY TRIAL · ONE DEVICE", { boy: 9, renk: S.mistDim, ls: 1.1 })}
+    ${yazi(14, 22, "FREE TRIAL · ONE DEVICE", { boy: 9, renk: S.mistDim, ls: 1.1 })}
     ${yazi(w - 14, h - 12, "CASH · M-PAISA · HESABPAY", { boy: 9, renk: S.mistDim, anchor: "end", ls: 1.1 })}`;
   return s;
 }
@@ -429,13 +432,12 @@ function fymerkez(x, y, w, h) {
 
 function yayin(x, y, w, h) {
   const proj = [
-    ["shafa", "shafa.fyajan.com"],
     ["dil-platform", "dil-platform.fyajan.com"],
     ["your-site", "your-site.fyajan.com"],
   ];
-  let s = yazi(14, 22, "GITHUB", { boy: 9, renk: S.mistDim, ls: 1.2 }) + yazi(w - 14, 22, "YOUR DOMAIN", { boy: 9, renk: S.mistDim, ls: 1.2, anchor: "end" });
+  let s = yazi(14, 22, "PROJECT", { boy: 9, renk: S.mistDim, ls: 1.2 }) + yazi(w - 14, 22, "YOUR DOMAIN", { boy: 9, renk: S.mistDim, ls: 1.2, anchor: "end" });
   proj.forEach(([r, d], i) => {
-    const yy = 30 + i * 28;
+    const yy = 36 + i * 34;
     const a = hap(14, yy, r, { boy: 10, led: S.goldLo });
     const b = hap(0, 0, d, { boy: 10 });
     const bx = w - 14 - b.w;
@@ -462,19 +464,17 @@ function yayin(x, y, w, h) {
 // ---------------------------------------------------------------- Sosyal Studyo
 
 function sosyal(x, y, w, h) {
+  // Akis kosucusu siradan ilerleyen bir durum makinesi: dogrusal zincir.
   const dugum = [
-    { x: 16, y: 62, t: "TRIGGER · comment", r: S.ember },
-    { x: 150, y: 28, t: "ASK · name" },
-    { x: 150, y: 96, t: "SCORE +10" },
-    { x: 284, y: 62, t: "TAG · lead" },
+    { x: 16, y: 62, t: "TRIGGER · keyword", r: S.ember },
+    { x: 152, y: 62, t: "ASK · name" },
+    { x: 246, y: 62, t: "TAG · lead" },
   ];
   const kanal = ["Telegram", "Instagram", "WhatsApp"];
   let s = "";
   const kenar = [
     [0, 1],
-    [0, 2],
-    [1, 3],
-    [2, 3],
+    [1, 2],
   ];
   const genis = dugum.map((d) => tw(d.t, 9.5, "mono") + 18);
   kenar.forEach(([a, b], i) => {
@@ -485,17 +485,17 @@ function sosyal(x, y, w, h) {
     const y1 = A.y + 11;
     const x2 = B.x;
     const y2 = B.y + 11;
-    s += `<path id="${yid}" d="M${f1(x1)} ${y1}C${f1(x1 + 30)} ${y1} ${f1(x2 - 30)} ${y2} ${f1(x2)} ${y2}" fill="none" stroke="${S.goldLo}" stroke-dasharray="3 4" class="flow" />${gezgin(yid, { sure: 2.4, gec: i * 0.6, r: 2.2 })}`;
+    s += `<path id="${yid}" d="M${f1(x1)} ${y1}H${f1(x2)}" fill="none" stroke="${S.goldLo}" stroke-dasharray="3 4" class="flow" />${gezgin(yid, { sure: 1.6, gec: i * 0.6, r: 2.2 })}`;
   });
   dugum.forEach((d, i) => {
     s += `<g class="rise" style="animation-delay:${f1(0.2 + i * 0.15)}s">${kutu(d.x, d.y, genis[i], 22, { r: 6, fill: S.void, stroke: d.r || S.rule })}${yazi(d.x + 9, d.y + 14.5, d.t, { boy: 9.5, renk: d.r || S.foam })}</g>`;
   });
-  const sx = dugum[3].x + genis[3];
+  const sx = dugum[2].x + genis[2];
   kanal.forEach((k, i) => {
     const ky = 26 + i * 40;
     const yid = uid("sc");
-    s += `<path id="${yid}" d="M${f1(sx)} 73C${f1(sx + 24)} 73 ${f1(sx + 10)} ${ky + 10} ${f1(sx + 36)} ${ky + 10}" fill="none" stroke="${S.rule}" />${gezgin(yid, { sure: 1.8, gec: 1 + i * 0.5, r: 2 })}`;
-    s += hap(sx + 36, ky, k, { boy: 9.5, renk: S.goldHi, kenar: S.goldLo }).svg;
+    s += `<path id="${yid}" d="M${f1(sx)} 73C${f1(sx + 20)} 73 ${f1(sx + 8)} ${ky + 10} ${f1(sx + 28)} ${ky + 10}" fill="none" stroke="${S.rule}" />${gezgin(yid, { sure: 1.8, gec: 1 + i * 0.5, r: 2 })}`;
+    s += hap(sx + 28, ky, k, { boy: 9.5, renk: S.goldHi, kenar: S.goldLo }).svg;
   });
   s += `${yazi(16, 148, "16 STEP TYPES · LOCAL MODE WORKS WITHOUT A SERVER", { boy: 8.5, renk: S.mistDim, ls: 1 })}`;
   return s;
@@ -515,7 +515,7 @@ function fyreklam(x, y, w, h) {
   const pen = [];
   cer.forEach((c, i) => {
     const cy = 134 - c.h;
-    const p = pencere(sure, i / 3, (i + 1) / 3, { gec: 0.3 });
+    const p = pencere(sure, i / 3, (i + 1) / 3, { gec: 0.3, sabit: i === 0 ? 1 : 0 });
     pen.push(p);
     s += `${kutu(cx, cy, c.w, c.h, { r: 5, fill: S.void })}
       <rect x="${cx + 6}" y="${cy + 6}" width="${c.w - 12}" height="${f1(c.h * 0.42)}" rx="3" fill="${S.goldDeep}" opacity=".45" />
@@ -529,7 +529,7 @@ function fyreklam(x, y, w, h) {
   });
   const ix = cx + 12;
   s += `${yazi(ix, 32, "CAPTION CHECK", { boy: 9, renk: S.mistDim, ls: 1.2 })}
-    ${yazi(ix, 56, "≤ 2,200 chars", { boy: 11, renk: S.foam })}${yazi(ix, 76, "≤ 30 hashtags", { boy: 11, renk: S.foam })}${yazi(ix, 96, "1 emoji · no shouting", { boy: 11, renk: S.foam })}
+    ${yazi(ix, 56, "≤ 2,200 chars", { boy: 11, renk: S.foam })}${yazi(ix, 76, "≤ 30 hashtags", { boy: 11, renk: S.foam })}${yazi(ix, 96, "≤ 1 emoji · no shouting", { boy: 11, renk: S.foam })}
     ${hap(ix, 116, "PUBLISH · META API", { boy: 9, renk: S.goldHi, kenar: S.goldLo, h: 20, led: S.ember }).svg}`;
   return pencereler(pen) + s;
 }
@@ -563,7 +563,7 @@ function botflow(x, y, w, h) {
     [300, 82, "branch"],
     [262, 120, "Dawayar"],
     [350, 120, "Shafa"],
-    [420, 82, "broadcast"],
+    [420, 82, "tag"],
   ];
   const kenar = [
     [0, 1],
@@ -607,7 +607,7 @@ function kazi(x, y, w, h) {
     [["# ", S.ember], ["Report", S.foam]],
     [["", S.foam], ["Q3 sales…", S.mist]],
     [["- ", S.gold], ["[link](…)", S.goldHi]],
-    [["## ", S.ember], ["Page 2", S.foam], ["  (pdf)", S.mistDim]],
+    [["## ", S.ember], ["Sayfa 2", S.foam], ["  (pdf)", S.mistDim]],
   ];
   s += `${kutu(266, 12, 188, 136, { r: 8, fill: S.void })}${yazi(276, 28, "page.md", { boy: 9, renk: S.mistDim, ls: 1 })}`;
   md.forEach((sat, i) => {
@@ -648,10 +648,10 @@ function fyajans(x, y, w, h) {
   }
   // bolum plakalari
   const bol = [
-    ["B1", 300],
-    ["B3", 40],
-    ["B4", 120],
-    ["B6", 210],
+    ["Ch1", 300],
+    ["Ch3", 40],
+    ["Ch4", 120],
+    ["Ch6", 210],
   ];
   bol.forEach(([b, a], i) => {
     const px = cx + R * 0.7 * Math.sin(rad(a));
@@ -682,10 +682,10 @@ function acikdefter(x, y, w, h) {
     <line x1="34" y1="18" x2="34" y2="${h - 14}" stroke="#7a6a48" stroke-opacity=".5" stroke-dasharray="4 4" />
     <text class="it" x="82" y="36" font-size="20" fill="#2a2418">Açık Defter</text>
     <text class="it" x="82" y="68" font-size="13" fill="#3a3122">an IT student's open notebook</text>
-    <text class="it" x="82" y="100" font-size="13" fill="#3a3122">04 · offline cache works ✓</text>
-    <text class="it" x="82" y="132" font-size="13" fill="#3a3122">05 · RTL with logical CSS</text>
-    <text class="mono" x="48" y="100" font-size="9" fill="#c4473a" text-anchor="middle">04</text>
-    <text class="mono" x="48" y="132" font-size="9" fill="#c4473a" text-anchor="middle">05</text>`;
+    <text class="it" x="82" y="100" font-size="13" fill="#3a3122">07 · offline cache works ✓</text>
+    <text class="it" x="82" y="132" font-size="13" fill="#3a3122">08 · RTL with logical CSS</text>
+    <text class="mono" x="48" y="100" font-size="9" fill="#c4473a" text-anchor="middle">07</text>
+    <text class="mono" x="48" y="132" font-size="9" fill="#c4473a" text-anchor="middle">08</text>`;
   // ayrac sekmeleri
   ["#c4473a", "#d4a840", "#6f8fb6"].forEach((r, i) => (s += `<rect x="${w - 92 + i * 22}" y="2" width="16" height="22" rx="2" fill="${r}" opacity=".9" />`));
   // yapiskan not
@@ -704,7 +704,7 @@ function acikdefter(x, y, w, h) {
 // ---------------------------------------------------------------- bu profil
 
 function profil(x, y, w, h) {
-  const dosya = ["header.svg", "products.svg", "map.svg", "activity.svg", "stats.svg", "languages.svg"];
+  const dosya = ["header.svg", "map.svg", "about.svg", "activity.svg", "stats.svg", "languages.svg"];
   let s = `${hap(14, 18, "GitHub GraphQL", { boy: 10, led: S.goldLo }).svg}
     ${hap(14, 70, "cards.mjs", { boy: 10, renk: S.goldHi, kenar: S.goldLo }).svg}
     ${hap(14, 122, "subset.py · fonts", { boy: 10 }).svg}`;

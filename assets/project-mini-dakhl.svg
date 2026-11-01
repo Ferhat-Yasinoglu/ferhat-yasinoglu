@@ -57,7 +57,7 @@
   <rect x="16" y="16" width="468" height="160" rx="10" fill="#111013" />
   <rect x="16" y="16" width="468" height="160" rx="10" fill="url(#ap3)" />
   <g clip-path="url(#ac4)"><g transform="translate(16 16)"><text class="mono" x="18" y="26" font-size="9.5" letter-spacing="1.1" fill="#8a7e64">BALANCES · EACH CURRENCY ITS OWN</text><g class="rise" style="animation-delay:0.3s"><rect x="14" y="38" width="262" height="24" rx="5" fill="#040405" stroke="#2e281b" />
-      <text class="mono" x="24" y="54" font-size="11" font-weight="600" fill="#d4a840">AFN</text>
+      <text class="mono" x="24" y="54" font-size="11" font-weight="600" fill="#d4a840">AFG</text>
       <polyline points="78,54.2 92,50.4 106,52.9 120,47.8 134,49.1 148,44 162,45.3" fill="none" stroke="#ffd36e" stroke-width="1.3" pathLength="100" stroke-dasharray="100" class="draw" style="--len:100;animation-delay:0.6s" />
       <text class="mono" x="266" y="54" font-size="11" text-anchor="end" fill="#f7f0df">1,250,000</text></g><g class="rise" style="animation-delay:0.4s"><rect x="14" y="66" width="262" height="24" rx="5" fill="#040405" stroke="#2e281b" />
       <text class="mono" x="24" y="82" font-size="11" font-weight="600" fill="#d4a840">USD</text>
@@ -74,7 +74,7 @@
     <path id="mh5" d="M318 118C330 40 410 30 436 70" fill="none" stroke="#8c6a1e" stroke-dasharray="3 4" class="flow" />
     <g opacity="0">
     <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.1;.85;1" dur="3.2s" begin="0s" repeatCount="indefinite" />
-    <animateMotion dur="3.2s" begin="0s" repeatCount="indefinite" rotate="auto" calcMode="spline" keyTimes="0;1" keySplines=".37 0 .63 1">
+    <animateMotion dur="3.2s" begin="0s" repeatCount="indefinite" rotate="auto" calcMode="spline" keyPoints="0;1" keyTimes="0;1" keySplines=".37 0 .63 1">
       <mpath href="#mh5" xlink:href="#mh5" />
     </animateMotion>
     <rect x="-14" y="-1" width="14" height="2" rx="1" fill="#ffd36e" opacity=".35" />
@@ -108,7 +108,7 @@
   <g class="rise" style="animation-delay:.34s"><text x="24" y="303" font-size="13.5" fill="#bfb293">Day book, receivables, stock and warehouse, buying and selling, hawala</text><text x="24" y="322.5" font-size="13.5" fill="#bfb293">transfers and currency exchange for shops, wholesalers, sarrafs and</text><text x="24" y="342" font-size="13.5" fill="#bfb293">fuel stations. Offline first, synced across the business&apos;s devices.</text></g>
   <g class="fade" style="animation-delay:.5s"><g><rect x="24" y="374" width="181" height="22" rx="11" fill="#1a1712" stroke="#2e281b" stroke-opacity="1" />
     <text class="mono" x="34" y="389" font-size="11" letter-spacing=".4" fill="#bfb293">Dari · Pashto · English</text></g><g><rect x="213" y="374" width="125" height="22" rx="11" fill="#1a1712" stroke="#2e281b" stroke-opacity="1" />
-    <text class="mono" x="223" y="389" font-size="11" letter-spacing=".4" fill="#bfb293">AFN · USD · PKR</text></g><g><rect x="346" y="374" width="41" height="22" rx="11" fill="#1a1712" stroke="#2e281b" stroke-opacity="1" />
+    <text class="mono" x="223" y="389" font-size="11" letter-spacing=".4" fill="#bfb293">AFG · USD · PKR</text></g><g><rect x="346" y="374" width="41" height="22" rx="11" fill="#1a1712" stroke="#2e281b" stroke-opacity="1" />
     <text class="mono" x="356" y="389" font-size="11" letter-spacing=".4" fill="#bfb293">PWA</text></g><g><rect x="395" y="374" width="69" height="22" rx="11" fill="#1a1712" stroke="#2e281b" stroke-opacity="1" />
     <text class="mono" x="405" y="389" font-size="11" letter-spacing=".4" fill="#bfb293">Workers</text></g></g>
 </svg>

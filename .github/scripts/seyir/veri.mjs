@@ -16,7 +16,8 @@ const PORTRE = readFileSync(join(HERE, "..", "portre.png")).toString("base64");
 
 // Sol: altin duotone portre, tarama cizgisi ve HUD etiketleri. Sag: Seyir
 // terminali (uc nokta ember/altin/koyu altin, sekmeler); komutlar harf harf
-// yazilir, ciktilar belirir, dizi bitince bastan baslar (SMIL, dongu).
+// yazilir, ciktilar belirir, dizi bitince bastan baslar (SMIL, dongu). Taban
+// hal tam metin: SMIL calismayan yerde terminal bos kalmaz.
 export function hakkinda(satirlar) {
   const W = 1000;
   const PX = 28;
@@ -53,12 +54,12 @@ export function hakkinda(satirlar) {
       : `<tspan fill="${s.renk || S.mist}">  ${esc(metin)}</tspan>`;
     if (kom) {
       const w = f1(([...metin].length + 2) * cw + 6);
-      govde += `<clipPath id="tk${i}"><rect x="${TX + 18}" y="${y - 16}" width="0" height="22">
+      govde += `<clipPath id="tk${i}"><rect x="${TX + 18}" y="${y - 16}" width="${w}" height="22">
         <animate attributeName="width" values="0;0;${w};${w};0" keyTimes="0;${at(bas)};${at(bas + sure)};${at(dongu - 0.1)};1" dur="${f1(dongu)}s" repeatCount="indefinite" />
       </rect></clipPath>
       <text class="mono" x="${TX + 18}" y="${y}" font-size="${boy}" clip-path="url(#tk${i})" xml:space="preserve">${ic}</text>`;
     } else {
-      govde += `<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;${at(bas)};${at(bas + sure)};${at(dongu - 0.1)};1" dur="${f1(dongu)}s" repeatCount="indefinite" />
+      govde += `<g><animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;${at(bas)};${at(bas + sure)};${at(dongu - 0.1)};1" dur="${f1(dongu)}s" repeatCount="indefinite" />
         <text class="mono" x="${TX + 18}" y="${y}" font-size="${boy}" xml:space="preserve">${ic}</text></g>`;
     }
   });
@@ -233,7 +234,7 @@ export function sayilar(d) {
   const H = 300;
   const kalem = [
     { deger: d.totalContributions, etiket: "contributions", alt: "last 12 months" },
-    { deger: d.commits, etiket: "commits", alt: "incl. private" },
+    { deger: d.commits, etiket: "commits", alt: "+ private activity" },
     { deger: d.prs, etiket: "pull requests", alt: "opened" },
     { deger: d.repos, etiket: "repositories", alt: "public, own" },
     { deger: d.stars, etiket: "stars", alt: "earned" },
@@ -268,6 +269,9 @@ export function aktivite(days, stamp) {
   const W = 1000;
   const H = 300;
   const son = days.slice(-90);
+  if (!son.length)
+    return kok(W, H, "Contribution graph: no data", `${zemin(W, H, { r: 16 })}<defs>${stil()}</defs>${kicker(24, 44, 270, "Last 90 days")}
+  <text class="mono" x="${W / 2}" y="${H / 2 + 10}" font-size="13" text-anchor="middle" fill="${S.mistDim}">no contribution data</text>`);
   const mx = Math.max(1, ...son.map((d) => d.count));
   const toplam = son.reduce((s, d) => s + d.count, 0);
   const x0 = 28;
@@ -287,14 +291,17 @@ export function aktivite(days, stamp) {
     else sut += `<rect x="${f1(x + bw / 2 - 1)}" y="${yb - 2}" width="2" height="2" fill="${S.rule}" />`;
     pts.push([x + bw / 2, yb - h]);
   });
-  // yumusak egri (Catmull-Rom -> Bezier)
+  // yumusak egri (Catmull-Rom -> Bezier). Kontrol noktalari cizim alanina
+  // kistirilir: yoksa sifir gunun yanindaki tepe egriyi eksenin altina (eksi
+  // katki) sarkitiyor.
+  const ky = (v) => f1(Math.min(yb, Math.max(yb - yh, v)));
   let d = `M${f1(pts[0][0])} ${f1(pts[0][1])}`;
   for (let i = 0; i < pts.length - 1; i++) {
     const p0 = pts[i - 1] || pts[i];
     const p1 = pts[i];
     const p2 = pts[i + 1];
     const p3 = pts[i + 2] || p2;
-    d += `C${f1(p1[0] + (p2[0] - p0[0]) / 6)} ${f1(p1[1] + (p2[1] - p0[1]) / 6)} ${f1(p2[0] - (p3[0] - p1[0]) / 6)} ${f1(p2[1] - (p3[1] - p1[1]) / 6)} ${f1(p2[0])} ${f1(p2[1])}`;
+    d += `C${f1(p1[0] + (p2[0] - p0[0]) / 6)} ${ky(p1[1] + (p2[1] - p0[1]) / 6)} ${f1(p2[0] - (p3[0] - p1[0]) / 6)} ${ky(p2[1] - (p3[1] - p1[1]) / 6)} ${f1(p2[0])} ${f1(p2[1])}`;
   }
   const egri = uid("eg");
   let hafta = "";
