@@ -12,7 +12,9 @@ import sys
 from pathlib import Path
 from xml.dom.minidom import parse
 
-ZORUNLU = ["header.svg", "footer.svg", "terminal.svg", "languages.svg", "stats.svg", "activity.svg"]
+ZORUNLU = ["header.svg", "footer.svg", "about.svg", "map.svg", "languages.svg", "stats.svg", "activity.svg"]
+# Bu oneklerden en az birer kart olmali (README hepsini kullaniyor)
+ONEKLER = ["icon-", "nav-", "station-", "project-"]
 
 
 def main(argv):
@@ -31,9 +33,10 @@ def main(argv):
     if eksik:
         print("hata: uretilmeyen kartlar: " + ", ".join(eksik))
         return 1
-    if not any(ad.startswith("icon-") for ad in adlar):
-        print("hata: hic ikon karti uretilmedi")
-        return 1
+    for onek in ONEKLER:
+        if not any(ad.startswith(onek) for ad in adlar):
+            print(f"hata: hic {onek}* karti uretilmedi")
+            return 1
 
     for yol in svgler:
         try:
@@ -43,6 +46,10 @@ def main(argv):
             return 1
         if belge.documentElement.tagName != "svg":
             print(f"hata: {yol.name} kok ogesi <svg> degil")
+            return 1
+        # Yazi tipi yer tutucusu her durumda doldurulmus olmali (gomulemese bile bos)
+        if "/*@FONTS@*/" in yol.read_text(encoding="utf-8"):
+            print(f"hata: {yol.name} icinde doldurulmamis yazi tipi yer tutucusu var")
             return 1
 
     print(f"{len(svgler)} kart dogrulandi")

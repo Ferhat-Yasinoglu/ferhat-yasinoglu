@@ -1,179 +1,132 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/header.svg" alt="Farhad Yaqoobi" width="100%" />
+<img src="assets/header.svg" width="100%" alt="Farhad Yaqoobi — Software that keeps working when the power doesn't. A gyro-compass around the FY logo; its heading turns from project to project: Pusula, Dawayar, Zamin, Shafa, Mini Dakhl, Yayın, FY Merkez. 17 projects shipped, 6 interface languages, 8 apps that run offline, 5,236 km from NRW to Kabul." />
 
-**I build offline-first web apps with vanilla JavaScript — and bots that answer when I'm not there.**
+<a href="#products"><img src="assets/nav-products.svg" height="36" alt="045° Products" /></a>
+<a href="#ai"><img src="assets/nav-ai.svg" height="36" alt="090° AI &amp; Platforms" /></a>
+<a href="#sites"><img src="assets/nav-sites.svg" height="36" alt="135° Sites" /></a>
+<a href="#about"><img src="assets/nav-about.svg" height="36" alt="180° About" /></a>
+<a href="#tech"><img src="assets/nav-tech.svg" height="36" alt="225° Tech" /></a>
+<a href="#logbook"><img src="assets/nav-logbook.svg" height="36" alt="270° Logbook" /></a>
+<a href="#contact"><img src="assets/nav-contact.svg" height="36" alt="315° Contact" /></a>
 
-<sub>Deutsch &nbsp;·&nbsp; Türkçe &nbsp;·&nbsp; English &nbsp;·&nbsp; فارسی &nbsp;&nbsp;|&nbsp;&nbsp; NRW, Germany</sub>
-
-<br>
-
-[![GitHub](https://img.shields.io/badge/GitHub-070604?style=for-the-badge&logo=github&logoColor=d4af37)](https://github.com/Ferhat-Yasinoglu)
-[![Instagram](https://img.shields.io/badge/Instagram-070604?style=for-the-badge&logo=instagram&logoColor=d4af37)](https://instagram.com/farhad___yaqoobi)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-070604?style=for-the-badge&logo=linkedin&logoColor=d4af37)](https://linkedin.com/in/ferhat-yasinoglu)
-[![Email](https://img.shields.io/badge/Email-070604?style=for-the-badge&logo=gmail&logoColor=d4af37)](mailto:farhadyaqoobi.kunduz@gmail.com)
-
-</div>
-
----
-
-## 🛠️ What I've built
-
-### 🧭 Pusula
-
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/pusula.svg" width="96" align="right" alt="Pusula: a compass mark on a teal tile, amber needle pointing north-east" />
-
-<sub>*One endpoint for every AI tool — hundreds of providers behind it, automatic fallback in front.*</sub>
-
-Coding agents such as Claude Code, Codex, Cursor and Cline talk to Pusula instead of to a single
-vendor. Pusula keeps the keys and sign-ins for hundreds of model providers, serves them all through
-one OpenAI-compatible endpoint, moves to the next provider when a quota or key runs out, and stacks
-RTK and Caveman compression so prompts cost fewer tokens. A dashboard shows usage, health and cost;
-it runs as a server, a desktop app or a PWA — in English, Turkish, German and Persian.
-
-<sub>**Built with** TypeScript &nbsp;·&nbsp; Next.js &nbsp;·&nbsp; Node.js &nbsp;·&nbsp; SQLite &nbsp;·&nbsp; MCP &nbsp;·&nbsp; Electron</sub><br>
-<sub>**Learned here** quota-aware failover across providers &nbsp;·&nbsp; stacked prompt compression &nbsp;·&nbsp; keeping a 20k-file codebase consistent under one name</sub>
-
-[![Code](https://img.shields.io/badge/Read-Source-070604?style=flat-square&logo=github&logoColor=d4af37)](https://github.com/Ferhat-Yasinoglu/pusula)
-
-<br>
-
-### 🤖 botflow-mcp
-
-<sub>*Telegram chatbot funnels, built by talking to a model instead of clicking a dashboard.*</sub>
-
-Connect a bot, describe a flow in plain steps, and the server runs the conversation —
-asking questions, keeping the answers, branching on button presses, tagging people and
-broadcasting to the segments those tags create. It speaks MCP, so a model drives the
-whole thing; Telegram is reached by long polling, so no public URL is needed.
-
-<sub>**Built with** TypeScript &nbsp;·&nbsp; Node.js &nbsp;·&nbsp; MCP &nbsp;·&nbsp; SQLite &nbsp;·&nbsp; Telegram Bot API</sub><br>
-<sub>**Learned here** the Model Context Protocol &nbsp;·&nbsp; resumable background jobs &nbsp;·&nbsp; migrating a schema in place</sub>
-
-[![Code](https://img.shields.io/badge/Read-Source-070604?style=flat-square&logo=github&logoColor=d4af37)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/botflow-mcp)
-
-<br>
-
-### 💊 Dawayar
-
-<sub>*Pharmacy management for Afghan dawakhanas — the till keeps selling when the power and the internet don't.*</sub>
-
-Stock by batch and expiry date, a barcode till, purchases, customer and supplier
-credit, expenses and reports — in Dari, Pashto and English, right to left, on the
-Shamsi calendar. Records live in the browser first; a small Cloudflare Worker syncs
-a pharmacy's devices when the connection comes back. Pharmacies sign in with the
-Gmail the seller has licensed, one screen at a time: a session copied to a second
-PC is caught within two requests.
-
-<sub>**Built with** JavaScript &nbsp;·&nbsp; IndexedDB &nbsp;·&nbsp; Service Workers &nbsp;·&nbsp; Cloudflare Workers &nbsp;·&nbsp; Durable Objects (SQLite) &nbsp;·&nbsp; Google Identity Services</sub><br>
-<sub>**Learned here** deriving stock and balances from documents instead of counters &nbsp;·&nbsp; last-writer-wins sync over a server sequence &nbsp;·&nbsp; rotating nonces to catch a cloned session</sub>
-
-[![Live](https://img.shields.io/badge/Open-Live%20site-d4af37?style=flat-square&logo=googlechrome&logoColor=070604)](https://dawayar.pages.dev/)
-![Source](https://img.shields.io/badge/Source-Private-070604?style=flat-square&logo=github&logoColor=d4af37)
-
-<br>
-
-### 📓 Açık Defter
-
-<sub>*An IT student's open notebook — my personal site and learning journal.*</sub>
-
-<a href="https://ferhat-yasinoglu.github.io/acik-defter/">
-  <img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/acik-defter.jpg" width="100%" alt="Açık Defter homepage: a lined notebook page on a desk, with a taped note card counting projects, notes and languages" />
-</a>
-
-Written from scratch — no framework, no build step, no dependency. The site is a lined school
-notebook lying on a desk: paper grain, a red margin, a stitched spine, bookmark tabs on the cover;
-dark mode is the same notebook under a desk lamp. Four languages share one dictionary, the whole
-layout turns right-to-left in Persian, and it reads with the network off. Nothing is hidden when
-JavaScript is off, and every animation stops when the system asks for less motion.
-
-Two scripts guard it: one reads the files and checks that the hand-written header and footer haven't
-drifted apart across pages, the other opens a real browser and measures contrast, touch targets,
-keyboard access and whether the offline cache actually works.
-
-<sub>**Built with** JavaScript (ES6+) &nbsp;·&nbsp; CSS3 &nbsp;·&nbsp; View Transitions &nbsp;·&nbsp; Service Workers &nbsp;·&nbsp; Web App Manifest</sub><br>
-<sub>**Learned here** RTL through logical CSS properties &nbsp;·&nbsp; cache strategies &nbsp;·&nbsp; measuring contrast and touch targets in a real browser</sub>
-
-[![Live](https://img.shields.io/badge/Open-Live%20site-d4af37?style=flat-square&logo=googlechrome&logoColor=070604)](https://ferhat-yasinoglu.github.io/acik-defter/)
-[![Code](https://img.shields.io/badge/Read-Source-070604?style=flat-square&logo=github&logoColor=d4af37)](https://github.com/Ferhat-Yasinoglu/acik-defter)
-
-<br>
-
-### 🛒 NetStore
-
-<sub>*A shop dashboard that keeps working offline.*</sub>
-
-A sales and stock dashboard two people share through their Google accounts. Records
-sync through Firestore, the app keeps working when the network drops, and it installs
-straight from the browser. Afghani is supported and the invoice prints.
-
-<sub>**Built with** JavaScript &nbsp;·&nbsp; Firestore &nbsp;·&nbsp; Service Workers &nbsp;·&nbsp; Web App Manifest</sub><br>
-<sub>**Learned here** Firestore security rules &nbsp;·&nbsp; App Check &nbsp;·&nbsp; why an allowlist has no business in the client</sub>
-
-![Source](https://img.shields.io/badge/Source-Private-070604?style=flat-square&logo=github&logoColor=d4af37)
-
-<br>
-
-### ✨ This profile
-
-<sub>*Every card on this page is generated in this repository.*</sub>
-
-The header above, the terminal below, the language chart, the numbers, the contribution graph —
-none of them come from a third-party service. A Node script queries the GitHub API and writes
-animated SVGs into this repo; a workflow reruns it every six hours and commits only the cards
-whose content actually changed. A second workflow feeds the snake below, and the rest run the
-tests for the projects that live in this repository.
-
-[![Code](https://img.shields.io/badge/Read-cards.mjs-070604?style=flat-square&logo=javascript&logoColor=d4af37)](https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/blob/main/.github/scripts/cards.mjs)
-
----
-
-## 👋 About me
-
-<div align="center">
-
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/terminal.svg" width="100%" alt="A portrait in gold scanlines beside a terminal: whoami — Farhad Yaqoobi, developer in NRW. Stack: JavaScript, TypeScript, PWA, Node, Workers." />
+<sub>Deutsch &nbsp;·&nbsp; Türkçe &nbsp;·&nbsp; English &nbsp;·&nbsp; فارسی &nbsp;&nbsp;|&nbsp;&nbsp; NRW, Germany &nbsp;&nbsp;|&nbsp;&nbsp; <a href="https://fyajan.com/">fyajan.com</a></sub>
 
 </div>
 
----
+<a name="products"></a>
 
-## 💻 Tech
+<img src="assets/station-products.svg" width="100%" alt="045° · Products — Software for Afghan small businesses. The till keeps selling when the power goes out." />
+
+<img src="assets/map.svg" width="100%" alt="Written in NRW, running in Afghanistan: dot maps of Germany and Afghanistan at the same scale, joined by an arc from NRW to Kabul — 5,236 km, bearing 085°." />
 
 <div align="center">
 
-<a href="https://developer.mozilla.org/tr/docs/Web/JavaScript" title="JavaScript"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-javascript.svg" width="80" alt="JavaScript" /></a>
-<a href="https://www.typescriptlang.org/" title="TypeScript"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-typescript.svg" width="80" alt="TypeScript" /></a>
-<a href="https://developer.mozilla.org/tr/docs/Web/HTML" title="HTML5"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-html5.svg" width="80" alt="HTML5" /></a>
-<a href="https://developer.mozilla.org/tr/docs/Web/CSS" title="CSS"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-css.svg" width="80" alt="CSS" /></a>
-<a href="https://nodejs.org/" title="Node.js"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-nodejs.svg" width="80" alt="Node.js" /></a>
-<a href="https://web.dev/explore/progressive-web-apps" title="PWA"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-pwa.svg" width="80" alt="PWA" /></a>
-<a href="https://firebase.google.com/" title="Firebase"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-firebase.svg" width="80" alt="Firebase" /></a>
-<a href="https://developers.cloudflare.com/workers/" title="Cloudflare Workers"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-cloudflare.svg" width="80" alt="Cloudflare Workers" /></a>
-
-<a href="https://www.sqlite.org/" title="SQLite"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-sqlite.svg" width="80" alt="SQLite" /></a>
-<a href="https://modelcontextprotocol.io/" title="Model Context Protocol"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-mcp.svg" width="80" alt="Model Context Protocol" /></a>
-<a href="https://git-scm.com/" title="Git"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-git.svg" width="80" alt="Git" /></a>
-<a href="https://github.com/" title="GitHub"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-github.svg" width="80" alt="GitHub" /></a>
-<a href="https://www.kernel.org/" title="Linux"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-linux.svg" width="80" alt="Linux" /></a>
-<a href="https://www.figma.com/" title="Figma"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-figma.svg" width="80" alt="Figma" /></a>
-<a href="https://www.markdownguide.org/" title="Markdown"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-markdown.svg" width="80" alt="Markdown" /></a>
-<a href="https://www.json.org/json-tr.html" title="JSON"><img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/icon-json.svg" width="80" alt="JSON" /></a>
+<a href="https://dawayar.pages.dev/"><img src="assets/project-dawayar.svg" width="49%" alt="Dawayar — pharmacy management for Afghan pharmacies: batch and expiry stock, barcode till, credit and reports; offline first, synced by a Worker. Live." /></a>
+<a href="https://mini-dakhl.pages.dev/"><img src="assets/project-mini-dakhl.svg" width="49%" alt="Mini Dakhl — offline accounting: day book, receivables, stock, hawala and currency exchange with a balance per currency. Live." /></a>
+<a href="https://shafa.pages.dev/"><img src="assets/project-shafa.svg" width="49%" alt="Shafa — prescriptions and patient records for a clinic doctor, with QR verification and allergy warnings; data stays on the device. Live." /></a>
+<a href="https://nuskha.pages.dev/"><img src="assets/project-nusha.svg" width="49%" alt="Nüsha — prescription system for one doctor on the web, Android and Windows; Shafa's forerunner. Live." /></a>
+<a href="https://naqsha-zamin.pages.dev/"><img src="assets/project-zamin.svg" width="49%" alt="Zamin — land measuring, dividing and selling for property agents: satellite map, GPS, jerib, biswa and m². Live." /></a>
+<a href="https://fy-netstore.pages.dev/"><img src="assets/project-netstore.svg" width="49%" alt="NetStore — stock, sales, customers and debt for a retail shop; works offline. Live." /></a>
+<a href="https://dil-platform.fyajan.com/"><img src="assets/project-fy-language.svg" width="49%" alt="FY Language — students, classes, attendance, fees, receipts and certificates for Afghan language schools. Live." /></a>
+<img src="assets/project-fy-merkez.svg" width="49%" alt="FY Merkez — the licence, customer, payment and cash hub behind all the apps. In-house." />
 
 </div>
 
-<div align="center"><sub>Currently learning <b>Cloudflare D1</b>, the <b>Meta Graph API</b>, and how far an AI agent can be trusted inside a product.</sub></div>
+<a name="ai"></a>
 
----
+<img src="assets/station-ai.svg" width="100%" alt="090° · AI &amp; Platforms — AI tools and platforms. Gateways, studios and bots that do the work." />
 
-## 📊 Activity
+<a href="https://github.com/Ferhat-Yasinoglu/pusula"><img src="assets/project-pusula.svg" width="100%" alt="Pusula — open-source AI gateway: one OpenAI-compatible endpoint for Claude Code, Codex, Cursor and Cline, automatic fallback across 375 providers, 20 routing strategies, RTK and Caveman compression." /></a>
 
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/languages.svg" alt="Most used languages" width="48%" />
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/stats.svg" alt="By the numbers: contributions, commits, pull requests, repositories, stars and followers" width="48%" />
+<img src="assets/project-yayin.svg" width="49%" alt="Yayın — publish static sites from GitHub repositories under your own subdomain, from one Cloudflare Worker. In-house." />
+<a href="https://sosyal-studyo.pages.dev/"><img src="assets/project-sosyal-studyo.svg" width="49%" alt="Sosyal Stüdyo — social media automation: flows, contacts, bulk messages, an AI agent and content tools. Live." /></a>
+<img src="assets/project-fy-reklam.svg" width="49%" alt="FY Reklam — studio that designs Instagram and Facebook posts, checks captions and publishes through the Meta API. In-house." />
+<a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/botflow-mcp"><img src="assets/project-botflow-mcp.svg" width="49%" alt="botflow-mcp — Telegram chatbot funnels built by talking to a model over MCP. Open source." /></a>
+<a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/kazi"><img src="assets/project-kazi.svg" width="49%" alt="kazi — a small personal Firecrawl: web pages and PDFs to Markdown, JSON extraction with Claude, web search. Open source." /></a>
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/activity.svg" alt="Contribution graph, last 90 days" width="100%" />
+</div>
+
+<a name="sites"></a>
+
+<img src="assets/station-sites.svg" width="100%" alt="135° · Sites — Sites, written by hand. No framework, no build step, no tracking." />
+
+<a href="https://fyajan.com/"><img src="assets/project-fy-ajans.svg" width="100%" alt="fyajan.com — the AI agency site in the Seyir design: gyro-compass bridge, eight stations, a free seven-chapter AI course, the FY assistant and a language academy. Live." /></a>
+
+<div align="center">
+
+<a href="https://ferhat-yasinoglu.github.io/acik-defter/"><img src="assets/project-acik-defter.svg" width="49%" alt="Açık Defter — an IT student's open notebook: personal site and learning journal in four languages. Live." /></a>
+<a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/blob/main/.github/scripts/cards.mjs"><img src="assets/project-profil.svg" width="49%" alt="This profile — every card is drawn by a script in this repository and refreshed every six hours." /></a>
+
+</div>
+
+<details>
+<summary><b>What these projects taught me</b></summary>
+<br>
+
+| Project | Learned here |
+|---|---|
+| Pusula | quota-aware failover across providers · stacked prompt compression · keeping a 20k-file codebase consistent under one name |
+| Dawayar | deriving stock and balances from documents instead of counters · last-writer-wins sync over a server sequence · rotating nonces to catch a cloned session |
+| FY Merkez | one licence server for many products · trials and one-device rules · Shamsi dates and right-to-left in a panel |
+| botflow-mcp | the Model Context Protocol · resumable background jobs · migrating a schema in place |
+| kazi | robots.txt and redirects done right · an SSRF guard · PDFs page by page |
+| Açık Defter | RTL through logical CSS properties · cache strategies · measuring contrast and touch targets in a real browser |
+| NetStore | Firestore security rules · App Check · why an allowlist has no business in the client |
+| This profile | animated SVG without scripts · subsetting fonts per card · committing only what changed |
+
+</details>
+
+<a name="about"></a>
+
+<img src="assets/station-about.svg" width="100%" alt="180° · About — Who's on the bridge. IT student, developer, founder of FY." />
+
+<img src="assets/about.svg" width="100%" alt="A portrait in gold scanlines beside a terminal: whoami — Farhad Yaqoobi, developer, founder of FY, NRW. Stack: JavaScript, TypeScript, PWA, Node, Workers. 17 projects, 8 of them work offline. Locales de_DE, tr_TR, en_US, fa_AF." />
+
+<a name="tech"></a>
+
+<img src="assets/station-tech.svg" width="100%" alt="225° · Tech — Instruments on the bridge. What the projects above are built with." />
+
+<div align="center">
+
+<a href="https://developer.mozilla.org/tr/docs/Web/JavaScript" title="JavaScript"><img src="assets/icon-javascript.svg" width="70" alt="JavaScript" /></a>
+<a href="https://www.typescriptlang.org/" title="TypeScript"><img src="assets/icon-typescript.svg" width="70" alt="TypeScript" /></a>
+<a href="https://developer.mozilla.org/tr/docs/Web/HTML" title="HTML5"><img src="assets/icon-html5.svg" width="70" alt="HTML5" /></a>
+<a href="https://developer.mozilla.org/tr/docs/Web/CSS" title="CSS"><img src="assets/icon-css.svg" width="70" alt="CSS" /></a>
+<a href="https://www.python.org/" title="Python"><img src="assets/icon-python.svg" width="70" alt="Python" /></a>
+<a href="https://nodejs.org/" title="Node.js"><img src="assets/icon-nodejs.svg" width="70" alt="Node.js" /></a>
+<a href="https://nextjs.org/" title="Next.js"><img src="assets/icon-nextdotjs.svg" width="70" alt="Next.js" /></a>
+<a href="https://react.dev/" title="React"><img src="assets/icon-react.svg" width="70" alt="React" /></a>
+<a href="https://www.electronjs.org/" title="Electron"><img src="assets/icon-electron.svg" width="70" alt="Electron" /></a>
+<a href="https://web.dev/explore/progressive-web-apps" title="PWA"><img src="assets/icon-pwa.svg" width="70" alt="PWA" /></a>
+<a href="https://developers.cloudflare.com/workers/" title="Workers"><img src="assets/icon-cloudflareworkers.svg" width="70" alt="Workers" /></a>
+
+<a href="https://www.sqlite.org/" title="SQLite"><img src="assets/icon-sqlite.svg" width="70" alt="SQLite" /></a>
+<a href="https://firebase.google.com/" title="Firebase"><img src="assets/icon-firebase.svg" width="70" alt="Firebase" /></a>
+<a href="https://modelcontextprotocol.io/" title="MCP"><img src="assets/icon-mcp.svg" width="70" alt="MCP" /></a>
+<a href="https://docs.anthropic.com/" title="Claude API"><img src="assets/icon-anthropic.svg" width="70" alt="Claude API" /></a>
+<a href="https://core.telegram.org/bots/api" title="Telegram"><img src="assets/icon-telegram.svg" width="70" alt="Telegram" /></a>
+<a href="https://leafletjs.com/" title="Leaflet"><img src="assets/icon-leaflet.svg" width="70" alt="Leaflet" /></a>
+<a href="https://vitest.dev/" title="Vitest"><img src="assets/icon-vitest.svg" width="70" alt="Vitest" /></a>
+<a href="https://git-scm.com/" title="Git"><img src="assets/icon-git.svg" width="70" alt="Git" /></a>
+<a href="https://github.com/" title="GitHub"><img src="assets/icon-github.svg" width="70" alt="GitHub" /></a>
+<a href="https://www.kernel.org/" title="Linux"><img src="assets/icon-linux.svg" width="70" alt="Linux" /></a>
+<a href="https://www.figma.com/" title="Figma"><img src="assets/icon-figma.svg" width="70" alt="Figma" /></a>
+
+</div>
+
+<a name="logbook"></a>
+
+<img src="assets/station-logbook.svg" width="100%" alt="270° · Logbook — read from the GitHub API every six hours." />
+
+<div align="center">
+
+<img src="assets/languages.svg" width="49%" alt="Most used languages in public repositories" />
+<img src="assets/stats.svg" width="49%" alt="By the numbers: contributions, commits, pull requests, repositories, stars and followers" />
+
+<img src="assets/activity.svg" width="100%" alt="Contribution graph, last 90 days" />
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/output/github-snake-dark.svg" />
@@ -183,19 +136,20 @@ tests for the projects that live in this repository.
 
 </div>
 
----
+<a name="contact"></a>
+
+<img src="assets/station-contact.svg" width="100%" alt="315° · Contact — Say hello." />
 
 <div align="center">
 
-### Say hello
+[![Email](https://img.shields.io/badge/Email-d4a840?style=for-the-badge&logo=gmail&logoColor=040405)](mailto:farhadyaqoobi.kunduz@gmail.com)
+[![fyajan.com](https://img.shields.io/badge/fyajan.com-0a0a0c?style=for-the-badge&logo=googlechrome&logoColor=d4a840)](https://fyajan.com/)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0a0a0c?style=for-the-badge&logo=linkedin&logoColor=d4a840)](https://linkedin.com/in/ferhat-yasinoglu)
+[![Instagram](https://img.shields.io/badge/Instagram-0a0a0c?style=for-the-badge&logo=instagram&logoColor=d4a840)](https://instagram.com/farhad___yaqoobi)
+[![GitHub](https://img.shields.io/badge/GitHub-0a0a0c?style=for-the-badge&logo=github&logoColor=d4a840)](https://github.com/Ferhat-Yasinoglu)
 
-<sub>Always up for a conversation about web development, messaging APIs, or whatever you're building.</sub>
-
-[![Email](https://img.shields.io/badge/Email-d4af37?style=flat-square&logo=gmail&logoColor=070604)](mailto:farhadyaqoobi.kunduz@gmail.com)
-[![Instagram](https://img.shields.io/badge/Instagram-070604?style=flat-square&logo=instagram&logoColor=d4af37)](https://instagram.com/farhad___yaqoobi)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-070604?style=flat-square&logo=linkedin&logoColor=d4af37)](https://linkedin.com/in/ferhat-yasinoglu)
-<img src="https://komarev.com/ghpvc/?username=Ferhat-Yasinoglu&label=Profile%20views&color=d4af37&style=flat-square" alt="profile views" />
+<img src="https://komarev.com/ghpvc/?username=Ferhat-Yasinoglu&label=Profile%20views&color=d4a840&style=flat-square" alt="profile views" />
 
 </div>
 
-<img src="https://raw.githubusercontent.com/Ferhat-Yasinoglu/ferhat-yasinoglu/main/assets/footer.svg" width="100%" alt="" />
+<img src="assets/footer.svg" width="100%" alt="" />
