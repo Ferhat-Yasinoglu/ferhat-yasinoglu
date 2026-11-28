@@ -205,6 +205,19 @@ export const PROJELER = [
     link: "https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/kazi",
     sanat: "kazi",
   },
+  {
+    id: "kripto-asistan",
+    bolum: "ai",
+    ad: "Kripto Asistan",
+    tur: "Telegram watchdog",
+    italik: "Watches the price, the news and your plan. Never says buy or sell.",
+    aciklama:
+      "A Telegram bot for people who save in Bitcoin: one alert when the price moves sharply, tax and regulation headlines the same day, reminders for the purchase day and the holding period. It connects to no exchange and asks for no password.",
+    cipler: ["Workers", "KV", "Telegram", "Türkçe · English"],
+    durum: "open",
+    link: "https://github.com/Ferhat-Yasinoglu/kripto-asistan",
+    sanat: "kripto",
+  },
 
   // ------------------------------------------------------------ 135° siteler
   {

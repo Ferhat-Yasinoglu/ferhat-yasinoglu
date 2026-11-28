@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/header.svg" width="100%" alt="Farhad Yaqoobi — Software that keeps working when the power doesn't. A gyro-compass around the FY logo; its heading turns from project to project: Pusula, Dawayar, Zamin, Shafa, Mini Dakhl, Yayın, FY Merkez. 17 projects shipped, 6 interface languages, 8 apps that run offline, 5,236 km from NRW to Kabul." />
+<img src="assets/header.svg" width="100%" alt="Farhad Yaqoobi — Software that keeps working when the power doesn't. A gyro-compass around the FY logo; its heading turns from project to project: Pusula, Dawayar, Zamin, Shafa, Mini Dakhl, Yayın, FY Merkez. 18 projects shipped, 6 interface languages, 8 apps that run offline, 5,236 km from NRW to Kabul." />
 
 <a href="#products"><img src="assets/nav-products.svg" height="36" alt="045° Products" /></a>
 <a href="#ai"><img src="assets/nav-ai.svg" height="36" alt="090° AI &amp; Platforms" /></a>
@@ -46,6 +46,7 @@
 <img src="assets/project-fy-reklam.svg" width="49%" alt="FY Reklam — studio that designs Instagram and Facebook posts, checks captions and publishes through the Meta API. In-house." />
 <a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/botflow-mcp"><img src="assets/project-botflow-mcp.svg" width="49%" alt="botflow-mcp — Telegram chatbot funnels built by talking to a model over MCP. Open source." /></a>
 <a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/kazi"><img src="assets/project-kazi.svg" width="49%" alt="kazi — a small Firecrawl-like scraper for personal use: web pages and PDFs to Markdown, JSON extraction with Claude, web search. Source on GitHub." /></a>
+<a href="https://github.com/Ferhat-Yasinoglu/kripto-asistan"><img src="assets/project-kripto-asistan.svg" width="49%" alt="Kripto Asistan — a Telegram watchdog for people who save in Bitcoin: price alerts, tax and regulation headlines, reminders for the purchase day and the holding period; never says buy or sell, connects to no exchange. Open source." /></a>
 
 </div>
 
@@ -73,6 +74,7 @@
 | FY Merkez | one licence server for many products · trials and one-device rules · Shamsi dates and right-to-left in a panel |
 | botflow-mcp | the Model Context Protocol · resumable background jobs · migrating a schema in place |
 | kazi | robots.txt and redirects done right · an SSRF guard · PDFs page by page |
+| Kripto Asistan | Telegram webhooks verified by a secret header · a Worker that provisions its own storage and webhook · alert cooldowns so one move is one message |
 | Açık Defter | RTL through logical CSS properties · cache strategies · measuring contrast and touch targets in a real browser |
 | NetStore | Firestore security rules · App Check · why an allowlist has no business in the client |
 | This profile | animated SVG without scripts · subsetting fonts per card · committing only what changed |
@@ -83,7 +85,7 @@
 
 <img src="assets/station-about.svg" width="100%" alt="180° · About — Who's on the bridge. IT student, developer, founder of FY." />
 
-<img src="assets/about.svg" width="100%" alt="A portrait in gold scanlines beside a terminal: whoami — Farhad Yaqoobi, developer, founder of FY, NRW. Stack: JavaScript, TypeScript, PWA, Node, Workers. 17 projects, 8 of them work offline. Locales de_DE, tr_TR, en_US, fa_AF." />
+<img src="assets/about.svg" width="100%" alt="A portrait in gold scanlines beside a terminal: whoami — Farhad Yaqoobi, developer, founder of FY, NRW. Stack: JavaScript, TypeScript, PWA, Node, Workers. 18 projects, 8 of them work offline. Locales de_DE, tr_TR, en_US, fa_AF." />
 
 <a name="tech"></a>
 

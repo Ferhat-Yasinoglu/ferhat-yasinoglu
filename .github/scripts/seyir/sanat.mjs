@@ -617,6 +617,46 @@ function kazi(x, y, w, h) {
   return s;
 }
 
+// ---------------------------------------------------------------- kripto-asistan
+
+function kripto(x, y, w, h) {
+  const mesaj = [
+    { b: true, t: "BTC −8.2 % in 24 h" },
+    { b: true, t: "Plan day in 2 days" },
+    { b: false, t: "/buy 50" },
+    { b: true, t: "Saved · 0.000625 BTC" },
+    { b: true, t: "No buy or sell calls." },
+  ];
+  const sure = 10;
+  const pen = [];
+  let s = `${kutu(14, 10, 230, 140, { r: 10, fill: S.void })}<rect x="14" y="10" width="230" height="20" rx="10" fill="${S.bezel}" />
+    <circle cx="28" cy="20" r="5" fill="${S.gold}" />${yazi(40, 24, "Kripto Asistan · Telegram", { boy: 9, renk: S.mist })}`;
+  mesaj.forEach((m, i) => {
+    const p = pencere(sure, 0.04 + i * 0.13, 0.94, { gec: 0.2 });
+    pen.push(p);
+    const mw = tw(m.t, 9.5, "sans") + 16;
+    const mx = m.b ? 22 : 236 - mw;
+    const my = 36 + i * 22;
+    s += `<g class="${p.k}">${kutu(mx, my, mw, 17, { r: 8, fill: m.b ? S.bezel : "rgba(212,168,64,.16)", stroke: m.b ? S.rule : S.goldLo })}${yazi(mx + 8, my + 12, m.t, { boy: 9.5, renk: m.b ? S.foam : S.goldHi, cls: "sans" })}</g>`;
+  });
+  // fiyat cizgisi: esik asilinca kor rengi bir isaret yanar
+  s += `${yazi(268, 24, "PRICE · 24 H", { boy: 9, renk: S.mistDim, ls: 1.2 })}${yazi(436, 24, "ALERT ±7 %", { boy: 9, renk: S.gold, ls: 1.2, anchor: "end" })}`;
+  const nokta = [[268, 52], [290, 48], [310, 56], [330, 50], [350, 58], [368, 54], [386, 86], [404, 92], [420, 84], [436, 88]];
+  const yol = uid("kp");
+  s += `<line x1="268" y1="76" x2="436" y2="76" stroke="${S.goldLo}" stroke-dasharray="2 3" />${yazi(268, 72, "−7 %", { boy: 8.5, renk: S.mistDim })}
+    <path id="${yol}" d="M${nokta.map(([px, py]) => `${px} ${py}`).join("L")}" fill="none" stroke="${S.gold}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" />${gezgin(yol, { sure: 5, r: 2, kuyruk: false })}`;
+  const uyari = pencere(sure, 0.1, 0.94, { gec: 0.2 });
+  pen.push(uyari);
+  s += `<g class="${uyari.k}"><circle cx="386" cy="86" r="7" fill="none" stroke="${S.ember}" stroke-dasharray="2 2" /><circle cx="386" cy="86" r="3" fill="${S.ember}" /></g>`;
+  let hx = 268;
+  for (const [t, led] of [["NEWS", S.gold], ["PLAN", S.gold], ["HOLD 1 Y", S.goldHi]]) {
+    const hp = hap(hx, 116, t, { boy: 9, renk: S.foam, h: 20, led });
+    s += hp.svg;
+    hx += hp.w + 6;
+  }
+  return pencereler(pen) + s;
+}
+
 // ---------------------------------------------------------------- fyajan.com
 
 function fyajans(x, y, w, h) {
@@ -753,6 +793,7 @@ export const SANAT = {
   fyreklam,
   botflow,
   kazi,
+  kripto,
   fyajans,
   acikdefter,
   profil,
