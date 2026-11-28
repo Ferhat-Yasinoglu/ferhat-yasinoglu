@@ -46,7 +46,7 @@
 <img src="assets/project-fy-reklam.svg" width="49%" alt="FY Reklam — studio that designs Instagram and Facebook posts, checks captions and publishes through the Meta API. In-house." />
 <a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/botflow-mcp"><img src="assets/project-botflow-mcp.svg" width="49%" alt="botflow-mcp — Telegram chatbot funnels built by talking to a model over MCP. Open source." /></a>
 <a href="https://github.com/Ferhat-Yasinoglu/ferhat-yasinoglu/tree/main/kazi"><img src="assets/project-kazi.svg" width="49%" alt="kazi — a small Firecrawl-like scraper for personal use: web pages and PDFs to Markdown, JSON extraction with Claude, web search. Source on GitHub." /></a>
-<a href="https://kripto-asistan.ferhatyasinoglu.workers.dev/"><img src="assets/project-kripto-asistan.svg" width="49%" alt="Kripto Asistan — a Telegram watchdog for people who save in Bitcoin: price alerts, tax and regulation headlines, reminders for the purchase day and the holding period; never says buy or sell, connects to no exchange. Open source (MIT), live at @fy_kripto_asistan_bot." /></a>
+<a href="https://kripto-asistan.fyajan.com/"><img src="assets/project-kripto-asistan.svg" width="49%" alt="Kripto Asistan — a Telegram watchdog for people who save in Bitcoin: price alerts, tax and regulation headlines, reminders for the purchase day and the holding period; never says buy or sell, connects to no exchange. Open source (MIT), live at @fy_kripto_asistan_bot." /></a>
 
 </div>
 

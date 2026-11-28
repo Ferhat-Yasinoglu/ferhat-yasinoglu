@@ -215,7 +215,7 @@ export const PROJELER = [
       "A Telegram bot for people who save in Bitcoin: one alert when the price moves sharply, tax and regulation headlines the same day, reminders for the purchase day and the holding period. It connects to no exchange and asks for no password.",
     cipler: ["Workers", "KV", "Telegram", "MIT"],
     durum: "live",
-    link: "https://kripto-asistan.ferhatyasinoglu.workers.dev/",
+    link: "https://kripto-asistan.fyajan.com/",
     sanat: "kripto",
   },
 
